@@ -63,7 +63,7 @@ class Coordinate_Transform(object):
     """
 
     def __init__(self, mol):
-        self.coordinates = mol.coordinates
+        self.coordinates = mol.coordinates/ht.angstrom
         self.numbers = mol.numbers
 
 
@@ -79,7 +79,7 @@ class Coordinate_Transform(object):
 
     def dihed_angle(self, atom1, atom2, atom3, atom4, deriv = 0):
         rs = np.vstack((self.coordinates[atom1],self.coordinates[atom2],self.coordinates[atom3],self.coordinates[atom4]))
-        return mm.dihedd_angle(rs, deriv)
+        return mm.dihed_angle(rs, deriv)
 
 
     def dihed_angle_new_dot(self, atom1, atom2, atom3, atom4, deriv = 0):
@@ -95,7 +95,8 @@ class Coordinate_Transform(object):
 
 
 if __name__ == '__main__':
-    mol = ht.IOData.from_file('../data/test/2h-azirine.xyz')
+    fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
+    mol = ht.IOData.from_file(fn_xyz)
     structure = Coordinate_Transform(mol)
     print structure.numbers
     print len(structure.numbers)
