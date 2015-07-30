@@ -66,8 +66,8 @@ class IC(object):
     def __init__(self, mol):
         self.numbers = mol.numbers 
         self.len = len(mol.numbers)
-        self.molecule = ic.Coordinate_Transform(mol)
         self.coordinates = (mol.coordinates/ht.angstrom)
+        self.molecule = ic.Coordinate_Transform(self.coordinates)
         self.ic_types = []
         self.B_matrix = np.zeros((0,3*self.len),float)
         self.atoms = []
@@ -143,6 +143,20 @@ class IC(object):
         return (self.coordinates.reshape(1,-1) + cartecian_change).reshape(3,-1)
 
 
+class IC_Iter(IC):
+
+
+    def __init__(self, coordinates):
+        self.coordinates = coordinates
+        self.len = len(coordinates)
+        self.molecule = ic.Coordinate_Transform(self.coordinates)
+        self.ic_types = []
+        self.B_matrix = np.zeros((0,3*self.len),float)
+        self.atoms = []
+        self.connect = dict([(i, set()) for i in range(self.len)])
+        self.internal_coordinates = []
+
+
 
 if __name__ == '__main__':
     # mol = ht.IOData.from_file('../data/test/2h-azirine.xyz')
@@ -180,4 +194,8 @@ if __name__ == '__main__':
     diff = [-0.1,-0.1,0]
     print water.coordinates
     print  water.internal_coordinates
-    print water.transform_i_to_c(diff)
+    tmp = IC_Iter(water.transform_i_to_c(diff))
+    tmp.add_bond(0,1, 'regular')
+    tmp.add_bond(1,2, 'regular')
+    tmp.add_angle(0,1,2)
+    print tmp.internal_coordinates

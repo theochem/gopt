@@ -62,9 +62,8 @@ class Coordinate_Transform(object):
      | ``deriv`` derivatives need to be calculated in the transformation.
     """
 
-    def __init__(self, mol):
-        self.coordinates = mol.coordinates/ht.angstrom
-        self.numbers = mol.numbers
+    def __init__(self, coordinates):
+        self.coordinates = coordinates
 
 
     def bond_length(self, atom1, atom2, deriv = 0):
@@ -97,9 +96,7 @@ class Coordinate_Transform(object):
 if __name__ == '__main__':
     fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
     mol = ht.IOData.from_file(fn_xyz)
-    structure = Coordinate_Transform(mol)
-    print structure.numbers
-    print len(structure.numbers)
+    structure = Coordinate_Transform(mol.coordinates)
     print structure.bond_length(1,2,1)
     print structure.dihed_angle_new_dot(1,0,2,3,2)[1]
     print structure.dihed_angle_new_cross(1,0,2,3,2)[1]

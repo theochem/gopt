@@ -26,4 +26,4 @@ __author__ = 'Derrick Yang'
 
 
 from ic import *
-from bond_decide import * 
+from bond_generator import * 
