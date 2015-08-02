@@ -97,6 +97,14 @@ if __name__ == '__main__':
     fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
     mol = ht.IOData.from_file(fn_xyz)
     structure = Coordinate_Transform(mol.coordinates)
-    print structure.bond_length(1,2,1)
-    print structure.dihed_angle_new_dot(1,0,2,3,2)[1]
-    print structure.dihed_angle_new_cross(1,0,2,3,2)[1]
+    print structure.bond_length(1,2,2)[1]
+    print "__________________"
+    print structure.bond_length(1,2,2)[2]
+    print "__________________"
+    print structure.bond_length(1,2,2)[2][0]
+    print "__________________"
+    print structure.bond_length(1,2,2)[2][0][0]
+    print "__________________"
+    print structure.bond_length(1,2,2)[2][0].reshape(3,-1)
+    # print structure.dihed_angle_new_dot(1,0,2,3,2)[1] 
+    # print structure.dihed_angle_new_cross(1,0,2,3,2)[1]
