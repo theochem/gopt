@@ -25,15 +25,17 @@ class IC_Transformation(object):
     def __init__(self, molecule):
         self.coordinates = molecule.coordinates
         self.numbers = molecule.numbers
+        self.len = len(self.numbers)
         self.ic = []
         self.iteration_flag = False
         self.procedures = []
         self.bond = []
         self.angle = []
         self.dihed = []
+        self.B_matrix = np.zeros((0,3*self.len),float)
 
 
-    def add_bond_length(self, atom1, atom2, type):
+    def add_bond_length(self, atom1, atom2, b_type = "covalence"):
         """To add a bond between atom1 and atom2
 
         Arguments:
@@ -42,7 +44,7 @@ class IC_Transformation(object):
         """
         atoms = (atom1, atom2)
         info = "add_bond_length"
-        if self._repetition_check(atoms):
+        if self._repetition_check(atoms, b_type):
             self._add_ic(info, atoms)
 
 
@@ -57,7 +59,8 @@ class IC_Transformation(object):
         """        
         atoms = (atom1, atom2, atom3)
         info = "add_bend_angle"
-        self._add_ic(info, atoms)
+        if self._repetition_check(atoms):
+            self._add_ic(info, atoms)
 
 
     def add_dihed_angle(self, atom1, atom2, atom3, atom4):
@@ -72,7 +75,9 @@ class IC_Transformation(object):
         """ 
         atoms = (atom1, atom2, atom3, atom4)
         info = "add_dihed_angle"
-        self._add_ic(info, atoms)
+        d_type = "conventional"
+        if self._repetition_check(atoms, d_type):
+            self._add_ic(info, atoms)
 
 
     def add_dihed_new(self, atom1, atom2, atom3, atom4):
@@ -86,8 +91,10 @@ class IC_Transformation(object):
          | ``atom4`` the index of atom4 in self.numbers
         """ 
         atoms = (atom1, atom2, atom3, atom4)
-        self._add_dihed_angle_new_dot(atoms)
-        self._add_dihed_angle_new_cross(atoms)
+        d_type = "new"
+        if self._repetition_check(atoms, d_type):
+            self._add_dihed_angle_new_dot(atoms)
+            self._add_dihed_angle_new_cross(atoms)
 
 
     def _add_dihed_angle_new_dot(self, atoms):
@@ -106,26 +113,27 @@ class IC_Transformation(object):
         self._add_ic(info, atoms)
 
 
-    def _repetition_check(self, atoms):
+    def _repetition_check(self, atoms, type = "default"):
         """private method to check whether the newly add ic has already existed or not
         """
         atoms_len = len(atoms)
+        content = ()
         if atoms_len == 2:
-            content = set(atoms)
+            content = (set(atoms), type)
             if content not in self.bond:
                 self.bond.append(content)
                 return True
             else: return False
 
         if atoms_len == 3:
-            content = (atom[1], set(atom[0], atom[2]))
+            content = (atoms[1], set([atoms[0], atoms[2]]), type)
             if content not in self.angle:
                 self.angle.append(content)
                 return True
             else: return False
     
         if atoms_len == 4:
-            content = (set(atoms[1], atoms[2]), set(atoms[0], atoms[3]))
+            content = (set([atoms[1], atoms[2]]), set([atoms[0], atoms[3]]), type)
             if content not in self.dihed:
                 self.dihed.append(content)
                 return True
@@ -136,11 +144,24 @@ class IC_Transformation(object):
         """ ic was added through this private method.
         """
         procedures = (info, atoms)
-        if not self.iteration_flag:
-            self.procedures.append(procedures)
         ic_function = IC_Transformation._IC_types[info]
         coordinates = self._get_coordinates(atoms)
-        self.ic.append(ic_function(coordinates, deriv = 2)[0])
+        result, d, dd = ic_function(coordinates, deriv = 2)
+        if not self.iteration_flag:
+            self.procedures.append(procedures)
+        self.ic.append(result)
+        self._add_B_matrix(d, atoms)
+
+
+    def _add_B_matrix(self, deriv, atoms):
+        """calculated B matrix for object
+        """
+        tmp_B_matrix = np.zeros((len(self.ic), 3*self.len), float)
+        tmp_B_matrix[:-1, :] = self.B_matrix
+        for i in range(len(atoms)):
+            tmp_B_matrix[-1, 3*atoms[i]: 3*atoms[i]+3] += deriv[i]
+        self.B_matrix = np.zeros((len(self.ic), 3*self.len), float)
+        self.B_matrix[:,:] = tmp_B_matrix
 
 
     def _get_coordinates(self, atoms):
@@ -163,16 +184,32 @@ class IC_Transformation(object):
         
         
 
-if __name__ == '__main__':
-    fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
-    mol = ht.IOData.from_file(fn_xyz)
-    cc_object = IC_Transformation(mol)
-    print cc_object.coordinates
-    print cc_object.numbers
-    cc_object.add_bond_length(0,1,"type")
-    print cc_object.ic
-    print cc_object.procedures[0][1]
-    cc_object.add_bond_length(0,1,"type")
-    print cc_object.ic
-    
-    
+# if __name__ == '__main__':
+#     fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
+#     mol = ht.IOData.from_file(fn_xyz)
+#     cc_object = IC_Transformation(mol)
+#     print cc_object.coordinates
+#     print cc_object.numbers
+#     cc_object.add_bond_length(0,1)
+#     print cc_object.ic
+#     print cc_object.procedures[0][1]
+#     cc_object.add_bond_length(0,1)
+#     print cc_object.ic
+#     cc_object.add_bend_angle(1,2,3)
+#     print cc_object.ic
+#     print cc_object.procedures
+#     cc_object.add_dihed_angle(1,2,3,4)
+#     print cc_object.ic
+#     cc_object.add_dihed_new(4,3,2,1)
+#     cc_object.add_dihed_new(1,2,3,4)
+#     print cc_object.ic
+#     print cc_object.bond
+#     cc_object.ic = []
+#     cc_object.B_matrix = B_matrix = np.zeros((0,3*cc_object.len),float)
+#     print cc_object.ic
+#     cc_object.iteration_flag = True
+#     print cc_object.procedures
+#     for i in cc_object.procedures:
+#         cc_object._add_ic(i[0], i[1])
+#         print i
+#     print cc_object.ic
