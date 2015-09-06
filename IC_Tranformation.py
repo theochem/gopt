@@ -1,6 +1,8 @@
 from IC_Functions import *
+from Cost_Functions import *
 import numpy as np
 import horton as ht
+import copy
 
 
 class IC_Transformation(object):
@@ -12,7 +14,7 @@ class IC_Transformation(object):
 
     Attributes:
      | ``coordinates`` -- cartesian coordinates of molecule in N*3 numpy array.
-     | ``numbers`` -- a list of atomic number of each atoms of targit molecule.
+     | ``numbers`` -- a list of atomic number of each atoms of target molecule.
      | ``ic`` -- a list of internal coordinates calculated through transformation.
      | ``iteration_falg`` -- a Bool flag to mark is it doing iteration or generate new ic. T for iteration, F for new ic.
      | ``procedures`` -- a list of steps used to generate ic which will be used when doing iteration
@@ -33,6 +35,8 @@ class IC_Transformation(object):
         self.angle = []
         self.dihed = []
         self.B_matrix = np.zeros((0,3*self.len),float)
+        self._ic_differences = []
+        self._target_ic = []
 
 
     def add_bond_length(self, atom1, atom2, b_type = "covalence"):
@@ -145,7 +149,7 @@ class IC_Transformation(object):
         """
         procedures = (info, atoms)
         ic_function = IC_Transformation._IC_types[info]
-        coordinates = self._get_coordinates(atoms)
+        coordinates = self.get_coordinates(atoms)
         result, d, dd = ic_function(coordinates, deriv = 2)
         if not self.iteration_flag:
             self.procedures.append(procedures)
@@ -164,7 +168,7 @@ class IC_Transformation(object):
         self.B_matrix[:,:] = tmp_B_matrix
 
 
-    def _get_coordinates(self, atoms):
+    def get_coordinates(self, atoms):
         """private method to retrive atoms' cartesian coordinates
         """
         atom_length = len(atoms)
@@ -172,6 +176,33 @@ class IC_Transformation(object):
         for i in atoms:
             coordinates = np.append(coordinates, self.coordinates[i])
         return coordinates.reshape(-1, 3)
+
+
+    def _get_difference(self):
+        self._ic_differences.extend([0]*(len(self.ic) - len(self._ic_differences)))
+        return list(np.array(self.ic) - np.array(self.target_ic))
+
+
+    def _set_difference(self, value):
+        self.target_ic = list(np.array(self.ic) + np.array(value))
+
+
+    ic_differences = property(_get_difference, _set_difference)
+
+
+    def _get_target_ic(self):
+        return self._target_ic or self.ic
+
+
+    def _set_target_ic(self, value):
+        if len(value) == len(self.ic):
+            self._target_ic = value
+
+
+    target_ic = property(_get_target_ic, _set_target_ic)
+
+
+    # def cost_
 
 
     _IC_types = {
@@ -182,34 +213,49 @@ class IC_Transformation(object):
         "add_dihed_agnle_new_cross":IC_Functions.dihed_angle_new_cross,
     }
         
-        
+    
+    _IC_costs = {
+        "add_bond_length":IC_Functions.bond_length,
+        "add_bend_angle":IC_Functions.bend_angle,
+        "add_dihed_angle":IC_Functions.dihed_angle,
+        "add_dihed_agnle_new_dot":IC_Functions.dihed_angle_new_dot,
+        "add_dihed_agnle_new_cross":IC_Functions.dihed_angle_new_cross,
+    }
 
-# if __name__ == '__main__':
-#     fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
-#     mol = ht.IOData.from_file(fn_xyz)
-#     cc_object = IC_Transformation(mol)
-#     print cc_object.coordinates
-#     print cc_object.numbers
-#     cc_object.add_bond_length(0,1)
-#     print cc_object.ic
-#     print cc_object.procedures[0][1]
-#     cc_object.add_bond_length(0,1)
-#     print cc_object.ic
-#     cc_object.add_bend_angle(1,2,3)
-#     print cc_object.ic
-#     print cc_object.procedures
-#     cc_object.add_dihed_angle(1,2,3,4)
-#     print cc_object.ic
-#     cc_object.add_dihed_new(4,3,2,1)
-#     cc_object.add_dihed_new(1,2,3,4)
-#     print cc_object.ic
-#     print cc_object.bond
-#     cc_object.ic = []
-#     cc_object.B_matrix = B_matrix = np.zeros((0,3*cc_object.len),float)
-#     print cc_object.ic
-#     cc_object.iteration_flag = True
-#     print cc_object.procedures
-#     for i in cc_object.procedures:
-#         cc_object._add_ic(i[0], i[1])
-#         print i
-#     print cc_object.ic
+
+
+if __name__ == '__main__':
+    fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
+    mol = ht.IOData.from_file(fn_xyz)
+    cc_object = IC_Transformation(mol)
+    print cc_object.coordinates
+    print cc_object.numbers
+    cc_object.add_bond_length(0,1)
+    print cc_object.ic
+    print cc_object.procedures[0][1]
+    cc_object.add_bond_length(0,1)
+    print cc_object.ic
+    cc_object.add_bend_angle(1,2,3)
+    print cc_object.ic
+    print cc_object.procedures
+    cc_object.add_dihed_angle(1,2,3,4)
+    print cc_object.ic
+    cc_object.add_dihed_new(4,3,2,1)
+    cc_object.add_dihed_new(1,2,3,4)
+    print cc_object.ic
+    print cc_object.bond
+    # cc_object.ic = []
+    cc_object.B_matrix = B_matrix = np.zeros((0,3*cc_object.len),float)
+    # print cc_object.ic
+    # cc_object.iteration_flag = True
+    print cc_object.procedures
+    # for i in cc_object.procedures:
+    #     cc_object._add_ic(i[0], i[1])
+    #     print i
+    print cc_object.ic
+    # cc_object.target_ic = [1,2,3,4,5]
+    # print cc_object.target_ic
+    print cc_object.ic_differences
+    cc_object.ic_differences = [0.1,0.1,0.1,0,0.1]
+    print cc_object.target_ic
+    print cc_object.ic_differences
