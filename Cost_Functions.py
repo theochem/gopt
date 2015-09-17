@@ -2,30 +2,47 @@ import numpy as np
 import molmod as mm
 
 
-class Cost_Function(object):
-
+class Cost_Functions(object):
     @staticmethod
-    def bond_cost(origin, target):
-        value = (origin - target) ** 2
-        deriv = 2 * origin - 2 * target
+    def direct_square(origin, target):
+        return (origin - target) ** 2
 
 
     @staticmethod
-    def angle_cost(origin, target):
-        value = (np.cos(origin) - cos(target)) ** 2
-        deriv = (2 * np.cos(origin) - 2 * np.cos(target)) * -np.sin(origin)
+    def cos_square(origin, target):
+        return (np.cos(origin) - np.cos(target)) ** 2
 
 
     @staticmethod
-    def dihed_cost(origin, target, coordinates):
-        angle1 = mm.bend_angle(np.array([coordinates[0], coordinates[1], coordinates[2]]))
-        angle2 = mm.bend_angle(np.array([coordinates[1], coordinates[2], coordinates[3]]))
-        angle_wight = np.sin(angle1) ** 2 * np.sin(angle2) ** 2
-        value = angle_wight * ((np.cos(origin) - np.cos(target)) ** 2 + (np.sin(origin) - np.sin(target)) ** 2)
-        deriv = angle_wight * ((2 * np.cos(origin) - 2 * np.cos(target)) * -np.sin(origin)) + ((2 * np.sin(origin) - 2 * np.sin(target)) * np.cos(target))
+    def dihed_square(origin, target):
+        return 2 - 2 * np.cos(origin - target)
 
 
     @staticmethod
-    def dihed_new_cost(origin, target):
-        value = (origin - target) ** 2
-        deriv = 2 * origin - 2 * target
+    def direct_diff(origin, target):
+        return 2 * (origin - target)
+
+
+    @staticmethod
+    def cos_diff(origin, target):
+        return 2 * (np.cos(origin) - np.cos(target)) * -np.sin(origin)
+
+
+    @staticmethod
+    def dihed_diff(origin, target):
+        return 2 * np.sin(origin - target)
+
+
+    @staticmethod
+    def direct_diff_2(origin, target):
+        return 2
+
+
+    @staticmethod
+    def cos_diff_2(origin, target):
+        return 2 * (np.cos(origin) * np.cos(target) - np.cos(2 * target))
+
+
+    @staticmethod
+    def dihed_diff_2(origin, target):
+        return 2 * np.cos(origin - target)
