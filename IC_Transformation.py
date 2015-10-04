@@ -1,5 +1,6 @@
 from IC_Functions import *
 from Cost_Functions import *
+from Optimizer import *
 import numpy as np
 import horton as ht
 import copy
@@ -26,6 +27,7 @@ class IC_Transformation(object):
 
     def __init__(self, molecule):
         self.coordinates = molecule.coordinates
+        self.init_coordinates = molecule.coordinates
         self.numbers = molecule.numbers
         self.len = len(self.numbers)
         self.ic = []
@@ -255,6 +257,31 @@ class IC_Transformation(object):
         return c_value, c_x_deriv, c_x_deriv_2
 
 
+    # def optimization_sender(self, point, target_op_class, ):
+
+
+    def new_coor_acceptor(self, point):
+        self.get_new_coor(point.coordinates.reshape(-1,3))
+        point.value, point.first_deriv, point.second_deriv = self.calculate_cost()
+        return point
+
+
+    def get_new_coor(self, new_coor):
+        if new_coor.shape != self.coordinates.shape:
+            print new_coor.shape, self.coordinates.shape
+            raise AtomsNumberError
+        self.coordinates = new_coor
+        self._reset_ic()
+
+
+    def _reset_ic(self):
+        self.iteration_flag = True
+        self.ic = []
+        self.B_matrix = np.zeros((0,3*self.len),float)
+        self.H_matrix = np.zeros((0, 3*self.len, 3*self.len), float)
+        for i in self.procedures:
+            self._add_ic(i[0], i[1])
+        self.iteration_flag = False
 
 
 
@@ -296,44 +323,67 @@ class IC_Transformation(object):
 
 
 if __name__ == '__main__':
-    fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
+    fn_xyz = ht.context.get_fn("test/water.xyz")
     mol = ht.IOData.from_file(fn_xyz)
-    cc_object = IC_Transformation(mol)
-    print cc_object.coordinates
-    print cc_object.numbers
-    cc_object.add_bond_length(0,1) ## 1st ic
-    print cc_object.ic
-    print cc_object.procedures[0][1]
-    cc_object.add_bond_length(0,1)
-    print cc_object.ic
-    cc_object.add_bend_angle(1,2,3) ## 2nd ic
-    print cc_object.ic
-    print cc_object.procedures
-    cc_object.add_dihed_angle(1,2,3,4) ## 3rd ic
-    print cc_object.ic
-    cc_object.add_dihed_new(4,3,2,1) ## 4th, 5th ic
-    # cc_object.add_dihed_new(1,2,3,4)
-    print cc_object.ic
-    print cc_object.bond
-    # cc_object.ic = []
-    # cc_object.B_matrix = B_matrix = np.zeros((0,3*cc_object.len),float)
+    water = IC_Transformation(mol)
+    print water.coordinates
+    print water.numbers
+    water.add_bond_length(0,1)
+    water.add_bond_length(1,2)
+    water.add_bend_angle(0,1,2)
+    print water.ic
+    water.target_ic = [1.6,1.6,1.9106340153991836]
+    print water.ic_differences
+    a,b,c = water.calculate_cost()
+    print a, b, c
+    firstP = Point(water.coordinates.reshape(1,-1), a, b, c)
+    opwater = DOM(firstP, water, IC_Transformation.new_coor_acceptor)
+    print opwater.p0.point.value
+    print "__"
+    opwater.first_step()
+    print water.coordinates
+    print water.ic
+    opwater.first_step()
+    print opwater.p1.stepratio
+    # print water.coordinates.shape
+    # fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
+    # mol = ht.IOData.from_file(fn_xyz)
+    # cc_object = IC_Transformation(mol)
+    # print cc_object.coordinates
+    # print cc_object.numbers
+    # cc_object.add_bond_length(0,1) ## 1st ic
     # print cc_object.ic
-    # cc_object.iteration_flag = True
-    print cc_object.procedures
-    # for i in cc_object.procedures:
-    #     cc_object._add_ic(i[0], i[1])
-    #     print i
-    print cc_object.ic
-    print cc_object.ic_differences
-    cc_object.ic_differences = [0.2,0.2,0.1,0.0,0.0]
-    print cc_object.target_ic
-    print cc_object.ic_differences
-    # cc_object.add_bond_length(1,2) ## 6th ic
-    print cc_object.ic
-    print cc_object.ic_differences
-    # cc_object.add_bond_length(2,3)
-    print cc_object.ic
-    print cc_object.B_matrix
-    a,b,c = cc_object.calculate_cost()
-    print c.shape
-    print cc_object.H_matrix.shape
+    # print cc_object.procedures[0][1]
+    # cc_object.add_bond_length(0,1)
+    # print cc_object.ic
+    # cc_object.add_bend_angle(1,2,3) ## 2nd ic
+    # print cc_object.ic
+    # print cc_object.procedures
+    # cc_object.add_dihed_angle(1,2,3,4) ## 3rd ic
+    # print cc_object.ic
+    # cc_object.add_dihed_new(4,3,2,1) ## 4th, 5th ic
+    # # cc_object.add_dihed_new(1,2,3,4)
+    # print cc_object.ic
+    # print cc_object.bond
+    # # cc_object.ic = []
+    # # cc_object.B_matrix = B_matrix = np.zeros((0,3*cc_object.len),float)
+    # # print cc_object.ic
+    # # cc_object.iteration_flag = True
+    # print cc_object.procedures
+    # # for i in cc_object.procedures:
+    # #     cc_object._add_ic(i[0], i[1])
+    # #     print i
+    # print cc_object.ic
+    # print cc_object.ic_differences
+    # cc_object.ic_differences = [0.2,0.2,0.1,0.0,0.0]
+    # print cc_object.target_ic
+    # print cc_object.ic_differences
+    # # cc_object.add_bond_length(1,2) ## 6th ic
+    # print cc_object.ic
+    # print cc_object.ic_differences
+    # # cc_object.add_bond_length(2,3)
+    # print cc_object.ic
+    # print cc_object.B_matrix
+    # a,b,c = cc_object.calculate_cost()
+    # print c.shape
+    # print cc_object.H_matrix.shape

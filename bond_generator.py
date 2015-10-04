@@ -168,6 +168,9 @@ class IC(object):
         self.internal_coordinates.append(dihed_angle_newcross)
 
 
+    # def add_dihed_angle(self, atom1, atom2, atom3, atom4, type = )
+
+
     def _fill_B_matrix(self, deriv1, *atoms):
         tmp_B_matrix = np.zeros((len(self.ic_types),3*self.len),float)
         tmp_B_matrix[:-1,:] = self.B_matrix
