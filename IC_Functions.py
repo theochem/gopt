@@ -104,11 +104,11 @@ class AtomsNumberError(Exception):
 
 
 
-if __name__ == '__main__':
-    fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
-    mol = ht.IOData.from_file(fn_xyz).coordinates
-    print IC_Functions.bond_length([mol[0],mol[1]])
-    # print IC_Functions.bend_angle([mol[0], mol[1], mol[2], mol[3]])
-    print IC_Functions.bend_angle([mol[0], mol[1], mol[2]])
-    print IC_Functions.dihed_angle_new_dot([mol[0], mol[1], mol[2], mol[3]])
-    print IC_Functions.dihed_angle_new_cross([mol[0], mol[1], mol[2], mol[3]])
+# if __name__ == '__main__':
+#     fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
+#     mol = ht.IOData.from_file(fn_xyz).coordinates
+#     print IC_Functions.bond_length([mol[0],mol[1]])
+#     # print IC_Functions.bend_angle([mol[0], mol[1], mol[2], mol[3]])
+#     print IC_Functions.bend_angle([mol[0], mol[1], mol[2]])
+#     print IC_Functions.dihed_angle_new_dot([mol[0], mol[1], mol[2], mol[3]])
+#     print IC_Functions.dihed_angle_new_cross([mol[0], mol[1], mol[2], mol[3]])

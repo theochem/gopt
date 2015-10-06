@@ -322,7 +322,15 @@ class IC_Transformation(object):
         return c_value, c_x_deriv, c_x_deriv_2
 
 
-    # def optimization_sender(self, point, target_op_class, ):
+    def generate_point_object(self):
+        """generate a Ponit object with present molecule's coordinates, first derivative and second derivative
+        Return: a Point object; contains coordinates, cost function value, first derivative and second derivative
+        """
+
+        value, d1, d2 = self.calculate_cost()
+        return Point(self.coordinates.reshape(1,-1), value, d1, d2)
+
+
 
 
     def new_coor_acceptor(self, point):
@@ -402,39 +410,43 @@ class IC_Transformation(object):
 
 
 
-if __name__ == '__main__':
-    fn_xyz = ht.context.get_fn("test/2h-azirine.xyz")
-    mol = ht.IOData.from_file(fn_xyz)
-    h2a = IC_Transformation(mol)
-    h2a.add_bond_length(0, 1)
-    h2a.add_bond_length(1, 2)
-    h2a.add_bond_length(0, 2)
-    h2a.add_bond_length(2, 5)
-    h2a.add_bond_length(1,3)
-    h2a.add_bond_length(1,4)
+# if __name__ == '__main__':
+#     fn_xyz = ht.context.get_fn("test/2h-azirine.xyz")
+#     mol = ht.IOData.from_file(fn_xyz)
+#     h2a = IC_Transformation(mol)
+#     h2a.add_bond_length(0, 1)
+#     h2a.add_bond_length(1, 2)
+#     h2a.add_bond_length(0, 2)
+#     h2a.add_bond_length(2, 5)
+#     h2a.add_bond_length(1,3)
+#     h2a.add_bond_length(1,4)
 
-    h2a.add_bend_angle(0,2,1)
-    h2a.add_bend_angle(0,1,2)
-    h2a.add_bend_angle(0,2,5)
-    h2a.add_bend_angle(0,1,3)
-    h2a.add_bend_angle(0,1,4)
-
-    h2a.add_dihed_angle(0,1,3,4)
-
-    print h2a.ic
-    h2a.target_ic = [2.7, 2.5, 2.3, 2.0]
-    print h2a.target_ic
-    a,b,c = h2a.calculate_cost()
-    # print np.linalg.inv(c)
-    print b
-    firstP = Point(h2a.coordinates.reshape(1,-1), a, b, c)
-    oph2a = DOM(firstP, h2a,IC_Transformation.new_coor_acceptor)
-    print h2a.coordinates
-    print h2a.ic
-    oph2a.first_step()
-    print h2a.coordinates
-    print h2a.ic
-
+#     h2a.add_bend_angle(0,2,1)
+#     h2a.add_bend_angle(0,1,2)
+#     h2a.add_bend_angle(0,2,5)
+#     h2a.add_bend_angle(0,1,3)
+#     h2a.add_bend_angle(0,1,4)
+#     h2a.add_dihed_new(1,0,2,5)
+#     h2a.add_dihed_angle(0,1,3,4)
+#     # h2a.target_ic = [2.7, 2.5, 2.3, 2.0,1.8, 1.7,1.0, 0.7, 2.7]
+#     print h2a.ic
+#     # print h2a.target_ic
+#     # print h2a.ic_differences
+#     h2a.target_ic = [2.7, 2.5, 2.3, 2.0,1.8, 1.7,1.0, 0.7, 2.7, 1.8, 1.8, 0.5,0.5,-2.5]
+#     # print h2a.target_ic
+#     # a,b,c = h2a.calculate_cost()
+#     # # print np.linalg.inv(c)
+#     # print b
+#     c = h2a.generate_point_object()
+#     # firstP = Point(h2a.coordinates.reshape(1,-1), a, b, c)
+#     oph2a = DOM(c, h2a, IC_Transformation.new_coor_acceptor)
+#     # print h2a.coordinates
+#     # print h2a.ic
+#     oph2a.first_step()
+#     # print h2a.coordinates
+#     # print h2a.ic
+#     oph2a.second_step()
+#     print h2a.ic
 
     # fn_xyz = ht.context.get_fn("test/water.xyz")
     # mol = ht.IOData.from_file(fn_xyz)

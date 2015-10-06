@@ -124,7 +124,7 @@ class DOM(Optimizer):
             n += 1
             if new_point.value < self.p0.point.value:
                 break
-            self.p0.tepratio *= 0.5
+            self.p0.stepratio *= 0.5
             if n > 20: break
         self.p1 = Procedure(new_point)
         self.p1.stepratio = self.p0.stepratio
@@ -136,7 +136,6 @@ class DOM(Optimizer):
         new_coordinate = self.p1.point.coordinates + steplength
         new_point = Point(new_coordinate)
         new_point = self.retrieve_method(self.request_object, new_point)
-        print "aaaa"
         self.new_point = new_point
 
 
@@ -146,7 +145,7 @@ class DOM(Optimizer):
             self.p1.stepratio *= 0.5
             self.calculate_new_point()
 
-        if np.dot(self.new_point.first_deriv, self.new_point.first_deriv)/len(self.new_point.coordinates) > 0.001:
+        if np.dot(self.new_point.first_deriv, self.new_point.first_deriv)/len(self.new_point.coordinates) > 0.0001:
             self.p0 = self.p1
             self.p1 = Procedure(self.new_point)
             self.p1.stepratio = self.p0.stepratio
