@@ -1,7 +1,6 @@
 import numpy as np
 import molmod as mm
 import horton as ht
-import molmod.ic as mmi 
 
 
 
@@ -18,7 +17,7 @@ class IC_Functions(object):
         | ``rs`` -- four numpy array with three elements
         | ``deriv`` -- the derivatives to be computed: 0, 1 or 2 [default = 0]
         """
-        return mmi._dihed_transform(rs, IC_Functions._dihed_new_dot, deriv)
+        return mm._dihed_transform(rs, IC_Functions._dihed_new_dot, deriv)
 
 
     @staticmethod
@@ -29,7 +28,7 @@ class IC_Functions(object):
          | ``rs`` -- four numpy array with three elements
          | ``deriv`` -- the derivatives to be computed: 0, 1 or 2 [default = 0]
         """
-        return mmi._dihed_transform(rs, IC_Functions._dihed_new_cross, deriv)
+        return mm._dihed_transform(rs, IC_Functions._dihed_new_cross, deriv)
 
 
     @staticmethod 

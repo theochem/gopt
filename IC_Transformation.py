@@ -2,7 +2,6 @@ from IC_Functions import *
 from Cost_Functions import *
 from Optimizer import *
 import numpy as np
-import horton as ht
 import copy
 
 
@@ -354,7 +353,6 @@ class IC_Transformation(object):
          | ``new_coor`` Numpy.array, shape(N, 3); updated coordinates of molecule
         """
         if new_coor.shape != self.coordinates.shape:
-            print new_coor.shape, self.coordinates.shape
             raise AtomsNumberError
         self.coordinates = new_coor
         self._reset_ic()
