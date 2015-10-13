@@ -18,12 +18,3 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 #--
-'''The main HORTON Package'''
-
-
-__version__ = '1.0.0'
-__author__ = 'Derrick Yang'
-
-
-from saddle.IC_Transformation import *
-from saddle.optimizer import *

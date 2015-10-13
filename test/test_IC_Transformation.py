@@ -1,6 +1,7 @@
 import numpy as np
 import horton as ht
 from saddle import *
+import saddle.optimizer as op
 
 
 def test_IC_Transformation_water_add_ics():
@@ -69,8 +70,12 @@ def test_IC_Transformation_h2_azirine():
     assert np.dot(diff, diff) < 10e-15
 
     h2a.target_ic = [2.7, 2.5, 2.3, 2.0,1.8, 1.7, 1.0, 0.7, 2.7, 1.8, 1.8, 0.5,0.5,-2.5]
-    oph2a = DOM(h2a.generate_point_object(), h2a, IC_Transformation.new_coor_acceptor)
-    oph2a.algorithm()
+
+    h2aop = h2a.generate_point_object()
+
+    h2aop = op.DOM.initialize(h2aop)
+    h2aop = op.DOM.optimize(h2aop, h2a.cost_func_value_api, h2a.cost_func_deriv_api, 0.0001)
+
     diff = h2a.ic - np.array([2.65960466,2.56205311,2.28111119,2.00076777,1.80286759,1.701731,
         1.15754025,0.90348139,2.58383649,1.80227751,1.80229723,0.48997636,0.45809291,-2.49348553])
     assert np.dot(diff, diff) < 10e-15

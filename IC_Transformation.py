@@ -1,8 +1,10 @@
-from IC_Functions import *
-from Cost_Functions import *
-from Optimizer import *
+from IC_Functions import IC_Functions
+from Cost_Functions import Cost_Functions
+# from Optimizer import * 
 import numpy as np
 import copy
+import horton as ht
+import optimizer as op
 
 
 class IC_Transformation(object):
@@ -25,6 +27,7 @@ class IC_Transformation(object):
      | ``B_matrix`` -- Numpy.array, shape (n, 3N), first derivative for coordinates transformation from cartesian to internal.
      | ``H_matrix`` -- Numpy.array, shape (n, 3N, 3N), second derivative for coordinates transformation from cartesian to internal.
     """
+
 
     def __init__(self, molecule):
         self.coordinates = molecule.coordinates
@@ -298,27 +301,54 @@ class IC_Transformation(object):
 
         Return:
          | ``c_value`` Float; the value of Cost function
-         | ``c_x_deriv`` Numpy.array, shape(3N,); the first derivative of cost function to cartesian coordinates
+         | ``c_x_deriv_1`` Numpy.array, shape(3N,); the first derivative of cost function to cartesian coordinates
          | ``c_x_deriv_2`` Numpy.array, shape(3N, 3N); the second derivative of cost function to cartesian coordinates 
         """
+        
+        c_value = self._calculate_cost_value()
+        c_x_deriv_1, c_x_deriv_2 = self._calculate_cost_deriv()
+        return c_value, c_x_deriv_1, c_x_deriv_2
+
+
+    def _calculate_cost_value(self):
+        """fnnction to calculate cost function value.
+
+        Return:
+         | ``c_value`` Float; the value of cost function
+        """
+
         c_value = 0
         ic_num = len(self.ic)
-        c_deriv = np.zeros(ic_num, float)
-        c_deriv_2 = np.zeros((ic_num, ic_num), float) 
         for i in range(ic_num):
             func = IC_Transformation._IC_costs_value[self.procedures[i][0]]
+            origin = self.ic[i]
+            target = self.target_ic[i]
+            c_value += func(origin, target) * self.weight_matrix[i][i]
+        return c_value
+
+
+    def _calculate_cost_deriv(self):
+        """fnnction to calculate cost function value.
+
+        Return:
+         | ``c_x_deriv_1`` Numpy.array, shape(3N,); the first derivative of cost function to cartesian coordinates
+         | ``c_x_deriv_2`` Numpy.array, shape(3N, 3N); the second derivative of cost function to cartesian coordinates 
+        """
+        ic_num = len(self.ic)
+        c_deriv = np.zeros(ic_num, float)
+        c_deriv_2 = np.zeros((ic_num, ic_num), float)
+        for i in range(ic_num):
             deriv_func = IC_Transformation._IC_costs_diff[self.procedures[i][0]]
             deriv_2_func = IC_Transformation._IC_costs_diff_2[self.procedures[i][0]]
             origin = self.ic[i]
             target = self.target_ic[i]
-            c_value += func(origin, target) * self.weight_matrix[i][i]
             c_deriv[i] += deriv_func(origin, target) * self.weight_matrix[i][i]
             c_deriv_2[i][i] += deriv_2_func(origin, target) * self.weight_matrix[i][i]
         c_x_deriv = np.dot(c_deriv, self.B_matrix)
         c_x_deriv_2_part_1 = np.dot(np.dot(np.transpose(self.B_matrix), c_deriv_2), self.B_matrix)
         c_x_deriv_2_part_2 = np.tensordot(c_deriv, self.H_matrix, 1)
         c_x_deriv_2 = c_x_deriv_2_part_1 + c_x_deriv_2_part_2
-        return c_value, c_x_deriv, c_x_deriv_2
+        return c_x_deriv, c_x_deriv_2
 
 
     def generate_point_object(self):
@@ -326,23 +356,34 @@ class IC_Transformation(object):
         Return: a Point object; contains coordinates, cost function value, first derivative and second derivative
         """
 
-        value, d1, d2 = self.calculate_cost()
-        return Point(self.coordinates.reshape(1,-1), value, d1, d2)
+        value, deriv_1, deriv_2 = self.calculate_cost()
+        return op.Point(self.coordinates.reshape(1,-1), value, deriv_1, deriv_2)
 
 
-
-
-    def new_coor_acceptor(self, point):
+    def cost_func_value_api(self, point):
         """accept a Point object to update local value and update the information of that object
 
         Arguments:
          | ``point`` Point Object; a Point class instance
 
         Return:
-         | ``point`` Point Object; return Point object with value, first derivative and second derivative
+         | ``point`` optimizer.Point Object; return Point object with value
         """
         self.get_new_coor(point.coordinates.reshape(-1,3))
-        point.value, point.first_deriv, point.second_deriv = self.calculate_cost()
+        point.value = self._calculate_cost_value()
+        return point
+
+
+    def cost_func_deriv_api(self, point):
+        """accept a Point object to update local value and update the information of that object
+
+        Arguments:
+         | ``point`` Point Object; a Point class instance
+
+        Return:
+         | ``point`` optimizer.Point Object; return Point object first derivative and second derivative
+        """
+        point.first_deriv, point.second_deriv = self._calculate_cost_deriv()
         return point
 
 
@@ -368,8 +409,6 @@ class IC_Transformation(object):
         for i in self.procedures:
             self._add_ic(i[0], i[1])
         self.iteration_flag = False
-
-
 
 
     _IC_types = {
@@ -449,13 +488,25 @@ class IC_Transformation(object):
     # fn_xyz = ht.context.get_fn("test/water.xyz")
     # mol = ht.IOData.from_file(fn_xyz)
     # water = IC_Transformation(mol)
-    # print water.coordinates
     # print water.numbers.shape
     # water.add_bond_length(0,1)
     # water.add_bond_length(1,2)
     # water.add_bend_angle(0,1,2)
     # print water.ic
-    # water.target_ic = [1.5,1.5]
+    # water.target_ic = [1.5,1.5,1.8]
+    # point_start = water.generate_point_object()
+    # print point_start
+    # point_dom = op.DOM.initialize(point_start)
+    # point_dom_new = op.DOM.update(point_dom, water.cost_func_value_api, water.cost_func_deriv_api)
+    # print point_dom_new.coordinates
+    # point_dom_op = op.DOM.optimize(point_dom_new, water.cost_func_value_api, water.cost_func_deriv_api)
+    # print point_dom_new.coordinates
+    # print water.ic
+    # print water.calculate_cost()
+    # # print water.calculate_cost_deriv()[1]
+    # # print water.calculate_cost()[2] == water.calculate_cost_deriv()[1]
+    # # print water.calculate_cost_value() == water.calculate_cost()[0]
+
     # # print water.target_ic
     # # print water.ic_differences
     # # water.ic_differences = [0.1,0.1]
