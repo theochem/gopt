@@ -1,39 +1,42 @@
 from IC_Functions import IC_Functions
 from Cost_Functions import Cost_Functions
-# from Optimizer import * 
+
 import numpy as np
 import copy
 import horton as ht
-import optimizer as op
+import saddle.optimizer as op
+
+
+__all__ = ["IC_Transformation"]
 
 
 class IC_Transformation(object):
     """IC_Transformation is a class for coordinates transformation from cartesian coordinates to internal 
     coordinates and vise versa.
-
+    
     Arguments:
-     | ``molecule`` Object; a object of Horton IODate class
-
+        coordinates (numpy.array): shape(N, 3), a numpy array which contains cartesian coordinates of atoms, shape is (m, 3n)
+    
     Attributes:
-     | ``coordinates`` -- Numpy.array,  shape (N, 3); cartesian coordinates of molecule.
-     | ``init_coordinates -- Numpy.array,  shape (N, 3); initial cartesian coordinates.
-     | ``numbers`` -- Numpy.array, shape (N,); a array of atomic number of each atoms of target molecule.
-     | ``ic`` -- Numpy.array, shape(n,); a list of internal coordinates calculated through transformation.
-     | ``iteration_falg`` -- Bool; a flag to mark is it doing iteration or generate new ic. T for iteration, F for new ic.
-     | ``procedures`` -- List; steps used to generate ic which will be used when doing iteration
-     | ``bond`` -- List; list of added ic bond set
-     | ``angle`` -- List; list of added ic angle set
-     | ``dihed`` -- List; list of added ic dihed set 
-     | ``B_matrix`` -- Numpy.array, shape (n, 3N), first derivative for coordinates transformation from cartesian to internal.
-     | ``H_matrix`` -- Numpy.array, shape (n, 3N, 3N), second derivative for coordinates transformation from cartesian to internal.
+        angle (list): a list of added ic angle
+        aux_bond (list): a list of added auxiliary bond.
+        B_matrix (numpy.array): shape(m, 3N), first derivative for coordinates transformation from cartesian to internal
+        bond (list): list of added ic bond 
+        coordinates (numpy.array): shape(N, 3), cartesian coordinates of molecule
+        dihed (list): list of added dihedral 
+        H_matrix (numpy.array): shape(m, 3N, 3N), second derivative for coordinates transformation from cartesian to internal 
+        ic (numpy.array): shape(m,), internal coordinates calculated throught transformation
+        ic_differences (numpy.array): shape(m,), difference between actual internal coordinates and target internal coordinates
+        iteration_flag (bool): a flag to mart is it doing iteration or calculate new ic
+        len (int): number of atoms
+        procedures (list): steps used to generate ic which will be used when doing iteration
+        target_ic (numpy.array): shape(m,), target ic
     """
 
 
-    def __init__(self, molecule):
-        self.coordinates = molecule.coordinates
-        self.init_coordinates = molecule.coordinates
-        self.numbers = molecule.numbers
-        self.len = len(self.numbers)
+    def __init__(self, coordinates):
+        self.coordinates = coordinates
+        self.len = len(coordinates.reshape(-1,3))
         self.ic = np.array([])
         self.iteration_flag = False
         self.procedures = []
@@ -44,30 +47,58 @@ class IC_Transformation(object):
         self._ic_differences = np.array([])
         self._target_ic = np.array([])
         self.H_matrix = np.zeros((0, 3*self.len, 3*self.len), float)
+        self.aux_bond = []
 
 
     def add_bond_length(self, atom1, atom2, b_type = "covalence"):
         """To add a bond between atom1 and atom2
-
+        
         Arguments:
-         | ``atom1`` Int; the index of atom1 in self.numbers
-         | ``atom2`` Int; the index of atom2 in self.numbers
+            atom1 (int): index of atom1 in coordinates 
+            atom2 (int): index of atom2 in coordinates
+            b_type (str, optional): bond type infomation.
         """
         atoms = (atom1, atom2)
         info = "add_bond_length"
-        if self._repetition_check(atoms, b_type):
+        if self._repetition_check(atoms):
+            self._add_ic(info, atoms)
+
+
+    def add_aux_bond(self, atom1, atom2):
+        """To add a auxiliary bond to self.aux_bond reservoir
+        
+        Arguments:
+            atom1 (int): index of atom1 in coordinates
+            atom2 (int): index of atom2 in coordinates
+        """
+        atoms = (atom1, atom2)
+        if self._repetition_check(atoms):
+            self.aux_bond.append(atoms)
+
+
+    def upgrade_aux_bond(self, atom1, atom2, b_type = "auxiliary"):
+        """To upgrade an auxiliary bond to ic
+        
+        Arguments:
+            atom1 (int): index of atom1
+            atom2 (int): index of atom2
+            b_type (str, optional): bond type information
+        """
+        atoms = (atom1, atom2)
+        info = "add_bond_length"
+        if atoms in self.aux_bond:
             self._add_ic(info, atoms)
 
 
     def add_bend_angle(self, atom1, atom2, atom3):
         """To add an angle between atom1, atom2 and atom3.
         1-2-3, atom2 is the central atom of the angle
-
+        
         Arguments:
-         | ``atom1`` Int; the index of atom1 in self.numbers
-         | ``atom2`` Int; the index of atom2 in self.numbers
-         | ``atom3`` Int; the index of atom3 in self.numbers
-        """        
+            atom1 (int): index of atom1
+            atom2 (int): index of atom2
+            atom3 (int): index of atom3
+        """
         atoms = (atom1, atom2, atom3)
         info = "add_bend_angle"
         if self._repetition_check(atoms):
@@ -76,14 +107,14 @@ class IC_Transformation(object):
 
     def add_dihed_angle(self, atom1, atom2, atom3, atom4):
         """To add an conventional angle between atom1, atom2, atom3 and atom4.
-           1-2-3-4, atom 2 and 3 is the central atoms 
-
+           1-2-3-4, atom 2 and 3 is the central atoms
+        
         Arguments:
-         | ``atom1`` Int; the index of atom1 in self.numbers
-         | ``atom2`` Int; the index of atom2 in self.numbers
-         | ``atom3`` Int; the index of atom3 in self.numbers
-         | ``atom4`` Int; the index of atom4 in self.numbers
-        """ 
+            atom1 (int): index of atom1
+            atom2 (int): index of atom2
+            atom3 (int): index of atom3
+            atom4 (int): index of atom4
+        """
         atoms = (atom1, atom2, atom3, atom4)
         info = "add_dihed_angle"
         d_type = "conventional"      
@@ -93,14 +124,14 @@ class IC_Transformation(object):
 
     def add_dihed_new(self, atom1, atom2, atom3, atom4):
         """To add an new dihedral angle indicator between atom1, atom2, atom3 and atom4.
-           1-2-3-4, atom 2 and 3 is the central atoms 
-
+           1-2-3-4, atom 2 and 3 is the central atoms
+        
         Arguments:
-         | ``atom1`` Int; the index of atom1 in self.numbers
-         | ``atom2`` Int; the index of atom2 in self.numbers
-         | ``atom3`` Int; the index of atom3 in self.numbers
-         | ``atom4`` Int; the index of atom4 in self.numbers
-        """ 
+            atom1 (int): index of atom1
+            atom2 (int): index of atom2
+            atom3 (int): index of atom3
+            atom4 (int): index of atom4
+        """
         atoms = (atom1, atom2, atom3, atom4)
         d_type = "new"
         if self._repetition_check(atoms, d_type):
@@ -110,11 +141,11 @@ class IC_Transformation(object):
 
     def _add_dihed_angle_new_dot(self, atoms):
         """private method to add an new dihedral angle dot indicator between atom1, atom2, atom3 and atom4.
-           1-2-3-4, atom 2 and 3 is the central atoms 
-
+           1-2-3-4, atom 2 and 3 is the central atoms
+        
         Arguments:
-         | ``atoms`` Tuple; a tuple of atoms to make coordinates transformation
-        """ 
+            atoms (tuple): a tuple of atoms indexes
+        """
 
         info = "add_dihed_angle_new_dot"
         self._add_ic(info, atoms)
@@ -122,11 +153,11 @@ class IC_Transformation(object):
 
     def _add_dihed_angle_new_cross(self, atoms):
         """private method to add an new dihedral angle dot indicator between atom1, atom2, atom3 and atom4.
-           1-2-3-4, atom 2 and 3 is the central atoms 
-
+           1-2-3-4, atom 2 and 3 is the central atoms
+        
         Arguments:
-         | ``atoms`` Tuple; a tuple of atoms to make coordinates transformation
-        """ 
+            atoms (tuple): a tuple of atoms indexes
+        """
 
         info = "add_dihed_angle_new_cross"
         self._add_ic(info, atoms)
@@ -134,9 +165,12 @@ class IC_Transformation(object):
 
     def _repetition_check(self, atoms, type = "default"):
         """private method to check whether the newly add ic has already existed or not
-
+        
         Arguments:
-         | ``atoms`` Tuple; a tuple of atoms to conduct the duplicated atoms examination.
+            atoms (tuple): a tuple of atoms indexes
+            type (str, optional): additional ic coordinates for check repetition
+
+        Returns: bool, false if it is existed, otherwise true
         """
         atoms_len = len(atoms)
         content = ()
@@ -163,11 +197,11 @@ class IC_Transformation(object):
 
 
     def _add_ic(self, info, atoms):
-        """ ic was added through this private method.
-
+        """ic was added through this private method.
+        
         Arguments:
-         | ``info`` String; basic information for each ic transformation
-         | ``atoms`` Tuple; tuple of atoms to add ic to self.ic
+            info (str): ic coordinates information
+            atoms (tuple): a tuple of atoms indexes
         """
         procedures = (info, atoms)
         ic_function = IC_Transformation._IC_types[info]
@@ -182,10 +216,10 @@ class IC_Transformation(object):
 
     def _add_B_matrix(self, deriv, atoms):
         """calculated B matrix for object
-
+        
         Arguments:
-         | ``deriv`` Numpy.array; first derivative of each atoms when doing coordinates transformation generated by module molmod. 
-         | ``atoms`` Tuple; tuple of atoms index
+            deriv (numpy.array): first derivative of each atoms when doing coordinates transformation
+            atoms (tuple): a tuple of atoms indexes
         """
         tmp_B_matrix = np.zeros((len(self.ic), 3*self.len), float)
         tmp_B_matrix[:-1, :] = self.B_matrix
@@ -197,10 +231,10 @@ class IC_Transformation(object):
 
     def _add_H_matrix(self, deriv2, atoms):
         """calculate H matrix for coordinates transformation from cartesian to internal
-
+        
         Arguments:
-         | ``deriv2`` Numpy.array; second derivative of each atoms when doing transformation generated by module molmod
-         | ``atoms`` Tuple; tuple of atoms index.      
+            deriv2 (numpy.array): second derivative of each atoms when doing transformation
+            atoms (tuple): a tuple of atoms indexes
         """
         tmp_H_matrix = np.zeros((len(self.ic), 3*self.len, 3*self.len), float)
         tmp_H_matrix[:-1, : , : ] = self.H_matrix
@@ -213,11 +247,12 @@ class IC_Transformation(object):
 
     def get_coordinates(self, atoms):
         """private method to retrive atoms' cartesian coordinates
-
+        
         Arguments:
-         | ``atoms`` Tuple; tuple of atoms index
-
-        Return: Numpy.array, shape(N, 3); the N*3 coordinates of input atoms
+            atoms (tuple): a tuple of atoms indexes 
+        
+        Returns:
+            numpy.array, shape(N, 3); the N*3 coordinates of input atoms
         """
         atom_length = len(atoms)
         coordinates = np.array([])
@@ -237,9 +272,9 @@ class IC_Transformation(object):
 
     def _set_difference(self, value):
         """setter for self.target. Use the value of difference and present ic to calculate target ic value.
-
+        
         Arguments:
-         | ``value`` Numpy.array or List; an array of ic.difference value
+            value (numpy.array): An array of difference between actual coordinates and target coordinates
         """
         value = np.array(value)
         if len(value) <= len(self.ic):
@@ -261,9 +296,12 @@ class IC_Transformation(object):
 
     def _set_target_ic(self, value):
         """setter for self.target
-
+        
         Arguments:
-         | ``value`` Numpy.array or List; an array of target ic value.
+            value (numpy.array): target ic value
+        
+        Raises:
+            AtomsNumberError: number target ic is larger than actual ic
         """
         value = np.array(value)
         if len(value) <= len(self.ic):
@@ -298,11 +336,12 @@ class IC_Transformation(object):
 
     def calculate_cost(self):
         """function to calculate Cost which is used measure the difference between present ic with target one.
-
+        
         Return:
-         | ``c_value`` Float; the value of Cost function
-         | ``c_x_deriv_1`` Numpy.array, shape(3N,); the first derivative of cost function to cartesian coordinates
-         | ``c_x_deriv_2`` Numpy.array, shape(3N, 3N); the second derivative of cost function to cartesian coordinates 
+            (float, numpy.array, numpy.array)
+            float: the value of Cost function
+            numpy.array, shape(3N,): the first derivative of cost function to cartesian coordinates
+            numpy.array, shape(3N, 3N); the second derivative of cost function to cartesian coordinates
         """
         
         c_value = self._calculate_cost_value()
@@ -314,7 +353,7 @@ class IC_Transformation(object):
         """fnnction to calculate cost function value.
 
         Return:
-         | ``c_value`` Float; the value of cost function
+            float; the value of cost function
         """
 
         c_value = 0
@@ -362,12 +401,12 @@ class IC_Transformation(object):
 
     def cost_func_value_api(self, point):
         """accept a Point object to update local value and update the information of that object
-
+        
         Arguments:
-         | ``point`` Point Object; a Point class instance
-
+            point (optimize.Point): optimizer.Point object
+        
         Return:
-         | ``point`` optimizer.Point Object; return Point object with value
+            optimizer.Point object with cost function value updated
         """
         self.get_new_coor(point.coordinates.reshape(-1,3))
         point.value = self._calculate_cost_value()
@@ -376,22 +415,25 @@ class IC_Transformation(object):
 
     def cost_func_deriv_api(self, point):
         """accept a Point object to update local value and update the information of that object
-
+        
         Arguments:
-         | ``point`` Point Object; a Point class instance
-
+            point (optimizer.Point object): optimizer.Point Object
+        
         Return:
-         | ``point`` optimizer.Point Object; return Point object first derivative and second derivative
+            optimizer.Point Object; Point object with first derivative and second derivative updated
         """
         point.first_deriv, point.second_deriv = self._calculate_cost_deriv()
         return point
 
 
     def get_new_coor(self, new_coor):
-        """update internal coordinates according to new coordinates.
-
+        """update internal coordinates according to new cartesian coordinates.
+        
         Arguments:
-         | ``new_coor`` Numpy.array, shape(N, 3); updated coordinates of molecule
+            new_coor (numpy.array): shape(N, 3); updated new cartesian coordinates.
+        
+        Raises:
+            AtomsNumberError: new cartesian coordinates is different from original coordinates 
         """
         if new_coor.shape != self.coordinates.shape:
             raise AtomsNumberError
@@ -450,14 +492,15 @@ class IC_Transformation(object):
 # if __name__ == '__main__':
 #     fn_xyz = ht.context.get_fn("test/2h-azirine.xyz")
 #     mol = ht.IOData.from_file(fn_xyz)
-#     h2a = IC_Transformation(mol)
+#     h2a = IC_Transformation(mol.coordinates)
 #     h2a.add_bond_length(0, 1)
 #     h2a.add_bond_length(1, 2)
 #     h2a.add_bond_length(0, 2)
 #     h2a.add_bond_length(2, 5)
-#     h2a.add_bond_length(1,3)
-#     h2a.add_bond_length(1,4)
-
+#     h2a.add_bond_length(1, 3)
+#     h2a.add_bond_length(1, 4)
+#     print h2a.len
+#     print h2a.H_matrix.shape
 #     h2a.add_bend_angle(0,2,1)
 #     h2a.add_bend_angle(0,1,2)
 #     h2a.add_bend_angle(0,2,5)
@@ -485,9 +528,9 @@ class IC_Transformation(object):
 #     oph2a.second_step()
 #     print h2a.ic
 
-    # fn_xyz = ht.context.get_fn("test/water.xyz")
-    # mol = ht.IOData.from_file(fn_xyz)
-    # water = IC_Transformation(mol)
+#     fn_xyz = ht.context.get_fn("test/water.xyz")
+#     mol = ht.IOData.from_file(fn_xyz)
+#     print mol.coordinates   
     # print water.numbers.shape
     # water.add_bond_length(0,1)
     # water.add_bond_length(1,2)
@@ -533,8 +576,6 @@ class IC_Transformation(object):
     # print np.dot(opwater.p1.point.first_deriv, opwater.p1.point.first_deriv)
     # print water.coordinates
     # print water.ic
-
-
 
 
 
