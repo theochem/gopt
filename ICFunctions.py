@@ -4,8 +4,8 @@ import horton as ht
 
 
 
-class IC_Functions(object):
-    """IC_Functions is a set for store different coordinate transforming method.
+class ICFunctions(object):
+    """ICFunctions is a set for store different coordinate transforming method.
 
     """
 
@@ -17,7 +17,7 @@ class IC_Functions(object):
         | ``rs`` -- four numpy array with three elements
         | ``deriv`` -- the derivatives to be computed: 0, 1 or 2 [default = 0]
         """
-        return mm._dihed_transform(rs, IC_Functions._dihed_new_dot, deriv)
+        return mm._dihed_transform(rs, ICFunctions._dihed_new_dot, deriv)
 
 
     @staticmethod
@@ -28,7 +28,7 @@ class IC_Functions(object):
          | ``rs`` -- four numpy array with three elements
          | ``deriv`` -- the derivatives to be computed: 0, 1 or 2 [default = 0]
         """
-        return mm._dihed_transform(rs, IC_Functions._dihed_new_cross, deriv)
+        return mm._dihed_transform(rs, ICFunctions._dihed_new_cross, deriv)
 
 
     @staticmethod 
@@ -86,7 +86,7 @@ class IC_Functions(object):
         if len(atoms) != 4:
             raise AtomsNumberError
         rs = np.array(atoms)    
-        return IC_Functions.dihed_new_dot(rs, deriv) 
+        return ICFunctions.dihed_new_dot(rs, deriv) 
     
 
     @staticmethod
@@ -94,7 +94,7 @@ class IC_Functions(object):
         if len(atoms) != 4:
             raise AtomsNumberError
         rs = np.array(atoms)    
-        return IC_Functions.dihed_new_cross(rs,deriv)
+        return ICFunctions.dihed_new_cross(rs,deriv)
 
 
 

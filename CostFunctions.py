@@ -2,7 +2,7 @@ import numpy as np
 import molmod as mm
 
 
-class Cost_Functions(object):
+class CostFunctions(object):
     @staticmethod
     def direct_square(origin, target):
         return (origin - target) ** 2
