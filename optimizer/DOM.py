@@ -3,14 +3,17 @@ from copy import deepcopy
 from Point import Point
 
 
+__all__ = ["DOM"]
+
 
 class DOM(object):
     @staticmethod
-    def initialize(point):
+    def initialize(point, trust_radius = None):
         point_init = deepcopy(point)
         point_init._flag = "DOM"
         point_init._G = np.linalg.inv(point_init.second_deriv)
         point_init._stepratio = 0.5
+        point_init.trust_radius = trust_radius
         return point_init
 
 
@@ -22,6 +25,10 @@ class DOM(object):
         while True:
             n += 1
             steplength = - point._stepratio * np.dot(point._G, point.first_deriv)
+            # if np.linalg.norm(steplength)> :
+            #     steplength = steplength
+            # else:
+            #     steplength = steplength 0.2
             new_coor = point.coordinates + steplength
             new_point = Point(new_coor)
             new_point = value_func(new_point)        

@@ -23,5 +23,5 @@ __version__ = '1.0.0'
 __author__ = 'Derrick Yang'
 
 
-from Point import *
-from DOM import *
+from saddle.optimizer.Point import *
+from saddle.optimizer.DOM import *

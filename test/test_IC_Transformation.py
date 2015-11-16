@@ -7,7 +7,7 @@ import saddle.optimizer as op
 def test_IC_Transformation_water_add_ics():
     fn_xyz = ht.context.get_fn("test/water.xyz")
     mol = ht.IOData.from_file(fn_xyz)
-    water = IC_Transformation(mol.coordinates)
+    water = ICTransformation(mol.coordinates)
     water.add_bond_length(0, 1)
     water.add_bond_length(1, 2)
     water.add_bend_angle(0, 1, 2)
@@ -27,7 +27,7 @@ def test_IC_Transformation_water_add_ics():
 def test_IC_Transformation_h2_azirine():
     fn_xyz = ht.context.get_fn("test/2h-azirine.xyz")
     mol = ht.IOData.from_file(fn_xyz)
-    h2a = IC_Transformation(mol.coordinates)
+    h2a = ICTransformation(mol.coordinates)
     h2a.add_bond_length(0, 1)
     h2a.add_bond_length(1, 2)
     h2a.add_bond_length(0, 2)
