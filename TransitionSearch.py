@@ -18,15 +18,30 @@ class TransitionSearch(object):
         for i in range(self.len):
             if self.numbers[i] in TransitionSearch.halo_atom_numbers:
                 self.halo_atom_index.add(i)
+        self.ts_state = None
+        self._ic_key_counter = 0
 
     halo_atom_numbers = (7, 8, 9, 15, 16, 17)
 
-    def get_ts_guess(self, ratio=0.5):
+    def auto_ts_search(self, ratio=0.5):
+        self.auto_ic_select(self.reagent,[self.reagent, self.product])
+        self.get_ts_guess_cc(ratio)
+        self.get_ts_guess_ic(ratio)
+
+    def get_ts_guess_cc(self, ratio=0.5):
         if ratio > 1. or ratio < 0.:
             raise ValueError
         ts_coordinate = self.reagent.coordinates * \
             ratio + self.product.coordinates * (1. - ratio)
         self.ts_state = ICTransformation(ts_coordinate)
+
+    def get_ts_guess_ic(self, ratio=0.5):
+        if len(self.reagent.ic) != len(self.product.ic):
+            raise AtomsNumberError
+        if ratio > 1. or ratio < 0.:
+            raise ValueError
+        target_ic = self.reagent.ic * ratio + self.product.ic * (1. - ratio)
+        self.ts_state.target_ic = target_ic
 
     @staticmethod
     def add_bond(atom1, atom2, b_type, multistructure):
@@ -106,7 +121,8 @@ class TransitionSearch(object):
                 total_len = len(side_atoms)
                 for left in range(total_len):
                     for right in range(left + 1, total_len):
-                        self.add_angle(side_atoms[left], central_index, side_atoms[right], targeted)
+                        self.add_angle(side_atoms[left], central_index, side_atoms[
+                                       right], targeted)
 
     def _auto_dihed_select(self, selected, targeted):
         for cen_atom1 in range(self.len):
@@ -150,6 +166,11 @@ class TransitionSearch(object):
                 return (flag, (index1, index2))
         return (flag,)
 
+    def arrange_key_ic(self, *ic_index):
+        for i in ic_index:
+            self.ts_state.ic_switch(i, self._ic_key_counter)
+            self._ic_key_counter += 1
+
 
 class AtomsNumberError(Exception):
     pass
@@ -161,12 +182,15 @@ if __name__ == '__main__':
     # print mol.numbers
     h22 = TransitionSearch(mol, mol)
     print(h22.numbers)
-    h22.get_ts_guess()
+    h22.get_ts_guess_cc()
     # h22._auto_bond_select(h22.reagent, [h22.reagent])
     # print h22.reagent.aux_bond
     # h22._auto_angle_select(h22.reagent, [h22.reagent])
     h22.auto_ic_select(h22.reagent)
     print h22.reagent.bond
-    print h22.reagent.ic
+    print h22.reagent.ic_info
     print h22.reagent.procedures
+    print h22.reagent.aux_bond
+    h22.auto_ic_select(h22.reagent)
+    print h22.reagent.bond
     # print h22.reagent.procedures
