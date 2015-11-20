@@ -438,14 +438,14 @@ class ICTransformation(object):
         point.value = self._calculate_cost_value()
         return point
 
-    def ic_switch(self, icindex1, icindex2):
+    def ic_swap(self, icindex1, icindex2):
         temp = self.procedures[icindex1]
         self.procedures[icindex1] = self.procedures[icindex2]
         self.procedures[icindex2] = temp
-        self._target_ic_switch(icindex1, icindex2)
+        self._target_ic_swap(icindex1, icindex2)
         self._reset_ic()
 
-    def _target_ic_switch(self, icindex1, icindex2):
+    def _target_ic_swap(self, icindex1, icindex2):
         target_ic = self.target_ic
         temp = self._target_ic[icindex1]
         self._target_ic[icindex1] = self._target_ic[icindex2]
@@ -525,20 +525,23 @@ class AtomsNumberError(Exception):
 
 if __name__ == '__main__':
     import horton as ht
-    fn_xyz = ht.context.get_fn("test/2h-azirine.xyz")
+    fn_xyz = ht.context.get_fn("test/water.xyz")
     mol = ht.IOData.from_file(fn_xyz)
     h2a = ICTransformation(mol.coordinates)
     h2a.add_bond_length(0, 1)
     h2a.add_bond_length(1, 2)
     h2a.add_bond_length(2, 1)
+    h2a.add_bend_angle(0,1,2)
+    print h2a.angle_calculate(0,1,2)
     print h2a.ic_info
     print h2a.ic
     print h2a.procedures
     # h2a._set_target_ic([2.8, 2.6])
     print h2a._target_ic
-    h2a.ic_switch(0, 1)
+    h2a.ic_swap(0, 1)
     print h2a.ic
     print h2a.procedures
+    print h2a.coordinates
 #     print h2a.ic
 #     h2a.add_bond_length(0, 2)
 #     h2a.add_bond_length(2, 5)
