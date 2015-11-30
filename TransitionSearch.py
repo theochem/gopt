@@ -6,13 +6,25 @@ from saddle.ICTransformation import ICTransformation
 
 
 class TransitionSearch(object):
+    """Use to determine transition state structure and doing optimization for transition state to
+    find a proper saddle point.
 
-    def __init__(self, reagent, product):
-        self.reagent = ICTransformation(reagent.coordinates)
+    Attributes:
+        halo_atom_index (set): index of atoms that can form hydrogen bond
+        halo_atom_numbers (tuple): atomic numbers that can form hydrogen bond
+        len (int): numbers of atoms of system in total
+        numbers (list): atomic numbers of each atoms in system with corresponding index number
+        product (ICTransformation object): a ICTransformation object with product coordinates
+        reactant (ICTransformation object): a ICTransformation object with reactant coordinates
+        ts_state (ICTransformation object): a ICTransformation object with ts_state coordinates
+    """
+
+    def __init__(self, reactant, product):
+        self.reactant = ICTransformation(reactant.coordinates)
         self.product = ICTransformation(product.coordinates)
-        if reagent.numbers.tolist() != product.numbers.tolist():
+        if reactant.numbers.tolist() != product.numbers.tolist():
             raise AtomsNumberError
-        self.numbers = reagent.numbers
+        self.numbers = reactant.numbers
         self.len = len(self.numbers)
         self.halo_atom_index = set()
         for i in range(self.len):
@@ -22,64 +34,160 @@ class TransitionSearch(object):
         self._ic_key_counter = 0
         self._a_matrix = np.array([])
         self._b_perturb = np.array([])
+        self._ts_dof = None 
 
     halo_atom_numbers = (7, 8, 9, 15, 16, 17)
 
-    def auto_ts_search(self, similar=None,ratio=0.5):
+    def linear_check(self):
+        ic_len = len(self.ts_state.ic)
+        for i in range(ic_len):
+            if self.ts_state.procedures[i][0] == "add_bend_angle":
+                rad = self.ts_state.ic[i]
+                if abs(np.sin(rad)) > 1e-3:
+                    self._linear_struct_setting(False)
+                    return
+        self._linear_struct_setting(True)
+        return
+
+    def _linear_struct_setting(self, lnr_struct):
+        if lnr_struct:
+            self._ts_dof = 3 * self.len - 5
+        else:
+            self._ts_dof = 3 * self.len - 6
+
+    def auto_ts_search(self, similar=None, ratio=0.5):
+        """generate auto transition state initial geometry
+
+        Args:
+            similar (ICTransformation object, optional): select targeted geometry for geometry guess
+            ratio (float, optional): ratio for combining reactant structure and product structure
+        """
         if similar == None:
-            similar = self.reagent
-        self.auto_ic_select(similar, [self.reagent, self.product])
+            similar = self.reactant
+        self.auto_ic_select(similar, [self.reactant, self.product])
         self.get_ts_guess_cc(ratio)
         self.ts_state.procedures = similar.procedures
         self.ts_state._reset_ic()
         self.get_ts_guess_ic(ratio)
 
     def get_ts_guess_cc(self, ratio=0.5):
+        """Summary
+
+        Args:
+            ratio (float, optional): ratio for combining reactant structure and product structure
+
+        Raises:
+            ValueError: value for ratio is beyond rational range
+        """
         if ratio > 1. or ratio < 0.:
             raise ValueError
-        ts_coordinate = self.reagent.coordinates * \
+        ts_coordinate = self.reactant.coordinates * \
             ratio + self.product.coordinates * (1. - ratio)
         self.ts_state = ICTransformation(ts_coordinate)
 
     def get_ts_guess_ic(self, ratio=0.5):
-        if len(self.reagent.ic) != len(self.product.ic):
+        """Summary
+
+        Args:
+            ratio (float, optional): ratio for combining reactant structure and product structure
+
+        Raises:
+            AtomsNumberError: reactant and product sample geometry have different number
+                of internal coordinates
+            ValueError: value for ratio is beyond rational range
+        """
+        if len(self.reactant.ic) != len(self.product.ic):
             raise AtomsNumberError
         if ratio > 1. or ratio < 0.:
             raise ValueError
-        target_ic = self.reagent.ic * ratio + self.product.ic * (1. - ratio)
+        target_ic = self.reactant.ic * ratio + self.product.ic * (1. - ratio)
         self.ts_state.target_ic = target_ic
 
     @staticmethod
     def add_bond(atom1, atom2, b_type, multistructure):
+        """add bond to several geometry structure
+
+        Args:
+            atom1 (int): index number of atom1
+            atom2 (int): index number of atom2
+            b_type (string): chemical bond type
+            multistructure (tuple): a tuple of structure
+        """
         for structure in multistructure:
             structure.add_bond_length(atom1, atom2, b_type)
 
     @staticmethod
     def add_angle(atom1, atom2, atom3, multistructure):
+        """add angle to several geometry structure
+
+        Args:
+            atom1 (int): index number of atom1
+            atom2 (int): index number of atom2
+            atom3 (int): index number of atom3
+            multistructure (tuple): a tuple of structure
+        """
         for structure in multistructure:
             structure.add_bend_angle(atom1, atom2, atom3)
 
     @staticmethod
     def add_dihed_conv(atom1, atom2, atom3, atom4, multistructure):
+        """add conventional dihedral angle to several geometry structure
+
+        Args:
+            atom1 (int): index number of atom1
+            atom2 (int): index number of atom2
+            atom3 (int): index number of atom3
+            atom4 (int): index number of atom4
+            multistructure (tuple): a tuple of structure
+        """
         for structure in multistructure:
             structure.add_dihed_angle(atom1, atom2, atom3, atom4)
 
     @staticmethod
     def add_dihed_new(atom1, atom2, atom3, atom4, multistructure):
+        """add new dihedral descriptors to several geometry structure
+
+        Args:
+            atom1 (int): index number of atom1
+            atom2 (int): index number of atom2
+            atom3 (int): index number of atom3
+            atom4 (int): index number of atom4
+            multistructure (tuple): a tuple of structure
+        """
         for structure in multistructure:
             structure.add_dihed_new(atom1, atom2, atom3, atom4)
 
     @staticmethod
     def add_aux_bond(atom1, atom2, multistructure):
+        """add aux bond in several geometry structure
+
+        Args:
+            atom1 (int): index number of atom1
+            atom2 (int): index number of atom2
+            multistructure (tuple): a tuple of structure
+        """
         for structure in multistructure:
             structure.add_aux_bond(atom1, atom2)
 
     @staticmethod
     def upgrade_aux_bond(atom1, atom2, multistructure):
+        """upgrade an aux bond to several geometry structure
+
+        Args:
+            atom1 (int): index number of atom1
+            atom2 (int): index number of atom2
+            multistructure (tuple): a tuple of structure
+        """
         for structure in multistructure:
             structure.upgrade_aux_bond(atom1, atom2)
 
     def auto_ic_select(self, selected_structure, target_structure=[]):
+        """select internal coordinates according to the selected_structure
+
+        Args:
+            selected_structure (ICTransformation object): target model structure
+            target_structure (list, optional): list of structure to add internal coordinates
+        """
         assert isinstance(target_structure,
                           list), "target_structure should be a list"
         if not target_structure:
@@ -89,6 +197,12 @@ class TransitionSearch(object):
         self._auto_dihed_select(selected_structure, target_structure)
 
     def _auto_bond_select(self, selected, targeted):
+        """Auto bond generator
+
+        Args:
+            selected (ICTransformation object): model structure for add internal coordinates
+            targeted (ICTransformation object): target structure to add internal coordinates
+        """
         # i,j is index of selected atoms in coordinates
         for index_i in range(self.len):
             for index_j in range(index_i + 1, self.len):
@@ -121,6 +235,12 @@ class TransitionSearch(object):
                     self.add_aux_bond(index_i, index_j, targeted)
 
     def _auto_angle_select(self, selected, targeted):
+        """auto angle generator
+
+        Args:
+            selected (ICTransformation object): model structure for add internal coordinates
+            targeted (ICTransformation object): target structure to add internal coordinates
+        """
         for central_index in range(self.len):
             side_atoms = selected.bond[central_index]
             if len(side_atoms) >= 2:
@@ -131,6 +251,12 @@ class TransitionSearch(object):
                                        right], targeted)
 
     def _auto_dihed_select(self, selected, targeted):
+        """auto dihed generator
+
+        Args:
+            selected (ICTransformation object): model structure for add internal coordinates
+            targeted (ICTransformation object): target structure to add internal coordinates
+        """
         for cen_atom1 in range(self.len):
             connect_atoms1 = selected.bond[cen_atom1]
             if len(connect_atoms1) < 2:
@@ -155,6 +281,17 @@ class TransitionSearch(object):
                                        cen_atom2, side_atom2, targeted)
 
     def _hydrogen_halo_test(self, atomindex1, atomindex2):
+        """check whether bond between atomindex and atomindex2 can form a hydrogen bond later,
+        if so, return the flag and index of two atoms, nonhydrogen atom index first, then the index of hydrogen
+        if not, only return the flag
+        Args:
+            atomindex1 (int): index of atom1
+            atomindex2 (TYPE): index of atom2
+
+        Returns:
+            tuple: (flag [,tuple(index1, index2)])
+
+        """
         flag = False  # flag to indicate whether the two atoms can form a h-bond
         num1 = self.numbers[atomindex1]
         num2 = self.numbers[atomindex2]
@@ -173,6 +310,8 @@ class TransitionSearch(object):
         return (flag,)
 
     def auto_key_ic_select(self):
+        """auto key internal coordinates generator
+        """
         key_ic = []
         for i in len(self.ts_state.ic):  # i is the index of ic of ts_state
             procedure = self.ts_state.procedures[i]
@@ -182,8 +321,8 @@ class TransitionSearch(object):
                 atomnum2 = self.numbers[atomindex2]
                 threshhold = (periodic[atomnum1].cov_radius +
                               periodic[atomnum2].cov_radius) * 0.5
-                if (abs(self.reagent.ic[i] - self.product.ic[i]) > threshhold or
-                        abs(self.reagent.ic[i] - self.ts_state.ic[i]) > threshhold or
+                if (abs(self.reactant.ic[i] - self.product.ic[i]) > threshhold or
+                        abs(self.reactant.ic[i] - self.ts_state.ic[i]) > threshhold or
                         abs(self.product.ic[i] - self.ts_state.ic[i]) > threshhold):
                     key_ic.append(i)
             if procedure[0] == "add_bend_angle":
@@ -192,56 +331,129 @@ class TransitionSearch(object):
                 atomnum2 = self.numbers[atomindex2]
                 atomnum3 = self.numbers[atomindex3]
                 threshhold = 0.5236  # 1rad = 57.2958 degrees, therefore 30degree = 0.5236rad
-                if (abs(self.reagent.ic[i] - self.product.ic[i]) > threshhold or
-                        abs(self.reagent.ic[i] - self.ts_state.ic[i]) > threshhold or
+                if (abs(self.reactant.ic[i] - self.product.ic[i]) > threshhold or
+                        abs(self.reactant.ic[i] - self.ts_state.ic[i]) > threshhold or
                         abs(self.product.ic[i] - self.ts_state.ic[i]) > threshhold):
                     key_ic.append(i)
-        self.arrange_key_ic(ic_index)
+        self._arrange_key_ic(ic_index)
 
-    def arrange_key_ic(self, ic_index):
+    def _arrange_key_ic(self, ic_index):
+        """rearrange the sequence of internal key internal coordinates
+
+        Args:
+            ic_index (int): index of internal coordinates
+        """
         for i in ic_index:
             self.ts_state.ic_swap(i, self._ic_key_counter)
             self._ic_key_counter += 1
 
     def _matrix_a_eigen(self):
+        """calculate eigenvalue of b_matrix, select 3n-5 to form the a matrix
+
+        Returns:
+            numpy.array: shape(3N - 5, n), A matrix
+        """
         matrix_space = np.dot(self.ts_state.b_matrix, self.ts_state.b_matrix.transpose())
         eig_value, eig_vector = np.linalg.eig(matrix_space)
         ic_len = len(self.ts_state.ic)
-        a_matrix = np.zeros((0, ic_len), float)
-        count = 0
+        a_matrix = np.zeros((self._ts_dof, ic_len), float)
+        counter = 0
         for i in len(eig_value):
             if eig_value[i] < 0.01:
                 continue
-            np.vstack((a_matrix, eig_value[:,i]))
-            count += 1
-            if count >= (self.len * 3 - 5):
+            a_matrix[counter] = eig_value[:, i]
+            counter += 1
+            if counter >= (self._ts_dof):
                 break
         return a_matrix
-    
+
     def _projection(self):
+        """project perturbation on each key internal coordinates into relizable internal coordinates
+
+        Returns:
+            numpy.array: shape(n, R)
+        """
         b_matrix = self.ts_state.b_matrix
         b_pinv = np.linalg.pinv(b_matrix)
         prj_matrix = np.dot(b_matrix, b_pinv)
         ic_len = len(self.ts_state.ic)
-        b_perturb = np.zeros((0, ic_len),float)
-        for i in range(self._ic_key_counter):
-            unit = np.zeros(ic_len, float)
-            unit[i] = 1.
-            result = np.dot(prj_matrix, unit)
-            b_perturb = np.vstack((b_perturb, result))
+        ic_keyic_len = self._ic_key_counter
+        e_perturb = np.identity(ic_keyic_len)
+        b_perturb = np.dot(prj_matrix, e_perturb)
         return b_perturb
 
-    def _gram_ortho(self, vectors):
+    @staticmethod
+    def _gram_ortho(vectors, transpose=False):
+        """grammian orthogonal treatment, to orthogonize the row space
+        
+        Args:
+            vectors (numpy.array): a set of vectors to be orthogonized
+            transpose (bool, optional): if the vactor span a column space, true
+                to transpose it into row space
+        
+        Returns:
+            numpy.array: orthogonlized vectors set. span in row space.
+        """
+        if transpose:
+            vectors = vectors.T
         vec_len = len(vectors)
         gram = np.zeros((vec_len, vec_len), float)
         for row in range(vec_len):
             for column in range(vec_len):
                 gram[row][column] = np.dot(vectors[row], vectors[column])
         eig_value, eig_vector = np.linalg.eig(gram)
-        basisset = np.zeros(0, vec_len)
+        basisset = np.zeros((vec_len, vec_len), float)
+        counter = 0
         for i in range(vec_len):
-            basisset.vstack((basisset, eig_value[:, i]))
-        return basisset
+            if eig_value[i] > 0.01:
+                basisset[counter] = eig_value[:, i]
+                counter += 1
+        return basisset[:counter]
+
+    def _deloc_reduce_ic(self):
+        """orthogonize perturbation, calculate reduced internal coordinates for key ic
+        
+        Returns:
+            numpy.array: reduced internal coordinates
+        """
+        b_perturb = self._projection()
+        basisset = self._gram_ortho(b_perturb)
+        reduced_ic = np.dot(b_perturb, basisset)
+        return reduced_ic
+
+    def _deloc_non_reduce_ic(self):
+        """calculate nonreduced_space by project a_matrix to nonspace of reduced space
+        
+        Returns:
+            numpy.array: nonreduced vectors to form nonreduced space
+        """
+        a_matrix = self._matrix_a_eigen()
+        v_reduce = self._deloc_reduce_ic()
+        reduced_space_1 = np.dot(v_reduce, v_reduce.T)
+        reduced_space_2 = np.dot(non_reduced_space_1, a_matrix.T)
+        nonreduced_space = a_matrix - reduced_space_2
+        return nonreduced_space
+
+    def _nonreduce_ic(self):
+        """calculate nonreduce internal coordinates
+        
+        Returns:
+            numpy.array: nonreduced internal coordinates
+        """
+        d_vectors = self._deloc_non_reduce_ic()
+        basisset = self._gram_ortho(d_vectors)
+        nonreduce_ic = np.dot(d_vectors, basisset)
+        return nonreduce_ic
+
+    def get_v_basis(self):
+        """get 3n-5 nonredundant internal coordinates
+        
+        Returns:
+            numpy.array: nonredundant internal coordinates
+        """
+        reduced = self._deloc_reduce_ic()
+        non_reduced = self._nonreduce_ic()
+        return np.vstack((reduced, non_reduced))
 
 
 class AtomsNumberError(Exception):
@@ -249,20 +461,18 @@ class AtomsNumberError(Exception):
 
 
 if __name__ == '__main__':
-    fn_xyz = ht.context.get_fn("test/2h-azirine.xyz")
+    fn_xyz = ht.context.get_fn("test/methyl.xyz")
     mol = ht.IOData.from_file(fn_xyz)
     # print mol.numbers
     h22 = TransitionSearch(mol, mol)
     print(h22.numbers)
     h22.get_ts_guess_cc()
-    # h22._auto_bond_select(h22.reagent, [h22.reagent])
-    # print h22.reagent.aux_bond
-    # h22._auto_angle_select(h22.reagent, [h22.reagent])
-    h22.auto_ic_select(h22.reagent, [h22.reagent,h22.product])
-    print h22.reagent.bond
-    print h22.reagent.ic_info
-    print h22.reagent.procedures
-    print h22.reagent.aux_bond
-    print h22.auto_ts_search(h22.reagent)
-    print h22.ts_state.b_matrix
-    # print h22.reagent.procedures
+    h22.auto_ic_select(h22.reactant, [h22.reactant, h22.product])
+    h22.auto_ts_search()
+    print h22.ts_state.ic
+    print h22.reactant.bond
+    print h22.reactant.ic_info
+    print h22.reactant.procedures
+    print h22.reactant.aux_bond
+    h22.linear_check()
+    print h22._ts_dof   
