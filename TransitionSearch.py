@@ -1,6 +1,7 @@
 import numpy as np
 import horton as ht
 
+from copy import copy
 from horton.periodic import periodic
 from saddle.ICTransformation import ICTransformation
 
@@ -38,7 +39,7 @@ class TransitionSearch(object):
 
     halo_atom_numbers = (7, 8, 9, 15, 16, 17)
 
-    def linear_check(self):
+    def _linear_check(self):
         ic_len = len(self.ts_state.ic)
         for i in range(ic_len):
             if self.ts_state.procedures[i][0] == "add_bend_angle":
@@ -65,10 +66,15 @@ class TransitionSearch(object):
         if similar == None:
             similar = self.reactant
         self.auto_ic_select(similar, [self.reactant, self.product])
-        self.get_ts_guess_cc(ratio)
-        self.ts_state.procedures = similar.procedures
+        self.ts_state = copy(similar)
+        self.ts_state.coordinates = self.get_ts_guess_cc(ratio)
         self.ts_state._reset_ic()
         self.get_ts_guess_ic(ratio)
+        self._linear_check()
+        while len(self.ts_state.ic) < self._ts_dof:
+            if self.ts_state.aux_bond:
+                self.ts_state.auto_upgrade_aux_bond()
+            else: break
 
     def get_ts_guess_cc(self, ratio=0.5):
         """Summary
@@ -83,7 +89,7 @@ class TransitionSearch(object):
             raise ValueError
         ts_coordinate = self.reactant.coordinates * \
             ratio + self.product.coordinates * (1. - ratio)
-        self.ts_state = ICTransformation(ts_coordinate)
+        return ts_coordinate
 
     def get_ts_guess_ic(self, ratio=0.5):
         """Summary
@@ -195,6 +201,10 @@ class TransitionSearch(object):
         self._auto_bond_select(selected_structure, target_structure)
         self._auto_angle_select(selected_structure, target_structure)
         self._auto_dihed_select(selected_structure, target_structure)
+
+    def auto_ic_select_combine(self):
+        self.auto_ic_select(self.reactant, [self.reactant, self.product])
+        self.auto_ic_select(self.product, [self.reactant, self.product])
 
     def _auto_bond_select(self, selected, targeted):
         """Auto bond generator
@@ -461,18 +471,18 @@ class AtomsNumberError(Exception):
 
 
 if __name__ == '__main__':
-    fn_xyz = ht.context.get_fn("test/methyl.xyz")
-    mol = ht.IOData.from_file(fn_xyz)
+    fn_xyz = ht.context.get_fn("test/Br_HCl.xyz")
+    fn_xyz_2 = ht.context.get_fn("test/Cl_HBr.xyz")
+    reactant = ht.IOData.from_file(fn_xyz)
+    product = ht.IOData.from_file(fn_xyz_2)
     # print mol.numbers
-    h22 = TransitionSearch(mol, mol)
+    h22 = TransitionSearch(reactant, product)
     print(h22.numbers)
-    h22.get_ts_guess_cc()
-    h22.auto_ic_select(h22.reactant, [h22.reactant, h22.product])
+    h22.auto_ic_select_combine()
     h22.auto_ts_search()
-    print h22.ts_state.ic
-    print h22.reactant.bond
-    print h22.reactant.ic_info
-    print h22.reactant.procedures
-    print h22.reactant.aux_bond
-    h22.linear_check()
+    print "ic",h22.ts_state.ic
+    print "bond",h22.ts_state.bond
+    print "ic info",h22.ts_state.ic_info
+    print "proce",h22.ts_state.procedures
+    print "aux",h22.ts_state.aux_bond
     print h22._ts_dof   

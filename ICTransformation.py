@@ -47,6 +47,7 @@ class ICTransformation(object):
         self._target_ic = np.array([])
         self.h_matrix = np.zeros((0, 3 * self.len, 3 * self.len), float)
         self.aux_bond = []
+        self._aux = []
 
     def length_calculate(self, atom1, atom2):
         """To calculate distance between two atoms
@@ -103,8 +104,13 @@ class ICTransformation(object):
             atom2 (int): index of atom2 in coordinates
         """
         atoms = (atom1, atom2)
-        if self._repetition_check(atoms):
+        if self._aux_rep_check(atoms):
             self.aux_bond.append(atoms)
+
+    def auto_upgrade_aux_bond(self):
+        if self.aux_bond:
+            atom1, atom2 = self.aux_bond.pop()
+            self.upgrade_aux_bond(atom1, atom2)
 
     def upgrade_aux_bond(self, atom1, atom2, b_type="auxiliary"):
         """To upgrade an auxiliary bond to ic
@@ -117,9 +123,11 @@ class ICTransformation(object):
         atoms = (atom1, atom2)
         bond_type = b_type
         info = "add_bond_length"
-        if atoms in self.aux_bond:
+        if self._repetition_check(atoms):
             self.ic_info.append(bond_type)
             self._add_ic(info, atoms)
+            self.bond[atom1].append(atom2)
+            self.bond[atom2].append(atom1)
 
     def add_bend_angle(self, atom1, atom2, atom3):
         """To add an angle between atom1, atom2 and atom3.
@@ -227,6 +235,16 @@ class ICTransformation(object):
                 return True
             else:
                 return False
+
+    def _aux_rep_check(self, atoms):
+        if len(atoms) != 2:
+            raise AtomsNumberError
+        content = (set(atoms))
+        if content not in self._re_bond:
+            if content not in self._aux:
+                self._aux.append(content)
+                return True
+        return False
 
     def _add_ic(self, info, atoms):
         """ic was added through this private method.
@@ -488,6 +506,22 @@ class ICTransformation(object):
             self._add_ic(i[0], i[1])
         self.iteration_flag = False
 
+    def _clear_ic(self):
+        """Clear all the ic formed from current cartesian coordinates
+        """
+        self.ic = np.array([])
+        self.ic_info = []
+        self.procedures = []
+        self.bond =[[] for i in range(self.len)]
+        self._re_bond = []
+        self._angle = []
+        self._dihed = []
+        self.aux_bond = []
+        self._aux = []
+        self.b_matrix = np.zeros((0, 3 * self.len), float)
+        self.h_matrix = np.zeros((0, 3 * self.len, 3 * self.len), float)
+
+
     _IC_types = {
         "add_bond_length": ICFunctions.bond_length,
         "add_bend_angle": ICFunctions.bend_angle,
@@ -542,6 +576,7 @@ if __name__ == '__main__':
     print h2a.ic
     print h2a.procedures
     print h2a.coordinates
+
 #     print h2a.ic
 #     h2a.add_bond_length(0, 2)
 #     h2a.add_bond_length(2, 5)
