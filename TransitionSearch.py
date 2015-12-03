@@ -1,7 +1,7 @@
 import numpy as np
 import horton as ht
 
-from copy import copy
+from copy import deepcopy
 from horton.periodic import periodic
 from saddle.ICTransformation import ICTransformation
 
@@ -66,15 +66,17 @@ class TransitionSearch(object):
         if similar == None:
             similar = self.reactant
         self.auto_ic_select(similar, [self.reactant, self.product])
-        self.ts_state = copy(similar)
+        self.ts_state = deepcopy(similar)
         self.ts_state.coordinates = self.get_ts_guess_cc(ratio)
         self.ts_state._reset_ic()
-        self.get_ts_guess_ic(ratio)
         self._linear_check()
         while len(self.ts_state.ic) < self._ts_dof:
             if self.ts_state.aux_bond:
-                self.ts_state.auto_upgrade_aux_bond()
-            else: break
+                atom1, atom2 = self.ts_state.auto_upgrade_aux_bond()
+                self.upgrade_aux_bond(atom1, atom2, [self.product, self.ts_state, self.reactant])
+            else:
+                print "something wrong"
+                break
 
     def get_ts_guess_cc(self, ratio=0.5):
         """Summary
@@ -323,7 +325,7 @@ class TransitionSearch(object):
         """auto key internal coordinates generator
         """
         key_ic = []
-        for i in len(self.ts_state.ic):  # i is the index of ic of ts_state
+        for i in range(len(self.ts_state.ic)):  # i is the index of ic of ts_state
             procedure = self.ts_state.procedures[i]
             if procedure[0] == "add_bond_length":
                 atomindex1, atomindex2 = procedure[1]
@@ -345,7 +347,8 @@ class TransitionSearch(object):
                         abs(self.reactant.ic[i] - self.ts_state.ic[i]) > threshhold or
                         abs(self.product.ic[i] - self.ts_state.ic[i]) > threshhold):
                     key_ic.append(i)
-        self._arrange_key_ic(ic_index)
+        print "key ic",key_ic
+        self._arrange_key_ic(key_ic)
 
     def _arrange_key_ic(self, ic_index):
         """rearrange the sequence of internal key internal coordinates
@@ -357,113 +360,113 @@ class TransitionSearch(object):
             self.ts_state.ic_swap(i, self._ic_key_counter)
             self._ic_key_counter += 1
 
-    def _matrix_a_eigen(self):
-        """calculate eigenvalue of b_matrix, select 3n-5 to form the a matrix
+    # def _matrix_a_eigen(self):
+    #     """calculate eigenvalue of b_matrix, select 3n-5 to form the a matrix
 
-        Returns:
-            numpy.array: shape(3N - 5, n), A matrix
-        """
-        matrix_space = np.dot(self.ts_state.b_matrix, self.ts_state.b_matrix.transpose())
-        eig_value, eig_vector = np.linalg.eig(matrix_space)
-        ic_len = len(self.ts_state.ic)
-        a_matrix = np.zeros((self._ts_dof, ic_len), float)
-        counter = 0
-        for i in len(eig_value):
-            if eig_value[i] < 0.01:
-                continue
-            a_matrix[counter] = eig_value[:, i]
-            counter += 1
-            if counter >= (self._ts_dof):
-                break
-        return a_matrix
+    #     Returns:
+    #         numpy.array: shape(3N - 5, n), A matrix
+    #     """
+    #     matrix_space = np.dot(self.ts_state.b_matrix, self.ts_state.b_matrix.transpose())
+    #     eig_value, eig_vector = np.linalg.eig(matrix_space)
+    #     ic_len = len(self.ts_state.ic)
+    #     a_matrix = np.zeros((self._ts_dof, ic_len), float)
+    #     counter = 0
+    #     for i in len(eig_value):
+    #         if eig_value[i] < 0.01:
+    #             continue
+    #         a_matrix[counter] = eig_value[:, i]
+    #         counter += 1
+    #         if counter >= (self._ts_dof):
+    #             break
+    #     return a_matrix
 
-    def _projection(self):
-        """project perturbation on each key internal coordinates into relizable internal coordinates
+    # def _projection(self):
+    #     """project perturbation on each key internal coordinates into relizable internal coordinates
 
-        Returns:
-            numpy.array: shape(n, R)
-        """
-        b_matrix = self.ts_state.b_matrix
-        b_pinv = np.linalg.pinv(b_matrix)
-        prj_matrix = np.dot(b_matrix, b_pinv)
-        ic_len = len(self.ts_state.ic)
-        ic_keyic_len = self._ic_key_counter
-        e_perturb = np.identity(ic_keyic_len)
-        b_perturb = np.dot(prj_matrix, e_perturb)
-        return b_perturb
+    #     Returns:
+    #         numpy.array: shape(n, R)
+    #     """
+    #     b_matrix = self.ts_state.b_matrix
+    #     b_pinv = np.linalg.pinv(b_matrix)
+    #     prj_matrix = np.dot(b_matrix, b_pinv)
+    #     ic_len = len(self.ts_state.ic)
+    #     ic_keyic_len = self._ic_key_counter
+    #     e_perturb = np.identity(ic_keyic_len)
+    #     b_perturb = np.dot(prj_matrix, e_perturb)
+    #     return b_perturb
 
-    @staticmethod
-    def _gram_ortho(vectors, transpose=False):
-        """grammian orthogonal treatment, to orthogonize the row space
+    # @staticmethod
+    # def _gram_ortho(vectors, transpose=False):
+    #     """grammian orthogonal treatment, to orthogonize the row space
         
-        Args:
-            vectors (numpy.array): a set of vectors to be orthogonized
-            transpose (bool, optional): if the vactor span a column space, true
-                to transpose it into row space
+    #     Args:
+    #         vectors (numpy.array): a set of vectors to be orthogonized
+    #         transpose (bool, optional): if the vactor span a column space, true
+    #             to transpose it into row space
         
-        Returns:
-            numpy.array: orthogonlized vectors set. span in row space.
-        """
-        if transpose:
-            vectors = vectors.T
-        vec_len = len(vectors)
-        gram = np.zeros((vec_len, vec_len), float)
-        for row in range(vec_len):
-            for column in range(vec_len):
-                gram[row][column] = np.dot(vectors[row], vectors[column])
-        eig_value, eig_vector = np.linalg.eig(gram)
-        basisset = np.zeros((vec_len, vec_len), float)
-        counter = 0
-        for i in range(vec_len):
-            if eig_value[i] > 0.01:
-                basisset[counter] = eig_value[:, i]
-                counter += 1
-        return basisset[:counter]
+    #     Returns:
+    #         numpy.array: orthogonlized vectors set. span in row space.
+    #     """
+    #     if transpose:
+    #         vectors = vectors.T
+    #     vec_len = len(vectors)
+    #     gram = np.zeros((vec_len, vec_len), float)
+    #     for row in range(vec_len):
+    #         for column in range(vec_len):
+    #             gram[row][column] = np.dot(vectors[row], vectors[column])
+    #     eig_value, eig_vector = np.linalg.eig(gram)
+    #     basisset = np.zeros((vec_len, vec_len), float)
+    #     counter = 0
+    #     for i in range(vec_len):
+    #         if eig_value[i] > 0.01:
+    #             basisset[counter] = eig_value[:, i]
+    #             counter += 1
+    #     return basisset[:counter]
 
-    def _deloc_reduce_ic(self):
-        """orthogonize perturbation, calculate reduced internal coordinates for key ic
+    # def _deloc_reduce_ic(self):
+    #     """orthogonize perturbation, calculate reduced internal coordinates for key ic
         
-        Returns:
-            numpy.array: reduced internal coordinates
-        """
-        b_perturb = self._projection()
-        basisset = self._gram_ortho(b_perturb)
-        reduced_ic = np.dot(b_perturb, basisset)
-        return reduced_ic
+    #     Returns:
+    #         numpy.array: reduced internal coordinates
+    #     """
+    #     b_perturb = self._projection()
+    #     basisset = self._gram_ortho(b_perturb)
+    #     reduced_ic = np.dot(b_perturb, basisset)
+    #     return reduced_ic
 
-    def _deloc_non_reduce_ic(self):
-        """calculate nonreduced_space by project a_matrix to nonspace of reduced space
+    # def _deloc_non_reduce_ic(self):
+    #     """calculate nonreduced_space by project a_matrix to nonspace of reduced space
         
-        Returns:
-            numpy.array: nonreduced vectors to form nonreduced space
-        """
-        a_matrix = self._matrix_a_eigen()
-        v_reduce = self._deloc_reduce_ic()
-        reduced_space_1 = np.dot(v_reduce, v_reduce.T)
-        reduced_space_2 = np.dot(non_reduced_space_1, a_matrix.T)
-        nonreduced_space = a_matrix - reduced_space_2
-        return nonreduced_space
+    #     Returns:
+    #         numpy.array: nonreduced vectors to form nonreduced space
+    #     """
+    #     a_matrix = self._matrix_a_eigen()
+    #     v_reduce = self._deloc_reduce_ic()
+    #     reduced_space_1 = np.dot(v_reduce, v_reduce.T)
+    #     reduced_space_2 = np.dot(non_reduced_space_1, a_matrix.T)
+    #     nonreduced_space = a_matrix - reduced_space_2
+    #     return nonreduced_space
 
-    def _nonreduce_ic(self):
-        """calculate nonreduce internal coordinates
+    # def _nonreduce_ic(self):
+    #     """calculate nonreduce internal coordinates
         
-        Returns:
-            numpy.array: nonreduced internal coordinates
-        """
-        d_vectors = self._deloc_non_reduce_ic()
-        basisset = self._gram_ortho(d_vectors)
-        nonreduce_ic = np.dot(d_vectors, basisset)
-        return nonreduce_ic
+    #     Returns:
+    #         numpy.array: nonreduced internal coordinates
+    #     """
+    #     d_vectors = self._deloc_non_reduce_ic()
+    #     basisset = self._gram_ortho(d_vectors)
+    #     nonreduce_ic = np.dot(d_vectors, basisset)
+    #     return nonreduce_ic
 
-    def get_v_basis(self):
-        """get 3n-5 nonredundant internal coordinates
+    # def get_v_basis(self):
+    #     """get 3n-5 nonredundant internal coordinates
         
-        Returns:
-            numpy.array: nonredundant internal coordinates
-        """
-        reduced = self._deloc_reduce_ic()
-        non_reduced = self._nonreduce_ic()
-        return np.vstack((reduced, non_reduced))
+    #     Returns:
+    #         numpy.array: nonredundant internal coordinates
+    #     """
+    #     reduced = self._deloc_reduce_ic()
+    #     non_reduced = self._nonreduce_ic()
+    #     return np.vstack((reduced, non_reduced))
 
 
 class AtomsNumberError(Exception):
@@ -480,9 +483,13 @@ if __name__ == '__main__':
     print(h22.numbers)
     h22.auto_ic_select_combine()
     h22.auto_ts_search()
+    h22.auto_key_ic_select()
     print "ic",h22.ts_state.ic
+    print "ic_reactant", h22.reactant.ic
+    print "ic_prodect", h22.product.ic
     print "bond",h22.ts_state.bond
     print "ic info",h22.ts_state.ic_info
     print "proce",h22.ts_state.procedures
     print "aux",h22.ts_state.aux_bond
-    print h22._ts_dof   
+    print h22._ts_dof
+    print "key ic number", h22._ic_key_counter

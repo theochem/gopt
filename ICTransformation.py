@@ -110,7 +110,8 @@ class ICTransformation(object):
     def auto_upgrade_aux_bond(self):
         if self.aux_bond:
             atom1, atom2 = self.aux_bond.pop()
-            self.upgrade_aux_bond(atom1, atom2)
+            return (atom1, atom2)
+            # self.upgrade_aux_bond(atom1, atom2)
 
     def upgrade_aux_bond(self, atom1, atom2, b_type="auxiliary"):
         """To upgrade an auxiliary bond to ic
