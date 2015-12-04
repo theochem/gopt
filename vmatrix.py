@@ -4,10 +4,11 @@ from copy import deepcopy
 
 class Vmatrix(object):
 
-    def __inti__(self, structure, key_ic_number):
+    def __init__(self, structure, key_ic_number, deg_of_freedom):
         self.structure = deepcopy(structure)
         self.key_number = key_ic_number
         self.ic_len = len(self.structure.ic)
+        self.dof = deg_of_freedom
 
     def _matrix_a_eigen(self):
         """calculate eigenvalue of b_matrix, select 3n-5 to form the a matrix
@@ -17,14 +18,14 @@ class Vmatrix(object):
         """
         matrix_space = np.dot(self.structure.b_matrix, self.structure.b_matrix.transpose())
         eig_value, eig_vector = np.linalg.eig(matrix_space)
-        a_matrix = np.zeros((self.key_number, ic_len), float)
+        a_matrix = np.zeros((self.key_number, self.ic_len), float)
         counter = 0
-        for i in len(eig_value):
-            if eig_value[i] < 0.01:
+        for i in range(len(eig_value)):
+            if eig_value[i] < 1e-4:
                 continue
-            a_matrix[counter] = eig_value[:, i]
+            a_matrix[counter] = eig_vector[:, i]
             counter += 1
-            if counter >= (self.key_number):
+            if counter >= (self.dof):
                 break
         return a_matrix
 
@@ -37,9 +38,9 @@ class Vmatrix(object):
         b_matrix = self.structure.b_matrix
         b_pinv = np.linalg.pinv(b_matrix)
         prj_matrix = np.dot(b_matrix, b_pinv)
-        ic_len = len(self.structure.ic)
-        ic_keyic_len = self.key_number
-        e_perturb = np.identity(ic_keyic_len)
+        e_perturb = np.zeros((self.ic_len, self.key_number), float)
+        for i in range(self.key_number):
+            e_perturb[i][i] = 1.
         b_perturb = np.dot(prj_matrix, e_perturb)
         return b_perturb
 
@@ -57,19 +58,19 @@ class Vmatrix(object):
         """
         if transpose:
             vectors = vectors.T
-        vec_len = len(vectors)
+        vec_len = vectors.shape[1]
         gram = np.zeros((vec_len, vec_len), float)
         for row in range(vec_len):
             for column in range(vec_len):
-                gram[row][column] = np.dot(vectors[row], vectors[column])
+                gram[row][column] = np.dot(vectors[:,row], vectors[:,column])
         eig_value, eig_vector = np.linalg.eig(gram)
         basisset = np.zeros((vec_len, vec_len), float)
         counter = 0
         for i in range(vec_len):
             if eig_value[i] > 0.01:
-                basisset[counter] = eig_value[:, i]
+                basisset[:,counter] = eig_vector[:, i]
                 counter += 1
-        return basisset[:counter]
+        return basisset[:,:counter]
 
     def _deloc_reduce_ic(self):
         """orthogonize perturbation, calculate reduced internal coordinates for key ic

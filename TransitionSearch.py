@@ -4,6 +4,7 @@ import horton as ht
 from copy import deepcopy
 from horton.periodic import periodic
 from saddle.ICTransformation import ICTransformation
+from saddle.vmatrix import Vmatrix
 
 
 class TransitionSearch(object):
@@ -493,3 +494,17 @@ if __name__ == '__main__':
     print "aux",h22.ts_state.aux_bond
     print h22._ts_dof
     print "key ic number", h22._ic_key_counter
+    ts = Vmatrix(h22.ts_state, h22._ic_key_counter, h22._ts_dof)
+    print ts.structure.b_matrix
+    bb = np.dot(ts.structure.b_matrix, ts.structure.b_matrix.T)
+    print bb
+    print np.linalg.eig(bb)
+    a = ts._matrix_a_eigen()
+    print "a",a
+    print np.dot(a[0], a[1])
+    b_perturb = ts._projection()
+    print "b_perturb",b_perturb
+    ortho = ts._gram_ortho(b_perturb)
+    print "g", ortho
+    re_ic = ts._deloc_reduce_ic()
+    print re_ic
