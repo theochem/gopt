@@ -48,6 +48,7 @@ class ICTransformation(object):
         self.h_matrix = np.zeros((0, 3 * self.len, 3 * self.len), float)
         self.aux_bond = []
         self._aux = []
+        self._dof = None
 
     def length_calculate(self, atom1, atom2):
         """To calculate distance between two atoms
@@ -577,7 +578,6 @@ if __name__ == '__main__':
     print h2a.ic
     print h2a.procedures
     print h2a.coordinates
-
 #     print h2a.ic
 #     h2a.add_bond_length(0, 2)
 #     h2a.add_bond_length(2, 5)

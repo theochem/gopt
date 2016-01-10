@@ -5,6 +5,7 @@ from copy import deepcopy
 from horton.periodic import periodic
 from saddle.ICTransformation import ICTransformation
 from saddle.vmatrix import Vmatrix
+from saddle.optimizer import DOM
 
 
 class TransitionSearch(object):
@@ -36,7 +37,7 @@ class TransitionSearch(object):
         self._ic_key_counter = 0
         self._a_matrix = np.array([])
         self._b_perturb = np.array([])
-        self._ts_dof = None 
+        # self._ts_dof = None    #transitionState Degree of freedom 
 
     halo_atom_numbers = (7, 8, 9, 15, 16, 17)
 
@@ -53,34 +54,53 @@ class TransitionSearch(object):
 
     def _linear_struct_setting(self, lnr_struct):
         if lnr_struct:
-            self._ts_dof = 3 * self.len - 5
+            self.ts_state._dof = 3 * self.len - 5
         else:
-            self._ts_dof = 3 * self.len - 6
+            self.ts_state._dof = 3 * self.len - 6
 
-    def auto_ts_search(self, similar=None, ratio=0.5):
+    def auto_ts_search(self, **kwargs):
         """generate auto transition state initial geometry
 
-        Args:
-            similar (ICTransformation object, optional): select targeted geometry for geometry guess
-            ratio (float, optional): ratio for combining reactant structure and product structure
+        Kwargs:
+            similar (ICTransformation object, optional): Default reactant, select targeted geometry for geometry guess
+            ratio (float, optional): Default 0.5, ratio for combining reactant structure and product structure
+            opt (Bool, optional): Default false, optimize guess cartesian coordinates to target internal coordinates
         """
+        similar = kwargs.pop('similar', None)
+        ratio = kwargs.pop('ratio', 0.5)
+        auto_opt = kwargs.pop('opt', False)
+
+        if kwargs:
+            raise TypeError('Unexpected **kwargs: %r' % kwargs)
+
         if similar == None:
             similar = self.reactant
         self.auto_ic_select(similar, [self.reactant, self.product])
         self.ts_state = deepcopy(similar)
         self.ts_state.coordinates = self.get_ts_guess_cc(ratio)
+        self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
         self.ts_state._reset_ic()
         self._linear_check()
-        while len(self.ts_state.ic) < self._ts_dof:
+        while len(self.ts_state.ic) < self.ts_state._dof:
             if self.ts_state.aux_bond:
                 atom1, atom2 = self.ts_state.auto_upgrade_aux_bond()
                 self.upgrade_aux_bond(atom1, atom2, [self.product, self.ts_state, self.reactant])
             else:
                 print "something wrong"
                 break
+        if auto_opt:
+            self.ts_state = self._auto_optimize_ic_to_target()
+
+    def _auto_optimize_ic_to_target(self):
+        ts_state = deepcopy(self.ts_state)
+        init_point = ts_state.generate_point_object()
+        optimized_point = DOM.initialize(init_point)
+        final_point = DOM.optimize(optimized_point, ts_state.cost_func_value_api, ts_state.cost_func_deriv_api, 0.0001)
+        return ts_state 
+
 
     def get_ts_guess_cc(self, ratio=0.5):
-        """Summary
+        """calculate initial guess transition state cartesian coordinates at certain ratio, default value is 0.5
 
         Args:
             ratio (float, optional): ratio for combining reactant structure and product structure
@@ -95,7 +115,7 @@ class TransitionSearch(object):
         return ts_coordinate
 
     def get_ts_guess_ic(self, ratio=0.5):
-        """Summary
+        """calculate initial guess transition state internal coordinates at certain ratio, default value is o.5
 
         Args:
             ratio (float, optional): ratio for combining reactant structure and product structure
@@ -110,7 +130,10 @@ class TransitionSearch(object):
         if ratio > 1. or ratio < 0.:
             raise ValueError
         target_ic = self.reactant.ic * ratio + self.product.ic * (1. - ratio)
-        self.ts_state.target_ic = target_ic
+        # print "reactant ic", self.reactant.ic
+        # print "product ic", self.product.ic
+        # print "target_ic", self.reactant.ic * ratio + self.product.ic * (1. - ratio)
+        return target_ic
 
     @staticmethod
     def add_bond(atom1, atom2, b_type, multistructure):
@@ -292,6 +315,23 @@ class TransitionSearch(object):
                         continue
                     self.add_dihed_new(side_atom1, cen_atom1,
                                        cen_atom2, side_atom2, targeted)
+            if len(connect_atoms1) >= 3:
+                amax1, amax2 = 0, 0
+                max1, max2 = 0, 0
+                for con_atom2 in connect_atoms1:
+                    allatoms = len(selected.bond[con_atom2])
+                    if max(allatoms, max1, max2) == allatoms:
+                        amax2 = amax1
+                        max2 = max1
+                        amax1 = con_atom2
+                        max1 = allatoms
+                    elif min(allatoms, max1, max2) != allatoms:
+                        amax2 = con_atom2
+                        max2 = allatoms
+                for con_atom3 in connect_atoms1:
+                    if con_atom3 == amax1 or con_atom3 == amax2:
+                        continue
+                    self.add_dihed_new(amax1, amax2, cen_atom1, con_atom3, targeted)
 
     def _hydrogen_halo_test(self, atomindex1, atomindex2):
         """check whether bond between atomindex and atomindex2 can form a hydrogen bond later,
@@ -475,36 +515,49 @@ class AtomsNumberError(Exception):
 
 
 if __name__ == '__main__':
-    fn_xyz = ht.context.get_fn("test/Br_HCl.xyz")
-    fn_xyz_2 = ht.context.get_fn("test/Cl_HBr.xyz")
+    fn_xyz = ht.context.get_fn("test/ammonia_hydronium.xyz")
+    fn_xyz_2 = ht.context.get_fn("test/ammonium.xyz")
     reactant = ht.IOData.from_file(fn_xyz)
     product = ht.IOData.from_file(fn_xyz_2)
-    # print mol.numbers
     h22 = TransitionSearch(reactant, product)
-    print(h22.numbers)
+    print (h22.numbers)
     h22.auto_ic_select_combine()
+    # h22.auto_ic_select(h22.product, [h22.reactant, h22.product])
     h22.auto_ts_search()
-    h22.auto_key_ic_select()
+    # h22.auto_key_ic_select()
     print "ic",h22.ts_state.ic
     print "ic_reactant", h22.reactant.ic
     print "ic_prodect", h22.product.ic
-    print "bond",h22.ts_state.bond
-    print "ic info",h22.ts_state.ic_info
-    print "proce",h22.ts_state.procedures
-    print "aux",h22.ts_state.aux_bond
-    print h22._ts_dof
-    print "key ic number", h22._ic_key_counter
-    ts = Vmatrix(h22.ts_state, h22._ic_key_counter, h22._ts_dof)
-    print ts.structure.b_matrix
-    bb = np.dot(ts.structure.b_matrix, ts.structure.b_matrix.T)
-    print bb
-    print np.linalg.eig(bb)
-    a = ts._matrix_a_eigen()
-    print "a",a
-    print np.dot(a[0], a[1])
-    b_perturb = ts._projection()
-    print "b_perturb",b_perturb
-    ortho = ts._gram_ortho(b_perturb)
-    print "g", ortho
-    re_ic = ts._deloc_reduce_ic()
-    print re_ic
+    h22.auto_ts_search(opt = True)
+    print "opt ic", h22.ts_state.ic
+    # print h22.ts_state.procedures
+    # initial_point = h22.ts_state.generate_point_object()
+    # ts_state = deepcopy(h22.ts_state)
+    # print "initial ic", ts_state.ic
+    # print initial_point
+    # op_point = DOM.initialize(initial_point)
+    # op_final = DOM.optimize(op_point, ts_state.cost_func_value_api, ts_state.cost_func_deriv_api, 0.0001)
+    # print "optimized ic", ts_state.ic
+    # print "ts ic", h22.ts_state.ic
+    # print "target ic", ts_state.target_ic
+    # print ts_state._dof
+    # print "bond",h22.ts_state.bond
+    # print "ic info",h22.ts_state.ic_info
+    # print "proce",h22.ts_state.procedures
+    # print "aux",h22.ts_state.aux_bond
+    # print h22._ts_dof
+    # print "key ic number", h22._ic_key_counter
+    # ts = Vmatrix(h22.ts_state, h22._ic_key_counter, h22._ts_dof)
+    # print ts.structure.b_matrix
+    # bb = np.dot(ts.structure.b_matrix, ts.structure.b_matrix.T)
+    # print bb
+    # print np.linalg.eig(bb)
+    # a = ts._matrix_a_eigen()
+    # print "a",a
+    # print np.dot(a[0], a[1])
+    # b_perturb = ts._projection()
+    # print "b_perturb",b_perturb
+    # ortho = ts._gram_ortho(b_perturb)
+    # print "g", ortho
+    # re_ic = ts._deloc_reduce_ic()
+    # print re_ic
