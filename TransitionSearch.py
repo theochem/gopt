@@ -6,6 +6,7 @@ from horton.periodic import periodic
 from saddle.ICTransformation import ICTransformation
 from saddle.vmatrix import Vmatrix
 from saddle.optimizer import DOM
+from saddle.tstreat import TS_Treat
 
 
 class TransitionSearch(object):
@@ -524,12 +525,19 @@ if __name__ == '__main__':
     h22.auto_ic_select_combine()
     # h22.auto_ic_select(h22.product, [h22.reactant, h22.product])
     h22.auto_ts_search()
-    # h22.auto_key_ic_select()
+    h22.auto_key_ic_select()
     print "ic",h22.ts_state.ic
     print "ic_reactant", h22.reactant.ic
     print "ic_prodect", h22.product.ic
     h22.auto_ts_search(opt = True)
     print "opt ic", h22.ts_state.ic
+    ts_ob = TS_Treat(h22.ts_state, h22._ic_key_counter)
+    print "dof", ts_ob.ts_state._dof
+    print "key_ic number", ts_ob.key_ic
+    # print "ts eigenvector",ts_ob._matrix_a_eigen(), len(ts_ob._matrix_a_eigen())
+    # print "deloc_reduce",ts_ob._deloc_reduce_ic().shape
+    ts_ob.get_v_basis()
+    print "v_matrix", ts_ob.v_matrix, ts_ob.v_matrix.shape
     # print h22.ts_state.procedures
     # initial_point = h22.ts_state.generate_point_object()
     # ts_state = deepcopy(h22.ts_state)
