@@ -136,6 +136,4 @@ class TS_Treat(object):
         u, sigma, w = np.linalg.svd(s)
         q_min = np.dot(u, w)
         max_v = np.dot(self.v_matrix, q_min)
-        return max_v
-
-    
+        return max_v 

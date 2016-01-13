@@ -15,7 +15,7 @@ class Point(object):
 
 
     def __repr__(self):
-        return "point(coordinates: %s, value: %s, first_deriv: %s, second_deriv: %s)"%(self.coordinates.shape, self.value, self.first_deriv.shape, self.second_deriv.shape)
+        return "point(coordinates: {}, value: {}, first_deriv: {}, second_deriv: {})".format(self.coordinates.shape, self.value, self.first_deriv.shape, self.second_deriv.shape)
 
 
     def __add__(self, other):
