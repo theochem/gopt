@@ -9,7 +9,6 @@ class TS_Treat(object):
         self.ts_state = ts_state
         self.key_ic = key_ic_number
         self.v_matrix = None
-        self._old_v_matrix = None
 
     def _matrix_a_eigen(self):
         """calculate eigenvalue of b_matrix, select 3n-5 to form the a matrix
@@ -126,14 +125,14 @@ class TS_Treat(object):
         self._old_v_matrix = self.v_matrix
         self.v_matrix = np.hstack((reduced, non_reduced))
 
-    def procruste_q(self):
+    def procruste_q(self, other):
         """procruste process to find the most overlapped V matrix
         
         Returns:
             numpy.array: shape(3N - 5 or 3N - 6, n), most overlapped V matrx
         """
-        s = np.dot(self.v_matrix.T, self._old_v_matrix)
+        s = np.dot(self.v_matrix.T, other.v_matrix)
         u, sigma, w = np.linalg.svd(s)
         q_min = np.dot(u, w)
         max_v = np.dot(self.v_matrix, q_min)
-        return max_v 
+        self.v_matrix = max_v

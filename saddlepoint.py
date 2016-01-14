@@ -4,20 +4,20 @@ import math
 
 from copy import deepcopy
 
-class SaddleOptimizer(object):
+class SaddlePoint(object):
 
-    def __init__(self, coordinates, h_matrix, g_matrix, key_ic_number = 0):
-        self.coordinates = deepcopy(coordinates)
-        self.len = len(self.coordinates)
-        self.h_matrix = deepcopy(h_matrix) # hessian matrix
+    def __init__(self, g_matrix, h_matrix, key_ic_number = 0):
+        self.len = len(h_matrix)
         self.g_matrix = deefcopy(g_matrix) # gradien matrix
+        self.h_matrix = deepcopy(h_matrix) # hessian matrix
         self.advanced_info = {}
         self.key_ic_number = key_ic_number
         self.step_control = Trust_Step(math.sqrt(self.len), 0.1 * math.sqrt(self.len))
+        self.stepsize = None
 
     def _diagnolize_h_matrix(self):
         w,v = np.linalg.eig(self.h_matrix) # w is the eigenvalues while v is the eigenvectors
-        new_w, new_v = SaddleOptimizer._change_sequence_eigen(w, v)
+        new_w, new_v = SaddlePoint._change_sequence_eigen(w, v)
         self.advanced_info["eigenvalues"] = new_w
         self.advanced_info["eigenvectors"] = new_v
 
@@ -44,7 +44,7 @@ class SaddleOptimizer(object):
         eigenvectors[:,the_other_index] = eigenvectors[:, one_index]
 
     def _modify_h_matrix(self, pos_thresh, neg_thresh):
-        total_number = len(self.advanced_info["eigenvalues"])
+        total_number = self.len
         pos = 0
         neg = 0
         for i in range(total_number): # here can be optimized, but i am lazy to do that
@@ -70,7 +70,7 @@ class SaddleOptimizer(object):
                     temp_sum = fraction
                     label_flag = i
             #switch the selected negative eigenvalue and vector to index 0
-            SaddleOptimizer.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
+            SaddlePoint.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
             for i in range(1, total_number):
                 self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
             self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])
@@ -86,10 +86,15 @@ class SaddleOptimizer(object):
                     if temp_sum >= 0.5:
                         qualified_list.append(i)
             label_flag = min(qualified_list)
-            SaddleOptimizer.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
+            SaddlePoint.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
             for i in range(1, total_number):
                 self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
             self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])            
+
+    def _reconstruct_hessian_matrix(self):
+        eigenvalues = self.advanced_info["eigenvalues"]
+        eigenvectors = self.advanced_info["eigenvectors"]
+        self.h_matrix = np.dot(np.dot(eigenvectors, np.diag(eigenvalues)), eigenvectors.T) # V W V.T
 
     def _trust_region_image_potential(self, neg_lamda, pos_lamda = None):
         if pos_lamda == None:
@@ -128,9 +133,8 @@ class SaddleOptimizer(object):
         lamda_pos = min(eig_value)
         step_size = self._trust_region_image_potential(lamda_neg, lamda_pos)
 
-    # def _trust_redius_method(self, step_size):
-
-
+    def _trust_redius_method(self):
+        new_step = 
 
 
 class Trust_Step(object):

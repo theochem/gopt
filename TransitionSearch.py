@@ -4,7 +4,6 @@ import horton as ht
 from copy import deepcopy
 from horton.periodic import periodic
 from saddle.ICTransformation import ICTransformation
-from saddle.vmatrix import Vmatrix
 from saddle.optimizer import DOM
 from saddle.tstreat import TS_Treat
 
@@ -91,6 +90,7 @@ class TransitionSearch(object):
                 break
         if auto_opt:
             self.ts_state = self._auto_optimize_ic_to_target()
+        return TS_Treat(self.ts_state, self._ic_key_counter)
 
     def _auto_optimize_ic_to_target(self):
         ts_state = deepcopy(self.ts_state)
@@ -529,9 +529,9 @@ if __name__ == '__main__':
     print "ic",h22.ts_state.ic
     print "ic_reactant", h22.reactant.ic
     print "ic_prodect", h22.product.ic
-    h22.auto_ts_search(opt = True)
+    ts_ob = h22.auto_ts_search(opt = True)
     print "opt ic", h22.ts_state.ic
-    ts_ob = TS_Treat(h22.ts_state, h22._ic_key_counter)
+    # ts_ob = TS_Treat(h22.ts_state, h22._ic_key_counter)
     print "dof", ts_ob.ts_state._dof
     print "key_ic number", ts_ob.key_ic
     # print "ts eigenvector",ts_ob._matrix_a_eigen(), len(ts_ob._matrix_a_eigen())

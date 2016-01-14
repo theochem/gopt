@@ -29,3 +29,12 @@ class Point(object):
             raise TypeError
         return Point(self.coordinates/other)
 
+
+# class NewPoint(object):
+
+#     def __init__(self, gradient, hessian=None, initial=True, extra_parameters=None):
+#         self.gradient = gradient
+#         self.hessian = hessian
+#         self.intial = True
+#         self.extra = extra_parameters
+
