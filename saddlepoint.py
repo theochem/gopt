@@ -4,10 +4,21 @@ import math
 
 from copy import deepcopy
 
+
+class BasicPoint(object):
+
+    def __init__(self, dimention_len, g_matrix, h_matrix=None):
+        self.len = dimention_len
+        self.g_matrix = g_matrix
+        self.h_matrix = h_matrix
+        self.step_control = None
+        self.stepsize = None
+
+
 class SaddlePoint(object):
 
-    def __init__(self, g_matrix, h_matrix, key_ic_number = 0):
-        self.len = len(h_matrix)
+    def __init__(self, g_matrix, h_matrix, key_ic_number=0):
+        self.len = len()
         self.g_matrix = deefcopy(g_matrix) # gradien matrix
         self.h_matrix = deepcopy(h_matrix) # hessian matrix
         self.advanced_info = {}
@@ -16,7 +27,7 @@ class SaddlePoint(object):
         self.stepsize = None
 
     def _diagnolize_h_matrix(self):
-        w,v = np.linalg.eig(self.h_matrix) # w is the eigenvalues while v is the eigenvectors
+        w,v = np.linalg.eigh(self.h_matrix) # w is the eigenvalues while v is the eigenvectors
         new_w, new_v = SaddlePoint._change_sequence_eigen(w, v)
         self.advanced_info["eigenvalues"] = new_w
         self.advanced_info["eigenvectors"] = new_v
@@ -121,7 +132,7 @@ class SaddlePoint(object):
         neg_matrix[0][0] = eigenvalues[0]
         neg_matrix[1][0] = np.dot(self.g_matrix.T, eigenvectors[:,0])
         neg_matrix[0][1] = np.dot(eigenvectors[:,0].T, self.g_matrix)
-        eig_value, _ = np.linalg.eig(neg_matrix)
+        eig_value, _ = np.linalg.eigh(neg_matrix)
         lamda_neg = max(eig_value)
         #construct pos_matrix
         pos_matrix = np.zeros((self.len - 1, self.len - 1))
@@ -129,12 +140,16 @@ class SaddlePoint(object):
             pos_matrix[i - 1][i - 1] = eigenvalues[i]
             pos_matrix[self.len - 1][i - 1] = np.dot(self.g_matrix.T, eigenvectors[:, i])
             pos_matrix[i - 1][self.len - 1] = np.dot(eigenvectors[:, i].T, self.g_matrix)
-        eig_value, _ = np.linalg.eig(pos_matrix)
+        eig_value, _ = np.linalg.eigh(pos_matrix)
         lamda_pos = min(eig_value)
         step_size = self._trust_region_image_potential(lamda_neg, lamda_pos)
 
-    def _trust_redius_method(self):
-        new_step = 
+    # @classmethod
+    # def _new_ic_coordinates_from_updated_vc(self):
+    #     delta_q = np.dot(self.v_matrix.T, self.stepsize)
+    #     delta_x = np.dot(self.)
+
+    # def _update_trust_radius(self):
 
 
 class Trust_Step(object):

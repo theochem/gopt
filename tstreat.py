@@ -67,7 +67,7 @@ class TS_Treat(object):
         #     for column in range(vec_len):
         #         gram[row][column] = np.dot(vectors[row], vectors[column])
         gram = np.dot(vectors.T, vectors)
-        eig_value, eig_vector = np.linalg.eig(gram)
+        eig_value, eig_vector = np.linalg.eigh(gram)
         basisset = np.zeros((vec_len, vec_len), float)
         counter = 0
         for i in range(vec_len):
@@ -85,6 +85,8 @@ class TS_Treat(object):
         b_perturb = self._projection()
         basisset = self.gram_ortho(b_perturb)
         reduced_ic = np.dot(b_perturb, basisset)
+        for i in range(len(reduced_ic[0])):
+            reduced_ic[:,i] /= np.linalg.norm(reduced_ic[:,i])
         return reduced_ic
 
     def _deloc_non_reduce_ic(self):
@@ -98,8 +100,8 @@ class TS_Treat(object):
         reduced_space_1 = np.dot(v_reduce, v_reduce.T)
         reduced_space_2 = np.dot(reduced_space_1, a_matrix)
         nonreduced_space = a_matrix - reduced_space_2
-        non_reduced_num = self.ts_state._dof - self.key_ic
-        return nonreduced_space[:,:non_reduced_num]
+        # non_reduced_num = self.ts_state._dof - self.key_ic
+        return nonreduced_space[:,:]
 
     def _nonreduce_ic(self):
         """calculate nonreduce internal coordinates
@@ -112,6 +114,8 @@ class TS_Treat(object):
         basisset = self.gram_ortho(d_vectors)
         # print "basis", basisset.shape
         nonreduce_ic = np.dot(d_vectors, basisset)
+        for i in range(len(nonreduce_ic[0])):
+            nonreduce_ic[:, i] /= np.linalg.norm(nonreduce_ic[:,i])
         return nonreduce_ic
 
     def get_v_basis(self):
@@ -136,3 +140,4 @@ class TS_Treat(object):
         q_min = np.dot(u, w)
         max_v = np.dot(self.v_matrix, q_min)
         self.v_matrix = max_v
+

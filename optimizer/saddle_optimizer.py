@@ -52,15 +52,34 @@ class TrialOptimizer(object):
             step_size = function_to_calculate_step(point, parameter)
         else:
             step_size = function_to_calculate_step(point)
+        stepsize = max(min(self.stepsize, self.step_control.max_s), self.step_control.min_s)
         point.stepsize = step_size
-
-    step_size_method = {
-        "TRIM": SaddlePoint._trust_region_image_potential
-        "RFO": SaddlePoint._rational_function_optimization
-    }
 
     def find_stepsize_for_latest_point(self, **kwmethod):
         self.find_stepsize_for_a_point(self.latest_index, kwmethod)
+
+    def update_trust_radius_of_a_point(self, index, **kwmethod):
+        if index == 0:
+            raise IndexError("Cannot update trust radius method")
+        point = self.points[index]
+        method = kwmethod.pop('method')
+        if kwmethod:
+            raise TypeError('Unexpected **kwargs: {}'.format(kwmethod))
+        trust_radius_update_method = TRM[method]
+        trust_radius_update_method(point, pre_point)
+
+    _TRM = { # trust radius update method
+        "Energy-based": 
+        "Gradient-based": TrialOptimizer._gradient_based_trm
+    }
+
+    @staticmethod
+    def _gradient_based_trm(point, pre_point):
+        g_predict = pre_point.g_matrix + np.dot(pre_point.h_matrix, pre_point.stepsize)
+        norm = np.linalg.norm
+        ratio_rho = (norm(g_predict) - norm(pre_point.g_matrix)) / (norm(point.g_matrix) - norm(pre_point.g_matrix))
+
+
 
 '''EXAMPLE
 
@@ -68,6 +87,7 @@ a = TrialOptimizer()
 a.add_a_point(point)
 a.update_hessian_for_latest_point(method=BFGS)
 a.find_stepsize_for_a_point(method=TRIM, parameter=0.1)
+
 
 '''
 

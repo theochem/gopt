@@ -534,11 +534,15 @@ if __name__ == '__main__':
     # ts_ob = TS_Treat(h22.ts_state, h22._ic_key_counter)
     print "dof", ts_ob.ts_state._dof
     print "key_ic number", ts_ob.key_ic
-    # print "ts eigenvector",ts_ob._matrix_a_eigen(), len(ts_ob._matrix_a_eigen())
-    # print "deloc_reduce",ts_ob._deloc_reduce_ic().shape
+    print "ts eigenvector",ts_ob._matrix_a_eigen(), len(ts_ob._matrix_a_eigen())
+    print "deloc_reduce",ts_ob._deloc_reduce_ic()
+    print ts_ob._deloc_non_reduce_ic()
     ts_ob.get_v_basis()
-    print "v_matrix", ts_ob.v_matrix, ts_ob.v_matrix.shape
-    # print h22.ts_state.procedures
+    for i in range(9):
+        print np.linalg.norm(ts_ob.v_matrix[:,i])
+    # ts_ob.get_v_basis()
+    # print "v_matrix", ts_ob.v_matrix, ts_ob.v_matrix.shape
+    # # print h22.ts_state.procedures
     # initial_point = h22.ts_state.generate_point_object()
     # ts_state = deepcopy(h22.ts_state)
     # print "initial ic", ts_state.ic
