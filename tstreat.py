@@ -141,3 +141,8 @@ class TS_Treat(object):
         max_v = np.dot(self.v_matrix, q_min)
         self.v_matrix = max_v
 
+    def obtain_new_cc_with_new_delta_v(self, delta_v):
+        delta_q = np.dot(self.v_matrix, delta_v)
+        new_ts_state = deepcopy(self) #deepcopy self
+        new_ts_state.ts_state.use_delta_ic_to_calculate_new_cc(delta_q)
+        return new_ts_state

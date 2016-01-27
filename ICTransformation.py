@@ -492,10 +492,17 @@ class ICTransformation(object):
         Raises:
             AtomsNumberError: new cartesian coordinates is different from original coordinates
         """
+        new_coor = new_coor.reshape(-1, 3)
         if new_coor.shape != self.coordinates.shape:
             raise AtomsNumberError
         self.coordinates = new_coor
         self._reset_ic()
+
+    def use_delta_ic_to_calculate_new_cc(self, delta_q):
+        b_inv = np.linalg.inv(self.b_matrix)
+        delta_x = np.dot(b_inv, delta_q)
+        new_coor = self.coordinates + delta_x.reshape(-1, 3)
+        get_new_coor(self, new_coor)
 
     def _reset_ic(self):
         """private method to calculate each internal coordinates again to get the updated ic value for new coordinates

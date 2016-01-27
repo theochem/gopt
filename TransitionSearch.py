@@ -76,6 +76,7 @@ class TransitionSearch(object):
         if similar == None:
             similar = self.reactant
         self.auto_ic_select(similar, [self.reactant, self.product])
+        self.auto_ic_select(similar, [self.reactant, self.product])
         self.ts_state = deepcopy(similar)
         self.ts_state.coordinates = self.get_ts_guess_cc(ratio)
         self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
@@ -88,6 +89,12 @@ class TransitionSearch(object):
             else:
                 print "something wrong"
                 break
+            self._auto_angle_select(similar, [self.reactant, self.product])
+            self._auto_dihed_select(similar, [self.reactant, self.product])
+            self.ts_state = deepcopy(similar)
+            self.ts_state.coordinate = self.get_ts_guess_cc(ratio)
+            self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
+            self.ts_state._reset_ic()
         if auto_opt:
             self.ts_state = self._auto_optimize_ic_to_target()
         return TS_Treat(self.ts_state, self._ic_key_counter)
