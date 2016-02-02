@@ -3,65 +3,93 @@ import horton as ht
 import scipy.optimize as opt
 import math
 
-from copy import deepcopy
+from copy import deepcopy, copy
 
+# this is the test class, will be implemented some point
+# class BasicPoint(object):
 
-class BasicPoint(object):
+#     def __init__(self, value, dimention_len, g_matrix, reference, h_matrix=None):
+#         self.value = value
+#         self.len = dimention_len
+#         self.g_matrix = deepcopy(g_matrix)
+#         self.h_matrix = deepcopy(h_matrix)
+#         self.step_control = None
+#         self.stepsize = None
+#         self.reference = reference
+#         self.advanced_info = {}
 
-    def __init__(self, value, dimention_len, g_matrix, reference, h_matrix=None):
-        self.value = value
-        self.len = dimention_len
-        self.g_matrix = deepcopy(g_matrix)
-        self.h_matrix = deepcopy(h_matrix)
-        self.step_control = None
-        self.stepsize = None
-        self.reference = reference
-        self.advanced_info = {}
-
-    def update(self):
-        raise NotImplementedError("please rewrite it in subclass")
+#     def update(self):
+#         raise NotImplementedError("please rewrite it in subclass")
 
 
 class SaddlePoint(object):
+    """information treatment class for transition state, basic point class for optimization
+    
+    Attributes:
+        advanced_info (dict): any advanced information need to be used to update point
+        g_matrix (numpy.array): gradien matrix for optimization in cartesian coordinates
+        h_matrix (numpy.array): hessian matrix for optimization, default is none.
+        key_ic_number (int): number of key ic numbers
+        len (int): number of internal coordinates
+        step_control (float): the proper steplength for update steps
+        stepsize (float): the proper step will be take
+    """
 
-    def __init__(self, len, g_matrix, h_matrix, key_ic_number=0):
+    def __init__(self, len, g_matrix, key_ic_number=0, h_matrix=None):
         self.len = len
-        self.g_matrix = deefcopy(g_matrix) # gradien matrix
-        self.h_matrix = deepcopy(h_matrix) # hessian matrix
+        self.g_matrix = deefcopy(g_matrix) # gradien matrix in internal coordinates
+        if h_matrix == None:
+            self.h_matrix = np.identity(self.len) # hessian matrix in internal coordinates
         self.advanced_info = {}
         self.key_ic_number = key_ic_number
-        self.step_control = Trust_Step(math.sqrt(self.len), 0.1 * math.sqrt(self.len))
+        self.step_control = None
         self.stepsize = None
 
     def _diagnolize_h_matrix(self):
+        """diagnolize hessian matrix if it is not none
+        """
         w,v = np.linalg.eigh(self.h_matrix) # w is the eigenvalues while v is the eigenvectors
-        new_w, new_v = SaddlePoint._change_sequence_eigen(w, v)
-        self.advanced_info["eigenvalues"] = new_w
-        self.advanced_info["eigenvectors"] = new_v
+        self.advanced_info["eigenvalues"] = w
+        self.advanced_info["eigenvectors"] = v
 
-    @staticmethod
-    def _change_sequence_eigen(eigenvalues, eigenvectors):
-        length = len(eigenvalues)
-        new_eigenvalues = [None] * length
-        new_eigenvectors = np.zeros((length, length), float)
-        for i in range(length):
-            new_eigenvalues[i] = eigenvalues[length - 1 - i]
-            new_eigenvectors[:,i] = eigenvectors[:, length - 1 - i]
-        return new_eigenvalues, new_eigenvectors
+    # @staticmethod
+    # def _change_sequence_eigen(eigenvalues, eigenvectors):
+    #     length = len(eigenvalues)
+    #     new_eigenvalues = [None] * length
+    #     new_eigenvectors = np.zeros((length, length), float)
+    #     for i in range(length):
+    #         new_eigenvalues[i] = eigenvalues[length - 1 - i]
+    #         new_eigenvectors[:,i] = eigenvectors[:, length - 1 - i]
+    #     return new_eigenvalues, new_eigenvectors
 
     @staticmethod
     def switch_eigens(eigenvalues, eigenvectors, one_index, the_other_index):
+        """switch the eigen values and eigenvalues of two different indexes
+        
+        Args:
+            eigenvalues (numpy.array): numpy array of whole bunch of eigenvalues
+            eigenvectors (numpy.array): numpy array of whole bunch of eigenvectors
+            one_index (int): the one index to be switched
+            the_other_index (int): the other index to be switched
+        """
         # set temp eigenvalue and eigenvector
-        temp_eigen_value = eigenvalues[one_index]
-        temp_eigen_vector = eigenvectors[:, one_index]
+        temp_eigen_value = copy(eigenvalues[one_index])
+        temp_eigen_vector = copy(eigenvectors[:, one_index])
         # assign the other index 
-        eigenvalues[one_index] = eigenvalues[the_other_index]
-        eigenvectors[:, one_index] = eigenvectors[:, the_other_index]
+        eigenvalues[one_index] = copy(eigenvalues[the_other_index])
+        eigenvectors[:, one_index] = copy(eigenvectors[:, the_other_index])
         # assign the temp value back to the other index
-        eigenvalues[the_other_index] = eigenvalues[one_index]
-        eigenvectors[:, the_other_index] = eigenvectors[:, one_index]
+        eigenvalues[the_other_index] = copy(eigenvalues[one_index])
+        eigenvectors[:, the_other_index] = copy(eigenvectors[:, one_index])
 
-    def _modify_h_matrix(self, pos_thresh, neg_thresh):
+    def _modify_h_matrix(self, pos_thresh=0.005, neg_thresh=-0.005):
+        """modify the eigenvalues of hessian matrix to make sure it has the right form
+        
+        Args:
+            pos_thresh (float, optional): the threshold for positive eigenvalues, default is 0.005
+            neg_thresh (float, optional): the threshold for nagetive eigenvalues, default is -0.005
+        
+        """
         total_number = self.len
         pos = 0
         neg = 0
@@ -85,36 +113,47 @@ class SaddlePoint(object):
                 for j in range(self.key_ic):
                     temp_sum += corresponding_eigenvector[j]**2
                 if temp_sum > fraction:
-                    temp_sum = fraction
+                    fraction = temp_sum
                     label_flag = i
             #switch the selected negative eigenvalue and vector to index 0
-            SaddlePoint.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
+            if label_flag != 0:
+                SaddlePoint.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
             for i in range(1, total_number):
                 self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
             self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])
 
         if neg == 0: # choose the one more important eigenvalues to become negative
-            qualified_list = [] # index for any eigenvectors that has more than 0.5 fraction in reduced space
+            lowest_eigenvalue = None # index for any eigenvectors that has more than 0.5 fraction in reduced space
             label_flag = -1 # the same reason as above
             for i in range(total_number):
                 corresponding_eigenvector = self.advanced_info["eigenvectors"][:,i]
                 temp_sum = 0
                 for j in range(self.key_ic):
                     temp_sum += corresponding_eigenvector[j]**2
-                    if temp_sum >= 0.5:
-                        qualified_list.append(i)
-            label_flag = min(qualified_list)
-            SaddlePoint.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
+                if temp_sum >= 0.5:
+                    if self.eigenvalues[i] < lowest_eigenvalue or lowest_eigenvalue == None:
+                        lowest_eigenvalue = self.eigenvalues[i]
+                        label_flag = i
+            if label_flag != 0:
+                SaddlePoint.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
             for i in range(1, total_number):
                 self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
             self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])            
 
     def _reconstruct_hessian_matrix(self):
+        """reconstruct new hessian depends on the twieked hessian matrix
+
+        """
         eigenvalues = self.advanced_info["eigenvalues"]
         eigenvectors = self.advanced_info["eigenvectors"]
         self.h_matrix = np.dot(np.dot(eigenvectors, np.diag(eigenvalues)), eigenvectors.T) # V W V.T
 
     def _trust_region_image_potential(self):
+        """use TRIR method to find proper step under the control of trust radius method
+        
+        Returns:
+            numpy.array: the steps to be taken to update geometry
+        """
         eigenvectors = self.advanced_info["eigenvectors"]
         eigenvalues = self.advanced_info["eigenvalues"]
         g_matrix = self.g_matrix
@@ -142,6 +181,11 @@ class SaddlePoint(object):
         return non_linear_value(root_for_lamda)
 
     def _rational_function_optimization(self):
+        """use RFO method to find proper step under the control of trust radius method
+        
+        Returns:
+            numpy.array: the steps to be taken to update geometry
+        """
         eigenvectors = self.advanced_info["eigenvalues"]
         eigenvectors = self.advanced_info["eigenvectors"]
         #construct neg_matrix
@@ -178,6 +222,7 @@ class SaddlePoint(object):
                 part_2 += temp_p2
             s_value = - part_1 - part_2
             return s_value
+
         def non_linear_func(lamda):
             s_value = non_linear_value(lamda)
             return np.linalg.norm(s_value) - self.step_control
@@ -189,16 +234,10 @@ class SaddlePoint(object):
         while non_linear_func(try_lamda) > 0:
             try_lamda *= 2
         root_for_lamda = opt.ridder(non_linear_func, 0, try_lamda)
-        return non_linear_value(root_for_lamda
+        return non_linear_value(root_for_lamda)
 
         #need to use ridder method to solve the function.
 
     def update(self):
         new_ts_state = self.reference.obtain_new_cc_with_new_delta_v(self.stepsize)
         return newpoint = SaddlePoint(None, None) #need to be completed
-
-class Trust_Step(object):
-
-    def __init__(self, max_s, min_s):
-        self.maxstep = max_s
-        self.min_s = min_s

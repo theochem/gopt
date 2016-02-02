@@ -4,7 +4,14 @@ import horton as ht
 from copy import deepcopy
 
 class TS_Treat(object):
-
+    """class use to optimize the transition state, change its dimention to 3n-5
+    
+    Attributes:
+        key_ic (int): number of key internal coordinates
+        ts_state (ICTransformation object): a ICT instance contains the geometry information of
+    a transition state
+        v_matrix (numpy.array): the v matrix for optimization
+    """
     def __init__(self, ts_state, key_ic_number):
         self.ts_state = ts_state
         self.key_ic = key_ic_number
@@ -142,6 +149,13 @@ class TS_Treat(object):
         self.v_matrix = max_v
 
     def obtain_new_cc_with_new_delta_v(self, delta_v):
+        """calculate the change of internal coordinates \delta q according to the 
+        change of the change of V coordinates \delta v.
+        
+        Args:
+            delta_v (numpy.array): the change of V coordinates, \delta v
+        
+        """
         delta_q = np.dot(self.v_matrix, delta_v)
         new_ts_state = deepcopy(self) #deepcopy self
         new_ts_state.ts_state.use_delta_ic_to_calculate_new_cc(delta_q)

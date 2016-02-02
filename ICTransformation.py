@@ -3,7 +3,7 @@ import saddle.optimizer as op
 
 from saddle.ICFunctions import ICFunctions
 from saddle.CostFunctions import CostFunctions
-
+from copy import copy
 
 __all__ = ["ICTransformation"]
 
@@ -239,6 +239,18 @@ class ICTransformation(object):
                 return False
 
     def _aux_rep_check(self, atoms):
+        """to change whether the pair of atoms been added into internal coordinates
+        or not
+        
+        Args:
+            atoms (tuple): a tuple of two atoms indexes
+        
+        Raises:
+            AtomsNumberError: the number of atoms is not right
+        
+        Returns:
+            Bool: Return True for havn't been added yet otherwise return False
+        """
         if len(atoms) != 2:
             raise AtomsNumberError
         content = (set(atoms))
@@ -459,17 +471,31 @@ class ICTransformation(object):
         return point
 
     def ic_swap(self, icindex1, icindex2):
-        temp = self.procedures[icindex1]
-        self.procedures[icindex1] = self.procedures[icindex2]
-        self.procedures[icindex2] = temp
+        """swap internal coordinates between index1 and index2
+        
+        Args:
+            icindex1 (int): index of ic to be swaped
+            icindex2 (int): the other index of ic to be swaped
+        
+        """
+        temp = copy(self.procedures[icindex1])
+        self.procedures[icindex1] = copy(self.procedures[icindex2])
+        self.procedures[icindex2] = copy(temp)
         self._target_ic_swap(icindex1, icindex2)
         self._reset_ic()
 
     def _target_ic_swap(self, icindex1, icindex2):
-        target_ic = self.target_ic
-        temp = self._target_ic[icindex1]
-        self._target_ic[icindex1] = self._target_ic[icindex2]
-        self._target_ic[icindex2] = temp
+        """swap target_ic between two index
+
+        Args:
+            icindex1 (int): index of ic to be swaped
+            icindex2 (int): the other index of ic to be swaped
+        
+        """
+        target_ic = copy(self.target_ic)
+        temp = copy(target_ic[icindex1])
+        self.target_ic[icindex1] = copy(target_ic[icindex2])
+        self.target_ic[icindex2] = copy(temp)
 
     def cost_func_deriv_api(self, point):
         """accept a Point object to update local value and update the information of that object
@@ -499,6 +525,12 @@ class ICTransformation(object):
         self._reset_ic()
 
     def use_delta_ic_to_calculate_new_cc(self, delta_q):
+        """use change of internal coordinates to find new set of cartesian coordinates
+        
+        Args:
+            delta_q (numpy.array): the change of internal coordinates
+        
+        """
         b_inv = np.linalg.inv(self.b_matrix)
         delta_x = np.dot(b_inv, delta_q)
         new_coor = self.coordinates + delta_x.reshape(-1, 3)
@@ -580,9 +612,10 @@ if __name__ == '__main__':
     print h2a.ic
     print h2a.procedures
     # h2a._set_target_ic([2.8, 2.6])
-    print h2a._target_ic
-    h2a.ic_swap(0, 1)
+    print h2a.target_ic
+    h2a.ic_swap(0, 2)
     print h2a.ic
+    print h2a.target_ic
     print h2a.procedures
     print h2a.coordinates
 #     print h2a.ic
