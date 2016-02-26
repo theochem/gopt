@@ -35,14 +35,15 @@ class SaddlePoint(object):
         stepsize (float): the proper step will be take
     """
 
-    def __init__(self, len, g_matrix, key_ic_number=0, h_matrix=None):
+    def __init__(self, len, g_matrix, vmatrix, reference, key_ic_number=0, h_matrix=None):
         self.len = len
-        self.g_matrix = deefcopy(g_matrix) # gradien matrix in internal coordinates
+        self.g_matrix = deepcopy(g_matrix) # gradien matrix in internal coordinates
         if h_matrix == None:
             self.h_matrix = np.identity(self.len) # hessian matrix in internal coordinates
         self.advanced_info = {}
         self.key_ic_number = key_ic_number
         self.step_control = None
+        self.reference = reference
         self.stepsize = None
 
     def _diagnolize_h_matrix(self):

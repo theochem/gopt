@@ -137,7 +137,8 @@ class TransitionSearch(object):
             raise AtomsNumberError
         if ratio > 1. or ratio < 0.:
             raise ValueError
-        target_ic = self.reactant.ic * ratio + self.product.ic * (1. - ratio)
+        target_ic = self.reactant.ic #set the guess ic of target ts is the same as reactant
+        # target_ic = self.reactant.ic * ratio + self.product.ic * (1. - ratio)
         # print "reactant ic", self.reactant.ic
         # print "product ic", self.product.ic
         # print "target_ic", self.reactant.ic * ratio + self.product.ic * (1. - ratio)

@@ -93,9 +93,11 @@ class TrialOptimizer(object):
         if kwmethod:
             raise TypeError('Unexpected **kwargs: {}'.format(kwmethod))
         point = self.points[index]
+        pre_point = self.points[index - 1]
         if point.hessian:
-            print("exits, quit updating")
+            print("exists, quit updating")
         else:
+            method = hessian_update_method[method]
             point.hessian = hessian_update_function[
                 method]  # function need to be added here
 
@@ -203,7 +205,13 @@ class TrialOptimizer(object):
         else :
             trust_radius_update_method(self._trust_radius, point, pre_point)
 
-
+    def _secant_condition(self, point, point_old):
+        part1 = point.g_matrix - point_old.g_matrix
+        part2 = np.dot(point.reference.v_matrix.T, np.linalg.inv(point.reference.b_matrix))
+        part3 = np.dot(np.dot(point.reference.b_matrix.T, (point.reference.v_matrix - point_old.reference.v_matrix)), point.g_matrix)
+        part4 = np.dot((point.reference.b_matrix - point_old.reference.b_matrix).T, point.reference.g_matrix_q)
+        secant_value = part1 - np.dot(part2, (part3 + part4))
+        return secant_value
 
     trm_class = {
         "default" = default_trust_radius
@@ -214,7 +222,58 @@ class TrialOptimizer(object):
         "gradient": default_trust_radius._gradient_based_trust_radius_method
     }
 
+    hessian_update_method = {
+        'SR1' = TrialOptimizer._sr1_update_method,
+        'PSB' = TrialOptimizer._psb_update_method,
+        'BFGS' = TrialOptimizer._bfgs_update_method,
+        'Bofill' = TrialOptimizer._bofill_update_method,
+    }
 
+    @staticmethod
+    def _sr1_update_method(point, point_old, secant_value):
+        part1 = secant_value - np.dot(point_old.h_matrix, point_old.stepsize)
+        part2 = point_old.stepsize
+        half_result = np.dot(part1, part2)
+        numerator = np.dot(half_result.T, half_result)
+        denominator = np.linalg.norm(part1) ** 2 * np.linalg.norm(part2) ** 2
+        result = numerator / denominator
+        if result <= 1E-18:
+            point.h_matrix = np.deepcopy(point_old.h_matrix)
+        else:
+            new_value = point_old.h_matrix + np.dot(part1, part1.T) / np.dot(part1, point_old.stepsize)
+            point.h_matrix = new_value
+
+    @staticmethod
+    def _psb_update_method(point, point_old, secant_value):
+        part1 = secant_value - np.dot(point_old.h_matrix, point_old.stepsize)
+        part2 = point_old.stepsize
+        value1 = point_old.h_matrix
+        value2 = (np.dot(part1, part2.T) + np.dot(part2, part1.T)) / np.dot(part2.T, part2)
+        value3 = np.dot(part2.T, part1) / (np.dot(part2.T, part2) ** 2)
+        value4 = np.dot(part2, part2.T)
+        new_value = value1 + value2 - np.dot(value3, value4)
+        point.h_matrix = new_value
+
+    @staticmethod
+    def _bfgs_update_method(point, point_old, secant_value):
+        part1 = p.dot(point_old.h_matrix, point_old.stepsize)
+        part2 = point_old.stepsize
+        value1 = point_old.h_matrix
+        value2 = np.dot(secant_value, secant_value.T) / np.dot(secant_value.T, part2)
+        value3 = np.dot(part1, part1.T) / np.dot(part2.T, part1)
+        new_value = value1 + value2 - value3
+        point.h_matrix = new_value
+
+    @staticmethod
+    def _bofill_update_method(point, point_old, secant_value):
+        part1 = secant_value - p.dot(point_old.h_matrix, point_old.stepsize)
+        part2 = point_old.stepsize
+        norm = np.linalg.norm
+        psi = 1 - norm(np.dot(part2, part1)) ** 2 / np.dot(norm(part2) ** 2, norm(part1) ** 2)
+        result1 = TrialOptimizer._sr1_update_method(point, point_old, secant_value)
+        result2 = TrialOptimizer._psb_update_method(point, point_old, secant_value)
+        new_value = (1. - psi) * result1 + psi * result2
+        point.h_matrix = new_value
 
 class trust_radius(object):
     pass
@@ -238,11 +297,11 @@ class default_trust_radius(trust_radius):
     def min(self):
         return self._min
 
-    def update_trust_radius(self, method):
-        if method == "energy":
-            return self._energy_based_trust_radius_method
-        elif method == "gradient":
-            return self._gradient_based_trust_radius_method
+    # def update_trust_radius(self, method):
+    #     if method == "energy":
+    #         return self._energy_based_trust_radius_method
+    #     elif method == "gradient":
+    #         return self._gradient_based_trust_radius_method
 
     def _energy_based_trust_radius_method(self, point, pre_point):
         delta_m = np.dot(pre_point.g_matrix, pre_point.stepsize) + 1. / 2 * np.dot(
