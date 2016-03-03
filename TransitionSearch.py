@@ -35,8 +35,8 @@ class TransitionSearch(object):
                 self.halo_atom_index.add(i)
         self.ts_state = None
         self._ic_key_counter = 0
-        self._a_matrix = np.array([])
-        self._b_perturb = np.array([])
+        # self._a_matrix = np.array([])
+        # self._b_perturb = np.array([])
         # self._ts_dof = None    #transitionState Degree of freedom 
 
     halo_atom_numbers = (7, 8, 9, 15, 16, 17)
@@ -95,8 +95,12 @@ class TransitionSearch(object):
             self.ts_state.coordinates = self.get_ts_guess_cc(ratio)
             self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
             self.ts_state._reset_ic()
+            self._linear_check()
         if auto_opt:
             self.ts_state = self._auto_optimize_ic_to_target()
+        # return TS_Treat(self.ts_state, self._ic_key_counter)
+
+    def create_ts_treat(self):
         return TS_Treat(self.ts_state, self._ic_key_counter)
 
     def _auto_optimize_ic_to_target(self):
