@@ -23,6 +23,10 @@ def test_transitionsearch_cl_h_br():
     assert np.allclose(a_matrix, np.linalg.svd(ts_treat.ts_state.b_matrix)[0][:,:4])
     b_vector = ts_treat._projection()
     ts_treat.get_v_basis()
+    ortho_b = TS_Treat.gram_ortho(b_vector)
+    dric = np.dot(b_vector, ortho_b)
+    new_dric = [dric[:, i] / np.linalg.norm(dric[:,i]) for i in range(len(dric[0]))]
+    new_dric = np.array(new_dric).T
     part1 = np.dot(new_dric, new_dric.T)
     part2 = np.dot(part1, a_matrix)
     nonredu = a_matrix - part2
@@ -32,7 +36,7 @@ def test_transitionsearch_cl_h_br():
     new_rdric = np.array(new_rdric).T
     test_v = np.hstack((new_dric, new_rdric))
     assert np.allclose(ts_treat.v_matrix, test_v)
-
+    print test_v.shape
 
 if __name__ == '__main__':
     test_transitionsearch_cl_h_br()

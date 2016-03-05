@@ -29,8 +29,6 @@ class TS_Treat(object):
         a_matrix = np.zeros((ic_len, self.ts_state._dof), float)
         counter = 0
         for i in range(len(s)):
-            if s[i] < 0.01:
-                continue
             a_matrix[:,counter] = u[:, i]
             counter += 1
             if counter >= (self.ts_state._dof):
@@ -56,7 +54,7 @@ class TS_Treat(object):
 
     @staticmethod
     def gram_ortho(vectors, transpose=False):
-        """grammian orthogonal treatment, to orthogonize the row space
+        """gramian orthogonal treatment, to orthogonize the row space
         
         Args:
             vectors (numpy.array): a set of vectors to be orthogonized
