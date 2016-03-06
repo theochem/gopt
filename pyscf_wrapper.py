@@ -1,4 +1,5 @@
 from pyscf import gto
+import horton as ht
 
 class gobasis(object):
     def __init__(self, coordinates, numbers, default, spin=0,
@@ -54,7 +55,7 @@ class gobasis(object):
 
            **Returns:** ``TwoIndex`` object
         """
-        if isinstance(output, LinalgFactory):
+        if isinstance(output, ht.LinalgFactory):
             lf = output
             output = lf.create_two_index(self.nbasis)
         self._get_cint1e("cint1e_ovlp_sph", output._array)
@@ -68,13 +69,13 @@ class gobasis(object):
 
            output
                 When a ``TwoIndex`` instance is given, it is used as output
-                argument and its contents are overwritten. When ``LinalgFactory``
+                argument and its contents are overwritten. When ``ht.LinalgFactory``
                 is given, it is used to construct the output ``TwoIndex``
                 object. In both cases, the output two-index object is returned.
 
            **Returns:** ``TwoIndex`` object
         """
-        if isinstance(output, LinalgFactory):
+        if isinstance(output, ht.LinalgFactory):
             lf = output
             output = lf.create_two_index(self.nbasis)
         self._get_cint1e("cint1e_ipovlp_sph", output._array)
@@ -87,13 +88,13 @@ class gobasis(object):
 
            output
                 When a ``TwoIndex`` instance is given, it is used as output
-                argument and its contents are overwritten. When ``LinalgFactory``
+                argument and its contents are overwritten. When ``ht.LinalgFactory``
                 is given, it is used to construct the output ``TwoIndex``
                 object. In both cases, the output two-index object is returned.
 
            **Returns:** ``TwoIndex`` object
         """
-        if isinstance(output, LinalgFactory):
+        if isinstance(output, ht.LinalgFactory):
             lf = output
             output = lf.create_two_index(self.nbasis)
         self._get_cint1e("cint1e_kin_sph", output._array)
@@ -107,13 +108,13 @@ class gobasis(object):
 
            output
                 When a ``TwoIndex`` instance is given, it is used as output
-                argument and its contents are overwritten. When ``LinalgFactory``
+                argument and its contents are overwritten. When ``ht.LinalgFactory``
                 is given, it is used to construct the output ``TwoIndex``
                 object. In both cases, the output two-index object is returned.
 
            **Returns:** ``TwoIndex`` object
         """
-        if isinstance(output, LinalgFactory):
+        if isinstance(output, ht.LinalgFactory):
             lf = output
             output = lf.create_two_index(self.nbasis)
         self._get_cint1e("cint1e_ipkin_sph", output._array)
@@ -135,13 +136,13 @@ class gobasis(object):
 
            output
                 When a ``TwoIndex`` instance is given, it is used as output
-                argument and its contents are overwritten. When ``LinalgFactory``
+                argument and its contents are overwritten. When ``ht.LinalgFactory``
                 is given, it is used to construct the output ``TwoIndex``
                 object. In both cases, the output two-index object is returned.
 
            **Returns:** ``TwoIndex`` object
         """
-        if isinstance(output, LinalgFactory):
+        if isinstance(output, ht.LinalgFactory):
             lf = output
             output = lf.create_two_index(self.nbasis)
         self._get_cint1e("cint1e_nuc_sph", output._array)
@@ -164,13 +165,13 @@ class gobasis(object):
 
            output
                 When a ``TwoIndex`` instance is given, it is used as output
-                argument and its contents are overwritten. When ``LinalgFactory``
+                argument and its contents are overwritten. When ``ht.LinalgFactory``
                 is given, it is used to construct the output ``TwoIndex``
                 object. In both cases, the output two-index object is returned.
 
            **Returns:** ``TwoIndex`` object
         """
-        if isinstance(output, LinalgFactory):
+        if isinstance(output, ht.LinalgFactory):
             lf = output
             output = lf.create_two_index(self.nbasis)
         self._get_cint1e("cint1e_ipnuc_sph", output._array)
@@ -184,7 +185,7 @@ class gobasis(object):
            output
                 When a ``DenseFourIndex`` object is given, it is used as output
                 argument and its contents are overwritten. When a
-                ``DenseLinalgFactory`` or ``CholeskyLinalgFactory`` is given, it
+                ``Denseht.LinalgFactory`` or ``Choleskyht.LinalgFactory`` is given, it
                 is used to construct the four-index object in which the
                 integrals are stored.
 
@@ -196,7 +197,7 @@ class gobasis(object):
         # FIXME: restore log behaviour
         # log.cite('valeev2014', 'the efficient implementation of four-center electron repulsion integrals')
 
-        if isinstance(output, LinalgFactory):
+        if isinstance(output, ht.LinalgFactory):
             lf = output
             output = lf.create_four_index(self.nbasis)
         self._get_cint2e("cint2e_sph", output._array)
@@ -210,7 +211,7 @@ class gobasis(object):
            output
                 When a ``DenseFourIndex`` object is given, it is used as output
                 argument and its contents are overwritten. When a
-                ``DenseLinalgFactory`` or ``CholeskyLinalgFactory`` is given, it
+                ``Denseht.LinalgFactory`` or ``Choleskyht.LinalgFactory`` is given, it
                 is used to construct the four-index object in which the
                 integrals are stored.
 
@@ -222,7 +223,7 @@ class gobasis(object):
         # FIXME: restore log behaviour
         # log.cite('valeev2014', 'the efficient implementation of four-center electron repulsion integrals')
 
-        if isinstance(output, LinalgFactory):
+        if isinstance(output, ht.LinalgFactory):
             lf = output
             output = lf.create_four_index(self.nbasis)
         self._get_cint2e("cint2e_ip1_sph", output._array)
@@ -236,7 +237,7 @@ class gobasis(object):
            output1, output2
                 When a ``DenseFourIndex`` object is given, it is used as output
                 argument and its contents are overwritten. When a
-                ``DenseLinalgFactory`` or ``CholeskyLinalgFactory`` is given, it
+                ``Denseht.LinalgFactory`` or ``Choleskyht.LinalgFactory`` is given, it
                 is used to construct the four-index object in which the
                 integrals are stored.
 
@@ -249,13 +250,13 @@ class gobasis(object):
             print "Auxiliary basis set wasn't provided for gobasis."
             raise AttributeError
 
-        if isinstance(output1, LinalgFactory):
+        if isinstance(output1, ht.LinalgFactory):
             lf = output1
             output1 = lf.create_three_index(self.nbasis, self.nbasis,
                                             self.naux)
         self._get_cint3c2e("cint3c2e_sph", output1._array)
 
-        if isinstance(output2, LinalgFactory):
+        if isinstance(output2, ht.LinalgFactory):
             lf = output2
             output2 = lf.create_two_index(self.naux, self.naux)
         self._get_cint2c2e("cint2c2e_sph", output2._array)

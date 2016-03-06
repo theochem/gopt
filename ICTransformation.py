@@ -1,9 +1,11 @@
 import numpy as np
 import saddle.optimizer as op
+import horton as ht
 
 from saddle.ICFunctions import ICFunctions
 from saddle.CostFunctions import CostFunctions
 from copy import copy
+from saddle.pyscf_wrapper import gobasis
 
 __all__ = ["ICTransformation"]
 
@@ -32,7 +34,7 @@ class ICTransformation(object):
     """
 
     def __init__(self, mol):
-        self.atoms = mol.numbers
+        self.numbers = mol.numbers
         self.coordinates = mol.coordinates
         self.len = len(mol.coordinates.reshape(-1, 3))
         self.ic = np.array([])
@@ -40,6 +42,7 @@ class ICTransformation(object):
         self.iteration_flag = False
         self.procedures = []
         self.bond =[[] for i in range(self.len)]
+        self.pseudo_numbers = mol.pseudo_numbers
         self._re_bond = []
         self._angle = []
         self._dihed = []
@@ -563,6 +566,14 @@ class ICTransformation(object):
         self.b_matrix = np.zeros((0, 3 * self.len), float)
         self.h_matrix = np.zeros((0, 3 * self.len, 3 * self.len), float)
 
+    # def energy_compute(self, default_method="STO-3G"):
+    #     goba = gobasis(self.coordinates, self.numbers, default_method)
+    #     lf = ht.DenseLinalgFactory(goba.nbasis)
+    #     olp = goba.compute_overlap(lf)
+    #     print dir(olp)
+
+
+
 
     _IC_types = {
         "add_bond_length": ICFunctions.bond_length,
@@ -603,6 +614,7 @@ if __name__ == '__main__':
     import horton as ht
     fn_xyz = ht.context.get_fn("test/water.xyz")
     mol = ht.IOData.from_file(fn_xyz)
+    print "pse",mol.pseudo_numbers
     h2a = ICTransformation(mol)
     h2a.add_bond_length(0, 1)
     h2a.add_bond_length(1, 2)
@@ -619,6 +631,7 @@ if __name__ == '__main__':
     print h2a.target_ic
     print h2a.procedures
     print h2a.coordinates
+    # h2a.energy_compute()
 #     print h2a.ic
 #     h2a.add_bond_length(0, 2)
 #     h2a.add_bond_length(2, 5)
