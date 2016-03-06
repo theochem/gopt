@@ -1,5 +1,4 @@
 import numpy as np
-import molmod as mm
 
 
 class CostFunctions(object):

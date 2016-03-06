@@ -23,8 +23,8 @@ class TransitionSearch(object):
     """
 
     def __init__(self, reactant, product):
-        self.reactant = ICTransformation(reactant.coordinates)
-        self.product = ICTransformation(product.coordinates)
+        self.reactant = ICTransformation(reactant)
+        self.product = ICTransformation(product)
         if reactant.numbers.tolist() != product.numbers.tolist():
             raise AtomsNumberError
         self.numbers = reactant.numbers

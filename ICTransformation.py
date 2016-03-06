@@ -31,9 +31,10 @@ class ICTransformation(object):
         target_ic (numpy.array): shape(m,), target ic
     """
 
-    def __init__(self, coordinates):
-        self.coordinates = coordinates
-        self.len = len(coordinates.reshape(-1, 3))
+    def __init__(self, mol):
+        self.atoms = mol.numbers
+        self.coordinates = mol.coordinates
+        self.len = len(mol.coordinates.reshape(-1, 3))
         self.ic = np.array([])
         self.ic_info = []
         self.iteration_flag = False
@@ -602,7 +603,7 @@ if __name__ == '__main__':
     import horton as ht
     fn_xyz = ht.context.get_fn("test/water.xyz")
     mol = ht.IOData.from_file(fn_xyz)
-    h2a = ICTransformation(mol.coordinates)
+    h2a = ICTransformation(mol)
     h2a.add_bond_length(0, 1)
     h2a.add_bond_length(1, 2)
     h2a.add_bond_length(2, 1)
