@@ -85,6 +85,8 @@ class TransitionSearch(object):
         while len(self.ts_state.ic) < self.ts_state._dof:
             if self.ts_state.aux_bond:
                 atom1, atom2 = self.ts_state.auto_upgrade_aux_bond()
+                self.product.aux_bond.remove((atom1, atom2))
+                self.reactant.aux_bond.remove((atom1, atom2))
                 self.upgrade_aux_bond(atom1, atom2, [self.product, self.ts_state, self.reactant])
             else:
                 print "something wrong"
