@@ -30,6 +30,8 @@ class Window(QtGui.QMainWindow):
         self.ui.auto_ic_select.stateChanged.connect(self.change_auto_ic)
         self.ui.auto_key_ic.stateChanged.connect(self.change_key_ic)
         self.ui.tc_progressBar.setValue(0)
+        self.ui.save_xyz.clicked.connect(self.save_xyz)
+        self.ts_mol = None
 
     def reactant_open(self):
         name = QtGui.QFileDialog.getOpenFileName(self,"Open file")
@@ -90,6 +92,8 @@ class Window(QtGui.QMainWindow):
             produ_mol = ht.IOData.from_file(str(self.product_path))
             # self.ui.tc_progressBar.setValue(20)
             ts_search = TransitionSearch.TransitionSearch(react_mol, produ_mol)
+            self.return_ratio()
+            ratio = self.lable_ratio_value / 100.
             if self.auto_ic_select == True:
                 ts_search.auto_ic_select_combine()
                 if self.auto_key_ic == True:
@@ -97,14 +101,25 @@ class Window(QtGui.QMainWindow):
             # self.ui.tc_progressBar.setValue(30)
             ts_search.auto_ts_search()
             # self.ui.tc_progressBar.setValue(100)
-            print ts_search.ts_state
+            self.ts_mol = ts_search.ts_state
         else:
             print "not enough info"
 
+    def save_xyz(self):
+        name = QtGui.QFileDialog.getSaveFileName(self, "Save .xyz")
+        if name:
+            with open(name, "w") as f:
+                print >> f, len(self.ts_mol.numbers)
+                print >> f, getattr(self.ts_mol, "title", "Created with saddle")
+                for i in range(len(self.ts_mol.numbers)):
+                    n = ht.periodic[self.ts_mol.numbers[i]].symbol
+                    x, y, z = self.ts_mol.coordinates[i]/ht.angstrom
+                    print >> f, '%2s %15.10f %15.10f %15.10f' % (n, x, y, z)
 
         # print self.auto_key_ic
 
 app = QtGui.QApplication(sys.argv)
 gui = Window()
+gui.setWindowTitle("Saddle --by Derrick")
 gui.show()
 sys.exit(app.exec_())

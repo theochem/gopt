@@ -37,6 +37,7 @@ def test_transitionsearch_cl_h_br():
     test_v = np.hstack((new_dric, new_rdric))
     assert np.allclose(ts_treat.v_matrix, test_v)
     print test_v.shape
+    print reactant.natom
 
 if __name__ == '__main__':
     test_transitionsearch_cl_h_br()
