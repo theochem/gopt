@@ -4,6 +4,7 @@ import horton as ht
 from saddle import TransitionSearch
 from PyQt4 import QtGui, QtCore
 from gui_ts_guess import Ui_MainWindow
+from subprocess import call
 
 
 class Window(QtGui.QMainWindow):
@@ -31,7 +32,9 @@ class Window(QtGui.QMainWindow):
         self.ui.auto_key_ic.stateChanged.connect(self.change_key_ic)
         self.ui.tc_progressBar.setValue(0)
         self.ui.save_xyz.clicked.connect(self.save_xyz)
+        self.ui.actionSaddle.triggered.connect(self.about)
         self.ts_mol = None
+        self.ui.view_vmd.clicked.connect(self.view_vmd)
 
     def reactant_open(self):
         name = QtGui.QFileDialog.getOpenFileName(self,"Open file")
@@ -55,6 +58,7 @@ class Window(QtGui.QMainWindow):
         self.ui.reactant_text.clear()
         self.reactant_path = None
         self.ui.tc_progressBar.setValue(0)
+        # choice = QtGui.QMessageBox.information(self, "Extrac!", "Really", QtGui.QMessageBox.Ok)
 
     def product_reset(self):
         self.ui.product_text.clear()
@@ -90,7 +94,7 @@ class Window(QtGui.QMainWindow):
         if self.reactant_path and self.product_path:
             react_mol = ht.IOData.from_file(str(self.reactant_path))
             produ_mol = ht.IOData.from_file(str(self.product_path))
-            # self.ui.tc_progressBar.setValue(20)
+            self.ui.tc_progressBar.setValue(20)
             ts_search = TransitionSearch.TransitionSearch(react_mol, produ_mol)
             self.return_ratio()
             ratio = self.lable_ratio_value / 100.
@@ -98,12 +102,13 @@ class Window(QtGui.QMainWindow):
                 ts_search.auto_ic_select_combine()
                 if self.auto_key_ic == True:
                     ts_search.auto_key_ic_select()
-            # self.ui.tc_progressBar.setValue(30)
+            self.ui.tc_progressBar.setValue(30)
             ts_search.auto_ts_search()
-            # self.ui.tc_progressBar.setValue(100)
+            self.ui.tc_progressBar.setValue(100)
             self.ts_mol = ts_search.ts_state
+            success = QtGui.QMessageBox.information(self, "Finished", "\n\nFinished!", QtGui.QMessageBox.Ok)
         else:
-            print "not enough info"
+            fail = QtGui.QMessageBox.warning(self, "Can't do that", "Can't do that \n \nPlease select reactant and product structure first", QtGui.QMessageBox.Ok)
 
     def save_xyz(self):
         name = QtGui.QFileDialog.getSaveFileName(self, "Save .xyz")
@@ -117,6 +122,13 @@ class Window(QtGui.QMainWindow):
                     print >> f, '%2s %15.10f %15.10f %15.10f' % (n, x, y, z)
 
         # print self.auto_key_ic
+
+    def view_vmd(self):
+        call("vmd")
+
+    def about(self):
+        popup = QtGui.QMessageBox.about(self, "About Saddle", '''<font size="6"><p align="center">Saddle</p></font>\n<font size="3"><p align="center">Copyright 2016 Horton Group</p></font>\n
+            <font size="2"><p align="center">version 1.0 by Derrick</p></font>''')
 
 app = QtGui.QApplication(sys.argv)
 gui = Window()

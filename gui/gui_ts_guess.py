@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ts_guess.ui'
+# Form implementation generated from reading ui file 'gui_ts_guess.ui'
 #
 # Created by: PyQt4 UI code generator 4.11.4
 #
@@ -83,6 +83,9 @@ class Ui_MainWindow(object):
         self.save_xyz = QtGui.QPushButton(self.centralwidget)
         self.save_xyz.setObjectName(_fromUtf8("save_xyz"))
         self.gridLayout.addWidget(self.save_xyz, 8, 2, 1, 1)
+        self.view_vmd = QtGui.QPushButton(self.centralwidget)
+        self.view_vmd.setObjectName(_fromUtf8("view_vmd"))
+        self.gridLayout.addWidget(self.view_vmd, 8, 0, 1, 1)
         self.reactant.raise_()
         self.reactant_text.raise_()
         self.reactant_reset.raise_()
@@ -99,14 +102,29 @@ class Ui_MainWindow(object):
         self.auto_key_ic.raise_()
         self.save_xyz.raise_()
         self.key_ic_text.raise_()
+        self.view_vmd.raise_()
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 600, 22))
         self.menubar.setObjectName(_fromUtf8("menubar"))
+        self.menuSaddle = QtGui.QMenu(self.menubar)
+        self.menuSaddle.setObjectName(_fromUtf8("menuSaddle"))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
         MainWindow.setStatusBar(self.statusbar)
+        self.actionAbout_Saddle = QtGui.QAction(MainWindow)
+        self.actionAbout_Saddle.setObjectName(_fromUtf8("actionAbout_Saddle"))
+        self.actionNice = QtGui.QAction(MainWindow)
+        self.actionNice.setObjectName(_fromUtf8("actionNice"))
+        self.actionAgain = QtGui.QAction(MainWindow)
+        self.actionAgain.setObjectName(_fromUtf8("actionAgain"))
+        self.actionThird = QtGui.QAction(MainWindow)
+        self.actionThird.setObjectName(_fromUtf8("actionThird"))
+        self.actionSaddle = QtGui.QAction(MainWindow)
+        self.actionSaddle.setObjectName(_fromUtf8("actionSaddle"))
+        self.menuSaddle.addAction(self.actionSaddle)
+        self.menubar.addAction(self.menuSaddle.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -124,4 +142,11 @@ class Ui_MainWindow(object):
         self.auto_ic_select.setText(_translate("MainWindow", "Auto IC Select", None))
         self.save_saddle.setText(_translate("MainWindow", "Save as .saddle", None))
         self.save_xyz.setText(_translate("MainWindow", "Save as .xyz", None))
+        self.view_vmd.setText(_translate("MainWindow", "View in VMD", None))
+        self.menuSaddle.setTitle(_translate("MainWindow", "Saddle", None))
+        self.actionAbout_Saddle.setText(_translate("MainWindow", "ajgdagjkalsjgda", None))
+        self.actionNice.setText(_translate("MainWindow", "nice", None))
+        self.actionAgain.setText(_translate("MainWindow", "again", None))
+        self.actionThird.setText(_translate("MainWindow", "third", None))
+        self.actionSaddle.setText(_translate("MainWindow", "Saddle", None))
 

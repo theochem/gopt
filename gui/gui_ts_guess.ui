@@ -124,9 +124,14 @@
       </property>
      </widget>
     </item>
+    <item row="8" column="0">
+     <widget class="QPushButton" name="view_vmd">
+      <property name="text">
+       <string>View in VMD</string>
+      </property>
+     </widget>
+    </item>
    </layout>
-   <zorder>textEdit_2</zorder>
-   <zorder>textEdit</zorder>
    <zorder>reactant</zorder>
    <zorder>reactant_text</zorder>
    <zorder>reactant_reset</zorder>
@@ -143,6 +148,7 @@
    <zorder>auto_key_ic</zorder>
    <zorder>save_xyz</zorder>
    <zorder>key_ic_text</zorder>
+   <zorder>view_vmd</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -153,8 +159,40 @@
      <height>22</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuSaddle">
+    <property name="title">
+     <string>Saddle</string>
+    </property>
+    <addaction name="actionSaddle"/>
+   </widget>
+   <addaction name="menuSaddle"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionAbout_Saddle">
+   <property name="text">
+    <string>ajgdagjkalsjgda</string>
+   </property>
+  </action>
+  <action name="actionNice">
+   <property name="text">
+    <string>nice</string>
+   </property>
+  </action>
+  <action name="actionAgain">
+   <property name="text">
+    <string>again</string>
+   </property>
+  </action>
+  <action name="actionThird">
+   <property name="text">
+    <string>third</string>
+   </property>
+  </action>
+  <action name="actionSaddle">
+   <property name="text">
+    <string>Saddle</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
