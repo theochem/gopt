@@ -5,7 +5,8 @@ import horton as ht
 from saddle.ICFunctions import ICFunctions
 from saddle.CostFunctions import CostFunctions
 from copy import copy
-from saddle.pyscf_wrapper import gobasis
+from saddle.ljenergy import LJEnergy
+# from saddle.pyscf_wrapper import gobasis
 
 __all__ = ["ICTransformation"]
 
@@ -53,6 +54,9 @@ class ICTransformation(object):
         self.aux_bond = []
         self._aux = []
         self._dof = None
+        self.energy = None
+        self.gradient_matrix = None
+        self.hessian_matrix = None
 
     def length_calculate(self, atom1, atom2):
         """To calculate distance between two atoms
@@ -566,14 +570,16 @@ class ICTransformation(object):
         self.b_matrix = np.zeros((0, 3 * self.len), float)
         self.h_matrix = np.zeros((0, 3 * self.len, 3 * self.len), float)
 
-    # def energy_compute(self, default_method="STO-3G"):
-    #     goba = gobasis(self.coordinates, self.numbers, default_method)
-    #     lf = ht.DenseLinalgFactory(goba.nbasis)
-    #     olp = goba.compute_overlap(lf)
-    #     print dir(olp)
 
+    def get_energy_gradient_hessian(self, method="lf"):
+        if method == "lf":
+            ob = LJEnergy(self)
+            self.energy, self.gradient_matrix, self.hessian_matrix = ob.get_energy_gradient_hessian()
 
-
+    def get_energy_gradient(self, method="lf"):
+        if method == "lf":
+            ob = LJEnergy(self)
+            self.energy, self.gradient_matrix = ob.get_energy_gradient()
 
     _IC_types = {
         "add_bond_length": ICFunctions.bond_length,
@@ -631,6 +637,7 @@ if __name__ == '__main__':
     print h2a.target_ic
     print h2a.procedures
     print h2a.coordinates
+    print h2a.h_matrix.shape
     # h2a.energy_compute()
 #     print h2a.ic
 #     h2a.add_bond_length(0, 2)

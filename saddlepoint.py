@@ -35,11 +35,12 @@ class SaddlePoint(object):
         stepsize (float): the proper step will be take
     """
 
-    def __init__(self, len, g_matrix, vmatrix, reference, key_ic_number=0, h_matrix=None):
-        self.len = len
+    def __init__(self, length, g_matrix, vmatrix, reference, key_ic_number=0, h_matrix=[]):
+        self.len = length
         self.g_matrix = deepcopy(g_matrix) # gradien matrix in internal coordinates
-        if h_matrix == None:
-            self.h_matrix = np.identity(self.len) # hessian matrix in internal coordinates
+        # if h_matrix == []:
+            # self.h_matrix = np.identity(self.len) # hessian matrix in internal coordinates
+        self.h_matrix = deepcopy(h_matrix)
         self.advanced_info = {}
         self.key_ic_number = key_ic_number
         self.step_control = None
@@ -111,14 +112,16 @@ class SaddlePoint(object):
             for i in range(neg):
                 corresponding_eigenvector = self.advanced_info["eigenvectors"][:,i]
                 temp_sum = 0
-                for j in range(self.key_ic):
+                for j in range(self.key_ic_number):
                     temp_sum += corresponding_eigenvector[j]**2
                 if temp_sum > fraction:
                     fraction = temp_sum
                     label_flag = i
+                print i, temp_sum
             #switch the selected negative eigenvalue and vector to index 0
             if label_flag != 0:
                 SaddlePoint.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
+                print label_flag
             for i in range(1, total_number):
                 self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
             self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])
@@ -129,7 +132,7 @@ class SaddlePoint(object):
             for i in range(total_number):
                 corresponding_eigenvector = self.advanced_info["eigenvectors"][:,i]
                 temp_sum = 0
-                for j in range(self.key_ic):
+                for j in range(self.key_ic_number):
                     temp_sum += corresponding_eigenvector[j]**2
                 if temp_sum >= 0.5:
                     if self.eigenvalues[i] < lowest_eigenvalue or lowest_eigenvalue == None:
@@ -239,6 +242,6 @@ class SaddlePoint(object):
 
         #need to use ridder method to solve the function.
 
-    def update(self):
-        new_ts_state = self.reference.obtain_new_cc_with_new_delta_v(self.stepsize)
-        return newpoint = SaddlePoint(None, None) #need to be completed
+    # def update(self):
+    #     new_ts_state = self.reference.obtain_new_cc_with_new_delta_v(self.stepsize)
+    #     return newpoint = SaddlePoint(None, None) #need to be completed

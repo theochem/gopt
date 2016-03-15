@@ -2,6 +2,7 @@ import numpy as np
 import horton as ht
 
 from copy import deepcopy
+from saddle.saddlepoint import SaddlePoint
 
 class TS_Treat(object):
     """class use to optimize the transition state, change its dimention to 3n-5
@@ -145,6 +146,16 @@ class TS_Treat(object):
         q_min = np.dot(u, w)
         max_v = np.dot(self.v_matrix, q_min)
         self.v_matrix = max_v
+
+    def create_a_saddle_point(self):
+        length = len(self.ts_state.ic)
+        g_matrix = self.ts_state.gradient_matrix
+        vmatrix = self.v_matrix
+        reference = self
+        key_ic_number = self.key_ic
+        h_matrix = self.ts_state.hessian_matrix
+        new_point = SaddlePoint(length, g_matrix, vmatrix, reference, key_ic_number, h_matrix)
+        return new_point
 
     def obtain_new_cc_with_new_delta_v(self, delta_v):
         """calculate the change of internal coordinates \delta q according to the 
