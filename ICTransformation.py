@@ -59,9 +59,6 @@ class ICTransformation(object):
         self.hessian_matrix = None
         self.ic_gradient = None
         self.ic_hessian = None
-        # self.v_matrix = None
-        # self.v_gradient = None
-        # self.v_hessian = None
 
     def length_calculate(self, atom1, atom2):
         """To calculate distance between two atoms
@@ -610,14 +607,15 @@ class ICTransformation(object):
 
     def hessian_x_to_ic(self):
         k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
- 
+        self.ic_hessian = np.dot(np.dot(np.linalg.pinv(self.b_matrix.T), (self.hessian_matrix - k_matrix)), np.linalg.pinv(self.b_matrix))
+
     def gradient_ic_to_x(self):
         self.gradient_matrix = np.dot(self.b_matrix.T, self.ic_gradient)
 
     def hessian_ic_to_x(self):
         k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
         self.hessian_matrix = np.dot(np.dot(self.b_matrix.T, self.ic_hessian), self.b_matrix) + np.tensordot(self.ic_gradient, self.h_matrix, 1)
-
+        
 
     _IC_types = {
         "add_bond_length": ICFunctions.bond_length,
@@ -665,9 +663,9 @@ if __name__ == '__main__':
     h2a.add_bond_length(2, 1)
     h2a.add_bend_angle(0,1,2)
     print h2a.angle_calculate(0,1,2)
-    print "icinfo",h2a.ic_info
+    print h2a.ic_info
     print h2a.ic
-    print "procedures",h2a.procedures,h2a.numbers
+    print h2a.procedures
     # h2a._set_target_ic([2.8, 2.6])
     print h2a.target_ic
     h2a.ic_swap(0, 2)

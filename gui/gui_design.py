@@ -95,6 +95,7 @@ class Window(QtGui.QMainWindow):
     def change_key_ic(self):
         self.auto_key_ic = not self.auto_key_ic
         self.ui.key_ic_text.setEnabled(not self.auto_key_ic)
+        # self.ui.select_key_ic.setEnabled(not self.auto_key_ic)
 
     def get_ts_guess(self):
         if self.reactant_path and self.product_path:
@@ -111,7 +112,7 @@ class Window(QtGui.QMainWindow):
                 if self.auto_key_ic == True:
                     ts_search.auto_key_ic_select()
             self.ui.tc_progressBar.setValue(100)
-            self.ts_mol = ts_search.ts_state
+            self.ts_mol = ts_search # change from ts_search.ts_state to just ts_search
             success = QtGui.QMessageBox.information(self, "Finished", "\n\nFinished!", QtGui.QMessageBox.Ok)
         else:
             fail = QtGui.QMessageBox.warning(self, "Can't do that", '''Can't do that
@@ -122,11 +123,11 @@ class Window(QtGui.QMainWindow):
         if name:
             name = name + ".xyz"
             with open(name, "w") as f:
-                print >> f, len(self.ts_mol.numbers)
-                print >> f, getattr(self.ts_mol, "title", name.split("/")[-1].split(".")[0])
-                for i in range(len(self.ts_mol.numbers)):
-                    n = ht.periodic[self.ts_mol.numbers[i]].symbol
-                    x, y, z = self.ts_mol.coordinates[i]/ht.angstrom
+                print >> f, len(self.ts_mol.ts_state.numbers)
+                print >> f, getattr(self.ts_mol.ts_state, "title", name.split("/")[-1].split(".")[0])
+                for i in range(len(self.ts_mol.ts_state.numbers)):
+                    n = ht.periodic[self.ts_mol.ts_state.numbers[i]].symbol
+                    x, y, z = self.ts_mol.ts_state.coordinates[i]/ht.angstrom
                     print >> f, '%2s %15.10f %15.10f %15.10f' % (n, x, y, z)
             self.output = name
         # print self.auto_key_ic
@@ -140,11 +141,14 @@ class Window(QtGui.QMainWindow):
 
     def open_select_key_ci(self):
         if self.ts_mol:
-            ic_info, atom_info = self.ts_mol.procedures, self.ts_mol.numbers
-            table_gui = KeyIcTable(ic_info, atom_info)
+            molecule = self.ts_mol
+            table_gui = KeyIcTable(molecule)
             table_gui.setWindowTitle("Key IC Selection --by Derrick")
             table_gui.exec_()
-
+            # print self.ts_mol._ic_key_counter
+        else:
+            fail = QtGui.QMessageBox.warning(self, "Can't do that", '''Can't do that
+                \nPlease generate transition guess structure first''', QtGui.QMessageBox.Ok)
 
     def about(self):
         popup = QtGui.QMessageBox.about(self, "About Saddle", '''<font size="6"><p align="center">Saddle</p></font>

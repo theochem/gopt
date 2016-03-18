@@ -9,19 +9,21 @@ from horton import periodic
 
 class KeyIcTable(QtGui.QDialog):
 
-    def __init__(self, ic_info, atom_info):
+    def __init__(self, mol):
         super(KeyIcTable, self).__init__()
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        self.ic_info = ic_info
+        self.mol = mol
+        self.ic_info = mol.ts_state.procedures
+        self.atom_info = mol.ts_state.numbers
         self.ui.keyic_table_widget.setColumnCount(5)
-        self.ui.keyic_table_widget.setRowCount(len(ic_info))
-        print self.ui.keyic_table_widget.rowCount()
-        print len(ic_info)+1
+        self.ui.keyic_table_widget.setRowCount(len(self.ic_info))
+        # print self.ui.keyic_table_widget.rowCount()
+        # print len(ic_info)+1
         self.ui.keyic_table_widget.setHorizontalHeaderLabels(['IC Type', 'Atom1', 'Atom2', 'Atom3', 'Atom4'])
         self.ui.keyic_table_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
-        for row in range(len(ic_info)):
-            info = ic_info[row]
+        for row in range(len(self.ic_info)):
+            info = self.ic_info[row]
             if info[0] == 'add_bond_length':
                 content = QtGui.QTableWidgetItem('Bond')
             elif info[0] == "add_bend_angle":
@@ -38,7 +40,7 @@ class KeyIcTable(QtGui.QDialog):
             content.setCheckState(QtCore.Qt.Unchecked)
             atoms = info[1]
             for i in range(len(atoms)):
-                sym = periodic[atom_info[atoms[i]]].symbol
+                sym = periodic[self.atom_info[atoms[i]]].symbol
                 index = atoms[i]
                 item = QtGui.QTableWidgetItem('{}  ({})'.format(index, sym))
                 item.setFlags(QtCore.Qt.ItemIsEnabled)
@@ -51,6 +53,12 @@ class KeyIcTable(QtGui.QDialog):
         self.ui.keyic_table_widget.itemClicked.connect(self.item_check)
         self.ui.return_button.accepted.connect(self.accept_key_ic)
         self.ui.return_button.rejected.connect(self.reject_key_ic)
+        if self.mol._ic_key_counter > 0:
+            for i in range(self.mol._ic_key_counter):
+                self.ui.keyic_table_widget.item(i, 0).setCheckState(QtCore.Qt.Checked)
+                for j in range(5):
+                    if self.ui.keyic_table_widget.item(i, j).text():
+                        self.ui.keyic_table_widget.item(i, j).setBackgroundColor(QtGui.QColor(200, 200, 200))
 
     def item_check(self, item):
         if item.checkState() == QtCore.Qt.Checked:
@@ -65,15 +73,22 @@ class KeyIcTable(QtGui.QDialog):
                     self.ui.keyic_table_widget.item(row, i).setBackgroundColor(QtGui.QColor(255, 255, 255))
 
     def accept_key_ic(self):
-        print "cool"
+        key_ic = []
+        self.mol._ic_key_counter = 0
+        rows = self.ui.keyic_table_widget.rowCount()
+        for i in range(rows):
+            if self.ui.keyic_table_widget.item(i, 0).checkState() == QtCore.Qt.Checked:
+                key_ic.append(i)
+        # print key_ic
+        self.mol._arrange_key_ic(key_ic)
+        # print self.mol._ic_key_counter
 
     def reject_key_ic(self):
-        print 'not cool'
+        pass
 
-# app = QtGui.QApplication(sys.argv)
-# data = [('add_bend_angle', (0, 1, 2)), ('add_bond_length', (1, 2)), ('add_bond_length', (0, 1))]
-# atom_info = [1, 8, 1]
-# gui = KeyIcTable(data, atom_info)
-# gui.setWindowTitle("Key IC Selection --by Derrick")
-# gui.show()
-# sys.exit(app.exec_())
+# if __name__ == '__main__':
+#     app = QtGui.QApplication(sys.argv)
+#     # gui = KeyIcTable(data, atom_info)
+#     gui.setWindowTitle("Key IC Selection --by Derrick")
+#     gui.show()
+#     sys.exit(app.exec_())
