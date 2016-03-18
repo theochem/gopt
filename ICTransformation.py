@@ -57,6 +57,11 @@ class ICTransformation(object):
         self.energy = None
         self.gradient_matrix = None
         self.hessian_matrix = None
+        self.ic_gradient = None
+        self.ic_hessian = None
+        # self.v_matrix = None
+        # self.v_gradient = None
+        # self.v_hessian = None
 
     def length_calculate(self, atom1, atom2):
         """To calculate distance between two atoms
@@ -571,15 +576,48 @@ class ICTransformation(object):
         self.h_matrix = np.zeros((0, 3 * self.len, 3 * self.len), float)
 
 
-    def get_energy_gradient_hessian(self, method="lf"):
+    def get_energy_gradient_hessian(self, convert=True, method="lf"):
         if method == "lf":
-            ob = LJEnergy(self)
-            self.energy, self.gradient_matrix, self.hessian_matrix = ob.get_energy_gradient_hessian()
+            self.energy, self.gradient_matrix, self.hessian_matrix = self._lf_get_energy_gradient_hessian()
+        if convert:
+            self.gradient_x_to_ic()
+            self.hessian_x_to_ic()
+            # self.ic_gradient = np.dot(np.linalg.pinv(self.b_matrix.T), self.gradient_matrix)
+            # print np.dot(self.b_matrix.T, self.ic_gradient)
+            # print "test", self.b_matrix.T.shape, self.hessian_matrix.shape, self.b_matrix.shape
+            # print self.ic_gradient.shape, self.h_matrix.shape
+            # k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
+            # self.ic_hessian = np.dot(np.dot(np.linalg.pinv(self.b_matrix.T), (self.hessian_matrix - k_matrix)), np.linalg.pinv(self.b_matrix))
+            print self.ic_hessian.shape
+            # self.ic_hessian = np.dot(np.dot(self.b_matrix.T, self.hessian_matrix), self.b_matrix)# + np.tensordot(self.gradient_matrix, self.b_matrix, 1)
+
+
+    def _lf_get_energy_gradient_hessian(self):
+        ob = LJEnergy(self)
+        return ob.get_energy_gradient_hessian()
 
     def get_energy_gradient(self, method="lf"):
         if method == "lf":
             ob = LJEnergy(self)
-            self.energy, self.gradient_matrix = ob.get_energy_gradient()
+            self.energy, self.gradient_matrix = self._lf_get_energy_gradient()
+
+    def _lf_get_energy_gradient(self):
+        ob = LJEnergy(self)
+        return ob.get_energy_gradient
+
+    def gradient_x_to_ic(self):
+        self.ic_gradient = np.dot(np.linalg.pinv(self.b_matrix.T), self.gradient_matrix)
+
+    def hessian_x_to_ic(self):
+        k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
+ 
+    def gradient_ic_to_x(self):
+        self.gradient_matrix = np.dot(self.b_matrix.T, self.ic_gradient)
+
+    def hessian_ic_to_x(self):
+        k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
+        self.hessian_matrix = np.dot(np.dot(self.b_matrix.T, self.ic_hessian), self.b_matrix) + np.tensordot(self.ic_gradient, self.h_matrix, 1)
+
 
     _IC_types = {
         "add_bond_length": ICFunctions.bond_length,
@@ -627,9 +665,9 @@ if __name__ == '__main__':
     h2a.add_bond_length(2, 1)
     h2a.add_bend_angle(0,1,2)
     print h2a.angle_calculate(0,1,2)
-    print h2a.ic_info
+    print "icinfo",h2a.ic_info
     print h2a.ic
-    print h2a.procedures
+    print "procedures",h2a.procedures,h2a.numbers
     # h2a._set_target_ic([2.8, 2.6])
     print h2a.target_ic
     h2a.ic_swap(0, 2)

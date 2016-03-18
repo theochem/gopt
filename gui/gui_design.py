@@ -1,11 +1,12 @@
 import sys
 import horton as ht
-import os
+# import os
 
 from saddle import TransitionSearch
 from PyQt4 import QtGui, QtCore
 from gui_ts_guess import Ui_MainWindow
-# from subprocess import call
+from subprocess import Popen
+from key_table_view import KeyIcTable
 
 
 class Window(QtGui.QMainWindow):
@@ -37,6 +38,7 @@ class Window(QtGui.QMainWindow):
         self.ts_mol = None
         self.ui.view_vmd.clicked.connect(self.view_vmd)
         self.output = None
+        self.ui.select_key_ic.clicked.connect(self.open_select_key_ci)
 
     def reactant_open(self):
         name = QtGui.QFileDialog.getOpenFileName(self,"Open file")
@@ -130,12 +132,25 @@ class Window(QtGui.QMainWindow):
         # print self.auto_key_ic
 
     def view_vmd(self):
-        os.system("vmd {0}".format(self.output))
+        file_name = "{}".format(self.output)
+        arg = ["vmd",file_name]
+        a = Popen(arg)
+        print a
+        # os.system("vmd {0}".format(self.output))
+
+    def open_select_key_ci(self):
+        if self.ts_mol:
+            ic_info, atom_info = self.ts_mol.procedures, self.ts_mol.numbers
+            table_gui = KeyIcTable(ic_info, atom_info)
+            table_gui.setWindowTitle("Key IC Selection --by Derrick")
+            table_gui.exec_()
+
 
     def about(self):
         popup = QtGui.QMessageBox.about(self, "About Saddle", '''<font size="6"><p align="center">Saddle</p></font>
             \n<font size="3"><p align="center">Copyright 2016 Horton Group</p></font>\n
             <font size="2"><p align="center">version 1.0 by Derrick</p></font>''')
+
 
 app = QtGui.QApplication(sys.argv)
 gui = Window()

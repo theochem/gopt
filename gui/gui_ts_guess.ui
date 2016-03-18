@@ -15,17 +15,27 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="3" column="0">
-     <widget class="QPushButton" name="product_reset">
+    <item row="6" column="0">
+     <widget class="QCheckBox" name="auto_key_ic">
       <property name="text">
-       <string>Reset</string>
+       <string>Auto Key IC Select</string>
       </property>
      </widget>
     </item>
-    <item row="7" column="0" colspan="3">
-     <widget class="QProgressBar" name="tc_progressBar">
+    <item row="4" column="3">
+     <widget class="QSlider" name="ratio_slide_bar">
       <property name="value">
-       <number>24</number>
+       <number>50</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="11" column="0">
+     <widget class="QPushButton" name="view_vmd">
+      <property name="text">
+       <string>View in VMD</string>
       </property>
      </widget>
     </item>
@@ -33,6 +43,30 @@
      <widget class="QPushButton" name="reactant">
       <property name="text">
        <string>Reactant</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Initial Guess Ratio</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1" rowspan="2" colspan="3">
+     <widget class="QTextEdit" name="reactant_text"/>
+    </item>
+    <item row="5" column="0">
+     <widget class="QCheckBox" name="auto_ic_select">
+      <property name="text">
+       <string>Auto IC Select</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="product_reset">
+      <property name="text">
+       <string>Reset</string>
       </property>
      </widget>
     </item>
@@ -49,9 +83,6 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="1" rowspan="2" colspan="3">
-     <widget class="QTextEdit" name="product_text"/>
-    </item>
     <item row="1" column="0">
      <widget class="QPushButton" name="reactant_reset">
       <property name="text">
@@ -66,68 +97,44 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
-     <widget class="QLabel" name="label">
-      <property name="text">
-       <string>Initial Guess Ratio</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="3">
-     <widget class="QSlider" name="ratio_slide_bar">
-      <property name="value">
-       <number>50</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="0">
-     <widget class="QCheckBox" name="auto_key_ic">
-      <property name="text">
-       <string>Auto Key IC Select</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1" rowspan="2" colspan="3">
-     <widget class="QTextEdit" name="reactant_text"/>
-    </item>
-    <item row="7" column="3">
-     <widget class="QPushButton" name="ts_guess">
-      <property name="text">
-       <string>Get TS Guess</string>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="0">
-     <widget class="QCheckBox" name="auto_ic_select">
-      <property name="text">
-       <string>Auto IC Select</string>
-      </property>
-     </widget>
+    <item row="2" column="1" rowspan="2" colspan="3">
+     <widget class="QTextEdit" name="product_text"/>
     </item>
     <item row="5" column="1" rowspan="2" colspan="3">
      <widget class="QTextEdit" name="key_ic_text"/>
     </item>
-    <item row="8" column="3">
-     <widget class="QPushButton" name="save_saddle">
-      <property name="text">
-       <string>Save as .saddle</string>
-      </property>
-     </widget>
-    </item>
-    <item row="8" column="2">
+    <item row="11" column="2">
      <widget class="QPushButton" name="save_xyz">
       <property name="text">
        <string>Save as .xyz</string>
       </property>
      </widget>
     </item>
-    <item row="8" column="0">
-     <widget class="QPushButton" name="view_vmd">
+    <item row="11" column="3">
+     <widget class="QPushButton" name="save_saddle">
       <property name="text">
-       <string>View in VMD</string>
+       <string>Save as .saddle</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="0" colspan="2">
+     <widget class="QProgressBar" name="tc_progressBar">
+      <property name="value">
+       <number>24</number>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="2">
+     <widget class="QPushButton" name="ts_guess">
+      <property name="text">
+       <string>Get TS Guess</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="3">
+     <widget class="QPushButton" name="select_key_ic">
+      <property name="text">
+       <string>Select Key IC</string>
       </property>
      </widget>
     </item>
@@ -138,17 +145,18 @@
    <zorder>product_text</zorder>
    <zorder>product</zorder>
    <zorder>product_reset</zorder>
-   <zorder>auto_ic_select</zorder>
    <zorder>label</zorder>
-   <zorder>ts_guess</zorder>
    <zorder>tc_progressBar</zorder>
    <zorder>save_saddle</zorder>
    <zorder>ratio_slide_bar</zorder>
    <zorder>ratio_value</zorder>
-   <zorder>auto_key_ic</zorder>
    <zorder>save_xyz</zorder>
    <zorder>key_ic_text</zorder>
    <zorder>view_vmd</zorder>
+   <zorder>auto_ic_select</zorder>
+   <zorder>auto_key_ic</zorder>
+   <zorder>ts_guess</zorder>
+   <zorder>select_key_ic</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

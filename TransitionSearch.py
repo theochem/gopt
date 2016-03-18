@@ -380,6 +380,9 @@ class TransitionSearch(object):
                 return (flag, (index1, index2))
         return (flag,)
 
+    def select_key_ic(self):
+        print self.ic
+
     def auto_key_ic_select(self):
         """auto key internal coordinates generator
         """
@@ -459,12 +462,12 @@ if __name__ == '__main__':
     h22.put_transition_state_molucule_in_xyz("test ts_state")
     print "opt ic", h22.ts_state.ic
     # ts_ob = TS_Treat(h22.ts_state, h22._ic_key_counter)
-    print "dof", ts_ob.ts_state._dof
-    print "key_ic number", ts_ob.key_ic
-    print "ts eigenvector",ts_ob._matrix_a_eigen(), len(ts_ob._matrix_a_eigen())
-    print "deloc_reduce",ts_ob._deloc_reduce_ic()
-    print ts_ob._deloc_non_reduce_ic()
-    ts_ob.get_v_basis()
+    # print "dof", ts_ob.ts_state._dof
+    # print "key_ic number", ts_ob.key_ic
+    # print "ts eigenvector",ts_ob._matrix_a_eigen(), len(ts_ob._matrix_a_eigen())
+    # print "deloc_reduce",ts_ob._deloc_reduce_ic()
+    # print ts_ob._deloc_non_reduce_ic()
+    # ts_ob.get_v_basis()
     # for i in range(9):
     #     print np.linalg.norm(ts_ob.v_matrix[:,i])
     # ts_ob.get_v_basis()
