@@ -17,6 +17,8 @@ class TS_Treat(object):
         self.ts_state = ts_state
         self.key_ic = key_ic_number
         self.v_matrix = None
+        self.v_gradient = None
+        self.v_hessian = None
 
     def _matrix_a_eigen(self):
         """calculate eigenvalue of b_matrix, select 3n-5 to form the a matrix
@@ -169,3 +171,15 @@ class TS_Treat(object):
         new_ts_state = deepcopy(self) #deepcopy self
         new_ts_state.ts_state.use_delta_ic_to_calculate_new_cc(delta_q)
         return new_ts_state
+
+    def get_v_gradient(self):
+        q_v = self.ts_state.ic_gradient
+        self.v_gradient = np.dot(self.v_matrix.T, q_v)
+
+    def get_v_hessian(self):
+        q_h = self.ts_state.ic_hessian
+        self.v_hessian = np.dot(np.dot(self.v_matrix.T, q_h), self.v_matrix)
+
+    def get_v_gradient_hessian(self):
+        self.get_v_gradient()
+        self.get_v_hessian()

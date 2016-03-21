@@ -1,5 +1,6 @@
 import sys
 import horton as ht
+# import PyQt4 import Qt
 # import os
 
 from saddle import TransitionSearch
@@ -15,6 +16,7 @@ class Window(QtGui.QMainWindow):
         super(Window, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        # QtGui.QApplication.setStyle(QtGui.QStyleFactory.create("Windows"))
         self.reactant_path = None
         self.product_path = None
         self.lable_ratio_value = 50
