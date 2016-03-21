@@ -150,12 +150,12 @@ class TS_Treat(object):
         self.v_matrix = max_v
 
     def create_a_saddle_point(self):
-        length = len(self.ts_state.ic)
-        g_matrix = self.ts_state.gradient_matrix
+        length = len(self.ts_state._dof)
+        g_matrix = self.v_gradient
         vmatrix = self.v_matrix
         reference = self
         key_ic_number = self.key_ic
-        h_matrix = self.ts_state.hessian_matrix
+        h_matrix = v_hessian
         new_point = SaddlePoint(length, g_matrix, vmatrix, reference, key_ic_number, h_matrix)
         return new_point
 
@@ -170,6 +170,9 @@ class TS_Treat(object):
         delta_q = np.dot(self.v_matrix, delta_v)
         new_ts_state = deepcopy(self) #deepcopy self
         new_ts_state.ts_state.use_delta_ic_to_calculate_new_cc(delta_q)
+        new_ts_state.ts_state.get_energy_gradient()
+        new_ts_state.get_v_basis()
+        new_ts_state.get_v_gradient()
         return new_ts_state
 
     def get_v_gradient(self):
@@ -183,3 +186,5 @@ class TS_Treat(object):
     def get_v_gradient_hessian(self):
         self.get_v_gradient()
         self.get_v_hessian()
+
+    # def update_hessian_finite_difference(self, other):

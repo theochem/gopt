@@ -47,6 +47,10 @@ class SaddlePoint(object):
         self.reference = reference
         self.stepsize = None
 
+    # def _test_necessity_for_finite_difference(self):
+    #     for i in range(self.key_ic_number):
+    #         if self.g_matrix[i] > np.linalg.norm(self.g_matrix) / math.sqrt(self.reference.ts_state._dof)
+
     def _diagnolize_h_matrix(self):
         """diagnolize hessian matrix if it is not none
         """
@@ -142,7 +146,7 @@ class SaddlePoint(object):
                 SaddlePoint.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
             for i in range(1, total_number):
                 self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
-            self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])            
+            self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])
 
     def _reconstruct_hessian_matrix(self):
         """reconstruct new hessian depends on the twieked hessian matrix

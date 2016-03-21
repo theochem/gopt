@@ -35,9 +35,33 @@ def test_transitionsearch_cl_h_br():
     new_rdric = [rdric[:,i] / np.linalg.norm(rdric[:, i]) for i in range(len(rdric[0]))]
     new_rdric = np.array(new_rdric).T
     test_v = np.hstack((new_dric, new_rdric))
-    assert np.allclose(ts_treat.v_matrix, test_v)
     print test_v.shape
-    print reactant.natom
+    assert np.allclose(ts_treat.v_matrix, test_v)
+    ts_treat.ts_state.get_energy_gradient_hessian()
+    print ts_treat.ts_state.energy, ts_treat.ts_state.gradient_matrix#, ts_treat.ts_state.hessian_matrix
+    # print "x",ts_treat.ts_state.gradient_matrix
+    # print "x",ts_treat.ts_state.hessian_matrix
+    # print "ic",ts_treat.ts_state.ic_gradient
+    # print "ic", ts_treat.ts_state.ic_hessian
+    ts_treat.ts_state.gradient_ic_to_x()
+    ts_treat.ts_state.hessian_ic_to_x()
+    # print "x",ts_treat.ts_state.gradient_matrix
+    # print "x",ts_treat.ts_state.hessian_matrix
+    ts_treat.ts_state.hessian_x_to_ic()
+    # print "ic", ts_treat.ts_state.ic_hessian
+    ts_treat.ts_state.hessian_ic_to_x()
+    ts_treat.get_v_gradient()
+    ts_treat.get_v_hessian()
+    print ts_treat.v_hessian
+    print ts_treat.v_gradient
+    # print ts_treat.ts_state.ic_gradient
+    # print "x", ts_treat.ts_state.hessian_matrix
+
+    # start_point = ts_treat.create_a_saddle_point()
+
+    # print test_v.shape
+    # print reactant.natom
+
 
 if __name__ == '__main__':
     test_transitionsearch_cl_h_br()
