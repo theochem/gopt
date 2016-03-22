@@ -541,10 +541,10 @@ class ICTransformation(object):
             delta_q (numpy.array): the change of internal coordinates
         
         """
-        b_inv = np.linalg.inv(self.b_matrix)
+        b_inv = np.linalg.pinv(self.b_matrix)
         delta_x = np.dot(b_inv, delta_q)
         new_coor = self.coordinates + delta_x.reshape(-1, 3)
-        get_new_coor(self, new_coor)
+        self.get_new_coor(new_coor)
 
     def _reset_ic(self):
         """private method to calculate each internal coordinates again to get the updated ic value for new coordinates
@@ -593,14 +593,15 @@ class ICTransformation(object):
         ob = LJEnergy(self)
         return ob.get_energy_gradient_hessian()
 
-    def get_energy_gradient(self, method="lf"):
+    def get_energy_gradient(self, convert=True, method="lf"):
         if method == "lf":
-            ob = LJEnergy(self)
             self.energy, self.gradient_matrix = self._lf_get_energy_gradient()
+        if convert:
+            self.gradient_x_to_ic()
 
     def _lf_get_energy_gradient(self):
         ob = LJEnergy(self)
-        return ob.get_energy_gradient
+        return ob.get_energy_gradient()
 
     def gradient_x_to_ic(self):
         self.ic_gradient = np.dot(np.linalg.pinv(self.b_matrix.T), self.gradient_matrix)

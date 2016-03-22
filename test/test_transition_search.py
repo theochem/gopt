@@ -2,6 +2,7 @@ import horton as ht
 import numpy as np
 from saddle.TransitionSearch import *
 from saddle.tstreat import TS_Treat
+from saddle.optimizer.saddle_optimizer import TrialOptimizer
 import pprint
 
 def test_transitionsearch_cl_h_br():
@@ -38,6 +39,7 @@ def test_transitionsearch_cl_h_br():
     print test_v.shape
     assert np.allclose(ts_treat.v_matrix, test_v)
     ts_treat.ts_state.get_energy_gradient_hessian()
+    ts_treat.ts_state.get_energy_gradient()
     print ts_treat.ts_state.energy, ts_treat.ts_state.gradient_matrix#, ts_treat.ts_state.hessian_matrix
     # print "x",ts_treat.ts_state.gradient_matrix
     # print "x",ts_treat.ts_state.hessian_matrix
@@ -52,8 +54,34 @@ def test_transitionsearch_cl_h_br():
     ts_treat.ts_state.hessian_ic_to_x()
     ts_treat.get_v_gradient()
     ts_treat.get_v_hessian()
+    print ts_treat.v_matrix.shape
     print ts_treat.v_hessian
+    print "hessian", np.linalg.eigh(ts_treat.v_hessian)
     print ts_treat.v_gradient
+    print ts_treat.step_control
+    optimizer = TrialOptimizer()
+    optimizer.set_trust_radius_method(method="default", parameter=3)
+    optimizer.add_a_point(ts_treat)
+    optimizer.initialize_trm_for_point_with_index(0)
+    optimizer.tweak_hessian_for_latest_point()
+    print np.linalg.eigh(ts_treat.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    print ts_treat.stepsize
+    new_point = ts_treat.obtain_new_cc_with_new_delta_v(ts_treat.stepsize)
+    print new_point
+    print ts_treat.ts_state.coordinates
+    print new_point.ts_state.coordinates
+    another_new = optimizer.update_to_new_point_for_a_point(0)
+    print another_new.ts_state.ic
+    # print ts_treat.step_control
+    # ts_treat._diagnolize_h_matrix()
+    # print ts_treat.advanced_info['eigenvalues']
+    # ts_treat._modify_h_matrix()
+    # print ts_treat.advanced_info['eigenvalues']
+    # ts_treat._reconstruct_hessian_matrix()
+    # print "new hessian", ts_treat.v_hessian
+
+
     # print ts_treat.ts_state.ic_gradient
     # print "x", ts_treat.ts_state.hessian_matrix
 

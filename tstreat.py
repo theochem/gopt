@@ -20,7 +20,7 @@ class TS_Treat(object):
         self.v_matrix = None
         self.v_gradient = None
         self.v_hessian = None
-        self.stepcontrol = None
+        self.step_control = None
         self.stepsize = None
         self.advanced_info = {}
 
@@ -246,7 +246,7 @@ class TS_Treat(object):
             for i in range(neg):
                 corresponding_eigenvector = self.advanced_info["eigenvectors"][:,i]
                 temp_sum = 0
-                for j in range(self.key_ic_number):
+                for j in range(self.key_ic):
                     temp_sum += corresponding_eigenvector[j]**2
                 if temp_sum > fraction:
                     fraction = temp_sum
@@ -266,11 +266,11 @@ class TS_Treat(object):
             for i in range(total_number):
                 corresponding_eigenvector = self.advanced_info["eigenvectors"][:,i]
                 temp_sum = 0
-                for j in range(self.key_ic_number):
+                for j in range(self.key_ic):
                     temp_sum += corresponding_eigenvector[j]**2
                 if temp_sum >= 0.5:
-                    if self.eigenvalues[i] < lowest_eigenvalue or lowest_eigenvalue == None:
-                        lowest_eigenvalue = self.eigenvalues[i]
+                    if self.advanced_info["eigenvalues"][i] < lowest_eigenvalue or lowest_eigenvalue == None:
+                        lowest_eigenvalue = self.advanced_info["eigenvalues"][i]
                         label_flag = i
             if label_flag != 0:
                 TS_Treat.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
@@ -325,8 +325,9 @@ class TS_Treat(object):
         Returns:
             numpy.array: the steps to be taken to update geometry
         """
-        eigenvectors = self.advanced_info["eigenvalues"]
+        eigenvalues = self.advanced_info["eigenvalues"]
         eigenvectors = self.advanced_info["eigenvectors"]
+        g_matrix = self.v_gradient
         #construct neg_matrix
         neg_matrix = np.zeros((2,2), float)
         neg_matrix[0][0] = eigenvalues[0]
