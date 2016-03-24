@@ -553,6 +553,11 @@ class ICTransformation(object):
         self.ic = np.array([])
         self.b_matrix = np.zeros((0, 3 * self.len), float)
         self.h_matrix = np.zeros((0, 3 * self.len, 3 * self.len), float)
+        self.energy = None
+        self.gradient_matrix = None
+        self.hessian_matrix = None
+        self.ic_gradient = None
+        self.ic_hessian = None
         for i in self.procedures:
             self._add_ic(i[0], i[1])
         self.iteration_flag = False

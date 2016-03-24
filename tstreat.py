@@ -173,6 +173,11 @@ class TS_Treat(object):
         """
         delta_q = np.dot(self.v_matrix, delta_v)
         new_ts_state = deepcopy(self) #deepcopy self
+        new_ts_state.v_matrix = None
+        new_ts_state.v_gradient = None
+        new_ts_state.v_hessian = None
+        new_ts_state.advanced_info = {}
+        new_ts_state.stepsize = None
         new_ts_state.ts_state.use_delta_ic_to_calculate_new_cc(delta_q)
         new_ts_state.ts_state.get_energy_gradient()
         new_ts_state.get_v_basis()

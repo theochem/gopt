@@ -17,7 +17,7 @@ class TrialOptimizer(object):
     def __init__(self):
         self.points = []
         self._trust_radius = None
-        self.ancestors=[]
+        # self.parents=[]
 
     def _update_hessian_finite_difference(self, index, perturb=0.001):
         point = self.points[index]
@@ -36,7 +36,7 @@ class TrialOptimizer(object):
             pt4 = np.dot(db.T, point.reference.ts_state.ic_gradient)
             point.hessian[:, i] = pt1 - np.dot(pt2, (pt3 + pt4))
 
-    def set_trust_radius_method(self, **kwmethod):
+    def set_trust_radius_method(self, **kwmethod): #checked
         """select keyword args to implement different trust radius methods
 
         Args:
@@ -55,7 +55,7 @@ class TrialOptimizer(object):
         else:
             self._trust_radius = trm_method()
 
-    def initialize_trm_for_point_with_index(self, index):
+    def initialize_trm_for_point_with_index(self, index): #checked
         """initilize point with selected trust radius method
 
         Args:
@@ -89,7 +89,7 @@ class TrialOptimizer(object):
         """
         return len(self.points) - 1
 
-    def add_a_point(self, point):
+    def add_a_point(self, point): #checked
         """add a point to self.points attribute
 
         Args:
@@ -97,7 +97,7 @@ class TrialOptimizer(object):
         """
         self.points.append(point)
 
-    def update_hessian_for_a_point(self, index, **kwmethod):
+    def update_hessian_for_a_point(self, index, **kwmethod): 
         """update hessian for a certain point
 
         Args:
@@ -146,7 +146,7 @@ class TrialOptimizer(object):
         # otherwise return False.
         return True
 
-    def tweak_hessian_for_a_point(self, index):
+    def tweak_hessian_for_a_point(self, index): #checked
         """tweak the hessian for a point in self.points
 
         Args:
@@ -155,7 +155,7 @@ class TrialOptimizer(object):
         point = self.points[index]
         self._tweak_hessian(point)
 
-    def tweak_hessian_for_latest_point(self):
+    def tweak_hessian_for_latest_point(self): #checked
         """tweak the hessian for the latest point
 
         """
@@ -177,7 +177,7 @@ class TrialOptimizer(object):
         point._modify_h_matrix()
         point._reconstruct_hessian_matrix()  # reconstruct hessian matrix
 
-    def find_stepsize_for_a_point(self, index, **kwmethod):
+    def find_stepsize_for_a_point(self, index, **kwmethod): #checked
         """find the proper stepsize for a certain point
 
         Args:
@@ -200,7 +200,7 @@ class TrialOptimizer(object):
             stepsize = point._rational_function_optimization()
         point.stepsize = stepsize
 
-    def find_stepsize_for_latest_point(self, **kwmethod):
+    def find_stepsize_for_latest_point(self, **kwmethod): #checked
         """find the proper stepsize for latest point
 
         Args:
@@ -212,10 +212,28 @@ class TrialOptimizer(object):
         """
         self.find_stepsize_for_a_point(self.latest_index, **kwmethod)
 
-    def update_to_new_point_for_a_point(self, index):
+    def update_to_new_point_for_a_point(self, index): #chekced
         point = self.points[index]
         new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize)
         return new_point
+
+    def _check_new_point_satisfied(self, old_point, new_point):
+        no1 = np.linalg.norm(old_point.ts_state.gradient_matrix)
+        no2 = np.linalg.norm(new_point.ts_state.gradient_matrix)
+        print "no1, no2", no1, no2
+        if no2 > no1:
+            return False
+        return True
+
+    def _change_trust_radius_step(self, index, multiplier):
+        point = self.points[index]
+        new_control = point.step_control * multiplier
+        point.step_control = max(new_control, self._trust_radius.min)
+
+
+
+    def update_to_new_point_for_latest_point(self): #checked
+        return self.update_to_new_point_for_a_point(self.latest_index)
 
     def update_trust_radius_for_a_point(self, index, **kwmethod):
         """update the trust radius for a certain point

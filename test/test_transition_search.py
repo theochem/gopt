@@ -69,10 +69,23 @@ def test_transitionsearch_cl_h_br():
     print ts_treat.stepsize
     new_point = ts_treat.obtain_new_cc_with_new_delta_v(ts_treat.stepsize)
     print new_point
-    print ts_treat.ts_state.coordinates
+    print ts_treat.ts_state.energy
     print new_point.ts_state.coordinates
-    another_new = optimizer.update_to_new_point_for_a_point(0)
-    print another_new.ts_state.ic
+    another_new = optimizer.update_to_new_point_for_latest_point()
+    print another_new.ts_state.energy
+    print optimizer._check_new_point_satisfied(ts_treat, another_new)
+    print ts_treat.step_control
+    optimizer._change_trust_radius_step(0, 0.25)
+    print ts_treat.step_control
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    second_new = optimizer.update_to_new_point_for_latest_point()
+    print "norm",np.linalg.norm(second_new.ts_state.gradient_matrix)
+    optimizer.add_a_point(second_new)
+    # optimizer.tweak_hessian_for_latest_point()
+    # optimizer.find_stepsize_for_latest_point(method="TRIM")
+    # third_p = optimizer.update_to_new_point_for_latest_point()
+
+
     # print ts_treat.step_control
     # ts_treat._diagnolize_h_matrix()
     # print ts_treat.advanced_info['eigenvalues']
