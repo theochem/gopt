@@ -2,7 +2,7 @@ import numpy as np
 import horton as ht
 import scipy.optimize as opt
 
-from copy import deepcopy
+from copy import deepcopy, copy
 # from saddle.saddlepoint import SaddlePoint
 
 class TS_Treat(object):
@@ -214,14 +214,12 @@ class TS_Treat(object):
             the_other_index (int): the other index to be switched
         """
         # set temp eigenvalue and eigenvector
+        eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[the_other_index], eigenvalues[one_index]
         temp_eigen_value = copy(eigenvalues[one_index])
         temp_eigen_vector = copy(eigenvectors[:, one_index])
         # assign the other index 
-        eigenvalues[one_index] = copy(eigenvalues[the_other_index])
-        eigenvectors[:, one_index] = copy(eigenvectors[:, the_other_index])
-        # assign the temp value back to the other index
-        eigenvalues[the_other_index] = copy(eigenvalues[one_index])
-        eigenvectors[:, the_other_index] = copy(eigenvectors[:, one_index])
+        eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[the_other_index], eigenvalues[one_index]
+        eigenvectors[:, one_index], eigenvectors[:, the_other_index] = eigenvectors[:, the_other_index], eigenvectors[:, one_index]
 
     def _modify_h_matrix(self, pos_thresh=0.005, neg_thresh=-0.005):
         """modify the eigenvalues of hessian matrix to make sure it has the right form

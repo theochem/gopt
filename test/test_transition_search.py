@@ -68,11 +68,12 @@ def test_transitionsearch_cl_h_br():
     optimizer.find_stepsize_for_latest_point(method="TRIM")
     print ts_treat.stepsize
     new_point = ts_treat.obtain_new_cc_with_new_delta_v(ts_treat.stepsize)
-    print new_point
+    print "new point", new_point, new_point.ts_state.coordinates
     print ts_treat.ts_state.energy
+    print new_point.ts_state.energy
     print new_point.ts_state.coordinates
     another_new = optimizer.update_to_new_point_for_latest_point()
-    print another_new.ts_state.energy
+    print "another energy", another_new.ts_state.energy, another_new.ts_state.ic_gradient
     print optimizer._check_new_point_satisfied(ts_treat, another_new)
     print ts_treat.step_control
     optimizer._change_trust_radius_step(0, 0.25)
@@ -81,6 +82,17 @@ def test_transitionsearch_cl_h_br():
     second_new = optimizer.update_to_new_point_for_latest_point()
     print "norm",np.linalg.norm(second_new.ts_state.gradient_matrix)
     optimizer.add_a_point(second_new)
+    second = optimizer._secant_condition(optimizer.points[1], optimizer.points[0])
+    print "this is secand",second
+    optimizer.update_hessian_for_latest_point(method="SR1")
+    print optimizer.points[1].v_hessian
+    print optimizer.points[0].v_hessian
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    print "stepsize", second_new.stepsize
+    third_p = ts_treat.obtain_new_cc_with_new_delta_v(ts_treat.stepsize)
+    print third_p.ts_state.gradient_matrix
+    # print optimizer.points[1].advanced_info['']
     # optimizer.tweak_hessian_for_latest_point()
     # optimizer.find_stepsize_for_latest_point(method="TRIM")
     # third_p = optimizer.update_to_new_point_for_latest_point()
