@@ -125,6 +125,7 @@ class TrialOptimizer(object):
             new_value = method(point, pre_point, secand_value)  # function need to be added here
             point.v_hessian = new_value
             print("finish updating")
+        assert np.allclose(point.v_hessian, point.v_hessian.T) # make sure Hessian is symmetric
 
     def update_hessian_for_latest_point(self, **kwmethod):
         """update hessian for the latest point
@@ -296,11 +297,12 @@ class TrialOptimizer(object):
         return secant_value
 
     def _test_converge(self, point, old_point, method="gradient"):
+        ## energy part need to be fixed
         if method == "gradient":
             gm = np.max(point.ts_state.gradient_matrix)
             return np.linalg.norm(gm) <= 3e-4
         elif method == "energy":
-            condition_1 = np.abs(point.ts_state.energy - old_point.ts.energy) <= 1e-6
+            condition_1 = np.abs(point.ts_state.energy - old_point.ts_state.energy) <= 1e-6
             delta_q = np.dot(point.v_matrix, point.stepsize)
             delta_x = np.dot(np.linalg.pinv(point.ts_state.b_matrix), delta_q)
             condition_2 = np.max(np.abs(delta_x)) <= 3e-4

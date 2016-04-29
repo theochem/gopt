@@ -203,23 +203,20 @@ class TS_Treat(object):
         self.advanced_info["eigenvalues"] = w
         self.advanced_info["eigenvectors"] = v
 
-    @staticmethod
-    def switch_eigens(eigenvalues, eigenvectors, one_index, the_other_index):
+    def switch_eigens(self, one_index, the_other_index):
         """switch the eigen values and eigenvalues of two different indexes
         
         Args:
-            eigenvalues (numpy.array): numpy array of whole bunch of eigenvalues
-            eigenvectors (numpy.array): numpy array of whole bunch of eigenvectors
             one_index (int): the one index to be switched
             the_other_index (int): the other index to be switched
         """
         # set temp eigenvalue and eigenvector
+        eigenvalues = self.advanced_info["eigenvalues"]
+        eigenvectors = self.advanced_info["eigenvectors"]
         eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[the_other_index], eigenvalues[one_index]
-        temp_eigen_value = copy(eigenvalues[one_index])
-        temp_eigen_vector = copy(eigenvectors[:, one_index])
         # assign the other index 
         eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[the_other_index], eigenvalues[one_index]
-        eigenvectors[:, one_index], eigenvectors[:, the_other_index] = eigenvectors[:, the_other_index], eigenvectors[:, one_index]
+        eigenvectors[:, one_index], eigenvectors[:, the_other_index] = np.copy(eigenvectors[:, the_other_index]), np.copy(eigenvectors[:, one_index])
 
     def _modify_h_matrix(self, pos_thresh=0.005, neg_thresh=-0.005):
         """modify the eigenvalues of hessian matrix to make sure it has the right form
@@ -250,15 +247,15 @@ class TS_Treat(object):
                 corresponding_eigenvector = self.advanced_info["eigenvectors"][:,i]
                 temp_sum = 0
                 for j in range(self.key_ic):
-                    temp_sum += corresponding_eigenvector[j]**2
+                    temp_sum += corresponding_eigenvector[j] ** 2
                 if temp_sum > fraction:
                     fraction = temp_sum
                     label_flag = i
-                print i, temp_sum
+                # print "find max",i, temp_sum
             #switch the selected negative eigenvalue and vector to index 0
             if label_flag != 0:
-                TS_Treat.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
-                print label_flag
+                self.switch_eigens(0, label_flag)
+                # print "negative eigen flag",label_flag
             for i in range(1, total_number):
                 self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
             self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])
@@ -276,7 +273,7 @@ class TS_Treat(object):
                         lowest_eigenvalue = self.advanced_info["eigenvalues"][i]
                         label_flag = i
             if label_flag != 0:
-                TS_Treat.switch_eigens(self.advanced_info["eigenvalues"], self.advanced_info["eigenvectors"], 0, label_flag)
+                self.switch_eigens(0, label_flag)
             for i in range(1, total_number):
                 self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
             self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])

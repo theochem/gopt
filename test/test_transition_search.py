@@ -23,7 +23,7 @@ def test_transitionsearch_cl_h_br():
     a_matrix = ts_treat._matrix_a_eigen()
     assert np.allclose(a_matrix, np.linalg.svd(ts_treat.ts_state.b_matrix)[0][:,:4])
     b_vector = ts_treat._projection()
-    ts_treat.get_v_basis()
+    ts_treat.get_v_basis() # obtain V basis for ts_treat
     ortho_b = TS_Treat.gram_ortho(b_vector)
     dric = np.dot(b_vector, ortho_b)
     new_dric = [dric[:, i] / np.linalg.norm(dric[:,i]) for i in range(len(dric[0]))]
@@ -36,26 +36,14 @@ def test_transitionsearch_cl_h_br():
     new_rdric = [rdric[:,i] / np.linalg.norm(rdric[:, i]) for i in range(len(rdric[0]))]
     new_rdric = np.array(new_rdric).T
     test_v = np.hstack((new_dric, new_rdric))
-    print test_v.shape
     assert np.allclose(ts_treat.v_matrix, test_v)
-    ts_treat.ts_state.get_energy_gradient_hessian()
+
+    ts_treat.ts_state.get_energy_gradient_hessian() #obtain energy, gradient, and hessian
     ts_treat.ts_state.get_energy_gradient()
-    print ts_treat.ts_state.energy, ts_treat.ts_state.gradient_matrix#, ts_treat.ts_state.hessian_matrix
-    # print "x",ts_treat.ts_state.gradient_matrix
-    # print "x",ts_treat.ts_state.hessian_matrix
-    # print "ic",ts_treat.ts_state.ic_gradient
-    # print "ic", ts_treat.ts_state.ic_hessian
-    ts_treat.ts_state.gradient_ic_to_x()
-    ts_treat.ts_state.hessian_ic_to_x()
-    # print "x",ts_treat.ts_state.gradient_matrix
-    # print "x",ts_treat.ts_state.hessian_matrix
-    ts_treat.ts_state.hessian_x_to_ic()
-    # print "ic", ts_treat.ts_state.ic_hessian
-    ts_treat.ts_state.hessian_ic_to_x()
+    print "first obtain energy and gradient", ts_treat.ts_state.energy, ts_treat.ts_state.gradient_matrix#, ts_treat.ts_state.hessian_matrix
     ts_treat.get_v_gradient()
     ts_treat.get_v_hessian()
-    print ts_treat.v_matrix.shape
-    print ts_treat.v_hessian
+    print ts_treat.v_hessian.shape
     print "hessian", np.linalg.eigh(ts_treat.v_hessian)
     print ts_treat.v_gradient
     print ts_treat.step_control
@@ -67,31 +55,79 @@ def test_transitionsearch_cl_h_br():
     print np.linalg.eigh(ts_treat.v_hessian)
     optimizer.find_stepsize_for_latest_point(method="TRIM")
     print ts_treat.stepsize
-    new_point = ts_treat.obtain_new_cc_with_new_delta_v(ts_treat.stepsize)
-    print "new point", new_point, new_point.ts_state.coordinates
+    # # new_point = ts_treat.obtain_new_cc_with_new_delta_v(ts_treat.stepsize)
+    # print "new point", new_point, new_point.ts_state.coordinates
     print ts_treat.ts_state.energy
-    print new_point.ts_state.energy
-    print new_point.ts_state.coordinates
+    # print new_point.ts_state.energy
+    # print new_point.ts_state.coordinates
     another_new = optimizer.update_to_new_point_for_latest_point()
     print "another energy", another_new.ts_state.energy, another_new.ts_state.ic_gradient
-    print optimizer._check_new_point_satisfied(ts_treat, another_new)
-    print ts_treat.step_control
-    optimizer._change_trust_radius_step(0, 0.25)
-    print ts_treat.step_control
-    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    print "satisfied check",optimizer._check_new_point_satisfied(ts_treat, another_new) # something need to be fixed
+    print "step control 1", ts_treat.step_control
+    optimizer._change_trust_radius_step(0, 0.25) # change the trust radius
+    print "step control 2", ts_treat.step_control
+    optimizer.find_stepsize_for_latest_point(method="TRIM") 
+    print 'gradient', ts_treat.v_gradient
+    print 'step', ts_treat.stepsize
+    print "dot time value", np.dot(ts_treat.v_gradient, ts_treat.stepsize)
+
     second_new = optimizer.update_to_new_point_for_latest_point()
     print "norm",np.linalg.norm(second_new.ts_state.gradient_matrix)
     optimizer.add_a_point(second_new)
     second = optimizer._secant_condition(optimizer.points[1], optimizer.points[0])
     print "this is secand",second
     optimizer.update_hessian_for_latest_point(method="SR1")
-    print optimizer.points[1].v_hessian
-    print optimizer.points[0].v_hessian
+    print "new hessian", optimizer.points[1].v_hessian
+    print "old hessian", optimizer.points[0].v_hessian
     optimizer.tweak_hessian_for_latest_point()
     optimizer.find_stepsize_for_latest_point(method="TRIM")
+    third_trial = optimizer.update_to_new_point_for_latest_point()
+    print "second stepsize", second_new.step_control
+    print "satisfied check",optimizer._check_new_point_satisfied(second_new, third_trial) # something need to be fixed
+    optimizer._change_trust_radius_step(1, 0.25) # change the trust radius
+    print "new second stepsize", second_new.step_control
     print "stepsize", second_new.stepsize
-    third_p = ts_treat.obtain_new_cc_with_new_delta_v(ts_treat.stepsize)
-    print third_p.ts_state.gradient_matrix
+    test_third = optimizer.update_to_new_point_for_latest_point()
+    print "test third"
+
+    third_p = second_new.obtain_new_cc_with_new_delta_v(second_new.stepsize)
+    assert np.allclose(third_p.ts_state.coordinates, test_third.ts_state.coordinates)
+
+    print "energy", third_p.ts_state.energy
+    print "gradient", third_p.v_gradient
+    print "two close tests", np.allclose(third_trial.ts_state.coordinates, third_p.ts_state.coordinates)
+    print "third gradient",third_p.ts_state.gradient_matrix
+    print "v norm",np.linalg.norm(third_p.v_gradient)
+    print optimizer._test_converge(third_p, second_new)
+    optimizer.add_a_point(third_p)
+    print "new third_p"
+    optimizer.update_hessian_for_latest_point(method="SR1")
+    print "third hessian ***********"
+    print third_p.v_hessian
+    optimizer.tweak_hessian_for_latest_point()
+    print "third hessian ***********", np.linalg.eigh(third_p.v_hessian)
+    print np.linalg.eigh(second_new.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    print np.linalg.eigh(third_p.v_hessian)[0][1]
+    print np.linalg.eigh(third_p.v_hessian)[0][1] > 0.005
+    '''
+    point_four = optimizer.update_to_new_point_for_latest_point()
+    print "energy", point_four.ts_state.energy
+    print "gradient", point_four.v_gradient
+    print "norm",np.linalg.norm(point_four.ts_state.gradient_matrix)
+    print "v norm",np.linalg.norm(point_four.v_gradient)
+    optimizer.add_a_point(point_four)
+    optimizer.update_hessian_for_latest_point(method="SR1")
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    point_fifth = optimizer.update_to_new_point_for_latest_point()
+    print "energy", point_fifth.ts_state.energy
+    print "gradient", point_fifth.v_gradient
+    print "norm",np.linalg.norm(point_fifth.ts_state.gradient_matrix)
+    print "v norm",np.linalg.norm(point_fifth.v_gradient)
+    print "hessian", third_p.v_hessian
+    print np.linalg.eigh(third_p.v_hessian)
+    '''
     # print optimizer.points[1].advanced_info['']
     # optimizer.tweak_hessian_for_latest_point()
     # optimizer.find_stepsize_for_latest_point(method="TRIM")
