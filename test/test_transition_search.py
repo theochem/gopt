@@ -58,12 +58,12 @@ def test_transitionsearch_cl_h_br():
     print "first point step control",ts_treat.step_control
     second_point = optimizer.update_to_new_point_for_latest_point()
     print "second point information", second_point.step_control
-    print "satisfied check",optimizer._check_new_point_converge(ts_treat, second_point) # something need to be fixed
+    print "satisfied check" # something need to be fixed
     print optimizer.veryfy_new_point_with_index(0, second_point)
     print ts_treat.step_control
     new_second_point = optimizer.update_to_new_point_for_latest_point()
     optimizer.add_a_point(new_second_point)
-    optimizer.verify_convergence_for_latest_point()
+    print "converge", optimizer.verify_convergence_for_latest_point()
     # print new_second_point.ts_state.energy
     optimizer.update_trust_radius_latest_point(method="gradient")
     print new_second_point.step_control

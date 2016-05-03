@@ -20,9 +20,18 @@ class TrialOptimizer(object):
         self.points = []
         self._trust_radius = None
         # self.parents=[]
-        self.counter = 0
+        self._counter = 0
 
     def _update_hessian_finite_difference(self, index, perturb=0.001):
+        """use finite difference method to update hessian if hessian matrix is 
+        not provided or it performed terribly
+        
+        Args:
+            index (int): index of point in self.points list.
+            perturb (float, optional): the scale of perturbation added to each 
+        dimention for calculation
+        
+        """
         point = self.points[index]
         for i in range(point.key_ic_number):
             e_pert = np.zeros(point.ts_state._dof)
@@ -68,22 +77,32 @@ class TrialOptimizer(object):
         point = self.points[index]
         self._trust_radius.initilize_point(point)
 
-    def update_trm_for_point_with_index(self, index, method):
-        """update trust radius method for a certain point
+    # def update_trm_for_point_with_index(self, index, method):
+    #     """update trust radius method for a certain point
 
-        Args:
-            index (int): the index of point in attribute self.points
-            method (string): string name to select trust radius update method
-                "energy" for energy based trust radius update method
-                "gradient" for gradient based trust radius update method
+    #     Args:
+    #         index (int): the index of point in attribute self.points
+    #         method (string): string name to select trust radius update method
+    #             "energy" for energy based trust radius update method
+    #             "gradient" for gradient based trust radius update method
 
-        """
-        point = self.points[index]
-        pre_point = self.points[index - 1]
-        update_method = self._trust_radius.update_trust_radius(method)
-        update_method(point, pre_point)
+    #     """
+    #     point = self.points[index]
+    #     pre_point = self.points[index - 1]
+    #     update_method = self._trust_radius.update_trust_radius(method)
+    #     update_method(point, pre_point)
 
     def veryfy_new_point_with_index(self, index, new_point):
+        """to test new calculated point is competent to be keep, if not send back
+        to recalculate a new point
+        
+        Args:
+            index (int): the index of point in attribute self.points
+            new_point (Ts_Treat): the point calculated through calculation
+        
+        Returns:
+            bool: True if the point is in good condition, otherwise False
+        """
         flag = True
         father_point = self.points[index]
         norm_new = np.linalg.norm(new_point.ts_state.gradient_matrix)
@@ -111,6 +130,7 @@ class TrialOptimizer(object):
             point (point instance): a new point instance with updated information
         """
         self.points.append(point)
+        self._counter_add()
 
     def update_hessian_for_a_point(self, index, **kwmethod): 
         """update hessian for a certain point
@@ -231,32 +251,86 @@ class TrialOptimizer(object):
         self.find_stepsize_for_a_point(self.latest_index, **kwmethod)
 
     def update_to_new_point_for_a_point(self, index): #chekced
+        """update to a new point depent on the information of present point like
+        hessian, trust radius method.
+        
+        Args:
+            index (int): index of point in the attribute self.points
+        
+        Returns:
+            Ts_Treat: the new point for further treatment and update
+        """
         point = self.points[index]
         new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize)
         return new_point
 
-    def _check_new_point_converge(self, old_point, new_point):
-        no1 = np.linalg.norm(old_point.ts_state.gradient_matrix)
-        no2 = np.linalg.norm(new_point.ts_state.gradient_matrix)
-        if no2 > no1:
-            return False
-        return True
+
+    def update_to_new_point_for_latest_point(self): #checked
+        """update to a new point depent on the information of the latest point
+        """
+        return self.update_to_new_point_for_a_point(self.latest_index)
+
+
+    # def _check_new_point_competent(self, old_point, new_point):
+    #     """chech the ne
+        
+    #     Args:
+    #         old_point (TYPE): Description
+    #         new_point (TYPE): Description
+        
+    #     Returns:
+    #         TYPE: Description
+    #     """
+    #     no1 = np.linalg.norm(old_point.ts_state.gradient_matrix)
+    #     no2 = np.linalg.norm(new_point.ts_state.gradient_matrix)
+    #     if no2 > no1:
+    #         return False
+    #     return True
+
+    def _test_converge(self, point, old_point, method="gradient"):
+        """test whether two point follow the rules of converg
+        
+        Args:
+            point (Ts_Treat): newly calculated point
+            old_point (Ts_Treat): the older point
+            method (str, optional): criterion for determine converge
+        
+        Returns:
+            Bool: True if it converge, otherwise False
+        """
+        gm = np.max(point.ts_state.gradient_matrix)
+        condition_1  = (np.linalg.norm(gm) <= 3.e-4)
+        condition_2 = (np.abs(point.ts_state.energy - old_point.ts_state.energy) <= 1e-6)
+        delta_q = np.dot(point.v_matrix, point.stepsize)
+        delta_x = np.dot(np.linalg.pinv(point.ts_state.b_matrix), delta_q)
+        condition_3 = (np.max(np.abs(delta_x)) <= 3e-4)
+        return condition_1 and (condition_2 or condition_3)
 
     def verify_convergence_for_a_point(self, index):
+        """to test a point whether if achieve the convergence criterion
+        
+        Args:
+            index (int): the index of point in self.points
+        
+        Returns:
+            bool: True if it converged, otherwise False
+        """
         new_point = self.points[index]
         old_point = self.points[index - 1]
-        return self._check_new_point_converge(old_point, new_point)
+        return self._test_converge(old_point, new_point)
 
     def verify_convergence_for_latest_point(self):
+        """to test the convergence for the latest point in self.points
+        
+        Returns:
+            bool: True if it converged, otherwise False
+        """
         return self.verify_convergence_for_a_point(self.latest_index)
 
     def _change_trust_radius_step(self, index, multiplier):
         point = self.points[index]
         new_control = point.step_control * multiplier
         point.step_control = max(new_control, self._trust_radius.min)
-
-    def update_to_new_point_for_latest_point(self): #checked
-        return self.update_to_new_point_for_a_point(self.latest_index)
 
     def update_trust_radius_for_a_point(self, index, **kwmethod):
         """update the trust radius for a certain point
@@ -303,6 +377,15 @@ class TrialOptimizer(object):
         self.update_trust_radius_for_a_point(self.latest_index, **kwmethod)
 
     def _secant_condition(self, point, point_old):
+        """calculate the secand_condition variable y
+        
+        Args:
+            point (Ts_Treat): the points whose secand_condition you want to calculate for
+            point_old (Ts_Treat): the older point you need its information 
+        
+        Returns:
+            numpy.array: the value of the secand_condition variable y
+        """
         part1 = point.v_gradient - point_old.v_gradient
         part2 = np.dot(point.v_matrix.T,
                        np.linalg.pinv(point.ts_state.b_matrix).T)
@@ -313,17 +396,17 @@ class TrialOptimizer(object):
         secant_value = part1 - np.dot(part2, (part3 + part4))
         return secant_value
 
-    def _test_converge(self, point, old_point, method="gradient"):
-        ## energy part need to be fixed
-        if method == "gradient":
-            gm = np.max(point.ts_state.gradient_matrix)
-            return np.linalg.norm(gm) <= 3e-4
-        elif method == "energy":
-            condition_1 = np.abs(point.ts_state.energy - old_point.ts_state.energy) <= 1e-6
-            delta_q = np.dot(point.v_matrix, point.stepsize)
-            delta_x = np.dot(np.linalg.pinv(point.ts_state.b_matrix), delta_q)
-            condition_2 = np.max(np.abs(delta_x)) <= 3e-4
-            return condition_1 or condition_2
+    @property
+    def counter(self):
+        """counter of iteration of optimization
+        
+        Returns:
+            int: times of iteration have done
+        """
+        return self._counter
+    
+    def _counter_add(self):
+        self._counter += 1
 
     trm_class = {
         "default" : default_trust_radius,
