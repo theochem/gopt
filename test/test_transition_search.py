@@ -64,6 +64,9 @@ def test_transitionsearch_cl_h_br():
     new_second_point = optimizer.update_to_new_point_for_latest_point()
     optimizer.add_a_point(new_second_point)
     optimizer.verify_convergence_for_latest_point()
+    # print new_second_point.ts_state.energy
+    optimizer.update_trust_radius_latest_point(method="gradient")
+    print new_second_point.step_control
     # need to update trm. method need to be implelemented here
 
     # # # new_point = ts_treat.obtain_new_cc_with_new_delta_v(ts_treat.stepsize)

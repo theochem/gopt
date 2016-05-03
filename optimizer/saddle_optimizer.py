@@ -238,7 +238,6 @@ class TrialOptimizer(object):
     def _check_new_point_converge(self, old_point, new_point):
         no1 = np.linalg.norm(old_point.ts_state.gradient_matrix)
         no2 = np.linalg.norm(new_point.ts_state.gradient_matrix)
-        print "no1, no2", no1, no2
         if no2 > no1:
             return False
         return True
@@ -281,7 +280,7 @@ class TrialOptimizer(object):
         parameter = kwmethod.pop('method', None)
         if kwmethod:
             raise TypeError('Unexpected **kwargs: {}'.format(kwmethod))
-        trust_radius_update_method = trm_update_method[method]
+        trust_radius_update_method = TrialOptimizer.trm_update_method[method]
         if parameter:
             trust_radius_update_method(
                 self._trust_radius, point, pre_point, parameter)
