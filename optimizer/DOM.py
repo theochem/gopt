@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-from Point import Point
+from saddle.optimizer.Point import Point
 
 
 __all__ = ["DOM"]

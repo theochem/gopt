@@ -1,6 +1,6 @@
 import numpy as np
 import saddle.optimizer as op
-import horton as ht
+# import horton as ht
 
 from saddle.ICFunctions import ICFunctions
 from saddle.CostFunctions import CostFunctions
@@ -590,7 +590,7 @@ class ICTransformation(object):
             # print self.ic_gradient.shape, self.h_matrix.shape
             # k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
             # self.ic_hessian = np.dot(np.dot(np.linalg.pinv(self.b_matrix.T), (self.hessian_matrix - k_matrix)), np.linalg.pinv(self.b_matrix))
-            print self.ic_hessian.shape
+            print (self.ic_hessian.shape)
             # self.ic_hessian = np.dot(np.dot(self.b_matrix.T, self.hessian_matrix), self.b_matrix)# + np.tensordot(self.gradient_matrix, self.b_matrix, 1)
 
 
@@ -662,24 +662,24 @@ if __name__ == '__main__':
     import horton as ht
     fn_xyz = ht.context.get_fn("test/water.xyz")
     mol = ht.IOData.from_file(fn_xyz)
-    print "pse",mol.pseudo_numbers
+    print ("pse",mol.pseudo_numbers)
     h2a = ICTransformation(mol)
     h2a.add_bond_length(0, 1)
     h2a.add_bond_length(1, 2)
     h2a.add_bond_length(2, 1)
     h2a.add_bend_angle(0,1,2)
-    print h2a.angle_calculate(0,1,2)
-    print h2a.ic_info
-    print h2a.ic
-    print h2a.procedures
+    print (h2a.angle_calculate(0,1,2))
+    print (h2a.ic_info)
+    print (h2a.ic)
+    print (h2a.procedures)
     # h2a._set_target_ic([2.8, 2.6])
-    print h2a.target_ic
+    print (h2a.target_ic)
     h2a.ic_swap(0, 2)
-    print h2a.ic
-    print h2a.target_ic
-    print h2a.procedures
-    print h2a.coordinates
-    print h2a.h_matrix.shape
+    print (h2a.ic)
+    print (h2a.target_ic)
+    print (h2a.procedures)
+    print (h2a.coordinates)
+    print (h2a.h_matrix.shape)
     # h2a.energy_compute()
 #     print h2a.ic
 #     h2a.add_bond_length(0, 2)

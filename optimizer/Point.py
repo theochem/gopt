@@ -1,7 +1,7 @@
 import numpy as np
 
 
-__all__ = ["Point"]
+# __all__ = ["Point"]
 
 
 class Point(object):

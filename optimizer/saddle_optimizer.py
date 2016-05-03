@@ -83,6 +83,18 @@ class TrialOptimizer(object):
         update_method = self._trust_radius.update_trust_radius(method)
         update_method(point, pre_point)
 
+    def veryfy_new_point_with_index(self, index, new_point):
+        flag = True
+        father_point = self.points[index]
+        norm_new = np.linalg.norm(new_point.ts_state.gradient_matrix)
+        norm_old = np.linalg.norm(father_point.ts_state.gradient_matrix)
+        if norm_new > norm_old:
+            flag = False
+            father_point.step_control *= 0.25
+            if father_point.step_control < 0.1 * self._trust_radius.min:
+                father_point.step_control = self._trust_radius.min
+        return flag
+
     @property
     def latest_index(self):
         """return the index of latest point
@@ -223,7 +235,7 @@ class TrialOptimizer(object):
         new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize)
         return new_point
 
-    def _check_new_point_satisfied(self, old_point, new_point):
+    def _check_new_point_converge(self, old_point, new_point):
         no1 = np.linalg.norm(old_point.ts_state.gradient_matrix)
         no2 = np.linalg.norm(new_point.ts_state.gradient_matrix)
         print "no1, no2", no1, no2
@@ -231,12 +243,18 @@ class TrialOptimizer(object):
             return False
         return True
 
+    def verify_convergence_for_a_point(self, index):
+        new_point = self.points[index]
+        old_point = self.points[index - 1]
+        return self._check_new_point_converge(old_point, new_point)
+
+    def verify_convergence_for_latest_point(self):
+        return self.verify_convergence_for_a_point(self.latest_index)
+
     def _change_trust_radius_step(self, index, multiplier):
         point = self.points[index]
         new_control = point.step_control * multiplier
         point.step_control = max(new_control, self._trust_radius.min)
-
-
 
     def update_to_new_point_for_latest_point(self): #checked
         return self.update_to_new_point_for_a_point(self.latest_index)

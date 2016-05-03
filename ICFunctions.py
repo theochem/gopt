@@ -1,6 +1,6 @@
 import numpy as np
 import molmod as mm
-import horton as ht
+#import horton as ht
 
 
 
@@ -104,6 +104,7 @@ class AtomsNumberError(Exception):
 
 
 # if __name__ == '__main__':
+#     import horton as ht
 #     fn_xyz = ht.context.get_fn('test/2h-azirine.xyz')
 #     mol = ht.IOData.from_file(fn_xyz).coordinates
 #     print IC_Functions.bond_length([mol[0],mol[1]])
