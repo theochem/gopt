@@ -60,7 +60,10 @@ class default_trust_radius(trust_radius):
         if 0.8 < ratio_rho < 1.25 and cos_ita > p_10:
             point.step_control = min(
                 max(2 * pre_point.step_control, self.min), self.max)
+            print 0
         elif 0.2 < ratio_rho < 6. and cos_ita > p_40:
             point.step_control = max(pre_point.step_control, self.min)
+            print 1
         else:
-            point.step_control = min(1. / 2 * pre_point.step_control, self.min) ##to be comfirmed
+            point.step_control = max(1. / 2 * pre_point.step_control, self.min) ##to be comfirmed
+            print 2

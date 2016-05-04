@@ -92,7 +92,7 @@ class TrialOptimizer(object):
     #     update_method = self._trust_radius.update_trust_radius(method)
     #     update_method(point, pre_point)
 
-    def veryfy_new_point_with_index(self, index, new_point):
+    def verify_new_point_with_point(self, index, new_point):
         """to test new calculated point is competent to be keep, if not send back
         to recalculate a new point
         
@@ -113,6 +113,18 @@ class TrialOptimizer(object):
             if father_point.step_control < 0.1 * self._trust_radius.min:
                 father_point.step_control = self._trust_radius.min
         return flag
+
+    def verify_new_point_with_latest_point(self, new_point):
+        """to test new calculated point is competent to be keep, if not, tweak father point
+        and recalculate again.
+        
+        Args:
+            new_point (Ts_Treat): the point calculated to be test
+        
+        Returns:
+            bool: True if the point is competent, otherwise False
+        """
+        return self.verify_new_point_with_point(self.latest_index, new_point)
 
     @property
     def latest_index(self):
@@ -395,6 +407,22 @@ class TrialOptimizer(object):
                         point_old.ts_state.b_matrix).T, point.ts_state.ic_gradient)
         secant_value = part1 - np.dot(part2, (part3 + part4))
         return secant_value
+
+    def start_iterate_optimization(self, max_iteration_times=100):
+        assert (self.latest_index >= 0)
+        assert (self._trust_radius != None)
+        for i in range(max_iteration_times):
+            self.tweak_hessian_for_latest_point()
+            self.find_stepsize_for_latest_point(method="TRIM")
+            new_point = self.update_to_new_point_for_latest_point()
+            if self.verify_new_point_with_latest_point(new_point) == False:
+                new_point = self.update_to_new_point_for_latest_point()
+            self.add_a_point(new_point)
+            if self.verify_convergence_for_latest_point():
+                print "converge!"
+                break
+            self.update_trust_radius_latest_point(method="gradient")
+            self.update_hessian_for_latest_point(method="SR1")
 
     @property
     def counter(self):

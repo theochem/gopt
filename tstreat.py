@@ -15,7 +15,7 @@ class TS_Treat(object):
         v_matrix (numpy.array): the v matrix for optimization
     """
     def __init__(self, ts_state, key_ic_number):
-        self.ts_state = ts_state
+        self.ts_state = deepcopy(ts_state)
         self.key_ic = key_ic_number
         self.v_matrix = None
         self.v_gradient = None

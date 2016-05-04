@@ -52,23 +52,42 @@ def test_transitionsearch_cl_h_br():
     optimizer.set_trust_radius_method(method="default", parameter=3)
     optimizer.add_a_point(ts_treat)
     optimizer.initialize_trm_for_point_with_index(0)
-    optimizer.tweak_hessian_for_latest_point()
-    # print np.linalg.eigh(ts_treat.v_hessian)
-    optimizer.find_stepsize_for_latest_point(method="TRIM")
-    print "first point step control",ts_treat.step_control
-    second_point = optimizer.update_to_new_point_for_latest_point()
-    print "second point information", second_point.step_control
-    print "satisfied check" # something need to be fixed
-    print optimizer.veryfy_new_point_with_index(0, second_point)
-    print ts_treat.step_control
-    new_second_point = optimizer.update_to_new_point_for_latest_point()
-    optimizer.add_a_point(new_second_point)
-    print "converge", optimizer.verify_convergence_for_latest_point()
-    # print new_second_point.ts_state.energy
-    optimizer.update_trust_radius_latest_point(method="gradient")
-    print new_second_point.step_control
+    optimizer.start_iterate_optimization(200)
+    print optimizer.latest_index
+    print optimizer.points[20].v_gradient
+    # optimizer.tweak_hessian_for_latest_point()
+    # # print np.linalg.eigh(ts_treat.v_hessian)
+    # optimizer.find_stepsize_for_latest_point(method="TRIM")
+    # print "first point step control",ts_treat.step_control
+    # second_point = optimizer.update_to_new_point_for_latest_point()
+    # print "second point information", second_point.step_control
+    # print "satisfied check" # something need to be fixed
+    # print optimizer.verify_new_point_with_point(0, second_point)
+    # print ts_treat.step_control
+    # new_second_point = optimizer.update_to_new_point_for_latest_point()
+    # optimizer.add_a_point(new_second_point)
+    # print "converge", optimizer.verify_convergence_for_latest_point()
+    # # print new_second_point.ts_state.energy
+    # optimizer.update_trust_radius_latest_point(method="gradient")
+    # print new_second_point.step_control
+    # optimizer.update_hessian_for_latest_point(method="SR1")
+    # optimizer.tweak_hessian_for_latest_point()
+    # optimizer.find_stepsize_for_latest_point(method="TRIM")
+    # third_trial = optimizer.update_to_new_point_for_latest_point()
+    # print optimizer.verify_new_point_with_latest_point(third_trial)
+    # print new_second_point.step_control
     # need to update trm. method need to be implelemented here
+    ''' step for optimization
+    add_a_point
+    verify_convergence_for_latest_point
+    update_trust_radius_latest_point
+    update_hessian_for_latest_point
+    tweak_hessian_for_latest_point
+    find_stepsize_for_latest_point
+    update_to_new_point_for_latest_point
+    verify_new_point_with_latest_point
 
+    '''
     # # # new_point = ts_treat.obtain_new_cc_with_new_delta_v(ts_treat.stepsize)
     # # print "new point", new_point, new_point.ts_state.coordinates
     # print ts_treat.ts_state.energy
