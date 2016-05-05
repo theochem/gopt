@@ -41,22 +41,22 @@ class TransitionSearch(object):
 
     halo_atom_numbers = (7, 8, 9, 15, 16, 17)
 
-    def _linear_check(self):
-        ic_len = len(self.ts_state.ic)
-        for i in range(ic_len):
-            if self.ts_state.procedures[i][0] == "add_bend_angle":
-                rad = self.ts_state.ic[i]
-                if abs(np.sin(rad)) > 1e-3:
-                    self._linear_struct_setting(False)
-                    return
-        self._linear_struct_setting(True)
-        return
+    # def _linear_check(self):
+    #     ic_len = len(self.ts_state.ic)
+    #     for i in range(ic_len):
+    #         if self.ts_state.procedures[i][0] == "add_bend_angle":
+    #             rad = self.ts_state.ic[i]
+    #             if abs(np.sin(rad)) > 1e-3:
+    #                 self._linear_struct_setting(False)
+    #                 return
+    #     self._linear_struct_setting(True)
+    #     return
 
-    def _linear_struct_setting(self, lnr_struct):
-        if lnr_struct:
-            self.ts_state._dof = 3 * self.len - 5
-        else:
-            self.ts_state._dof = 3 * self.len - 6
+    # def _linear_struct_setting(self, lnr_struct):
+    #     if lnr_struct:
+    #         self.ts_state._dof = 3 * self.len - 5
+    #     else:
+    #         self.ts_state._dof = 3 * self.len - 6
 
     def auto_ts_search(self, **kwargs):
         """generate auto transition state initial geometry
@@ -81,8 +81,8 @@ class TransitionSearch(object):
         self.ts_state.coordinates = self.get_ts_guess_cc(ratio)
         self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
         self.ts_state._reset_ic()
-        self._linear_check()
-        while len(self.ts_state.ic) < self.ts_state._dof:
+        # self._linear_check()
+        while len(self.ts_state.ic) < self.ts_state.dof:
             if self.ts_state.aux_bond:
                 atom1, atom2 = self.ts_state.auto_upgrade_aux_bond()
                 self.product.aux_bond.remove((atom1, atom2))
@@ -97,7 +97,7 @@ class TransitionSearch(object):
             self.ts_state.coordinates = self.get_ts_guess_cc(ratio)
             self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
             self.ts_state._reset_ic()
-            self._linear_check()
+            # self._linear_check()
         if auto_opt:
             self.ts_state = self._auto_optimize_ic_to_target()
         # return TS_Treat(self.ts_state, self._ic_key_counter)

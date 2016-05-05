@@ -34,7 +34,7 @@ class TrialOptimizer(object):
         """
         point = self.points[index]
         for i in range(point.key_ic_number):
-            e_pert = np.zeros(point.ts_state._dof)
+            e_pert = np.zeros(point.ts_state.dof)
             e_pert[i] = 1.
             new_ts_state = point.reference.obtain_new_cc_with_new_delta_v(
                 e_pert)
@@ -186,9 +186,9 @@ class TrialOptimizer(object):
         pre_point = self.points[index - 1]
         for i in range(point.key_ic_number):
             # create a perturbation array
-            e_pert = np.zeros(self.point.ts_state._dof)
+            e_pert = np.zeros(self.point.ts_state.dof)
             e_pert[i] = 1
-            if point.g_matrix[i] > np.linalg.norm(point.g_matrix) / math.sqrt(point.reference.ts_state._dof) and \
+            if point.g_matrix[i] > np.linalg.norm(point.g_matrix) / math.sqrt(point.reference.ts_state.dof) and \
                     np.liSSRnalg.norm(np.dot(point.h_matrix, e_pert) - np.dot(pre_point.h_matrix, e_pert)) > \
                     1.0 * np.linalg.norm(np.dot(pre_point.h_matrix, e_pert)):
                 return False

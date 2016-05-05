@@ -15,7 +15,7 @@ class TS_Treat(object):
         v_matrix (numpy.array): the v matrix for optimization
     """
     def __init__(self, ts_state, key_ic_number):
-        self.ts_state = deepcopy(ts_state)
+        self.ts_state = ts_state
         self.key_ic = key_ic_number
         self.v_matrix = None
         self.v_gradient = None
@@ -30,15 +30,15 @@ class TS_Treat(object):
         Returns:
             numpy.array: shape(n, 3n-5), A matrix
         """
-        b_matrix = deepcopy(self.ts_state.b_matrix)
+        b_matrix = self.ts_state.b_matrix
         u, s, v = np.linalg.svd(b_matrix, full_matrices=False) #u.shape = (n, 3N)
         ic_len = len(self.ts_state.ic)
-        a_matrix = np.zeros((ic_len, self.ts_state._dof), float)
+        a_matrix = np.zeros((ic_len, self.ts_state.dof), float)
         counter = 0
         for i in range(len(s)):
             a_matrix[:,counter] = u[:, i]
             counter += 1
-            if counter >= (self.ts_state._dof):
+            if counter >= (self.ts_state.dof):
                 break
         return a_matrix
 
@@ -112,7 +112,7 @@ class TS_Treat(object):
         reduced_space_1 = np.dot(v_reduce, v_reduce.T)
         reduced_space_2 = np.dot(reduced_space_1, a_matrix)
         nonreduced_space = a_matrix - reduced_space_2
-        # non_reduced_num = self.ts_state._dof - self.key_ic
+        # non_reduced_num = self.ts_state.dof - self.key_ic
         return nonreduced_space[:,:]
 
     def _nonreduce_ic(self):
@@ -154,7 +154,7 @@ class TS_Treat(object):
         self.v_matrix = max_v
 
     # def create_a_saddle_point(self):
-    #     length = len(self.ts_state._dof)
+    #     length = len(self.ts_state.dof)
     #     g_matrix = self.v_gradient
     #     vmatrix = self.v_matrix
     #     reference = self
@@ -226,7 +226,7 @@ class TS_Treat(object):
             neg_thresh (float, optional): the threshold for nagetive eigenvalues, default is -0.005
         
         """
-        total_number = self.ts_state._dof
+        total_number = self.ts_state.dof
         pos = 0
         neg = 0
         for i in range(total_number): # here can be optimized, but i am lazy to do that
@@ -294,26 +294,30 @@ class TS_Treat(object):
         """
         eigenvectors = self.advanced_info["eigenvectors"]
         eigenvalues = self.advanced_info["eigenvalues"]
+        print eigenvalues
         g_matrix = self.v_gradient
         def non_linear_value(lamda): #define function for ridder method calculation
-            part_1 = np.dot(eigenvectors[0].T, g_matrix) / (eigenvalues[0] - lamda)
-            part_1 = np.dot(part_1, eigenvectors[0])
+            part_1 = np.dot(eigenvectors[:,0].T, g_matrix)
+            part_1 /= (eigenvalues[0] - lamda)
+            part_1 = np.dot(part_1, eigenvectors[:,0])
             part_2 = 0
-            for i in range(1, self.ts_state._dof):
-                temp_p2 = np.dot(eigenvectors[i].T, g_matrix) / (eigenvalues[i] + lamda)
-                temp_p2 = np.dot(temp_p2, eigenvectors[i])
+            for i in range(1, self.ts_state.dof):
+                temp_p2 = np.dot(eigenvectors[:,i].T, g_matrix)
+                temp_p2 /= (eigenvalues[i] + lamda)
+                temp_p2 = np.dot(temp_p2, eigenvectors[:,i])
                 part_2 += temp_p2
             s_value = - part_1 - part_2
+            print "before"
             return s_value
 
         def non_linear_func(lamda):
             s_value = non_linear_value(lamda)
             return np.linalg.norm(s_value) - self.step_control
 
-        try_value = non_linear_func(0)
+        try_value = non_linear_func(1e-7)
         if try_value < 0:
-            return non_linear_value(0) 
-        try_eigen_value = eigenvalues[-1]
+            return non_linear_value(0)
+        try_eigen_value = max(1e-7, min(abs(eigenvalues[abs(eigenvalues)>0])))
         while non_linear_func(try_eigen_value) > 0:
             try_eigen_value *= 2
         root_for_lamda = opt.ridder(non_linear_func, 0, try_eigen_value)
@@ -335,11 +339,11 @@ class TS_Treat(object):
         neg_matrix[0][1] = np.dot(eigenvectors[:,0].T, self.v_gradient)
         eig_value_p, _ = np.linalg.eigh(neg_matrix)
         #construct neg_matrix
-        pos_matrix = np.zeros((self.ts_state._dof, self.ts_state._dof), float)
-        for i in range(1, self.ts_state._dof):
+        pos_matrix = np.zeros((self.ts_state.dof, self.ts_state.dof), float)
+        for i in range(1, self.ts_state.dof):
             pos_matrix[i - 1][i - 1] = eigenvalues[i]
-            pos_matrix[self.ts_state._dof - 1][i - 1] = np.dot(self.v_gradient.T, eigenvectors[:, i])
-            pos_matrix[i - 1][self.ts_state._dof - 1] = np.dot(eigenvectors[:, i].T, self.v_gradient)
+            pos_matrix[self.ts_state.dof - 1][i - 1] = np.dot(self.v_gradient.T, eigenvectors[:, i])
+            pos_matrix[i - 1][self.ts_state.dof - 1] = np.dot(eigenvectors[:, i].T, self.v_gradient)
         eig_value_n, _ = np.linalg.eigh(pos_matrix)
 
         def non_linear_value(lamda): #define function for ridder method calculation
@@ -356,7 +360,7 @@ class TS_Treat(object):
             if lamda == 0 or lamda_n < 0:
                 lamda_n = 0
             part_2 = 0
-            for i in range(1, self.ts_state._dof):
+            for i in range(1, self.ts_state.dof):
                 temp_p2 = np.dot(eigenvectors[i].T, g_matrix) / (eigenvalues[i] + lamda_n)
                 temp_p2 = np.dot(temp_p2, eigenvectors[i])
                 part_2 += temp_p2

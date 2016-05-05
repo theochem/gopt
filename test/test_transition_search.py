@@ -19,7 +19,7 @@ def test_transitionsearch_cl_h_br():
     assert abs(ts_sample._ic_key_counter - 2) < 1e-8
     ts_treat = ts_sample.create_ts_treat()
     assert isinstance(ts_treat, TS_Treat)
-    assert np.allclose(ts_sample.ts_state.ic, [ 3.90894008, 4.00695734, 3.14159265, 7.91589742, 0. ,0. ])
+    assert np.allclose(ts_sample.ts_state.ic, [ 3.90894008, 4.00695734, 3.14159265])
     a_matrix = ts_treat._matrix_a_eigen()
     assert np.allclose(a_matrix, np.linalg.svd(ts_treat.ts_state.b_matrix)[0][:,:4])
     b_vector = ts_treat._projection()
@@ -40,24 +40,75 @@ def test_transitionsearch_cl_h_br():
 
     ts_treat.ts_state.get_energy_gradient_hessian() #obtain energy, gradient, and hessian
     ts_treat.ts_state.get_energy_gradient()
+    # print "hessian", ts_treat.ts_state.hessian_matrix
     print "first obtain energy and gradient", ts_treat.ts_state.energy, ts_treat.ts_state.gradient_matrix#, ts_treat.ts_state.hessian_matrix
     ts_treat.get_v_gradient()
     ts_treat.get_v_hessian()
+    # print "symmetry" ,ts_treat.v_hessian
+    print ts_treat.ts_state.procedures
     print ts_treat.v_hessian.shape
     print "hessian", np.linalg.eigh(ts_treat.v_hessian)
     print ts_treat.v_gradient
-    print ts_treat.step_control
+    print ts_treat.ts_state.energy
+    print ts_treat.ts_state.gradient_matrix
+    print ts_treat.ts_state.coordinates
     print "start optimization-------------------"
     optimizer = TrialOptimizer()
     optimizer.set_trust_radius_method(method="default", parameter=3)
     optimizer.add_a_point(ts_treat)
-    optimizer.initialize_trm_for_point_with_index(0)
-    optimizer.start_iterate_optimization(200)
-    print optimizer.latest_index
-    print optimizer.points[20].v_gradient
+    print ts_treat.v_hessian
+    # optimizer.initialize_trm_for_point_with_index(0)
+    step = -np.dot(np.linalg.pinv(ts_treat.v_hessian), ts_treat.v_gradient)
+    print "step",step
+    ts_treat._diagnolize_h_matrix()
+    print "eigen",ts_treat.advanced_info['eigenvalues']
+    result = np.zeros(ts_treat.ts_state.dof)
+    for i in range(ts_treat.ts_state.dof):
+        print i
+        p1 = np.dot(ts_treat.advanced_info['eigenvectors'][:,i].T, ts_treat.v_gradient)
+        if np.allclose(ts_treat.advanced_info['eigenvalues'][i],0):
+            result += np.zeros(ts_treat.ts_state.dof)
+        else:
+            p1 /= ts_treat.advanced_info['eigenvalues'][i]
+            p2 = np.dot(p1, ts_treat.advanced_info['eigenvectors'][:,i])
+            result += p2
+    print result
+
+    ts_treat.stepsize = step
+    print "norm",np.linalg.norm(ts_treat.v_hessian)
+    print "norm",np.linalg.norm(ts_treat.ts_state.hessian_matrix)
+    original = optimizer.update_to_new_point_for_latest_point()
+    print original.ts_state.energy
+    original.ts_state.get_energy_gradient_hessian()
+    original.get_v_gradient()
+    original.get_v_hessian()
+    print "norm",np.linalg.norm(original.v_hessian)
+    print "norm",np.linalg.norm(original.ts_state.hessian_matrix)
+    # step = -np.dot(np.linalg.pinv(original.v_hessian), original.v_gradient)
+    # original.stepsize = step
+    # print step
+    # optimizer.add_a_point(original)
+    # third_ori = optimizer.update_to_new_point_for_latest_point()
+    # print third_ori.ts_state.energy
+
+
+
+    # optimizer.start_iterate_optimization(500)
+    # latest = optimizer.points[500]
+    # print latest.ts_state.coordinates, latest.ts_state.energy
+    # print ts_treat.ts_state.coordinates, ts_treat.ts_state.energy
+    # print latest.ts_state.coordinates
+    # print latest.ts_state.gradient_matrix
+    # print latest.ts_state.ic_gradient
+    # print ts_treat.ts_state.ic_gradient
+    # print optimizer.latest_index
+    # print optimizer.points[20].v_gradient
     # optimizer.tweak_hessian_for_latest_point()
     # # print np.linalg.eigh(ts_treat.v_hessian)
+    # ts_treat._diagnolize_h_matrix()
     # optimizer.find_stepsize_for_latest_point(method="TRIM")
+    # _trial_two = optimizer.update_to_new_point_for_latest_point()
+    # print _trial_two.ts_state.energy, _trial_two.ts_state.coordinates
     # print "first point step control",ts_treat.step_control
     # second_point = optimizer.update_to_new_point_for_latest_point()
     # print "second point information", second_point.step_control
@@ -65,6 +116,10 @@ def test_transitionsearch_cl_h_br():
     # print optimizer.verify_new_point_with_point(0, second_point)
     # print ts_treat.step_control
     # new_second_point = optimizer.update_to_new_point_for_latest_point()
+    # print "new_second_point"
+    # print new_second_point.ts_state.gradient_matrix
+    # print np.linalg.norm(new_second_point.ts_state.gradient_matrix)
+    # print np.linalg.norm(ts_treat.ts_state.gradient_matrix)
     # optimizer.add_a_point(new_second_point)
     # print "converge", optimizer.verify_convergence_for_latest_point()
     # # print new_second_point.ts_state.energy

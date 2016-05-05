@@ -53,12 +53,16 @@ class ICTransformation(object):
         self.h_matrix = np.zeros((0, 3 * self.len, 3 * self.len), float)
         self.aux_bond = []
         self._aux = []
-        self._dof = None
         self.energy = None
         self.gradient_matrix = None
         self.hessian_matrix = None
         self.ic_gradient = None
         self.ic_hessian = None
+
+    @property
+    def dof(self):
+        return self.len * 3 - 6
+    
 
     def length_calculate(self, atom1, atom2):
         """To calculate distance between two atoms
