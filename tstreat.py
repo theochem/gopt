@@ -185,8 +185,8 @@ class TS_Treat(object):
         return new_ts_state
 
     def get_v_gradient(self):
-        q_v = self.ts_state.ic_gradient
-        self.v_gradient = np.dot(self.v_matrix.T, q_v)
+        q_g = self.ts_state.ic_gradient
+        self.v_gradient = np.dot(self.v_matrix.T, q_g)
 
     def get_v_hessian(self):
         q_h = self.ts_state.ic_hessian

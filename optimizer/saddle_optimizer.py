@@ -33,20 +33,22 @@ class TrialOptimizer(object):
         
         """
         point = self.points[index]
-        for i in range(point.key_ic_number):
+        h_m = np.zeros((point.ts_state.dof, point.ts_state.dof), float)
+        for i in range(point.key_ic):
             e_pert = np.zeros(point.ts_state.dof)
-            e_pert[i] = 1.
-            new_ts_state = point.reference.obtain_new_cc_with_new_delta_v(
+            e_pert[i] = 1. * perturb
+            new_point = point.obtain_new_cc_with_new_delta_v(
                 e_pert)
-            new_point = new_ts_state.create_a_saddle_point()
-            pt1 = (new_point.g_matrix - point.g_matrix) / perturb
-            pt2 = np.dot(point.reference.v_matrix.T, np.linalg.pinv(
-                point.reference.ts_state.b_matrix))
-            dv = (new_point.reference.v_matrix - point.reference.v_matrix) / perturb
-            pt3 = np.dot(point.reference.ts_state.b_matrix.T, np.dot(dv, point.g_matrix))
-            db = (new_point.reference.ts_state.b_matrix - point.reference.ts_state.b_matrix) / perturb
-            pt4 = np.dot(db.T, point.reference.ts_state.ic_gradient)
-            point.hessian[:, i] = pt1 - np.dot(pt2, (pt3 + pt4))
+            # new_point = new_ts_state.create_a_saddle_point()
+            pt1 = (new_point.v_gradient - point.v_gradient) / perturb
+            pt2 = np.dot(point.v_matrix.T, np.linalg.pinv(
+                point.ts_state.b_matrix.T))
+            dv = (new_point.v_matrix - point.v_matrix) / perturb
+            pt3 = np.dot(point.ts_state.b_matrix.T, np.dot(dv, point.v_gradient))
+            db = (new_point.ts_state.b_matrix - point.ts_state.b_matrix) / perturb
+            pt4 = np.dot(db.T, point.ts_state.ic_gradient)
+            h_m[:, i] = pt1 - np.dot(pt2, (pt3 + pt4))
+        point.v_hessian = h_m
 
     def set_trust_radius_method(self, **kwmethod): #checked
         """select keyword args to implement different trust radius methods
@@ -184,17 +186,26 @@ class TrialOptimizer(object):
     def _test_necessity_for_finite_difference(self, index):
         point = self.points[index]
         pre_point = self.points[index - 1]
-        for i in range(point.key_ic_number):
+        for i in range(point.key_ic):
             # create a perturbation array
-            e_pert = np.zeros(self.point.ts_state.dof)
+            e_pert = np.zeros(point.ts_state.dof)
             e_pert[i] = 1
-            if point.g_matrix[i] > np.linalg.norm(point.g_matrix) / math.sqrt(point.reference.ts_state.dof) and \
-                    np.liSSRnalg.norm(np.dot(point.h_matrix, e_pert) - np.dot(pre_point.h_matrix, e_pert)) > \
-                    1.0 * np.linalg.norm(np.dot(pre_point.h_matrix, e_pert)):
+            if point.v_gradient[i] > np.linalg.norm(point.v_gradient) / math.sqrt(point.ts_state.dof) and \
+                    np.linalg.norm(np.dot(point.v_hessian, e_pert) - np.dot(pre_point.v_hessian, e_pert)) > \
+                    1.0 * np.linalg.norm(np.dot(pre_point.v_hessian, e_pert)):
                 return False
         # return True for no need to update through finite difference,
         # otherwise return False.
         return True
+
+    def procustes_process_for_a_point(self, index):
+        point = self.points[index]
+        pre_point = self.points[index - 1]
+        overlap = np.dot(point.v_matrix.T, pre_point.v_matrix)
+        u,s,v = np.linalg.svd(overlap)
+        q = np.dot(u,v)
+        point.v_matrix = np.dot(point.v_matrix, q)
+        point.get_v_gradient()
 
     def tweak_hessian_for_a_point(self, index): #checked
         """tweak the hessian for a point in self.points
