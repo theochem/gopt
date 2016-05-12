@@ -56,34 +56,367 @@ def test_transitionsearch_cl_h_br():
     optimizer = TrialOptimizer()
     optimizer.set_trust_radius_method(method="default", parameter=3)
     optimizer.add_a_point(ts_treat)
-    print ts_treat.v_hessian
-    # optimizer.initialize_trm_for_point_with_index(0)
-    step = -np.dot(np.linalg.pinv(ts_treat.v_hessian), ts_treat.v_gradient)
-    print "step",step
-    ts_treat._diagnolize_h_matrix()
-    print "eigen",ts_treat.advanced_info['eigenvalues']
-    result = np.zeros(ts_treat.ts_state.dof)
-    for i in range(ts_treat.ts_state.dof):
-        print i
-        p1 = np.dot(ts_treat.advanced_info['eigenvectors'][:,i].T, ts_treat.v_gradient)
-        if np.allclose(ts_treat.advanced_info['eigenvalues'][i],0):
-            result += np.zeros(ts_treat.ts_state.dof)
-        else:
-            p1 /= ts_treat.advanced_info['eigenvalues'][i]
-            p2 = np.dot(p1, ts_treat.advanced_info['eigenvectors'][:,i])
-            result += p2
+    print ts_treat.v_hessian,"\n, coor for the 1st", ts_treat.ts_state.coordinates
+    optimizer.initialize_trm_for_point_with_index(0)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    _2_p = optimizer.update_to_new_point_for_latest_point()
+    print _2_p.v_gradient
+    veri = optimizer.verify_new_point_with_latest_point(_2_p)
+    print veri
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    _2_p_new = optimizer.update_to_new_point_for_latest_point()
+    print "2 gradient",_2_p_new.v_gradient, np.linalg.norm(_2_p_new.v_gradient), np.linalg.norm(_2_p_new.ts_state.gradient_matrix)
+    optimizer.add_a_point(_2_p_new)
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    print _2_p_new.v_hessian
+    hveri = optimizer._test_necessity_for_finite_difference(1)
+    print hveri
+    optimizer._update_hessian_finite_difference(1, hveri)
+    hveri = optimizer._test_necessity_for_finite_difference(1)
+    print "hessian",_2_p_new.v_hessian
+    print hveri
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _3_p = optimizer.update_to_new_point_for_latest_point()
+    print "3 gradient",_3_p.v_gradient, np.linalg.norm(_3_p.v_gradient), np.linalg.norm(_3_p.ts_state.gradient_matrix)
+    veri = optimizer.verify_new_point_with_latest_point(_3_p)
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    _3_p_new = optimizer.update_to_new_point_for_latest_point()
+    print "3 gradient",_3_p_new.v_gradient, np.linalg.norm(_3_p_new.v_gradient), np.linalg.norm(_3_p_new.ts_state.gradient_matrix)
+    optimizer.add_a_point(_3_p_new)
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(2)
+    print veri
+    optimizer._update_hessian_finite_difference(2, veri)
+    print "3 hessian",np.linalg.eigh(_3_p_new.v_hessian)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _4_p = optimizer.update_to_new_point_for_latest_point()
+    print "4 gradient", _4_p.v_gradient,np.linalg.norm(_4_p.ts_state.gradient_matrix)
+    veri = optimizer.verify_new_point_with_latest_point(_4_p)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _4_p_new = optimizer.update_to_new_point_for_latest_point()
+    print "4 new gradient", _4_p_new.v_gradient,np.linalg.norm(_4_p_new.ts_state.gradient_matrix),"\n", _4_p_new.ts_state.coordinates
+    optimizer.add_a_point(_4_p_new)
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(3)
+    optimizer._update_hessian_finite_difference(3, veri)
+    print "4 hessian",np.linalg.eigh(_4_p_new.v_hessian)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _5_p = optimizer.update_to_new_point_for_latest_point()
+    print "5 gradient", _5_p.v_gradient,np.linalg.norm(_5_p.ts_state.gradient_matrix)
+    veri = optimizer.verify_new_point_with_latest_point(_5_p)
+    print veri, _5_p.ts_state.coordinates
+    optimizer.add_a_point(_5_p)
+    result = optimizer.verify_convergence_for_latest_point()
     print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    print _4_p_new.v_hessian, "\n",np.linalg.eigh(_4_p_new.v_hessian)
+    print _5_p.v_hessian, "\n",np.linalg.eigh(_5_p.v_hessian)
+    veri = optimizer._test_necessity_for_finite_difference(4)
+    print veri
+    optimizer._update_hessian_finite_difference(4, veri)
+    print "5 hessian",np.linalg.eigh(_5_p.v_hessian)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _6_p = optimizer.update_to_new_point_for_latest_point()
+    print "6 gradient", _6_p.v_gradient,np.linalg.norm(_6_p.ts_state.gradient_matrix)
+    veri = optimizer.verify_new_point_with_latest_point(_6_p)
+    print veri
+    optimizer.add_a_point(_6_p)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(5)
+    optimizer._update_hessian_finite_difference(5, veri)
+    print "6 hessian",np.linalg.eigh(_6_p.v_hessian)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    print "6 hessian",np.linalg.eigh(_6_p.v_hessian)
+    _7_p = optimizer.update_to_new_point_for_latest_point()
+    print "7 gradient", _7_p.v_gradient,np.linalg.norm(_7_p.ts_state.gradient_matrix)
+    veri = optimizer.verify_new_point_with_latest_point(_7_p)
+    print veri
+    optimizer.add_a_point(_7_p)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(6)
+    print veri
+    optimizer._update_hessian_finite_difference(6, veri)
+    print "7 hessian old",_7_p.v_hessian, "\n",np.linalg.eigh(_7_p.v_hessian)
+    # veri.append(0)
+    optimizer._update_hessian_finite_difference(6, veri)
+    print "7 hessian new",_7_p.v_hessian, "\n",np.linalg.eigh(_7_p.v_hessian)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.tweak_hessian_for_latest_point()
+    print "7 hessian",np.linalg.eigh(_7_p.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _8_p = optimizer.update_to_new_point_for_latest_point()
+    print "8 gradient", _8_p.v_gradient,np.linalg.norm(_8_p.ts_state.gradient_matrix)
+    veri = optimizer.verify_new_point_with_latest_point(_8_p)
+    print veri
+    _8_p_new = optimizer.update_to_new_point_for_latest_point()
+    optimizer.add_a_point(_8_p_new)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(7)
+    print "finite", veri
+    # optimizer._update_hessian_finite_difference(7, veri)
+    print "8 hessian old",_8_p_new.v_hessian, "\n",np.linalg.eigh(_8_p_new.v_hessian)
+    # veri.append(0)
+    # optimizer._update_hessian_finite_difference(7, veri)
+    # print "8 hessian new",_8_p_new.v_hessian, "\n",np.linalg.eigh(_8_p_new.v_hessian)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.tweak_hessian_for_latest_point()
+    print "8 hessian",np.linalg.eigh(_8_p_new.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _9_p = optimizer.update_to_new_point_for_latest_point()
+    print "9 gradient", _9_p.v_gradient,np.linalg.norm(_9_p.ts_state.gradient_matrix)
 
-    ts_treat.stepsize = step
-    print "norm",np.linalg.norm(ts_treat.v_hessian)
-    print "norm",np.linalg.norm(ts_treat.ts_state.hessian_matrix)
-    original = optimizer.update_to_new_point_for_latest_point()
-    print original.ts_state.energy
-    original.ts_state.get_energy_gradient_hessian()
-    original.get_v_gradient()
-    original.get_v_hessian()
-    print "norm",np.linalg.norm(original.v_hessian)
-    print "norm",np.linalg.norm(original.ts_state.hessian_matrix)
+    veri = optimizer.verify_new_point_with_latest_point(_9_p)
+    print veri
+    optimizer.add_a_point(_9_p)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(8)
+    print veri
+    # print "8 hessian old",_8_p_new.v_hessian, "\n",np.linalg.eigh(_8_p_new.v_hessian)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.tweak_hessian_for_latest_point()
+    # print "8 hessian",np.linalg.eigh(_8_p_new.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _10_p = optimizer.update_to_new_point_for_latest_point()
+    print "10 gradient", _10_p.v_gradient,np.linalg.norm(_10_p.ts_state.gradient_matrix)
+
+    veri = optimizer.verify_new_point_with_latest_point(_10_p)
+    print veri
+    optimizer.add_a_point(_10_p)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(9)
+    print veri
+    # print "8 hessian old",_8_p_new.v_hessian, "\n",np.linalg.eigh(_8_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "11 hessian",np.linalg.eigh(_10_p.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _11_p = optimizer.update_to_new_point_for_latest_point()
+    print "11 gradient", _11_p.v_gradient,np.linalg.norm(_11_p.ts_state.gradient_matrix)
+    
+    veri = optimizer.verify_new_point_with_latest_point(_11_p)
+    print veri
+    optimizer.add_a_point(_11_p)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(10)
+    print veri
+    # print "8 hessian old",_8_p_new.v_hessian, "\n",np.linalg.eigh(_8_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "12 hessian",np.linalg.eigh(_11_p.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _12_p = optimizer.update_to_new_point_for_latest_point()
+    print "12 gradient", _12_p.v_gradient,np.linalg.norm(_12_p.ts_state.gradient_matrix)
+
+    veri = optimizer.verify_new_point_with_latest_point(_12_p)
+    print veri
+    optimizer.add_a_point(_12_p)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(11)
+    print veri
+    # print "8 hessian old",_8_p_new.v_hessian, "\n",np.linalg.eigh(_8_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "13 hessian",np.linalg.eigh(_12_p.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _13_p = optimizer.update_to_new_point_for_latest_point()
+    print "13 gradient", _13_p.v_gradient,np.linalg.norm(_13_p.ts_state.gradient_matrix)
+
+    veri = optimizer.verify_new_point_with_latest_point(_13_p)
+    print veri
+    optimizer.add_a_point(_13_p)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(12)
+    print veri
+    # print "8 hessian old",_8_p_new.v_hessian, "\n",np.linalg.eigh(_8_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "13 hessian",np.linalg.eigh(_13_p.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _14_p = optimizer.update_to_new_point_for_latest_point()
+    print "14 gradient", _14_p.v_gradient,np.linalg.norm(_14_p.ts_state.gradient_matrix), _14_p.ts_state.ic
+
+    veri = optimizer.verify_new_point_with_latest_point(_14_p)
+    print "resize", veri
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _14_p_new = optimizer.update_to_new_point_for_latest_point()
+    optimizer.add_a_point(_14_p_new)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(13)
+    print veri
+    # print "8 hessian old",_14_p_new.v_hessian, "\n",np.linalg.eigh(_14_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "14 hessian",np.linalg.eigh(_14_p_new.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _15_p = optimizer.update_to_new_point_for_latest_point()
+    print "15 gradient", _15_p.v_gradient,np.linalg.norm(_15_p.ts_state.gradient_matrix),_15_p.ts_state.ic
+
+    veri = optimizer.verify_new_point_with_latest_point(_15_p)
+    print "resize", veri
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _15_p_new = optimizer.update_to_new_point_for_latest_point()
+    optimizer.add_a_point(_15_p_new)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(13)
+    print veri
+    # print "8 hessian old",_15_p_new.v_hessian, "\n",np.linalg.eigh(_14_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "15 hessian",np.linalg.eigh(_15_p_new.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _16_p = optimizer.update_to_new_point_for_latest_point()
+    print "16 gradient", _16_p.v_gradient,np.linalg.norm(_16_p.ts_state.gradient_matrix), _16_p.ts_state.ic
+
+    veri = optimizer.verify_new_point_with_latest_point(_16_p)
+    print "resize", veri
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _16_p_new = optimizer.update_to_new_point_for_latest_point()
+    optimizer.add_a_point(_16_p_new)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(14)
+    print veri
+    # print "8 hessian old",_16_p_new.v_hessian, "\n",np.linalg.eigh(_14_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "15 hessian",np.linalg.eigh(_16_p_new.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _17_p = optimizer.update_to_new_point_for_latest_point()
+    print "16 gradient", _17_p.v_gradient,np.linalg.norm(_17_p.ts_state.gradient_matrix), _17_p.ts_state.ic
+
+    veri = optimizer.verify_new_point_with_latest_point(_17_p)
+    print "resize", veri
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _17_p_new = optimizer.update_to_new_point_for_latest_point()
+    optimizer.add_a_point(_17_p_new)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(15)
+    print veri
+    # print "8 hessian old",_17_p_new.v_hessian, "\n",np.linalg.eigh(_14_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "15 hessian",np.linalg.eigh(_17_p_new.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _18_p = optimizer.update_to_new_point_for_latest_point()
+    print "17 gradient", _18_p.v_gradient,np.linalg.norm(_18_p.ts_state.gradient_matrix), _18_p.ts_state.ic
+
+    veri = optimizer.verify_new_point_with_latest_point(_18_p)
+    print "resize", veri
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _18_p_new = optimizer.update_to_new_point_for_latest_point()
+    optimizer.add_a_point(_18_p_new)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(16)
+    print veri
+    # print "8 hessian old",_18_p_new.v_hessian, "\n",np.linalg.eigh(_14_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "15 hessian",np.linalg.eigh(_18_p_new.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _19_p = optimizer.update_to_new_point_for_latest_point()
+    print "17 gradient", _19_p.v_gradient,np.linalg.norm(_19_p.ts_state.gradient_matrix), _19_p.ts_state.ic
+
+    # veri = optimizer.verify_new_point_with_latest_point(_19_p)
+    print "resize", veri
+    # optimizer.find_stepsize_for_latest_point(method='TRIM')
+    # _19_p_new = optimizer.update_to_new_point_for_latest_point()
+    optimizer.add_a_point(_19_p)
+    result = optimizer.verify_convergence_for_latest_point()
+    print result
+    optimizer.update_hessian_for_latest_point(method='SR1')
+    veri = optimizer._test_necessity_for_finite_difference(17)
+    print veri
+    # print "8 hessian old",_19_p_new.v_hessian, "\n",np.linalg.eigh(_14_p_new.v_hessian)
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    print "15 hessian",np.linalg.eigh(_19_p.v_hessian)
+    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    _20_p = optimizer.update_to_new_point_for_latest_point()
+    print "17 gradient", _20_p.v_gradient,np.linalg.norm(_20_p.ts_state.gradient_matrix), _20_p.ts_state.ic
+    # optimizer.update_hessian_for_latest_point(method='SR1')
+    # hveri = optimizer._test_necessity_for_finite_difference(2)
+    # print hveri
+    # optimizer._update_hessian_finite_difference(2, hveri)
+    # hveri = optimizer._test_necessity_for_finite_difference(2)
+
+    # optimizer.
+
+
+    # step = -np.dot(np.linalg.pinv(ts_treat.v_hessian), ts_treat.v_gradient)
+    # print "step",step
+    # ts_treat._diagnolize_h_matrix()
+    # print "eigen",ts_treat.advanced_info['eigenvalues']
+    # result = np.zeros(ts_treat.ts_state.dof)
+    # for i in range(ts_treat.ts_state.dof):
+    #     print i
+    #     p1 = np.dot(ts_treat.advanced_info['eigenvectors'][:,i].T, ts_treat.v_gradient)
+    #     if np.allclose(ts_treat.advanced_info['eigenvalues'][i],0):
+    #         result += np.zeros(ts_treat.ts_state.dof)
+    #     else:
+    #         p1 /= ts_treat.advanced_info['eigenvalues'][i]
+    #         p2 = np.dot(p1, ts_treat.advanced_info['eigenvectors'][:,i])
+    #         result += p2
+    # print result
+
+    # ts_treat.stepsize = step
+    # print "norm",np.linalg.norm(ts_treat.v_hessian)
+    # print "norm",np.linalg.norm(ts_treat.ts_state.hessian_matrix)
+    # original = optimizer.update_to_new_point_for_latest_point()
+    # print original.ts_state.energy
+    # original.ts_state.get_energy_gradient_hessian()
+    # original.get_v_gradient()
+    # original.get_v_hessian()
+    # print original.v_hessian
+    # print "norm",np.linalg.norm(original.v_hessian)
+    # print "norm",np.linalg.norm(original.ts_state.hessian_matrix)
+    # print np.linalg.eigh(original.v_hessian)
+    # optimizer.add_a_point(original)
+    # optimizer.update_hessian_for_latest_point(method="SR1")
+    # print original.v_hessian
+    # print optimizer._test_necessity_for_finite_difference(1)
+    # optimizer._update_hessian_finite_difference(1)
+    # print original.v_hessian
+    # # print result
+
+    # print optimizer._test_necessity_for_finite_difference(1)
+    # original.get_v_hessian()
+    # print original.v_hessian
     # step = -np.dot(np.linalg.pinv(original.v_hessian), original.v_gradient)
     # original.stepsize = step
     # print step

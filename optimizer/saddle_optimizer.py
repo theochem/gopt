@@ -22,19 +22,19 @@ class TrialOptimizer(object):
         # self.parents=[]
         self._counter = 0
 
-    def _update_hessian_finite_difference(self, index, perturb=0.001):
+    def _update_hessian_finite_difference(self, index, key_list, perturb=0.001):
         """use finite difference method to update hessian if hessian matrix is 
         not provided or it performed terribly
-        
+
         Args:
             index (int): index of point in self.points list.
             perturb (float, optional): the scale of perturbation added to each 
         dimention for calculation
-        
+
         """
         point = self.points[index]
-        h_m = np.zeros((point.ts_state.dof, point.ts_state.dof), float)
-        for i in range(point.key_ic):
+        # h_m = np.zeros((point.ts_state.dof, point.ts_state.dof), float)
+        for i in key_list:
             e_pert = np.zeros(point.ts_state.dof)
             e_pert[i] = 1. * perturb
             new_point = point.obtain_new_cc_with_new_delta_v(
@@ -44,13 +44,17 @@ class TrialOptimizer(object):
             pt2 = np.dot(point.v_matrix.T, np.linalg.pinv(
                 point.ts_state.b_matrix.T))
             dv = (new_point.v_matrix - point.v_matrix) / perturb
-            pt3 = np.dot(point.ts_state.b_matrix.T, np.dot(dv, point.v_gradient))
-            db = (new_point.ts_state.b_matrix - point.ts_state.b_matrix) / perturb
+            pt3 = np.dot(point.ts_state.b_matrix.T,
+                         np.dot(dv, point.v_gradient))
+            db = (new_point.ts_state.b_matrix -
+                  point.ts_state.b_matrix) / perturb
             pt4 = np.dot(db.T, point.ts_state.ic_gradient)
-            h_m[:, i] = pt1 - np.dot(pt2, (pt3 + pt4))
-        point.v_hessian = h_m
+            h_m = pt1 - np.dot(pt2, (pt3 + pt4))
+            point.v_hessian[:, i] = h_m
+            point.v_hessian[i, :] = h_m
+        # point.set_ic_x_hessian()
 
-    def set_trust_radius_method(self, **kwmethod): #checked
+    def set_trust_radius_method(self, **kwmethod):  # checked
         """select keyword args to implement different trust radius methods
 
         Args:
@@ -69,7 +73,7 @@ class TrialOptimizer(object):
         else:
             self._trust_radius = trm_method()
 
-    def initialize_trm_for_point_with_index(self, index): #checked
+    def initialize_trm_for_point_with_index(self, index):  # checked
         """initilize point with selected trust radius method
 
         Args:
@@ -97,18 +101,20 @@ class TrialOptimizer(object):
     def verify_new_point_with_point(self, index, new_point):
         """to test new calculated point is competent to be keep, if not send back
         to recalculate a new point
-        
+
         Args:
             index (int): the index of point in attribute self.points
             new_point (Ts_Treat): the point calculated through calculation
-        
+
         Returns:
             bool: True if the point is in good condition, otherwise False
         """
         flag = True
         father_point = self.points[index]
+        # print father_point.v_gradient
         norm_new = np.linalg.norm(new_point.ts_state.gradient_matrix)
         norm_old = np.linalg.norm(father_point.ts_state.gradient_matrix)
+        # print norm_new, norm_old
         if norm_new > norm_old:
             flag = False
             father_point.step_control *= 0.25
@@ -119,10 +125,10 @@ class TrialOptimizer(object):
     def verify_new_point_with_latest_point(self, new_point):
         """to test new calculated point is competent to be keep, if not, tweak father point
         and recalculate again.
-        
+
         Args:
             new_point (Ts_Treat): the point calculated to be test
-        
+
         Returns:
             bool: True if the point is competent, otherwise False
         """
@@ -137,7 +143,7 @@ class TrialOptimizer(object):
         """
         return len(self.points) - 1
 
-    def add_a_point(self, point): #checked
+    def add_a_point(self, point):  # checked
         """add a point to self.points attribute
 
         Args:
@@ -146,7 +152,7 @@ class TrialOptimizer(object):
         self.points.append(point)
         self._counter_add()
 
-    def update_hessian_for_a_point(self, index, **kwmethod): 
+    def update_hessian_for_a_point(self, index, **kwmethod):
         """update hessian for a certain point
 
         Args:
@@ -163,15 +169,17 @@ class TrialOptimizer(object):
             raise TypeError('Unexpected **kwargs: {}'.format(kwmethod))
         point = self.points[index]
         pre_point = self.points[index - 1]
-        if point.v_hessian:
+        if point.v_hessian != None:
             print("exists, quit updating")
         else:
             method = TrialOptimizer.hessian_update_method[method]
             secand_value = self._secant_condition(point, pre_point)
-            new_value = method(point, pre_point, secand_value)  # function need to be added here
+            # function need to be added here
+            new_value = method(point, pre_point, secand_value)
             point.v_hessian = new_value
             print("finish updating")
-        assert np.allclose(point.v_hessian, point.v_hessian.T) # make sure Hessian is symmetric
+        # make sure Hessian is symmetric
+        assert np.allclose(point.v_hessian, point.v_hessian.T)
 
     def update_hessian_for_latest_point(self, **kwmethod):
         """update hessian for the latest point
@@ -183,31 +191,50 @@ class TrialOptimizer(object):
         """
         self.update_hessian_for_a_point(self.latest_index, **kwmethod)
 
-    def _test_necessity_for_finite_difference(self, index):
+    def _test_necessity_for_finite_difference(self, index, omega=1.0, nu=1.0):
+        """To test hessian matrix after quasi-Newton method performance
+        if good enough, then pass, else, use call finite difference to recalculate more 
+        accurate hessian matrix
+
+        Args:
+            index (int): the index of structure
+            omega (float, optional): the coeffcient of \omega, default value is 1.0
+            nu (float, optional): the coeffcient of nu, default value is 1.0
+
+        Returns:
+            bool: True if the Hessian performs good, no need to update, otherwise False
+        """
         point = self.points[index]
         pre_point = self.points[index - 1]
+        need_update = []
         for i in range(point.key_ic):
+            condition_1 = False
+            norm = np.linalg.norm
             # create a perturbation array
             e_pert = np.zeros(point.ts_state.dof)
-            e_pert[i] = 1
-            if point.v_gradient[i] > np.linalg.norm(point.v_gradient) / math.sqrt(point.ts_state.dof) and \
-                    np.linalg.norm(np.dot(point.v_hessian, e_pert) - np.dot(pre_point.v_hessian, e_pert)) > \
-                    1.0 * np.linalg.norm(np.dot(pre_point.v_hessian, e_pert)):
-                return False
+            e_pert[i] = 1.
+            condition_1 = norm(point.v_gradient[
+                              i]) > omega * norm(point.v_gradient) / math.sqrt(point.ts_state.dof)
+            condition_2 = norm(np.dot(point.v_hessian, e_pert) - np.dot(
+                pre_point.v_hessian, e_pert)) > nu * norm(np.dot(pre_point.v_hessian, e_pert))
+            print "c1", condition_1
+            print "c2", condition_2
+            if condition_1 and condition_2:
+                need_update.append(i)
         # return True for no need to update through finite difference,
         # otherwise return False.
-        return True
+        return need_update
 
     def procustes_process_for_a_point(self, index):
         point = self.points[index]
         pre_point = self.points[index - 1]
         overlap = np.dot(point.v_matrix.T, pre_point.v_matrix)
-        u,s,v = np.linalg.svd(overlap)
-        q = np.dot(u,v)
+        u, s, v = np.linalg.svd(overlap)
+        q = np.dot(u, v)
         point.v_matrix = np.dot(point.v_matrix, q)
         point.get_v_gradient()
 
-    def tweak_hessian_for_a_point(self, index): #checked
+    def tweak_hessian_for_a_point(self, index):  # checked
         """tweak the hessian for a point in self.points
 
         Args:
@@ -216,7 +243,7 @@ class TrialOptimizer(object):
         point = self.points[index]
         self._tweak_hessian(point)
 
-    def tweak_hessian_for_latest_point(self): #checked
+    def tweak_hessian_for_latest_point(self):  # checked
         """tweak the hessian for the latest point
 
         """
@@ -238,7 +265,7 @@ class TrialOptimizer(object):
         point._modify_h_matrix()
         point._reconstruct_hessian_matrix()  # reconstruct hessian matrix
 
-    def find_stepsize_for_a_point(self, index, **kwmethod): #checked
+    def find_stepsize_for_a_point(self, index, **kwmethod):  # checked
         """find the proper stepsize for a certain point
 
         Args:
@@ -261,7 +288,7 @@ class TrialOptimizer(object):
             stepsize = point._rational_function_optimization()
         point.stepsize = stepsize
 
-    def find_stepsize_for_latest_point(self, **kwmethod): #checked
+    def find_stepsize_for_latest_point(self, **kwmethod):  # checked
         """find the proper stepsize for latest point
 
         Args:
@@ -273,13 +300,13 @@ class TrialOptimizer(object):
         """
         self.find_stepsize_for_a_point(self.latest_index, **kwmethod)
 
-    def update_to_new_point_for_a_point(self, index): #chekced
+    def update_to_new_point_for_a_point(self, index):  # chekced
         """update to a new point depent on the information of present point like
         hessian, trust radius method.
-        
+
         Args:
             index (int): index of point in the attribute self.points
-        
+
         Returns:
             Ts_Treat: the new point for further treatment and update
         """
@@ -287,20 +314,18 @@ class TrialOptimizer(object):
         new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize)
         return new_point
 
-
-    def update_to_new_point_for_latest_point(self): #checked
+    def update_to_new_point_for_latest_point(self):  # checked
         """update to a new point depent on the information of the latest point
         """
         return self.update_to_new_point_for_a_point(self.latest_index)
 
-
     # def _check_new_point_competent(self, old_point, new_point):
     #     """chech the ne
-        
+
     #     Args:
     #         old_point (TYPE): Description
     #         new_point (TYPE): Description
-        
+
     #     Returns:
     #         TYPE: Description
     #     """
@@ -312,29 +337,33 @@ class TrialOptimizer(object):
 
     def _test_converge(self, point, old_point, method="gradient"):
         """test whether two point follow the rules of converg
-        
+
         Args:
             point (Ts_Treat): newly calculated point
             old_point (Ts_Treat): the older point
             method (str, optional): criterion for determine converge
-        
+
         Returns:
             Bool: True if it converge, otherwise False
         """
         gm = np.max(point.ts_state.gradient_matrix)
-        condition_1  = (np.linalg.norm(gm) <= 3.e-4)
-        condition_2 = (np.abs(point.ts_state.energy - old_point.ts_state.energy) <= 1e-6)
+        condition_1 = (np.linalg.norm(gm) <= 3.e-4)
+        print "condition1", condition_1
+        condition_2 = (np.abs(point.ts_state.energy -
+                              old_point.ts_state.energy) <= 1e-6)
         delta_q = np.dot(point.v_matrix, point.stepsize)
         delta_x = np.dot(np.linalg.pinv(point.ts_state.b_matrix), delta_q)
+        print "condition2", condition_2
         condition_3 = (np.max(np.abs(delta_x)) <= 3e-4)
+        print "condition3", condition_3
         return condition_1 and (condition_2 or condition_3)
 
     def verify_convergence_for_a_point(self, index):
         """to test a point whether if achieve the convergence criterion
-        
+
         Args:
             index (int): the index of point in self.points
-        
+
         Returns:
             bool: True if it converged, otherwise False
         """
@@ -344,7 +373,7 @@ class TrialOptimizer(object):
 
     def verify_convergence_for_latest_point(self):
         """to test the convergence for the latest point in self.points
-        
+
         Returns:
             bool: True if it converged, otherwise False
         """
@@ -386,12 +415,12 @@ class TrialOptimizer(object):
 
     def update_trust_radius_latest_point(self, **kwmethod):
         """update the trust radius for a latest point
-        
+
         Args:
             **kwmethod: keyword args
                 method: the method for update trust radius
                 parameter: the parameter to use the corresponding method
-        
+
         Raises:
             IndexError: the index of point is invalid
             TypeError: provide unexpected kwargs
@@ -401,11 +430,11 @@ class TrialOptimizer(object):
 
     def _secant_condition(self, point, point_old):
         """calculate the secand_condition variable y
-        
+
         Args:
             point (Ts_Treat): the points whose secand_condition you want to calculate for
             point_old (Ts_Treat): the older point you need its information 
-        
+
         Returns:
             numpy.array: the value of the secand_condition variable y
         """
@@ -438,32 +467,30 @@ class TrialOptimizer(object):
     @property
     def counter(self):
         """counter of iteration of optimization
-        
+
         Returns:
             int: times of iteration have done
         """
         return self._counter
-    
+
     def _counter_add(self):
         self._counter += 1
 
     trm_class = {
-        "default" : default_trust_radius,
+        "default": default_trust_radius,
     }
 
     trm_update_method = {
-        "energy" : default_trust_radius._energy_based_trust_radius_method,
-        "gradient" : default_trust_radius._gradient_based_trust_radius_method,
+        "energy": default_trust_radius._energy_based_trust_radius_method,
+        "gradient": default_trust_radius._gradient_based_trust_radius_method,
     }
 
     hessian_update_method = {
-        'SR1' : hu._sr1_update_method,
-        'PSB' : hu._psb_update_method,
-        'BFGS' : hu._bfgs_update_method,
-        'Bofill' : hu._bofill_update_method,
+        'SR1': hu._sr1_update_method,
+        'PSB': hu._psb_update_method,
+        'BFGS': hu._bfgs_update_method,
+        'Bofill': hu._bofill_update_method,
     }
-
-
 
 
 '''EXAMPLE

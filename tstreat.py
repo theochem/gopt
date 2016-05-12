@@ -5,15 +5,17 @@ import scipy.optimize as opt
 from copy import deepcopy, copy
 # from saddle.saddlepoint import SaddlePoint
 
+
 class TS_Treat(object):
     """class use to optimize the transition state, change its dimention to 3n-5
-    
+
     Attributes:
         key_ic (int): number of key internal coordinates
         ts_state (ICTransformation object): a ICT instance contains the geometry information of
     a transition state
         v_matrix (numpy.array): the v matrix for optimization
     """
+
     def __init__(self, ts_state, key_ic_number):
         self.ts_state = ts_state
         self.key_ic = key_ic_number
@@ -31,12 +33,13 @@ class TS_Treat(object):
             numpy.array: shape(n, 3n-5), A matrix
         """
         b_matrix = self.ts_state.b_matrix
-        u, s, v = np.linalg.svd(b_matrix, full_matrices=False) #u.shape = (n, 3N)
+        u, s, v = np.linalg.svd(
+            b_matrix, full_matrices=False)  # u.shape = (n, 3N)
         ic_len = len(self.ts_state.ic)
         a_matrix = np.zeros((ic_len, self.ts_state.dof), float)
         counter = 0
         for i in range(len(s)):
-            a_matrix[:,counter] = u[:, i]
+            a_matrix[:, counter] = u[:, i]
             counter += 1
             if counter >= (self.ts_state.dof):
                 break
@@ -55,25 +58,25 @@ class TS_Treat(object):
         ic_keyic_len = self.key_ic
         e_perturb = np.zeros((ic_len, ic_keyic_len), float)
         identity_matrix = np.identity(ic_keyic_len)
-        e_perturb[:ic_keyic_len,:] = identity_matrix
+        e_perturb[:ic_keyic_len, :] = identity_matrix
         b_perturb = np.dot(prj_matrix, e_perturb)
         return b_perturb
 
     @staticmethod
     def gram_ortho(vectors, transpose=False):
         """gramian orthogonal treatment, to orthogonize the row space
-        
+
         Args:
             vectors (numpy.array): a set of vectors to be orthogonized
             transpose (bool, optional): if the vactor span a column space, true
                 to transpose it into row space
-        
+
         Returns:
             numpy.array: orthogonlized vectors set. span in row space.
         """
         if transpose:
             vectors = vectors.T
-        vec_len = len(vectors[0]) # numnber of columns(arrays)
+        vec_len = len(vectors[0])  # numnber of columns(arrays)
         # gram = np.zeros((vec_len, vec_len), float)
         # for row in range(vec_len):
         #     for column in range(vec_len):
@@ -84,13 +87,13 @@ class TS_Treat(object):
         counter = 0
         for i in range(vec_len):
             if eig_value[i] > 0.01:
-                basisset[:,counter] = eig_vector[:, i]
+                basisset[:, counter] = eig_vector[:, i]
                 counter += 1
-        return basisset[:,:counter] # numpy.array, shape(, counter)
+        return basisset[:, :counter]  # numpy.array, shape(, counter)
 
     def _deloc_reduce_ic(self):
         """orthogonize perturbation, calculate reduced internal coordinates for key ic
-        
+
         Returns:
             numpy.array: reduced internal coordinates
         """
@@ -98,12 +101,12 @@ class TS_Treat(object):
         basisset = self.gram_ortho(b_perturb)
         reduced_ic = np.dot(b_perturb, basisset)
         for i in range(len(reduced_ic[0])):
-            reduced_ic[:,i] /= np.linalg.norm(reduced_ic[:,i])
+            reduced_ic[:, i] /= np.linalg.norm(reduced_ic[:, i])
         return reduced_ic
 
     def _deloc_non_reduce_ic(self):
         """calculate nonreduced_space by project a_matrix to nonspace of reduced space
-        
+
         Returns:
             numpy.array: nonreduced vectors to form nonreduced space
         """
@@ -113,11 +116,11 @@ class TS_Treat(object):
         reduced_space_2 = np.dot(reduced_space_1, a_matrix)
         nonreduced_space = a_matrix - reduced_space_2
         # non_reduced_num = self.ts_state.dof - self.key_ic
-        return nonreduced_space[:,:]
+        return nonreduced_space[:, :]
 
     def _nonreduce_ic(self):
         """calculate nonreduce internal coordinates
-        
+
         Returns:
             numpy.array: nonreduced internal coordinates
         """
@@ -127,12 +130,12 @@ class TS_Treat(object):
         # print "basis", basisset.shape
         nonreduce_ic = np.dot(d_vectors, basisset)
         for i in range(len(nonreduce_ic[0])):
-            nonreduce_ic[:, i] /= np.linalg.norm(nonreduce_ic[:,i])
+            nonreduce_ic[:, i] /= np.linalg.norm(nonreduce_ic[:, i])
         return nonreduce_ic
 
     def get_v_basis(self):
         """get 3n-5 nonredundant internal coordinates
-        
+
         Returns:
             numpy.array: nonredundant internal coordinates
         """
@@ -141,17 +144,17 @@ class TS_Treat(object):
         self._old_v_matrix = self.v_matrix
         self.v_matrix = np.hstack((reduced, non_reduced))
 
-    def procruste_q(self, other):
-        """procruste process to find the most overlapped V matrix
-        
-        Returns:
-            numpy.array: shape(3N - 5 or 3N - 6, n), most overlapped V matrx
-        """
-        s = np.dot(self.v_matrix.T, other.v_matrix)
-        u, sigma, w = np.linalg.svd(s)
-        q_min = np.dot(u, w)
-        max_v = np.dot(self.v_matrix, q_min)
-        self.v_matrix = max_v
+    # def procruste_q(self, other):
+    #     """procruste process to find the most overlapped V matrix
+
+    #     Returns:
+    #         numpy.array: shape(3N - 5 or 3N - 6, n), most overlapped V matrx
+    #     """
+    #     s = np.dot(self.v_matrix.T, other.v_matrix)
+    #     u, sigma, w = np.linalg.svd(s)
+    #     q_min = np.dot(u, w)
+    #     max_v = np.dot(self.v_matrix, q_min)
+    #     self.v_matrix = max_v
 
     # def create_a_saddle_point(self):
     #     length = len(self.ts_state.dof)
@@ -166,13 +169,13 @@ class TS_Treat(object):
     def obtain_new_cc_with_new_delta_v(self, delta_v):
         """calculate the change of internal coordinates \delta q according to the 
         change of the change of V coordinates \delta v.
-        
+
         Args:
             delta_v (numpy.array): the change of V coordinates, \delta v
-        
+
         """
         delta_q = np.dot(self.v_matrix, delta_v)
-        new_ts_state = deepcopy(self) #deepcopy self
+        new_ts_state = deepcopy(self)  # deepcopy self
         new_ts_state.v_matrix = None
         new_ts_state.v_gradient = None
         new_ts_state.v_hessian = None
@@ -196,16 +199,32 @@ class TS_Treat(object):
         self.get_v_gradient()
         self.get_v_hessian()
 
+    def set_ic_gradient(self):
+        self.ts_state.ic_gradient = np.dot(self.v_matrix, self.v_gradient)
+
+    def set_ic_hessian(self):
+        self.ts_state.ic_hessian = np.dot(
+            np.dot(self.v_matrix, self.v_hessian), self.v_matrix.T)
+
+    def set_ic_x_gradient(self):
+        self.set_ic_gradient()
+        self.ts_state.gradient_ic_to_x()
+
+    def set_ic_x_hessian(self):
+        self.set_ic_hessian()
+        self.ts_state.hessian_ic_to_x()
+
     def _diagnolize_h_matrix(self):
         """diagnolize hessian matrix if it is not none
         """
-        w,v = np.linalg.eigh(self.v_hessian) # w is the eigenvalues while v is the eigenvectors
+        w, v = np.linalg.eigh(
+            self.v_hessian)  # w is the eigenvalues while v is the eigenvectors
         self.advanced_info["eigenvalues"] = w
         self.advanced_info["eigenvectors"] = v
 
     def switch_eigens(self, one_index, the_other_index):
         """switch the eigen values and eigenvalues of two different indexes
-        
+
         Args:
             one_index (int): the one index to be switched
             the_other_index (int): the other index to be switched
@@ -213,38 +232,44 @@ class TS_Treat(object):
         # set temp eigenvalue and eigenvector
         eigenvalues = self.advanced_info["eigenvalues"]
         eigenvectors = self.advanced_info["eigenvectors"]
-        eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[the_other_index], eigenvalues[one_index]
-        # assign the other index 
-        eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[the_other_index], eigenvalues[one_index]
-        eigenvectors[:, one_index], eigenvectors[:, the_other_index] = np.copy(eigenvectors[:, the_other_index]), np.copy(eigenvectors[:, one_index])
+        eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[
+            the_other_index], eigenvalues[one_index]
+        # assign the other index
+        eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[
+            the_other_index], eigenvalues[one_index]
+        eigenvectors[:, one_index], eigenvectors[:, the_other_index] = np.copy(
+            eigenvectors[:, the_other_index]), np.copy(eigenvectors[:, one_index])
 
     def _modify_h_matrix(self, pos_thresh=0.005, neg_thresh=-0.005):
         """modify the eigenvalues of hessian matrix to make sure it has the right form
-        
+
         Args:
             pos_thresh (float, optional): the threshold for positive eigenvalues, default is 0.005
             neg_thresh (float, optional): the threshold for nagetive eigenvalues, default is -0.005
-        
+
         """
         total_number = self.ts_state.dof
         pos = 0
         neg = 0
-        for i in range(total_number): # here can be optimized, but i am lazy to do that
+        for i in range(total_number):  # here can be optimized, but i am lazy to do that
             if self.advanced_info["eigenvalues"][i] >= 0:
                 pos += 1
             elif self.advanced_info["eigenvalues"][i] < 0:
                 neg += 1
 
-        if neg == 1: # ideal situation with only one negative eigenvalues
+        if neg == 1:  # ideal situation with only one negative eigenvalues
             for i in range(1, total_number):
-                self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
-            self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])
+                self.advanced_info["eigenvalues"][i] = max(
+                    pos_thresh, self.advanced_info["eigenvalues"][i])
+            self.advanced_info["eigenvalues"][0] = min(
+                neg_thresh, self.advanced_info["eigenvalues"][0])
 
-        if neg > 1: # method to select the most important negative eigenvalues
-            fraction = 0 #initial value for fraction calculation
-            label_flag = -1 #default flag, value -1 is just a symbol
+        if neg > 1:  # method to select the most important negative eigenvalues
+            fraction = 0  # initial value for fraction calculation
+            label_flag = -1  # default flag, value -1 is just a symbol
             for i in range(neg):
-                corresponding_eigenvector = self.advanced_info["eigenvectors"][:,i]
+                corresponding_eigenvector = self.advanced_info[
+                    "eigenvectors"][:, i]
                 temp_sum = 0
                 for j in range(self.key_ic):
                     temp_sum += corresponding_eigenvector[j] ** 2
@@ -252,31 +277,39 @@ class TS_Treat(object):
                     fraction = temp_sum
                     label_flag = i
                 # print "find max",i, temp_sum
-            #switch the selected negative eigenvalue and vector to index 0
+            # switch the selected negative eigenvalue and vector to index 0
             if label_flag != 0:
                 self.switch_eigens(0, label_flag)
                 # print "negative eigen flag",label_flag
             for i in range(1, total_number):
-                self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
-            self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])
+                self.advanced_info["eigenvalues"][i] = max(
+                    pos_thresh, self.advanced_info["eigenvalues"][i])
+            self.advanced_info["eigenvalues"][0] = min(
+                neg_thresh, self.advanced_info["eigenvalues"][0])
 
-        if neg == 0: # choose the one more important eigenvalues to become negative
-            lowest_eigenvalue = None # index for any eigenvectors that has more than 0.5 fraction in reduced space
-            label_flag = -1 # the same reason as above
+        if neg == 0:  # choose the one more important eigenvalues to become negative
+            # index for any eigenvectors that has more than 0.5 fraction in
+            # reduced space
+            lowest_eigenvalue = None
+            label_flag = -1  # the same reason as above
             for i in range(total_number):
-                corresponding_eigenvector = self.advanced_info["eigenvectors"][:,i]
+                corresponding_eigenvector = self.advanced_info[
+                    "eigenvectors"][:, i]
                 temp_sum = 0
                 for j in range(self.key_ic):
                     temp_sum += corresponding_eigenvector[j]**2
                 if temp_sum >= 0.5:
                     if self.advanced_info["eigenvalues"][i] < lowest_eigenvalue or lowest_eigenvalue == None:
-                        lowest_eigenvalue = self.advanced_info["eigenvalues"][i]
+                        lowest_eigenvalue = self.advanced_info[
+                            "eigenvalues"][i]
                         label_flag = i
             if label_flag != 0:
                 self.switch_eigens(0, label_flag)
             for i in range(1, total_number):
-                self.advanced_info["eigenvalues"][i] = max(pos_thresh, self.advanced_info["eigenvalues"][i])
-            self.advanced_info["eigenvalues"][0] = min(neg_thresh, self.advanced_info["eigenvalues"][0])
+                self.advanced_info["eigenvalues"][i] = max(
+                    pos_thresh, self.advanced_info["eigenvalues"][i])
+            self.advanced_info["eigenvalues"][0] = min(
+                neg_thresh, self.advanced_info["eigenvalues"][0])
 
     def _reconstruct_hessian_matrix(self):
         """reconstruct new hessian depends on the twieked hessian matrix
@@ -284,30 +317,32 @@ class TS_Treat(object):
         """
         eigenvalues = self.advanced_info["eigenvalues"]
         eigenvectors = self.advanced_info["eigenvectors"]
-        self.v_hessian = np.dot(np.dot(eigenvectors, np.diag(eigenvalues)), eigenvectors.T) # V W V.T
+        self.v_hessian = np.dot(np.dot(eigenvectors, np.diag(
+            eigenvalues)), eigenvectors.T)  # V W V.T
 
     def _trust_region_image_potential(self):
         """use TRIR method to find proper step under the control of trust radius method
-        
+
         Returns:
             numpy.array: the steps to be taken to update geometry
         """
         eigenvectors = self.advanced_info["eigenvectors"]
         eigenvalues = self.advanced_info["eigenvalues"]
-        print eigenvalues
+        # print eigenvalues
         g_matrix = self.v_gradient
-        def non_linear_value(lamda): #define function for ridder method calculation
-            part_1 = np.dot(eigenvectors[:,0].T, g_matrix)
+
+        def non_linear_value(lamda):  # define function for ridder method calculation
+            part_1 = np.dot(eigenvectors[:, 0].T, g_matrix)
             part_1 /= (eigenvalues[0] - lamda)
-            part_1 = np.dot(part_1, eigenvectors[:,0])
+            part_1 = np.dot(part_1, eigenvectors[:, 0])
             part_2 = 0
             for i in range(1, self.ts_state.dof):
-                temp_p2 = np.dot(eigenvectors[:,i].T, g_matrix)
+                temp_p2 = np.dot(eigenvectors[:, i].T, g_matrix)
                 temp_p2 /= (eigenvalues[i] + lamda)
-                temp_p2 = np.dot(temp_p2, eigenvectors[:,i])
+                temp_p2 = np.dot(temp_p2, eigenvectors[:, i])
                 part_2 += temp_p2
             s_value = - part_1 - part_2
-            print "before"
+            # print "before"
             return s_value
 
         def non_linear_func(lamda):
@@ -317,7 +352,8 @@ class TS_Treat(object):
         try_value = non_linear_func(1e-7)
         if try_value < 0:
             return non_linear_value(0)
-        try_eigen_value = max(1e-7, min(abs(eigenvalues[abs(eigenvalues)>0])))
+        try_eigen_value = max(
+            1e-7, min(abs(eigenvalues[abs(eigenvalues) > 0])))
         while non_linear_func(try_eigen_value) > 0:
             try_eigen_value *= 2
         root_for_lamda = opt.ridder(non_linear_func, 0, try_eigen_value)
@@ -325,34 +361,37 @@ class TS_Treat(object):
 
     def _rational_function_optimization(self):
         """use RFO method to find proper step under the control of trust radius method
-        
+
         Returns:
             numpy.array: the steps to be taken to update geometry
         """
         eigenvalues = self.advanced_info["eigenvalues"]
         eigenvectors = self.advanced_info["eigenvectors"]
         g_matrix = self.v_gradient
-        #construct neg_matrix
-        neg_matrix = np.zeros((2,2), float)
+        # construct neg_matrix
+        neg_matrix = np.zeros((2, 2), float)
         neg_matrix[0][0] = eigenvalues[0]
-        neg_matrix[1][0] = np.dot(self.v_gradient.T, eigenvectors[:,0])
-        neg_matrix[0][1] = np.dot(eigenvectors[:,0].T, self.v_gradient)
+        neg_matrix[1][0] = np.dot(self.v_gradient.T, eigenvectors[:, 0])
+        neg_matrix[0][1] = np.dot(eigenvectors[:, 0].T, self.v_gradient)
         eig_value_p, _ = np.linalg.eigh(neg_matrix)
-        #construct neg_matrix
+        # construct neg_matrix
         pos_matrix = np.zeros((self.ts_state.dof, self.ts_state.dof), float)
         for i in range(1, self.ts_state.dof):
             pos_matrix[i - 1][i - 1] = eigenvalues[i]
-            pos_matrix[self.ts_state.dof - 1][i - 1] = np.dot(self.v_gradient.T, eigenvectors[:, i])
-            pos_matrix[i - 1][self.ts_state.dof - 1] = np.dot(eigenvectors[:, i].T, self.v_gradient)
+            pos_matrix[self.ts_state.dof - 1][i -
+                                              1] = np.dot(self.v_gradient.T, eigenvectors[:, i])
+            pos_matrix[i - 1][self.ts_state.dof -
+                              1] = np.dot(eigenvectors[:, i].T, self.v_gradient)
         eig_value_n, _ = np.linalg.eigh(pos_matrix)
 
-        def non_linear_value(lamda): #define function for ridder method calculation
+        def non_linear_value(lamda):  # define function for ridder method calculation
             eig_value_p_copy = deepcopy(eig_value_p)
             eig_value_p_copy[:-1] = eig_value_p_copy[: -1] * lamda
             lamda_p = max(eig_value_p_copy.flatten())
             if lamda == 0:
                 lamda_p = 0
-            part_1 = np.dot(eigenvectors[0].T, g_matrix) / (eigenvalues[0] - lamda_p)
+            part_1 = np.dot(eigenvectors[0].T,
+                            g_matrix) / (eigenvalues[0] - lamda_p)
             part_1 = np.dot(part_1, eigenvectors[0])
             eig_value_n_copy = deepcopy(eig_value_n)
             eig_value_n_copy[:-1] = eig_value_n_copy[: -1] * lamda
@@ -361,7 +400,8 @@ class TS_Treat(object):
                 lamda_n = 0
             part_2 = 0
             for i in range(1, self.ts_state.dof):
-                temp_p2 = np.dot(eigenvectors[i].T, g_matrix) / (eigenvalues[i] + lamda_n)
+                temp_p2 = np.dot(
+                    eigenvectors[i].T, g_matrix) / (eigenvalues[i] + lamda_n)
                 temp_p2 = np.dot(temp_p2, eigenvectors[i])
                 part_2 += temp_p2
             s_value = - part_1 - part_2
