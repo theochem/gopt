@@ -12,7 +12,8 @@ class GaussianWrapper(object):
 
     def __init__(self, molecule, title):
         self.molecule = molecule
-        with open("single_hf_321g_template.com","r") as f:
+        self.pwd = os.path.dirname(os.path.realpath(__file__))
+        with open(self.pwd + "/single_hf_321g_template.com","r") as f:
             self.template = Template(f.read())
         self.title = title
 
@@ -24,8 +25,8 @@ class GaussianWrapper(object):
                 (periodic[self.molecule.numbers[i]].symbol, x, y, z))
         filename = "{0}_{1}".format(self.title, self.counter)
         postfix = ".com"
-        file_path = "./test/gauss/" + filename + postfix
-        with open(file_path, "w") as f:
+        file_path = "/test/gauss/" + filename + postfix
+        with open(self.pwd + file_path, "w") as f:
             f.write(self.template.substitute(charge=charge, freq=freq, multi=multi, atoms=atoms, title="{}_{}".format(self.title, GaussianWrapper.counter)))
             GaussianWrapper.counter+=1
         return filename
@@ -35,12 +36,14 @@ class GaussianWrapper(object):
 
     def _run_gaussian(self, filename, fchk=True, command_bin="g09"):
         fchk_ob = None
+        path = self.pwd + "/test/gauss/"
+        os.chdir(path)
         os.system("{0} {1}.com".format(command_bin, filename))
         if fchk:
             logname = "{0}.log".format(filename)
-            if os.path.isfile(logname) and self._log_finish_test(logname):
-                os.system("formchk {0}.chk {0}.fchk".format(filename))
-                fchk_ob = FCHKFile("{0}.fchk".format(filename))
+            if os.path.isfile(path+logname) and self._log_finish_test(path+logname):
+                os.system("formchk {0}{1}.chk {0}{1}.fchk".format(path, filename))
+                fchk_ob = FCHKFile("{0}{1}.fchk".format(path, filename))
         return fchk_ob
 
     def _log_finish_test(self, logname):
