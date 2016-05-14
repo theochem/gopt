@@ -6,9 +6,9 @@ from saddle.optimizer.saddle_optimizer import TrialOptimizer
 import pprint
 
 def test_transitionsearch_cl_h_br():
-    fn = ht.context.get_fn("../saddle/test/")
-    reactant = ht.IOData.from_file(fn + "Cl_HBr.xyz")
-    product = ht.IOData.from_file(fn + "Br_HCl.xyz")
+    # fn = ht.context.get_fn("../saddle/test/")
+    reactant = ht.IOData.from_file("./Cl_HBr.xyz")
+    product = ht.IOData.from_file("./Br_HCl.xyz")
     ts_sample = TransitionSearch(reactant, product) # create a object to find best fitting transition state
 
     ts_sample.auto_ic_select_combine() #auto select ic for reactant and product in certain way
