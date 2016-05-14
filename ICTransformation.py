@@ -5,7 +5,7 @@ import saddle.optimizer as op
 from saddle.ICFunctions import ICFunctions
 from saddle.CostFunctions import CostFunctions
 from copy import copy
-from saddle.ljenergy import LJEnergy
+# from saddle.ljenergy import LJEnergy
 # from saddle.pyscf_wrapper import gobasis
 
 __all__ = ["ICTransformation"]
@@ -599,6 +599,7 @@ class ICTransformation(object):
 
 
     def _lf_get_energy_gradient_hessian(self):
+        from saddle.ljenergy import LJEnergy
         ob = LJEnergy(self)
         return ob.get_energy_gradient_hessian()
 
@@ -609,6 +610,7 @@ class ICTransformation(object):
             self.gradient_x_to_ic()
 
     def _lf_get_energy_gradient(self):
+        from saddle.ljenergy import LJEnergy
         ob = LJEnergy(self)
         return ob.get_energy_gradient()
 
