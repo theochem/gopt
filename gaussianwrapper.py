@@ -1,4 +1,4 @@
-from horton.io import FCHKFile
+from saddle.fchk import FCHKFile
 from horton import angstrom
 from horton import periodic
 from string import Template
@@ -16,15 +16,17 @@ class GaussianWrapper(object):
             self.template = Template(f.read())
         self.title = title
 
-    def create_input_file(self, charge, multi):
+    def create_input_file(self, charge, multi, freq=""):
         atoms = ""
         for i in range(len(self.molecule.numbers)):
             x, y, z = self.molecule.coordinates[i]
             atoms += ('%2s % 10.5f % 10.5f % 10.5f \n' % 
                 (periodic[self.molecule.numbers[i]].symbol, x, y, z))
-        filename = "{0}_{1}.com".format(self.title, self.counter)
-        with open(filename, "w") as f:
-            f.write(self.template.substitute(charge=charge, multi=multi, atoms=atoms, title="{}_{}".format(self.title, GaussianWrapper.counter)))
+        filename = "{0}_{1}".format(self.title, self.counter)
+        postfix = ".com"
+        file_path = "./test/gauss/" + filename + postfix
+        with open(file_path, "w") as f:
+            f.write(self.template.substitute(charge=charge, freq=freq, multi=multi, atoms=atoms, title="{}_{}".format(self.title, GaussianWrapper.counter)))
             GaussianWrapper.counter+=1
         return filename
         # if run_cal:
@@ -56,4 +58,4 @@ if __name__ == '__main__':
     a = GaussianWrapper(aa, "text_wrapper")
     print a.template
     a.create_input_file(0, 2)
-    a.create_input_file(0, 2)
+    a.create_input_file(0, 2, "freq")

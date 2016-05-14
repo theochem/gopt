@@ -40,6 +40,9 @@ def test_transitionsearch_cl_h_br():
     test_v = np.hstack((new_dric, new_rdric))
     assert np.allclose(ts_treat.v_matrix, test_v)
 
+
+
+    '''
     ts_treat.ts_state.get_energy_gradient_hessian() #obtain energy, gradient, and hessian
     ts_treat.ts_state.get_energy_gradient()
     # print "hessian", ts_treat.ts_state.hessian_matrix
@@ -371,6 +374,9 @@ def test_transitionsearch_cl_h_br():
     optimizer.find_stepsize_for_latest_point(method='TRIM')
     _20_p = optimizer.update_to_new_point_for_latest_point()
     print "17 gradient", _20_p.v_gradient,np.linalg.norm(_20_p.ts_state.gradient_matrix), _20_p.ts_state.ic
+    '''
+    #label
+
     # optimizer.update_hessian_for_latest_point(method='SR1')
     # hveri = optimizer._test_necessity_for_finite_difference(2)
     # print hveri

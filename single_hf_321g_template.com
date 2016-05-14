@@ -1,5 +1,5 @@
 %chk=${title}.chk
-#p HF/3-21G scf(xqc)
+#p UHF/3-21G ${freq} scf(xqc)
 
 ${title}
 
