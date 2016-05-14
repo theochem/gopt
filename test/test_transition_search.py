@@ -4,11 +4,13 @@ from saddle.TransitionSearch import *
 from saddle.tstreat import TS_Treat
 from saddle.optimizer.saddle_optimizer import TrialOptimizer
 import pprint
+import os
 
 def test_transitionsearch_cl_h_br():
     # fn = ht.context.get_fn("../saddle/test/")
-    reactant = ht.IOData.from_file("./Cl_HBr.xyz")
-    product = ht.IOData.from_file("./Br_HCl.xyz")
+    path = os.path.dirname(os.path.realpath(__file__))
+    reactant = ht.IOData.from_file(path + "/Cl_HBr.xyz")
+    product = ht.IOData.from_file(path + "/Br_HCl.xyz")
     ts_sample = TransitionSearch(reactant, product) # create a object to find best fitting transition state
 
     ts_sample.auto_ic_select_combine() #auto select ic for reactant and product in certain way
