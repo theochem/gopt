@@ -13,22 +13,40 @@ class GaussianWrapper(object):
     def __init__(self, molecule, title):
         self.molecule = molecule
         self.pwd = os.path.dirname(os.path.realpath(__file__))
-        with open(self.pwd + "/single_hf_321g_template.com","r") as f:
+        with open(self.pwd + "/single_hf_321g_template.com", "r") as f:
             self.template = Template(f.read())
         self.title = title
 
-    def create_input_file(self, charge, multi, freq=""):
+    def run_gaussian_and_get_result(self, charge, multi, **kwargs):
+        energy = kwargs.pop('energy', True)
+        gradient = kwargs.pop('gradient', False)
+        hessian = kwargs.pop('hessian', False)
+        if kwargs:
+            raise TypeError('Unexpected **kwargs: %r' % kwargs)
+        filename = self.create_input_file(charge, multi, freq="")
+        fchk_file = self._run_gaussian(filename)
+        result = []
+        if energy:
+            result.append(fchk_file.get_energy())
+        if gradient:
+            result.append(fchk_file.get_gradient())
+        if hessian:
+            result.append(fchk_file.get_hessian())
+        return result
+
+    def create_input_file(self, charge, multi, freq="freq"):
         atoms = ""
         for i in range(len(self.molecule.numbers)):
             x, y, z = self.molecule.coordinates[i]
-            atoms += ('%2s % 10.5f % 10.5f % 10.5f \n' % 
-                (periodic[self.molecule.numbers[i]].symbol, x, y, z))
+            atoms += ('%2s % 10.5f % 10.5f % 10.5f \n' %
+                      (periodic[self.molecule.numbers[i]].symbol, x, y, z))
         filename = "{0}_{1}".format(self.title, self.counter)
         postfix = ".com"
         file_path = "/test/gauss/" + filename + postfix
         with open(self.pwd + file_path, "w") as f:
-            f.write(self.template.substitute(charge=charge, freq=freq, multi=multi, atoms=atoms, title="{}_{}".format(self.title, GaussianWrapper.counter)))
-            GaussianWrapper.counter+=1
+            f.write(self.template.substitute(charge=charge, freq=freq, multi=multi,
+                                             atoms=atoms, title="{}_{}".format(self.title, GaussianWrapper.counter)))
+            GaussianWrapper.counter += 1
         return filename
         # if run_cal:
         #     filename = "{0}_{1}.com".format(self.title, GaussianWrapper.counter)
@@ -41,8 +59,9 @@ class GaussianWrapper(object):
         os.system("{0} {1}.com".format(command_bin, filename))
         if fchk:
             logname = "{0}.log".format(filename)
-            if os.path.isfile(path+logname) and self._log_finish_test(path+logname):
-                os.system("formchk {0}{1}.chk {0}{1}.fchk".format(path, filename))
+            if os.path.isfile(path + logname) and self._log_finish_test(path + logname):
+                os.system(
+                    "formchk {0}{1}.chk {0}{1}.fchk".format(path, filename))
                 fchk_ob = FCHKFile("{0}{1}.fchk".format(path, filename))
         return fchk_ob
 
@@ -57,7 +76,7 @@ class GaussianWrapper(object):
 if __name__ == '__main__':
     from collections import namedtuple
     molecule = namedtuple("molecule", "numbers, coordinates")
-    aa = molecule([1,3],np.array([[0.,0.,0.], [1.,1.,1.]]))
+    aa = molecule([1, 3], np.array([[0., 0., 0.], [1., 1., 1.]]))
     a = GaussianWrapper(aa, "text_wrapper")
     print a.template
     a.create_input_file(0, 2)

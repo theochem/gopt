@@ -1,12 +1,9 @@
 import numpy as np
 import saddle.optimizer as op
-# import horton as ht
-
-from saddle.ICFunctions import ICFunctions
-from saddle.CostFunctions import CostFunctions
+import saddle.ICFunctions as ICFunctions
+import saddle.CostFunctions as CostFunctions
 from copy import copy
-# from saddle.ljenergy import LJEnergy
-# from saddle.pyscf_wrapper import gobasis
+from saddle.gaussianwrapper import GaussianWrapper
 
 __all__ = ["ICTransformation"]
 
@@ -42,7 +39,7 @@ class ICTransformation(object):
         self.ic_info = []
         self.iteration_flag = False
         self.procedures = []
-        self.bond =[[] for i in range(self.len)]
+        self.bond = [[] for i in range(self.len)]
         self.pseudo_numbers = mol.pseudo_numbers
         self._re_bond = []
         self._angle = []
@@ -62,7 +59,6 @@ class ICTransformation(object):
     @property
     def dof(self):
         return self.len * 3 - 6
-    
 
     def length_calculate(self, atom1, atom2):
         """To calculate distance between two atoms
@@ -255,13 +251,13 @@ class ICTransformation(object):
     def _aux_rep_check(self, atoms):
         """to change whether the pair of atoms been added into internal coordinates
         or not
-        
+
         Args:
             atoms (tuple): a tuple of two atoms indexes
-        
+
         Raises:
             AtomsNumberError: the number of atoms is not right
-        
+
         Returns:
             Bool: Return True for havn't been added yet otherwise return False
         """
@@ -317,7 +313,8 @@ class ICTransformation(object):
         tmp_h_matrix[:-1, :, :] = self.h_matrix
         for i in range(len(atoms)):
             for j in range(3):
-                tmp_h_matrix[-1, 3 * atoms[i] + j, 3 * atoms[i]: 3 * atoms[i] + 3] += deriv2[i][j][i]
+                tmp_h_matrix[-1, 3 * atoms[i] + j, 3 * atoms[i]
+                    : 3 * atoms[i] + 3] += deriv2[i][j][i]
         self.h_matrix = np.zeros(
             (len(self.ic), 3 * self.len, 3 * self.len), float)
         self.h_matrix = tmp_h_matrix
@@ -365,7 +362,8 @@ class ICTransformation(object):
         """getter for self.target.
         """
         if len(self._target_ic) < len(self.ic):
-            self._target_ic = np.append(self._target_ic, self.ic[len(self._target_ic):])
+            self._target_ic = np.append(self._target_ic, self.ic[
+                                        len(self._target_ic):])
         return self._target_ic
 
     def _set_target_ic(self, value):
@@ -486,11 +484,11 @@ class ICTransformation(object):
 
     def ic_swap(self, icindex1, icindex2):
         """swap internal coordinates between index1 and index2
-        
+
         Args:
             icindex1 (int): index of ic to be swaped
             icindex2 (int): the other index of ic to be swaped
-        
+
         """
         temp = copy(self.procedures[icindex1])
         self.procedures[icindex1] = copy(self.procedures[icindex2])
@@ -504,7 +502,7 @@ class ICTransformation(object):
         Args:
             icindex1 (int): index of ic to be swaped
             icindex2 (int): the other index of ic to be swaped
-        
+
         """
         target_ic = copy(self.target_ic)
         temp = copy(target_ic[icindex1])
@@ -540,10 +538,10 @@ class ICTransformation(object):
 
     def use_delta_ic_to_calculate_new_cc(self, delta_q):
         """use change of internal coordinates to find new set of cartesian coordinates
-        
+
         Args:
             delta_q (numpy.array): the change of internal coordinates
-        
+
         """
         b_inv = np.linalg.pinv(self.b_matrix)
         delta_x = np.dot(b_inv, delta_q)
@@ -572,7 +570,7 @@ class ICTransformation(object):
         self.ic = np.array([])
         self.ic_info = []
         self.procedures = []
-        self.bond =[[] for i in range(self.len)]
+        self.bond = [[] for i in range(self.len)]
         self._re_bond = []
         self._angle = []
         self._dihed = []
@@ -581,53 +579,91 @@ class ICTransformation(object):
         self.b_matrix = np.zeros((0, 3 * self.len), float)
         self.h_matrix = np.zeros((0, 3 * self.len, 3 * self.len), float)
 
+    def get_energy_gradient_hessian(self, method="lf", **kwargs):
+        """obtain energy, gradient and hessian for energy vs coordinates
 
-    def get_energy_gradient_hessian(self, convert=True, method="lf"):
+        Args:
+            method (str, optional): the method for calculate energy and other result
+                "ls" and "gs" is available.
+            **kwargs (TYPE): depends on different methods, some extra parameter might need to provide
+
+        """
         if method == "lf":
-            self.energy, self.gradient_matrix, self.hessian_matrix = self._lf_get_energy_gradient_hessian()
-        if convert:
-            self.gradient_x_to_ic()
-            self.hessian_x_to_ic()
-            # self.ic_gradient = np.dot(np.linalg.pinv(self.b_matrix.T), self.gradient_matrix)
-            # print np.dot(self.b_matrix.T, self.ic_gradient)
-            # print "test", self.b_matrix.T.shape, self.hessian_matrix.shape, self.b_matrix.shape
-            # print self.ic_gradient.shape, self.h_matrix.shape
-            # k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
-            # self.ic_hessian = np.dot(np.dot(np.linalg.pinv(self.b_matrix.T), (self.hessian_matrix - k_matrix)), np.linalg.pinv(self.b_matrix))
-            print (self.ic_hessian.shape)
-            # self.ic_hessian = np.dot(np.dot(self.b_matrix.T, self.hessian_matrix), self.b_matrix)# + np.tensordot(self.gradient_matrix, self.b_matrix, 1)
+            self.energy, self.gradient_matrix, self.hessian_matrix = self._lf_get_energy_gradient_hessian(
+                **kwargs)
+        elif method == "gs":
+            self.energy, self.gradient_matrix, self.hessian_matrix = self._gauss_get_energy_gradient_hessian(
+                **kwargs)
+        self.gradient_x_to_ic()
+        self.hessian_x_to_ic()
+        # self.ic_gradient = np.dot(np.linalg.pinv(self.b_matrix.T), self.gradient_matrix)
+        # print np.dot(self.b_matrix.T, self.ic_gradient)
+        # print "test", self.b_matrix.T.shape, self.hessian_matrix.shape, self.b_matrix.shape
+        # print self.ic_gradient.shape, self.h_matrix.shape
+        # k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
+        # self.ic_hessian = np.dot(np.dot(np.linalg.pinv(self.b_matrix.T), (self.hessian_matrix - k_matrix)), np.linalg.pinv(self.b_matrix))
+            # print(self.ic_hessian.shape)
+            # self.ic_hessian = np.dot(np.dot(self.b_matrix.T,
+            # self.hessian_matrix), self.b_matrix)# +
+            # np.tensordot(self.gradient_matrix, self.b_matrix, 1)
 
+    def get_energy_gradient(self, method="lf", **kwargs):
+        """obtain energy, gradient for energy vs coordinates
 
-    def _lf_get_energy_gradient_hessian(self):
-        from saddle.ljenergy import LJEnergy
-        ob = LJEnergy(self)
-        return ob.get_energy_gradient_hessian()
+        Args:
+            method (str, optional): the method for calculate energy and other result
+                "ls" and "gs" is available.
+            **kwargs (TYPE): depends on different methods, some extra parameter might need to provide
 
-    def get_energy_gradient(self, convert=True, method="lf"):
+        """
         if method == "lf":
-            self.energy, self.gradient_matrix = self._lf_get_energy_gradient()
-        if convert:
-            self.gradient_x_to_ic()
+            self.energy, self.gradient_matrix = self._lf_get_energy_gradient(
+                **kwargs)
+        elif method == "gs":
+            self.energy, self.gradient_matrix = self._gauss_get_energy_gradient(
+                **kwargs)
+        self.gradient_x_to_ic()
 
     def _lf_get_energy_gradient(self):
         from saddle.ljenergy import LJEnergy
         ob = LJEnergy(self)
         return ob.get_energy_gradient()
 
+    def _lf_get_energy_gradient_hessian(self):
+        from saddle.ljenergy import LJEnergy
+        ob = LJEnergy(self)
+        return ob.get_energy_gradient_hessian()
+
+    def _gauss_get_energy_gradient(self, **kwargs):
+        title = kwargs.pop('title')
+        charge = kwargs.pop('charge')
+        multi = kwargs.pop('multi')
+        ob = GaussianWrapper(self, title)
+        return ob.run_gaussian_and_get_result(charge, multi, energy=True, gradient=True, hessian=False)
+
+    def _gauss_get_energy_gradient_hessian(self, **kwargs):
+        title = kwargs.pop('title')
+        charge = kwargs.pop('charge')
+        multi = kwargs.pop('multi')
+        ob = GaussianWrapper(self, title)
+        return ob.run_gaussian_and_get_result(charge, multi, energy=True, gradient=True, hessian=True)
+
     def gradient_x_to_ic(self):
-        self.ic_gradient = np.dot(np.linalg.pinv(self.b_matrix.T), self.gradient_matrix)
+        self.ic_gradient = np.dot(np.linalg.pinv(
+            self.b_matrix.T), self.gradient_matrix)
 
     def hessian_x_to_ic(self):
         k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
-        self.ic_hessian = np.dot(np.dot(np.linalg.pinv(self.b_matrix.T), (self.hessian_matrix - k_matrix)), np.linalg.pinv(self.b_matrix))
+        self.ic_hessian = np.dot(np.dot(np.linalg.pinv(
+            self.b_matrix.T), (self.hessian_matrix - k_matrix)), np.linalg.pinv(self.b_matrix))
 
     def gradient_ic_to_x(self):
         self.gradient_matrix = np.dot(self.b_matrix.T, self.ic_gradient)
 
     def hessian_ic_to_x(self):
         k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)
-        self.hessian_matrix = np.dot(np.dot(self.b_matrix.T, self.ic_hessian), self.b_matrix) + np.tensordot(self.ic_gradient, self.h_matrix, 1)
-        
+        self.hessian_matrix = np.dot(np.dot(self.b_matrix.T, self.ic_hessian),
+                                     self.b_matrix) + np.tensordot(self.ic_gradient, self.h_matrix, 1)
 
     _IC_types = {
         "add_bond_length": ICFunctions.bond_length,
@@ -661,6 +697,7 @@ class ICTransformation(object):
         "add_dihed_angle_new_cross": CostFunctions.direct_diff_2
     }
 
+
 class AtomsNumberError(Exception):
     pass
 
@@ -668,24 +705,24 @@ if __name__ == '__main__':
     import horton as ht
     fn_xyz = ht.context.get_fn("test/water.xyz")
     mol = ht.IOData.from_file(fn_xyz)
-    print ("pse",mol.pseudo_numbers)
+    print("pse", mol.pseudo_numbers)
     h2a = ICTransformation(mol)
     h2a.add_bond_length(0, 1)
     h2a.add_bond_length(1, 2)
     h2a.add_bond_length(2, 1)
-    h2a.add_bend_angle(0,1,2)
-    print (h2a.angle_calculate(0,1,2))
-    print (h2a.ic_info)
-    print (h2a.ic)
-    print (h2a.procedures)
+    h2a.add_bend_angle(0, 1, 2)
+    print(h2a.angle_calculate(0, 1, 2))
+    print(h2a.ic_info)
+    print(h2a.ic)
+    print(h2a.procedures)
     # h2a._set_target_ic([2.8, 2.6])
-    print (h2a.target_ic)
+    print(h2a.target_ic)
     h2a.ic_swap(0, 2)
-    print (h2a.ic)
-    print (h2a.target_ic)
-    print (h2a.procedures)
-    print (h2a.coordinates)
-    print (h2a.h_matrix.shape)
+    print(h2a.ic)
+    print(h2a.target_ic)
+    print(h2a.procedures)
+    print(h2a.coordinates)
+    print(h2a.h_matrix.shape)
     # h2a.energy_compute()
 #     print h2a.ic
 #     h2a.add_bond_length(0, 2)
