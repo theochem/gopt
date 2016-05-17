@@ -23,7 +23,11 @@ class GaussianWrapper(object):
         hessian = kwargs.pop('hessian', False)
         if kwargs:
             raise TypeError('Unexpected **kwargs: %r' % kwargs)
-        filename = self.create_input_file(charge, multi, freq="")
+        if gradient or hessian:
+            freq = "freq"
+        else:
+            freq = ""
+        filename = self.create_input_file(charge, multi, freq=freq)
         fchk_file = self._run_gaussian(filename)
         result = []
         if energy:
