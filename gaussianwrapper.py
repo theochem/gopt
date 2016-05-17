@@ -41,7 +41,7 @@ class GaussianWrapper(object):
     def create_input_file(self, charge, multi, freq="freq"):
         atoms = ""
         for i in range(len(self.molecule.numbers)):
-            x, y, z = self.molecule.coordinates[i]
+            x, y, z = self.molecule.coordinates[i] / angstrom
             atoms += ('%2s % 10.5f % 10.5f % 10.5f \n' %
                       (periodic[self.molecule.numbers[i]].symbol, x, y, z))
         filename = "{0}_{1}".format(self.title, self.counter)
