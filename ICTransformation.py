@@ -645,6 +645,8 @@ class ICTransformation(object):
         title = kwargs.pop('title')
         charge = kwargs.pop('charge')
         multi = kwargs.pop('multi')
+        if kwargs:
+            raise TypeError('Unexpected **kwargs: %r' % kwargs)
         ob = GaussianWrapper(self, title)
         return ob.run_gaussian_and_get_result(charge, multi, energy=True, gradient=True, hessian=True)
 

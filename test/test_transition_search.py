@@ -39,6 +39,12 @@ def test_transitionsearch_cl_h_br():
     new_rdric = np.array(new_rdric).T
     test_v = np.hstack((new_dric, new_rdric))
     assert np.allclose(ts_treat.v_matrix, test_v)
+    ts_treat.ts_state.get_energy_gradient_hessian(method="gs", title="clhbr", charge=0, multi=2) #obtain energy, gradient, and hessian
+    ts_treat.get_v_gradient()
+    ts_treat.get_v_hessian()
+    optimizer = TrialOptimizer()
+    optimizer.set_trust_radius_method(method="default", parameter=3)
+    optimizer.add_a_point(ts_treat)
 
 
 
