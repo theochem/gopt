@@ -16,11 +16,13 @@ class TrialOptimizer(object):
         trm_class (dict, class property): trust_radius method chooser, availabel method keyword "default"
     """
 
-    def __init__(self):
+    def __init__(self, charge=0, spin=1):
         self.points = []
         self._trust_radius = None
         # self.parents=[]
         self._counter = 0
+        self._charge = charge
+        self._spin = spin
 
     def _update_hessian_finite_difference(self, index, key_list, perturb=0.001):
         """use finite difference method to update hessian if hessian matrix is 
@@ -300,7 +302,7 @@ class TrialOptimizer(object):
         """
         self.find_stepsize_for_a_point(self.latest_index, **kwmethod)
 
-    def update_to_new_point_for_a_point(self, index):  # chekced
+    def update_to_new_point_for_a_point(self, index, **kwmethod):  # chekced
         """update to a new point depent on the information of present point like
         hessian, trust radius method.
 
@@ -311,13 +313,22 @@ class TrialOptimizer(object):
             Ts_Treat: the new point for further treatment and update
         """
         point = self.points[index]
-        new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize)
+        method = kwmethod.pop("method")
+        title = kwmethod.pop("title","untitled")
+        kwargs = {}
+        if method == "lf":
+            pass
+        else method == "gs":
+            kwargs["charge"] = self._charge
+            kwargs["spin"] = self._spin
+            kwargs["title"] = title
+        new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize, method, **kwargs)
         return new_point
 
-    def update_to_new_point_for_latest_point(self):  # checked
+    def update_to_new_point_for_latest_point(self, **kwmethod):  # checked
         """update to a new point depent on the information of the latest point
         """
-        return self.update_to_new_point_for_a_point(self.latest_index)
+        return self.update_to_new_point_for_a_point(self.latest_index, **kwmethod)
 
     # def _check_new_point_competent(self, old_point, new_point):
     #     """chech the ne
