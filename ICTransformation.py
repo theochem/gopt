@@ -637,20 +637,20 @@ class ICTransformation(object):
     def _gauss_get_energy_gradient(self, **kwargs):
         title = kwargs.pop('title')
         charge = kwargs.pop('charge')
-        multi = kwargs.pop('multi')
+        spin = kwargs.pop('spin')
         if kwargs:
             raise TypeError('Unexpected **kwargs: %r' % kwargs)
         ob = GaussianWrapper(self, title)
-        return ob.run_gaussian_and_get_result(charge, multi, energy=True, gradient=True, hessian=False)
+        return ob.run_gaussian_and_get_result(charge, spin, energy=True, gradient=True, hessian=False)
 
     def _gauss_get_energy_gradient_hessian(self, **kwargs):
         title = kwargs.pop('title')
         charge = kwargs.pop('charge')
-        multi = kwargs.pop('multi')
+        spin = kwargs.pop('spin')
         if kwargs:
             raise TypeError('Unexpected **kwargs: %r' % kwargs)
         ob = GaussianWrapper(self, title)
-        return ob.run_gaussian_and_get_result(charge, multi, energy=True, gradient=True, hessian=True)
+        return ob.run_gaussian_and_get_result(charge, spin, energy=True, gradient=True, hessian=True)
 
     def gradient_x_to_ic(self):
         self.ic_gradient = np.dot(np.linalg.pinv(

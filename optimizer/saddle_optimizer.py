@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import hessian_update as hu
+from horton import angstrom
 
 from trust_radius import default_trust_radius
 from copy import deepcopy
@@ -16,15 +17,16 @@ class TrialOptimizer(object):
         trm_class (dict, class property): trust_radius method chooser, availabel method keyword "default"
     """
 
-    def __init__(self, charge=0, spin=1):
+    def __init__(self, charge=0, spin=1, title="untitled"):
         self.points = []
         self._trust_radius = None
         # self.parents=[]
         self._counter = 0
         self._charge = charge
         self._spin = spin
+        self._title = title
 
-    def _update_hessian_finite_difference(self, index, key_list, perturb=0.001):
+    def _update_hessian_finite_difference(self, index, key_list, method, perturb=0.001):
         """use finite difference method to update hessian if hessian matrix is 
         not provided or it performed terribly
 
@@ -36,13 +38,30 @@ class TrialOptimizer(object):
         """
         point = self.points[index]
         # h_m = np.zeros((point.ts_state.dof, point.ts_state.dof), float)
+        kwargs = {}
+        kwargs["spin"] = self._spin
+        kwargs["charge"] = self._charge
+        kwargs["title"] = self._title
         for i in key_list:
             e_pert = np.zeros(point.ts_state.dof)
+            print "finite", point.ts_state.ic
+            print "coor", point.ts_state.coordinates / angstrom
+            print "gm", point.ts_state.gradient_matrix
+            print "ic", point.ts_state.ic
+            print "ic gm", point.ts_state.ic_gradient
+            print "b * xg", np.dot(np.linalg.pinv(point.ts_state.b_matrix.T), point.ts_state.gradient_matrix)
             e_pert[i] = 1. * perturb
             new_point = point.obtain_new_cc_with_new_delta_v(
-                e_pert)
+                e_pert, method, **kwargs)
+            print "finite", new_point.ts_state.ic
+            print "coor", new_point.ts_state.coordinates / angstrom
+            print "gm", new_point.ts_state.gradient_matrix
+            print "ic", new_point.ts_state.ic
+            print "ic gm", new_point.ts_state.ic_gradient
+            print "b * xg", np.dot(np.linalg.pinv(new_point.ts_state.b_matrix.T), new_point.ts_state.gradient_matrix)
             # new_point = new_ts_state.create_a_saddle_point()
             pt1 = (new_point.v_gradient - point.v_gradient) / perturb
+            print "pt1", pt1
             pt2 = np.dot(point.v_matrix.T, np.linalg.pinv(
                 point.ts_state.b_matrix.T))
             dv = (new_point.v_matrix - point.v_matrix) / perturb
@@ -318,7 +337,7 @@ class TrialOptimizer(object):
         kwargs = {}
         if method == "lf":
             pass
-        else method == "gs":
+        elif method == "gs":
             kwargs["charge"] = self._charge
             kwargs["spin"] = self._spin
             kwargs["title"] = title
