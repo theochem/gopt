@@ -166,7 +166,7 @@ class TS_Treat(object):
     #     new_point = SaddlePoint(length, g_matrix, vmatrix, reference, key_ic_number, h_matrix)
     #     return new_point
 
-    def obtain_new_cc_with_new_delta_v(self, delta_v, method, **kwargs):
+    def obtain_new_cc_with_new_delta_v(self, delta_v, method, hessian=False, **kwargs):
         """calculate the change of internal coordinates \delta q according to the 
         change of the change of V coordinates \delta v.
 
@@ -182,7 +182,11 @@ class TS_Treat(object):
         new_ts_state.advanced_info = {}
         new_ts_state.stepsize = None
         new_ts_state.ts_state.use_delta_ic_to_calculate_new_cc(delta_q)
-        new_ts_state.ts_state.get_energy_gradient(method, **kwargs)
+        if hessian:
+            new_ts_state.ts_state.get_energy_gradient_hessian(method, **kwargs)
+            new_ts_state.get_v_hessian()
+        else:
+            new_ts_state.ts_state.get_energy_gradient(method, **kwargs)
         new_ts_state.get_v_basis()
         new_ts_state.get_v_gradient()
         return new_ts_state

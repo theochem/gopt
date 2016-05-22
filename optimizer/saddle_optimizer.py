@@ -246,6 +246,8 @@ class TrialOptimizer(object):
         # otherwise return False.
         return need_update
 
+    def obtain_
+
     def procustes_process_for_a_point(self, index):
         point = self.points[index]
         pre_point = self.points[index - 1]
@@ -321,7 +323,7 @@ class TrialOptimizer(object):
         """
         self.find_stepsize_for_a_point(self.latest_index, **kwmethod)
 
-    def update_to_new_point_for_a_point(self, index, **kwmethod):  # chekced
+    def update_to_new_point_for_a_point(self, index, hessian=False, **kwmethod):  # chekced
         """update to a new point depent on the information of present point like
         hessian, trust radius method.
 
@@ -341,7 +343,7 @@ class TrialOptimizer(object):
             kwargs["charge"] = self._charge
             kwargs["spin"] = self._spin
             kwargs["title"] = title
-        new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize, method, **kwargs)
+        new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize, method, hessian, **kwargs)
         return new_point
 
     def update_to_new_point_for_latest_point(self, **kwmethod):  # checked
