@@ -246,8 +246,6 @@ class TrialOptimizer(object):
         # otherwise return False.
         return need_update
 
-    def obtain_
-
     def procustes_process_for_a_point(self, index):
         point = self.points[index]
         pre_point = self.points[index - 1]
@@ -346,10 +344,10 @@ class TrialOptimizer(object):
         new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize, method, hessian, **kwargs)
         return new_point
 
-    def update_to_new_point_for_latest_point(self, **kwmethod):  # checked
+    def update_to_new_point_for_latest_point(self, hessian=False, **kwmethod):  # checked
         """update to a new point depent on the information of the latest point
         """
-        return self.update_to_new_point_for_a_point(self.latest_index, **kwmethod)
+        return self.update_to_new_point_for_a_point(self.latest_index, hessian, **kwmethod)
 
     # def _check_new_point_competent(self, old_point, new_point):
     #     """chech the ne

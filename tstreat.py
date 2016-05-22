@@ -184,11 +184,12 @@ class TS_Treat(object):
         new_ts_state.ts_state.use_delta_ic_to_calculate_new_cc(delta_q)
         if hessian:
             new_ts_state.ts_state.get_energy_gradient_hessian(method, **kwargs)
-            new_ts_state.get_v_hessian()
+            new_ts_state.get_v_basis()
+            new_ts_state.get_v_gradient_hessian()
         else:
             new_ts_state.ts_state.get_energy_gradient(method, **kwargs)
-        new_ts_state.get_v_basis()
-        new_ts_state.get_v_gradient()
+            new_ts_state.get_v_basis()
+            new_ts_state.get_v_gradient()
         return new_ts_state
 
     def get_v_gradient(self):
