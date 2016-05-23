@@ -246,15 +246,21 @@ class TrialOptimizer(object):
         # otherwise return False.
         return need_update
 
+    def procruste_process_for_latest_point(self, hessian=False):
+        index = self.latest_index
+        self.procruste_process_for_a_point(index, hessian)
 
-    def procustes_process_for_a_point(self, index):
+    def procruste_process_for_a_point(self, index, hessian=False):
         point = self.points[index]
         pre_point = self.points[index - 1]
         overlap = np.dot(point.v_matrix.T, pre_point.v_matrix)
         u, s, v = np.linalg.svd(overlap)
         q = np.dot(u, v)
         point.v_matrix = np.dot(point.v_matrix, q)
-        point.get_v_gradient()
+        if hessian:
+            point.get_v_gradient_hessian()
+        else:
+            point.get_v_gradient()
 
     def tweak_hessian_for_a_point(self, index):  # checked
         """tweak the hessian for a point in self.points
@@ -342,6 +348,7 @@ class TrialOptimizer(object):
             kwargs["spin"] = self._spin
             kwargs["title"] = title
         new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize, method, hessian, **kwargs)
+        self.procruste_process_for_a_point(index, hessian)
         return new_point
 
     def update_to_new_point_for_latest_point(self, hessian=False, **kwmethod):  # checked
