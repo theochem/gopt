@@ -331,8 +331,9 @@ class TS_Treat(object):
         Returns:
             numpy.array: the steps to be taken to update geometry
         """
-        eigenvectors = self.advanced_info["eigenvectors"]
-        eigenvalues = self.advanced_info["eigenvalues"]
+        #eigenvectors = self.advanced_info["eigenvectors"]
+        #eigenvalues = self.advanced_info["eigenvalues"]
+        eigenvalues, eigenvectors = np.linalg.eigh(self.v_hessian)
         # print eigenvalues
         g_matrix = self.v_gradient
 

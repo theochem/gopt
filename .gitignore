@@ -1,1 +1,6 @@
 *.pyc
+*.log
+*.chk
+*.fchk
+*.com
+!single_hf_template.com

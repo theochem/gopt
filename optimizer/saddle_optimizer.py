@@ -246,6 +246,7 @@ class TrialOptimizer(object):
         # otherwise return False.
         return need_update
 
+
     def procustes_process_for_a_point(self, index):
         point = self.points[index]
         pre_point = self.points[index - 1]
@@ -268,8 +269,7 @@ class TrialOptimizer(object):
         """tweak the hessian for the latest point
 
         """
-        point = self.points[self.latest_index]
-        self._tweak_hessian(point)
+        self.tweak_hessian_for_a_point(self.latest_index)
 
     def _tweak_hessian(self, point):
         """the function to tweak the hessian
