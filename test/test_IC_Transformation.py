@@ -1,5 +1,6 @@
 import numpy as np
 import horton as ht
+import os
 from saddle import *
 import saddle.optimizer as op
 
@@ -76,3 +77,8 @@ def test_IC_Transformation_h2_azirine():
     sample = np.array([2.65960466,2.56205311,2.28111119,2.00076777,1.80286759,1.701731,
         1.15754025,0.90348139,2.58383649,1.80227751,1.80229723,0.48997636,0.45809291,-2.49348553])
     assert np.allclose(h2a.ic, sample)
+
+
+if __name__ == '__main__':
+    test_IC_Transformation_h2_azirine()
+    test_IC_Transformation_water_add_ics()

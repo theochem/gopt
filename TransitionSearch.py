@@ -78,7 +78,7 @@ class TransitionSearch(object):
         self.auto_ic_select(similar, [self.reactant, self.product])
         self.auto_ic_select(similar, [self.reactant, self.product])
         self.ts_state = deepcopy(similar)
-        self.ts_state.coordinates = self.get_ts_guess_cc(ratio)
+        self.ts_state.coordinates = self.get_ts_guess_cc(similar)
         self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
         self.ts_state._reset_ic()
         # self._linear_check()
@@ -94,7 +94,7 @@ class TransitionSearch(object):
             self._auto_angle_select(similar, [self.reactant, self.product])
             self._auto_dihed_select(similar, [self.reactant, self.product])
             self.ts_state = deepcopy(similar)
-            self.ts_state.coordinates = self.get_ts_guess_cc(ratio)
+            self.ts_state.coordinates = self.get_ts_guess_cc(ratio, similar)
             self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
             self.ts_state._reset_ic()
             # self._linear_check()
@@ -113,7 +113,7 @@ class TransitionSearch(object):
         return ts_state 
 
 
-    def get_ts_guess_cc(self, ratio=0.5):
+    def get_ts_guess_cc(self, similer=None):
         """calculate initial guess transition state cartesian coordinates at certain ratio, default value is 0.5
 
         Args:
@@ -122,10 +122,7 @@ class TransitionSearch(object):
         Raises:
             ValueError: value for ratio is beyond rational range
         """
-        if ratio > 1. or ratio < 0.:
-            raise ValueError
-        ts_coordinates = self.reactant.coordinates * \
-            ratio + self.product.coordinates * (1. - ratio)
+        ts_coordinates = similer.coordinates.copy()
         return ts_coordinates
 
     def get_ts_guess_ic(self, ratio=0.5):
@@ -143,8 +140,8 @@ class TransitionSearch(object):
             raise AtomsNumberError
         if ratio > 1. or ratio < 0.:
             raise ValueError
-        target_ic = self.reactant.ic #set the guess ic of target ts is the same as reactant
-        # target_ic = self.reactant.ic * ratio + self.product.ic * (1. - ratio)
+        # target_ic = self.reactant.ic #set the guess ic of target ts is the same as reactant
+        target_ic = self.reactant.ic * ratio + self.product.ic * (1. - ratio)
         # print "reactant ic", self.reactant.ic
         # print "product ic", self.product.ic
         # print "target_ic", self.reactant.ic * ratio + self.product.ic * (1. - ratio)

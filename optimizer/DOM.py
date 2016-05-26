@@ -44,7 +44,7 @@ class DOM(object):
 
 
     @staticmethod
-    def optimize(point, value_func, deriv_func, threshold = 0.01):
+    def optimize(point, value_func, deriv_func, threshold = 0.001):
         if point._flag != "DOM":
             raise OptimizationTypeError
         new_point = deepcopy(point)

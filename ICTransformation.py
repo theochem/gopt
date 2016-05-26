@@ -655,6 +655,9 @@ class ICTransformation(object):
     def gradient_x_to_ic(self):
         self.ic_gradient = np.dot(np.linalg.pinv(
             self.b_matrix.T), self.gradient_matrix)
+        pinv = np.linalg.pinv(self.b_matrix.T)
+        print pinv, self.gradient_matrix
+        print np.dot(pinv, self.gradient_matrix)
 
     def hessian_x_to_ic(self):
         k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)

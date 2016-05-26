@@ -20,6 +20,6 @@ def test_trust_radius():
     # result = ts_treat_sample._trust_region_image_potential()
     # print result
     # print np.dot(hessian, result), np.linalg.norm(result)
-    step = ts_treat_sample._step_calculate_max_length(3)
-    print "step",step
+    # step = ts_treat_sample._step_calculate_max_length(3)
+    # print "step",step
 test_trust_radius()
