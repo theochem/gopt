@@ -29,6 +29,7 @@ class GaussianWrapper(object):
             freq = ""
         filename = self.create_input_file(charge, multi, freq=freq)
         fchk_file = self._run_gaussian(filename)
+        assert isinstance(fchk_file, FCHKFile), "Gaussian calculation didn't run properly"
         result = []
         if energy:
             result.append(fchk_file.get_energy())

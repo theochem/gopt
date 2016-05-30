@@ -25,6 +25,7 @@ class TrialOptimizer(object):
         self._charge = charge
         self._spin = spin
         self._title = title
+        self.create_log_output()
 
     def _update_hessian_finite_difference(self, index, key_list, method, perturb=0.001):
         """use finite difference method to update hessian if hessian matrix is 
@@ -172,6 +173,8 @@ class TrialOptimizer(object):
         """
         self.points.append(point)
         self._counter_add()
+        if self.latest_index > 0:
+            self.write_info(latest_index - 1)
 
     def update_hessian_for_a_point(self, index, **kwmethod):
         """update hessian for a certain point
@@ -500,6 +503,31 @@ class TrialOptimizer(object):
                 break
             self.update_trust_radius_latest_point(method="gradient")
             self.update_hessian_for_latest_point(method="SR1")
+
+    def create_log_output(self):
+        pwd = os.path.dirname(os.path.realpath(__file__))
+        file_path = "/test/gauss/" + self._title + ".log"
+        with open(pwd + file_path, "w") as f:
+            f.write("\n ----The log file for optimization---- \n")
+
+    def write_info(self, index):
+        pwd = os.path.dirname(os.path.realpath(__file__))
+        file_path = "/test/gauss/" + self._title + ".log"
+        point = self.points[index]
+        with open(pwd + file_path, "a") as f:
+            f.write("\n------------infromation for point {} starts------------".format(index))
+            f.write("atom numbers: \n{}\n".format(point.ts_state.numbres))
+            f.write("total energy: \n{}\n".format(point.ts_state.energy))
+            f.write("cartesian coordinates: \n{}\n".format(point.ts_state.coordinates))
+            f.write("internal coordinates: \n{}\n".format(point.ts_state.ic))
+            f.write("cartesian gradient: \n{}\n".format(point.ts_state.gradient_matrix))
+            f.write("cartesian hessian: \n{}\n".format(point.ts_state.hessian_matrix))
+            f.write("internal gradient: \n{}\n".format(point.ts_state.ic_gradient))
+            f.write("internal hessian: \n{}\n".format(point.ts_state.ic_hessian))
+            f.write("optimization step: \n{}\n".format(point.stepsize))
+            f.write("optimization step control: \n{}\n".format(point.stepcontrol))
+            f.write("------------infromation for point {} ends------------\n".format(index))
+
 
     @property
     def counter(self):
