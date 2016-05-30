@@ -8,6 +8,86 @@ import os
 
 
 def test_transitionsearch_cl_h_br():
+    path = os.path.dirname(os.path.realpath(__file__))
+    reactant = ht.IOData.from_file(path + "/Br_HCl.xyz")
+    product = ht.IOData.from_file(path + "/Cl_HBr.xyz")
+    ts_sample = TransitionSearch(reactant, product)
+    ts_sample.auto_ts_search(opt=True, similar=ts_sample.product)
+    # print "ic", ts_sample.ts_state.ic
+    # print ts_sample.ts_state.coordinates
+    # print ts_sample.ts_state.b_matrix
+    ts_sample.auto_key_ic_select()
+    # length = np.array([0.1, 0, 0])
+    # ts_sample.ts_state.use_delta_ic_to_calculate_new_cc(length)
+    # print ts_sample.ts_state.coordinates
+    # print ts_sample.ts_state.ic
+    x_gradient = np.array([0.,  0.,  0.08887695,  0.,  0.,
+                           -0.0902661,  0.,  0.,  0.00138915])
+    x_hessian = np.array([[0.03011641,  0.,  0., -0.02821553,  0.,
+                           0., -0.00190088,  0.,  0.],
+                          [0.,  0.03086039,  0.,  0., -0.02863026,
+                           0.,  0., -0.00223013,  0.],
+                          [0.,  0.,  0.02398155,  0.,  0.,
+                           -0.05804879,  0.,  0.,  0.03406724],
+                          [-0.02821553,  0.,  0.,  0.02733143,  0.,
+                           0.,  0.0008841,  0.,  0.],
+                          [0., -0.02863026,  0.,  0.,  0.02756313,
+                           0.,  0.,  0.00106714,  0.],
+                          [0.,  0., -0.05804879,  0.,  0.,
+                           0.10503458,  0.,  0., -0.04698579],
+                          [-0.00190088,  0.,  0.,  0.0008841,  0.,
+                           0.,  0.00101678,  0.,  0.],
+                          [0., -0.00223013,  0.,  0.,  0.00106714,
+                           0.,  0.,  0.00116299,  0.],
+                          [0.,  0.,  0.03406724,  0.,  0.,
+                           -0.04698579,  0.,  0.,  0.01291855]])
+    step = np.dot(np.linalg.pinv(x_hessian), x_gradient)
+    ts_sample.ts_state.gradient_matrix = x_gradient.copy()
+    ts_sample.ts_state.hessian_matrix = x_hessian.copy()
+    x_step = -np.dot(np.linalg.pinv(ts_sample.ts_state.hessian_matrix),
+                     ts_sample.ts_state.gradient_matrix)
+    delta_ic = np.dot(ts_sample.ts_state.b_matrix, x_step)
+    ts_sample.ts_state.gradient_x_to_ic()
+    ts_sample.ts_state.hessian_x_to_ic()
+    ic_step = -np.dot(np.linalg.pinv(ts_sample.ts_state.ic_hessian),
+                      ts_sample.ts_state.ic_gradient)
+    # # print ic_step
+    assert np.allclose(delta_ic, ic_step)
+
+    ts_t = ts_sample.create_ts_treat()
+    ts_t.get_new_v_basis()
+    ts_t.get_v_gradient()
+    ts_t.get_v_hessian()
+    # print ts_t.v_gradient
+    # print ts_t.v_hessian
+
+    ts_t.set_ic_gradient()
+    ts_t.set_ic_hessian()
+
+    v_step = -np.dot(np.linalg.pinv(ts_t.v_hessian), ts_t.v_gradient)
+    print "v step", v_step
+
+    new_v_step = v_step.copy()
+    new_v_step[0] = 0
+    print "new v step", new_v_step
+
+    delta_ic = np.dot(ts_t.v_matrix, v_step)
+    print "d ic, ic",delta_ic, ic_step
+
+    new_delta_ic = np.dot(ts_t.v_matrix, new_v_step)
+    print "new delta_ic", new_delta_ic
+
+    new_cc_step = ts_t.ts_state._calculate_delta_cc_from_detla_ic(new_delta_ic)
+    g = np.dot(ts_t.ts_state.hessian_matrix, new_cc_step.reshape(-1,1))
+    print "new cc \n", new_cc_step, g
+
+    cc_step = ts_t.ts_state._calculate_delta_cc_from_detla_ic(ic_step)
+    print x_step, cc_step, np.allclose(cc_step, x_step.reshape(-1,3))
+    # print ts_t.v_gradient
+    # print ts_t.ts_state.ic_gradient
+
+
+def test_transitionsearch_ch3_h_cl():
     # fn = ht.context.get_fn("../saddle/test/")
     path = os.path.dirname(os.path.realpath(__file__))
     reactant = ht.IOData.from_file(path + "/ch3_hf.xyz")
@@ -16,20 +96,36 @@ def test_transitionsearch_cl_h_br():
     # create a object to find best fitting transition state
     ts_sample = TransitionSearch(reactant, product)
     ts_sample.auto_ic_select_combine()
-    ts_sample.auto_ts_search(opt=True)
+    ts_sample.auto_ts_search(opt=True, similar=ts_sample.product)
     print ts_sample.ts_state.ic
+    print ts_sample.ts_state.target_ic
+    print ts_sample.reactant.ic
+    print ts_sample.product.ic
     print ts_sample.ts_state.procedures
-    a = ts_sample.ts_state.b_matrix
     ts_sample.auto_key_ic_select()
+    print ts_sample.ts_state.coordinates
+    # to do, use real gradient and hessian
+    print new_gradient
+    hessian = np.random.rand(18, 18)
+    new_hessian = np.dot(hessian.T, hessian)
+    ts_sample.ts_state.gradient_matrix = new_gradient
+    ts_sample.ts_state.hessian_matrix = new_hessian
+    step = - np.dot(np.linalg.inv(new_hessian), new_gradient)
+    result = np.dot(new_hessian, step)
+    assert np.allclose(result, -new_gradient)
+
+    # print np.linalg.pinv(ts_sample.ts_state.b_matrix)
+    # print ts_sample.ts_state.gradient_matrix
+    # ts_sample.create_ts_treat()
+
+    # ts_sample.put_transition_state_molucule_in_xyz("xyz_test")
     # print ts_sample.reactant.ic
     # print ts_sample.product.ic
     # print ts_sample.ts_state.target_ic
-    print ts_sample.ts_state.ic
-    b = ts_sample.ts_state.b_matrix
-    print np.allclose(a,b)
-    print ts_sample.ts_state.procedures
-    print np.linalg.norm((ts_sample.reactant.ic + ts_sample.product.ic) / 2 - ts_sample.ts_state.ic)
-
+    # print ts_sample.ts_state.ic
+    # print ts_sample.ts_state.procedures
+    # print ts_sample.ts_state.numbers
+    # print ts_sample.ts_state.b_matrix
     '''
     ts_sample = TransitionSearch(reactant, product)
 

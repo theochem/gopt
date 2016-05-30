@@ -16,7 +16,7 @@ def test_transitionsearch_cl_h_br():
     ts_sample.auto_ic_select_combine() #auto select ic for reactant and product in certain way
     assert np.allclose(ts_sample.reactant.ic, np.array([2.67533253, 5.56209896, 3.14159265]))
     assert np.allclose(ts_sample.product.ic, np.array([5.14254763, 2.45181572, 3.14159265]))
-    ts_sample.auto_ts_search(opt=True)  #auto select proper ic for ts and optimize the initial guess to as close as possible
+    ts_sample.auto_ts_search(opt=True, similar=ts_sample.reactant)  #auto select proper ic for ts and optimize the initial guess to as close as possible
     ts_sample.auto_key_ic_select()  #auto select key ic for transition states
     assert abs(ts_sample._ic_key_counter - 2) < 1e-8
     ts_treat = ts_sample.create_ts_treat()
@@ -40,6 +40,7 @@ def test_transitionsearch_cl_h_br():
     new_rdric = [rdric[:,i] / np.linalg.norm(rdric[:, i]) for i in range(len(rdric[0]))]
     new_rdric = np.array(new_rdric).T
     test_v = np.hstack((new_dric, new_rdric))
+    # print test_v
     assert np.allclose(ts_treat.v_matrix, test_v)
     # ts_treat.ts_state.get_energy_gradient_hessian(method="gs", title="clhbr", charge=0, spin=2) #obtain energy, gradient, and hessian
     # ts_treat.get_v_gradient()

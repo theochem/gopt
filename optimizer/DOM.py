@@ -11,7 +11,7 @@ class DOM(object):
     def initialize(point, trust_radius = None):
         point_init = deepcopy(point)
         point_init._flag = "DOM"
-        point_init._G = np.linalg.inv(point_init.second_deriv)
+        point_init._G = np.linalg.pinv(point_init.second_deriv)
         point_init._stepratio = 0.5
         point_init.trust_radius = trust_radius
         return point_init
@@ -38,7 +38,7 @@ class DOM(object):
             if n > 20: raise FailConvergeError
         new_point = deriv_func(new_point)
         new_point._stepratio = point._stepratio
-        new_point._G = np.linalg.inv(new_point.second_deriv)
+        new_point._G = np.linalg.pinv(new_point.second_deriv)
         new_point._flag = "DOM"
         return new_point
 

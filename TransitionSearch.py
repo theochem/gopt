@@ -79,10 +79,12 @@ class TransitionSearch(object):
         self.auto_ic_select(similar, [self.reactant, self.product])
         self.ts_state = deepcopy(similar)
         self.ts_state.coordinates = self.get_ts_guess_cc(similar)
+        # self.put_transition_state_molucule_in_xyz("xyz_test")
         self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
         self.ts_state._reset_ic()
         # self._linear_check()
         while len(self.ts_state.ic) < self.ts_state.dof:
+            # print "aux bond",self.ts_state.aux_bond
             if self.ts_state.aux_bond:
                 atom1, atom2 = self.ts_state.auto_upgrade_aux_bond()
                 self.product.aux_bond.remove((atom1, atom2))
@@ -94,7 +96,7 @@ class TransitionSearch(object):
             self._auto_angle_select(similar, [self.reactant, self.product])
             self._auto_dihed_select(similar, [self.reactant, self.product])
             self.ts_state = deepcopy(similar)
-            self.ts_state.coordinates = self.get_ts_guess_cc(ratio, similar)
+            self.ts_state.coordinates = self.get_ts_guess_cc(similar)
             self.ts_state.target_ic = self.get_ts_guess_ic(ratio)
             self.ts_state._reset_ic()
             # self._linear_check()
@@ -123,6 +125,9 @@ class TransitionSearch(object):
             ValueError: value for ratio is beyond rational range
         """
         ts_coordinates = similer.coordinates.copy()
+        # ratio = 0.9
+        # ts_coordinates = self.reactant.coordinates.copy() * ratio + self.product.coordinates.copy() * (1 - ratio)
+        # print ts_coordinates
         return ts_coordinates
 
     def get_ts_guess_ic(self, ratio=0.5):

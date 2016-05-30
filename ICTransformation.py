@@ -295,11 +295,11 @@ class ICTransformation(object):
             atoms (tuple): a tuple of atoms indexes
         """
         tmp_b_matrix = np.zeros((len(self.ic), 3 * self.len), float)
-        tmp_b_matrix[:-1, :] = self.b_matrix
+        tmp_b_matrix[:-1, :] = self.b_matrix.copy()
         for i in range(len(atoms)):
             tmp_b_matrix[-1, 3 * atoms[i]: 3 * atoms[i] + 3] += deriv[i]
-        self.b_matrix = np.zeros((len(self.ic), 3 * self.len), float)
-        self.b_matrix[:, :] = tmp_b_matrix
+        # self.b_matrix = np.zeros((len(self.ic), 3 * self.len), float)
+        self.b_matrix = tmp_b_matrix.copy()
 
     def _add_h_matrix(self, deriv2, atoms):
         """calculate H matrix for coordinates transformation from cartesian to internal
@@ -536,6 +536,11 @@ class ICTransformation(object):
         self.coordinates = new_coor
         self._reset_ic()
 
+    def _calculate_delta_cc_from_detla_ic(self, delta_q):
+        b_inv = np.linalg.pinv(self.b_matrix)
+        delta_x = np.dot(b_inv, delta_q)
+        return delta_x.reshape(-1,3)
+
     def use_delta_ic_to_calculate_new_cc(self, delta_q):
         """use change of internal coordinates to find new set of cartesian coordinates
 
@@ -543,9 +548,8 @@ class ICTransformation(object):
             delta_q (numpy.array): the change of internal coordinates
 
         """
-        b_inv = np.linalg.pinv(self.b_matrix)
-        delta_x = np.dot(b_inv, delta_q)
-        new_coor = self.coordinates + delta_x.reshape(-1, 3)
+        delta_x = self._calculate_delta_cc_from_detla_ic(delta_q)
+        new_coor = self.coordinates + delta_x
         self.get_new_coor(new_coor)
 
     def _reset_ic(self):
@@ -656,8 +660,8 @@ class ICTransformation(object):
         self.ic_gradient = np.dot(np.linalg.pinv(
             self.b_matrix.T), self.gradient_matrix)
         pinv = np.linalg.pinv(self.b_matrix.T)
-        print pinv, self.gradient_matrix
-        print np.dot(pinv, self.gradient_matrix)
+        # print pinv, self.gradient_matrix
+        # print np.dot(pinv, self.gradient_matrix)
 
     def hessian_x_to_ic(self):
         k_matrix = np.tensordot(self.ic_gradient, self.h_matrix, 1)

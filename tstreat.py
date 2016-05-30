@@ -56,6 +56,7 @@ class TS_Treat(object):
         prj_matrix = np.dot(b_matrix, b_pinv)
         ic_len = len(self.ts_state.ic)
         ic_keyic_len = self.key_ic
+        assert ic_keyic_len > 0, "key internal coordinates should be more than 1"
         e_perturb = np.zeros((ic_len, ic_keyic_len), float)
         identity_matrix = np.identity(ic_keyic_len)
         e_perturb[:ic_keyic_len, :] = identity_matrix
@@ -85,11 +86,18 @@ class TS_Treat(object):
         eig_value, eig_vector = np.linalg.eigh(gram)
         basisset = np.zeros((vec_len, vec_len), float)
         counter = 0
+        # print "eigenvalue",eig_value, "\n",eig_vector
         for i in range(vec_len):
-            if eig_value[i] > 0.01:
+            if abs(eig_value[i]) > 0.0001:
                 basisset[:, counter] = eig_vector[:, i]
                 counter += 1
         return basisset[:, :counter]  # numpy.array, shape(, counter)
+
+    def _new_deloc_reduce_ic(self): # can also be done by svd
+        b_perturb = self._projection()
+        reduced_ic = self.gram_ortho(b_perturb, True)
+        return reduced_ic
+
 
     def _deloc_reduce_ic(self):
         """orthogonize perturbation, calculate reduced internal coordinates for key ic
@@ -103,6 +111,17 @@ class TS_Treat(object):
         for i in range(len(reduced_ic[0])):
             reduced_ic[:, i] /= np.linalg.norm(reduced_ic[:, i])
         return reduced_ic
+
+    def _null_space_of_reduce_space(self):
+        a_matrix = self._matrix_a_eigen()
+        v_reduce = self._new_deloc_reduce_ic()
+        perjection_space = np.dot(v_reduce, v_reduce.T)
+        return a_matrix - np.dot(perjection_space, a_matrix)
+
+    def _new_deloc_nonreduce_ic(self):
+        d_vectors = self._null_space_of_reduce_space()
+        nonreduced_ic = self.gram_ortho(d_vectors, True)
+        return nonreduced_ic
 
     def _deloc_non_reduce_ic(self):
         """calculate nonreduced_space by project a_matrix to nonspace of reduced space
@@ -133,38 +152,21 @@ class TS_Treat(object):
             nonreduce_ic[:, i] /= np.linalg.norm(nonreduce_ic[:, i])
         return nonreduce_ic
 
+    def get_new_v_basis(self):
+        reduced_ic = self._new_deloc_reduce_ic()
+        nonreduced_ic = self._new_deloc_nonreduce_ic()
+        self.v_matrix = np.hstack((reduced_ic, nonreduced_ic))
+
     def get_v_basis(self):
         """get 3n-5 nonredundant internal coordinates
 
         Returns:
             numpy.array: nonredundant internal coordinates
         """
-        reduced = self._deloc_reduce_ic()
-        non_reduced = self._nonreduce_ic()
+        reduced = self._new_deloc_reduce_ic()
+        non_reduced = self._new_nonreduce_ic()
         self._old_v_matrix = self.v_matrix
         self.v_matrix = np.hstack((reduced, non_reduced))
-
-    # def procruste_q(self, other):
-    #     """procruste process to find the most overlapped V matrix
-
-    #     Returns:
-    #         numpy.array: shape(3N - 5 or 3N - 6, n), most overlapped V matrx
-    #     """
-    #     s = np.dot(self.v_matrix.T, other.v_matrix)
-    #     u, sigma, w = np.linalg.svd(s)
-    #     q_min = np.dot(u, w)
-    #     max_v = np.dot(self.v_matrix, q_min)
-    #     self.v_matrix = max_v
-
-    # def create_a_saddle_point(self):
-    #     length = len(self.ts_state.dof)
-    #     g_matrix = self.v_gradient
-    #     vmatrix = self.v_matrix
-    #     reference = self
-    #     key_ic_number = self.key_ic
-    #     h_matrix = v_hessian
-    #     new_point = SaddlePoint(length, g_matrix, vmatrix, reference, key_ic_number, h_matrix)
-    #     return new_point
 
     def obtain_new_cc_with_new_delta_v(self, delta_v, method, hessian=False, **kwargs):
         """calculate the change of internal coordinates \delta q according to the 

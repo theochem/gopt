@@ -14,9 +14,9 @@ def test_trust_radius():
     ts = namedtuple("ts_state", "dof")
     ts_sample_0 = ts(dof=3)
     ts_treat_sample = TS_Treat(ts_sample_0, 2)
-    ts_treat_sample.v_hessian = hessian
-    ts_treat_sample.v_gradient = np.array([0.5, 0.5, 0.5])
-    ts_treat_sample.step_control = 0.5
+    # ts_treat_sample.v_hessian = hessian
+    # ts_treat_sample.v_gradient = np.array([0.5, 0.1, 0.5])
+    # ts_treat_sample.step_control = 0.5
     # result = ts_treat_sample._trust_region_image_potential()
     # print result
     # print np.dot(hessian, result), np.linalg.norm(result)
