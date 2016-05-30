@@ -42,25 +42,25 @@ def test_transitionsearch_cl_h_br():
     test_v = np.hstack((new_dric, new_rdric))
     # print test_v
     assert np.allclose(ts_treat.v_matrix, test_v)
-    # ts_treat.ts_state.get_energy_gradient_hessian(method="gs", title="clhbr", charge=0, spin=2) #obtain energy, gradient, and hessian
-    # ts_treat.get_v_gradient()
-    # ts_treat.get_v_hessian()
+    ts_treat.ts_state.get_energy_gradient_hessian(method="gs", title="clhbr", charge=0, spin=2) #obtain energy, gradient, and hessian
+    ts_treat.get_v_gradient()
+    ts_treat.get_v_hessian()
     # print ts_treat.ts_state.energy
     # print ts_treat.v_gradient
-    # optimizer = TrialOptimizer(0, 2)
-    # optimizer.set_trust_radius_method(method="default", parameter=3)
-    # optimizer.add_a_point(ts_treat)
+    optimizer = TrialOptimizer(0, 2)
+    optimizer.set_trust_radius_method(method="default", parameter=3)
+    optimizer.add_a_point(ts_treat)
     # print "hessian, initial\n", ts_treat.v_hessian,"\n", np.linalg.eigh(ts_treat.v_hessian)
-    # optimizer.initialize_trm_for_point_with_index(0)
-    # #optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_2 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.initialize_trm_for_point_with_index(0)
+    # optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_2 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print p_2.ts_state.energy
     # print "p2", p_2.v_gradient
     # veri = optimizer.verify_new_point_with_latest_point(p_2)
     # print "test gradient",veri
-    # optimizer.add_a_point(p_2)
+    optimizer.add_a_point(p_2)
     # optimizer.update_trust_radius_latest_point(method='gradient')
     # print "finite test", optimizer._test_necessity_for_finite_difference(1)
     # #optimizer.tweak_hessian_for_latest_point()

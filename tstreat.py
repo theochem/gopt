@@ -163,8 +163,8 @@ class TS_Treat(object):
         Returns:
             numpy.array: nonredundant internal coordinates
         """
-        reduced = self._new_deloc_reduce_ic()
-        non_reduced = self._new_nonreduce_ic()
+        reduced = self._deloc_reduce_ic()
+        non_reduced = self._nonreduce_ic()
         self._old_v_matrix = self.v_matrix
         self.v_matrix = np.hstack((reduced, non_reduced))
 

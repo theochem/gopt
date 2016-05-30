@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import hessian_update as hu
+import os
 from horton import angstrom
 
 from trust_radius import default_trust_radius
@@ -174,7 +175,7 @@ class TrialOptimizer(object):
         self.points.append(point)
         self._counter_add()
         if self.latest_index > 0:
-            self.write_info(latest_index - 1)
+            self.write_info(self.latest_index - 1)
 
     def update_hessian_for_a_point(self, index, **kwmethod):
         """update hessian for a certain point
@@ -506,26 +507,29 @@ class TrialOptimizer(object):
 
     def create_log_output(self):
         pwd = os.path.dirname(os.path.realpath(__file__))
-        file_path = "/test/gauss/" + self._title + ".log"
-        with open(pwd + file_path, "w") as f:
+        file_path = "/../test/gauss/" + self._title + ".log"
+        with open(pwd + file_path, "w+") as f:
             f.write("\n ----The log file for optimization---- \n")
 
     def write_info(self, index):
         pwd = os.path.dirname(os.path.realpath(__file__))
-        file_path = "/test/gauss/" + self._title + ".log"
+        file_path = "/../test/gauss/" + self._title + ".log"
         point = self.points[index]
         with open(pwd + file_path, "a") as f:
             f.write("\n------------infromation for point {} starts------------".format(index))
-            f.write("atom numbers: \n{}\n".format(point.ts_state.numbres))
-            f.write("total energy: \n{}\n".format(point.ts_state.energy))
-            f.write("cartesian coordinates: \n{}\n".format(point.ts_state.coordinates))
-            f.write("internal coordinates: \n{}\n".format(point.ts_state.ic))
-            f.write("cartesian gradient: \n{}\n".format(point.ts_state.gradient_matrix))
-            f.write("cartesian hessian: \n{}\n".format(point.ts_state.hessian_matrix))
-            f.write("internal gradient: \n{}\n".format(point.ts_state.ic_gradient))
-            f.write("internal hessian: \n{}\n".format(point.ts_state.ic_hessian))
-            f.write("optimization step: \n{}\n".format(point.stepsize))
-            f.write("optimization step control: \n{}\n".format(point.stepcontrol))
+            f.write("\natom numbers: \n{}\n".format(point.ts_state.numbers))
+            f.write("\ntotal energy: \n{}\n".format(point.ts_state.energy))
+            f.write("\ncartesian coordinates: \n{}\n".format(point.ts_state.coordinates))
+            f.write("\ninternal coordinates: \n{}\n".format(point.ts_state.ic))
+            f.write("\ncartesian gradient: \n{}\n".format(point.ts_state.gradient_matrix))
+            f.write("\ncartesian hessian: \n{}\n".format(point.ts_state.hessian_matrix))
+            f.write("\ninternal gradient: \n{}\n".format(point.ts_state.ic_gradient))
+            f.write("\ninternal hessian: \n{}\n".format(point.ts_state.ic_hessian))
+            f.write("\nvspace transformation matrix:\n{}\n".format(point.v_matrix))
+            f.write("\nvspace gradient:\n{}\n".format(point.v_gradient))
+            f.write("\nvspace hessian:\n{}\n".format(point.v_hessian))
+            f.write("\noptimization step: \n{}\n".format(point.stepsize))
+            f.write("\noptimization step control: \n{}\n".format(point.step_control))
             f.write("------------infromation for point {} ends------------\n".format(index))
 
 
