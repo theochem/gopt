@@ -61,20 +61,20 @@ def test_transitionsearch_cl_h_br():
     # veri = optimizer.verify_new_point_with_latest_point(p_2)
     # print "test gradient",veri
     optimizer.add_a_point(p_2)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.update_trust_radius_latest_point(method='gradient')
     # print "finite test", optimizer._test_necessity_for_finite_difference(1)
-    # #optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p3",p_3.ts_state.energy, p_3.v_gradient
-    # veri = optimizer.verify_new_point_with_latest_point(p_3)
-    # if not veri:
+    veri = optimizer.verify_new_point_with_latest_point(p_3)
+    #if not veri:
     #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_3_new = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    #     p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p3 new",p_3_new.ts_state.energy, p_3_new.v_gradient, p_2.step_control
-    # optimizer.add_a_point(p_3_new)
+    optimizer.add_a_point(p_3)
     # optimizer.update_trust_radius_latest_point(method='gradient')
     # #optimizer.tweak_hessian_for_latest_point()
     # optimizer.find_stepsize_for_latest_point(method="TRIM")

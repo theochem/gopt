@@ -318,6 +318,7 @@ class TrialOptimizer(object):
         elif method == "RFO":
             stepsize = point._rational_function_optimization()
         point.stepsize = stepsize
+	point.stepsize[0] = 0
 
     def find_stepsize_for_latest_point(self, **kwmethod):  # checked
         """find the proper stepsize for latest point
