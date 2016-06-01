@@ -69,14 +69,16 @@ class TransitionSearch(object):
         similar = kwargs.pop('similar', None)
         ratio = kwargs.pop('ratio', 0.5)
         auto_opt = kwargs.pop('opt', False)
+        auto_select = kwargs.pop('select', True)
 
         if kwargs:
             raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
         if similar == None:
             similar = self.reactant
-        self.auto_ic_select(similar, [self.reactant, self.product])
-        self.auto_ic_select(similar, [self.reactant, self.product])
+        if auto_select:
+            self.auto_ic_select(similar, [self.reactant, self.product])
+            self.auto_ic_select(similar, [self.reactant, self.product])
         self.ts_state = deepcopy(similar)
         self.ts_state.coordinates = self.get_ts_guess_cc(similar)
         # self.put_transition_state_molucule_in_xyz("xyz_test")
