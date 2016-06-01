@@ -6,43 +6,65 @@ from saddle.optimizer.saddle_optimizer import TrialOptimizer
 import pprint
 import os
 
+
 def test_transitionsearch_cl_h_br():
     # fn = ht.context.get_fn("../saddle/test/")
     path = os.path.dirname(os.path.realpath(__file__))
     reactant = ht.IOData.from_file(path + "/Cl_HBr.xyz")
     product = ht.IOData.from_file(path + "/Br_HCl.xyz")
-    ts_sample = TransitionSearch(reactant, product) # create a object to find best fitting transition state
-
-    ts_sample.auto_ic_select_combine() #auto select ic for reactant and product in certain way
-    assert np.allclose(ts_sample.reactant.ic, np.array([2.67533253, 5.56209896, 3.14159265]))
-    assert np.allclose(ts_sample.product.ic, np.array([5.14254763, 2.45181572, 3.14159265]))
-    ts_sample.auto_ts_search(opt=True, similar=ts_sample.reactant)  #auto select proper ic for ts and optimize the initial guess to as close as possible
-    ts_sample.auto_key_ic_select()  #auto select key ic for transition states
+    # create a object to find best fitting transition state
+    ts_sample = TransitionSearch(reactant, product)
+    # auto select ic for reactant and product in certain way
+    ts_sample.auto_ic_select_combine()
+    assert np.allclose(ts_sample.reactant.ic, np.array(
+        [2.67533253, 5.56209896, 3.14159265]))
+    assert np.allclose(ts_sample.product.ic, np.array(
+        [5.14254763, 2.45181572, 3.14159265]))
+    # auto select proper ic for ts and optimize the initial guess to as close
+    # as possible
+    ts_sample.auto_ts_search(opt=True, similar=ts_sample.reactant)
+    ts_sample.auto_key_ic_select()  # auto select key ic for transition states
     assert abs(ts_sample._ic_key_counter - 2) < 1e-8
     ts_treat = ts_sample.create_ts_treat()
-    assert isinstance(ts_treat, TS_Treat)
-    # print ts_sample.ts_state.target_ic
-    assert np.allclose(ts_sample.ts_state.target_ic, [ 3.90894008, 4.00695734, 3.14159265])
-    assert np.allclose(ts_sample.ts_state.ic, [ 3.90773539, 4.00847603, 3.14159265])
-    a_matrix = ts_treat._matrix_a_eigen()
-    assert np.allclose(a_matrix, np.linalg.svd(ts_treat.ts_state.b_matrix)[0][:,:4])
-    b_vector = ts_treat._projection()
-    ts_treat.get_v_basis() # obtain V basis for ts_treat
-    ortho_b = TS_Treat.gram_ortho(b_vector)
-    dric = np.dot(b_vector, ortho_b)
-    new_dric = [dric[:, i] / np.linalg.norm(dric[:,i]) for i in range(len(dric[0]))]
-    new_dric = np.array(new_dric).T
-    part1 = np.dot(new_dric, new_dric.T)
-    part2 = np.dot(part1, a_matrix)
-    nonredu = a_matrix - part2
-    ortho_f = TS_Treat.gram_ortho(nonredu)
-    rdric = np.dot(nonredu, ortho_f)
-    new_rdric = [rdric[:,i] / np.linalg.norm(rdric[:, i]) for i in range(len(rdric[0]))]
-    new_rdric = np.array(new_rdric).T
-    test_v = np.hstack((new_dric, new_rdric))
-    # print test_v
-    assert np.allclose(ts_treat.v_matrix, test_v)
-    ts_treat.ts_state.get_energy_gradient_hessian(method="gs", title="clhbr", charge=0, spin=2) #obtain energy, gradient, and hessian
+    # assert isinstance(ts_treat, TS_Treat)
+    # assert np.allclose(ts_sample.ts_state.target_ic, [
+    #                    3.90894008, 4.00695734, 3.14159265])
+    # assert np.allclose(ts_sample.ts_state.ic, [
+    #                    3.90773539, 4.00847603, 3.14159265])
+    # a_matrix = ts_treat._matrix_a_eigen()
+    # assert np.allclose(a_matrix, np.linalg.svd(
+    #     ts_treat.ts_state.b_matrix)[0][:, :4])
+    # b_vector = ts_treat._projection()
+    # ts_treat.get_v_basis()  # obtain V basis for ts_treat
+    # ortho_b = TS_Treat.gram_ortho(b_vector)
+    # dric = np.dot(b_vector, ortho_b)
+    # new_dric = [dric[:, i] / np.linalg.norm(dric[:, i])
+    #             for i in range(len(dric[0]))]
+    # new_dric = np.array(new_dric).T
+    # part1 = np.dot(new_dric, new_dric.T)
+    # part2 = np.dot(part1, a_matrix)
+    # nonredu = a_matrix - part2
+    # ortho_f = TS_Treat.gram_ortho(nonredu)
+    # rdric = np.dot(nonredu, ortho_f)
+    # new_rdric = [rdric[:, i] /
+    #              np.linalg.norm(rdric[:, i]) for i in range(len(rdric[0]))]
+    # new_rdric = np.array(new_rdric).T
+    # test_v = np.hstack((new_dric, new_rdric))
+    # assert np.allclose(ts_treat.v_matrix, test_v)
+
+    "try to specify the ic manualy"
+
+    new_ts_sample = TransitionSearch(reactant, product)
+    new_ts_sample.add_bond(0, 1, "regular", [new_ts_sample.reactant, new_ts_sample.product])
+    new_ts_sample.add_bond(0, 2, "regular", [new_ts_sample.reactant, new_ts_sample.product])
+    new_ts_sample.add_bond(1, 2, "regular", [new_ts_sample.reactant, new_ts_sample.product])
+    new_ts_sample.auto_ts_search(opt=True, similar=new_ts_sample.reactant, select=False)
+    new_ts_sample.auto_key_ic_select()  # auto select key ic for transition states
+    ts_treat = new_ts_sample.create_ts_treat()
+    ts_treat.get_v_basis() 
+    print ts_treat.v_matrix
+    ts_treat.ts_state.get_energy_gradient_hessian(
+        method="gs", title="clhbr", charge=0, spin=2)  # obtain energy, gradient, and hessian
     ts_treat.get_v_gradient()
     ts_treat.get_v_hessian()
     # print ts_treat.ts_state.energy
@@ -50,7 +72,8 @@ def test_transitionsearch_cl_h_br():
     optimizer = TrialOptimizer(0, 2)
     optimizer.set_trust_radius_method(method="default", parameter=3)
     optimizer.add_a_point(ts_treat)
-    # print "hessian, initial\n", ts_treat.v_hessian,"\n", np.linalg.eigh(ts_treat.v_hessian)
+    # print "hessian, initial\n", ts_treat.v_hessian,"\n",
+    # np.linalg.eigh(ts_treat.v_hessian)
     optimizer.initialize_trm_for_point_with_index(0)
     # optimizer.tweak_hessian_for_latest_point()
     optimizer.find_stepsize_for_latest_point(method="TRIM")
@@ -69,11 +92,12 @@ def test_transitionsearch_cl_h_br():
     # print "-------"
     # print "p3",p_3.ts_state.energy, p_3.v_gradient
     veri = optimizer.verify_new_point_with_latest_point(p_3)
-    #if not veri:
+    # if not veri:
     #     optimizer.find_stepsize_for_latest_point(method='TRIM')
     #     p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
-    # print "p3 new",p_3_new.ts_state.energy, p_3_new.v_gradient, p_2.step_control
+    # print "p3 new",p_3_new.ts_state.energy, p_3_new.v_gradient,
+    # p_2.step_control
     optimizer.add_a_point(p_3)
     # optimizer.update_trust_radius_latest_point(method='gradient')
     # #optimizer.tweak_hessian_for_latest_point()
@@ -203,7 +227,7 @@ def test_transitionsearch_cl_h_br():
     #     optimizer.find_stepsize_for_latest_point(method='TRIM')
     #     p_13 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     #     print "-------"
-    #     print "p13 new",p_13.ts_state.energy, p_13.v_gradient, p_12.step_control
+    # print "p13 new",p_13.ts_state.energy, p_13.v_gradient, p_12.step_control
 
     '''
     optimizer.update_hessian_for_latest_point(method='SR1')
@@ -628,7 +652,7 @@ def test_transitionsearch_cl_h_br():
     _20_p = optimizer.update_to_new_point_for_latest_point()
     print "17 gradient", _20_p.v_gradient,np.linalg.norm(_20_p.ts_state.gradient_matrix), _20_p.ts_state.ic
     '''
-    #label
+    # label
 
     # optimizer.update_hessian_for_latest_point(method='SR1')
     # hveri = optimizer._test_necessity_for_finite_difference(2)
@@ -637,7 +661,6 @@ def test_transitionsearch_cl_h_br():
     # hveri = optimizer._test_necessity_for_finite_difference(2)
 
     # optimizer.
-
 
     # step = -np.dot(np.linalg.pinv(ts_treat.v_hessian), ts_treat.v_gradient)
     # print "step",step
@@ -684,8 +707,6 @@ def test_transitionsearch_cl_h_br():
     # optimizer.add_a_point(original)
     # third_ori = optimizer.update_to_new_point_for_latest_point()
     # print third_ori.ts_state.energy
-
-
 
     # optimizer.start_iterate_optimization(500)
     # latest = optimizer.points[500]
@@ -748,7 +769,7 @@ def test_transitionsearch_cl_h_br():
     # print "step control 1", ts_treat.step_control
     # optimizer._change_trust_radius_step(0, 0.25) # change the trust radius
     # print "step control 2", ts_treat.step_control
-    # optimizer.find_stepsize_for_latest_point(method="TRIM") 
+    # optimizer.find_stepsize_for_latest_point(method="TRIM")
     # print 'gradient', ts_treat.v_gradient
     # print 'step', ts_treat.stepsize
     # print "dot time value", np.dot(ts_treat.v_gradient, ts_treat.stepsize)
@@ -873,22 +894,21 @@ def test_transitionsearch_cl_h_br():
     print "hessian", np.linalg.eigh(ten_th.v_hessian)
     optimizer.add_a_point(_11_th)
     '''
-    # print ts_treat.step_control
-    # ts_treat._diagnolize_h_matrix()
-    # print ts_treat.advanced_info['eigenvalues']
-    # ts_treat._modify_h_matrix()
-    # print ts_treat.advanced_info['eigenvalues']
-    # ts_treat._reconstruct_hessian_matrix()
-    # print "new hessian", ts_treat.v_hessian
+# print ts_treat.step_control
+# ts_treat._diagnolize_h_matrix()
+# print ts_treat.advanced_info['eigenvalues']
+# ts_treat._modify_h_matrix()
+# print ts_treat.advanced_info['eigenvalues']
+# ts_treat._reconstruct_hessian_matrix()
+# print "new hessian", ts_treat.v_hessian
 
+# print ts_treat.ts_state.ic_gradient
+# print "x", ts_treat.ts_state.hessian_matrix
 
-    # print ts_treat.ts_state.ic_gradient
-    # print "x", ts_treat.ts_state.hessian_matrix
+# start_point = ts_treat.create_a_saddle_point()
 
-    # start_point = ts_treat.create_a_saddle_point()
-
-    # print test_v.shape
-    # print reactant.natom
+# print test_v.shape
+# print reactant.natom
 
 
 if __name__ == '__main__':

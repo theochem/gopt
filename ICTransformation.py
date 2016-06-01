@@ -32,15 +32,15 @@ class ICTransformation(object):
     """
 
     def __init__(self, mol):
-        self.numbers = mol.numbers
-        self.coordinates = mol.coordinates
+        self.numbers = mol.numbers.copy()
+        self.coordinates = mol.coordinates.copy()
         self.len = len(mol.coordinates.reshape(-1, 3))
         self.ic = np.array([])
         self.ic_info = []
         self.iteration_flag = False
         self.procedures = []
         self.bond = [[] for i in range(self.len)]
-        self.pseudo_numbers = mol.pseudo_numbers
+        self.pseudo_numbers = mol.pseudo_numbers.copy()
         self._re_bond = []
         self._angle = []
         self._dihed = []
