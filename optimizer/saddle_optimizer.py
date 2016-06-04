@@ -318,7 +318,6 @@ class TrialOptimizer(object):
         elif method == "RFO":
             stepsize = point._rational_function_optimization()
         point.stepsize = stepsize
-	point.stepsize[0] = 0
 
     def find_stepsize_for_latest_point(self, **kwmethod):  # checked
         """find the proper stepsize for latest point
@@ -445,7 +444,7 @@ class TrialOptimizer(object):
         point = self.points[index]
         pre_point = self.points[index - 1]
         method = kwmethod.pop('method')
-        parameter = kwmethod.pop('method', None)
+        parameter = kwmethod.pop('parameter', None)
         if kwmethod:
             raise TypeError('Unexpected **kwargs: {}'.format(kwmethod))
         trust_radius_update_method = TrialOptimizer.trm_update_method[method]
@@ -522,10 +521,13 @@ class TrialOptimizer(object):
             f.write("\ntotal energy: \n{}\n".format(point.ts_state.energy))
             f.write("\ncartesian coordinates: \n{}\n".format(point.ts_state.coordinates))
             f.write("\ninternal coordinates: \n{}\n".format(point.ts_state.ic))
+            f.write("\nic transformation matrix: \n{}\n".format(point.ts_state.b_matrix))
             f.write("\ncartesian gradient: \n{}\n".format(point.ts_state.gradient_matrix))
             f.write("\ncartesian hessian: \n{}\n".format(point.ts_state.hessian_matrix))
             f.write("\ninternal gradient: \n{}\n".format(point.ts_state.ic_gradient))
             f.write("\ninternal hessian: \n{}\n".format(point.ts_state.ic_hessian))
+            f.write("\nideal steps in x: \n{}\n".format(-np.dot(np.linalg.pinv(point.ts_state.hessian_matrix), point.ts_state.gradient_matrix)))
+            f.write("\nideal steps in ic: \n{}\n".format(-np.dot(np.linalg.pinv(point.ts_state.ic_hessian), point.ts_state.ic_gradient)))
             f.write("\nvspace transformation matrix:\n{}\n".format(point.v_matrix))
             f.write("\nvspace gradient:\n{}\n".format(point.v_gradient))
             f.write("\nvspace hessian:\n{}\n".format(point.v_hessian))

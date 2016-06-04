@@ -15,6 +15,12 @@ class default_trust_radius(trust_radius):
     def initilize_point(self, point):
         point.step_control = 0.35 * self.max
 
+    def set_max(self, value):
+        self._max = value
+
+    def set_min(self, value):
+        self._min = value
+
     @property
     def max(self):
         return self._max
@@ -65,5 +71,5 @@ class default_trust_radius(trust_radius):
             point.step_control = max(pre_point.step_control, self.min)
             print 1
         else:
-            point.step_control = max(1. / 2 * pre_point.step_control, self.min) ##to be comfirmed
+            point.step_control = min(1. / 2 * pre_point.step_control, self.min) ##to be comfirmed
             print 2

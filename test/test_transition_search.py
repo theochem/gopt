@@ -57,7 +57,8 @@ def test_transitionsearch_cl_h_br():
     new_ts_sample = TransitionSearch(reactant, product)
     new_ts_sample.add_bond(0, 1, "regular", [new_ts_sample.reactant, new_ts_sample.product])
     new_ts_sample.add_bond(0, 2, "regular", [new_ts_sample.reactant, new_ts_sample.product])
-    new_ts_sample.add_bond(1, 2, "regular", [new_ts_sample.reactant, new_ts_sample.product])
+    new_ts_sample.add_angle(1, 0, 2, [new_ts_sample.reactant, new_ts_sample.product])
+    #new_ts_sample.add_bond(1, 2, "regular", [new_ts_sample.reactant, new_ts_sample.product])
     new_ts_sample.auto_ts_search(opt=True, similar=new_ts_sample.reactant, select=False)
     new_ts_sample.auto_key_ic_select()  # auto select key ic for transition states
     ts_treat = new_ts_sample.create_ts_treat()
@@ -71,6 +72,8 @@ def test_transitionsearch_cl_h_br():
     # print ts_treat.v_gradient
     optimizer = TrialOptimizer(0, 2)
     optimizer.set_trust_radius_method(method="default", parameter=3)
+    optimizer._trust_radius.set_min(0.01)
+    print "min, max {} {}".format(optimizer._trust_radius.max, optimizer._trust_radius.min)
     optimizer.add_a_point(ts_treat)
     # print "hessian, initial\n", ts_treat.v_hessian,"\n",
     # np.linalg.eigh(ts_treat.v_hessian)
@@ -81,17 +84,24 @@ def test_transitionsearch_cl_h_br():
     # print "-------"
     # print p_2.ts_state.energy
     # print "p2", p_2.v_gradient
-    # veri = optimizer.verify_new_point_with_latest_point(p_2)
+    veri = optimizer.verify_new_point_with_latest_point(p_2)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_2 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "test gradient",veri
     optimizer.add_a_point(p_2)
     optimizer.update_trust_radius_latest_point(method='gradient')
     # print "finite test", optimizer._test_necessity_for_finite_difference(1)
-    optimizer.tweak_hessian_for_latest_point()
+    # optimizer.tweak_hessian_for_latest_point()
     optimizer.find_stepsize_for_latest_point(method="TRIM")
     p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_3)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p3",p_3.ts_state.energy, p_3.v_gradient
-    veri = optimizer.verify_new_point_with_latest_point(p_3)
+    # veri = optimizer.verify_new_point_with_latest_point(p_3)
     # if not veri:
     #     optimizer.find_stepsize_for_latest_point(method='TRIM')
     #     p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
@@ -99,58 +109,71 @@ def test_transitionsearch_cl_h_br():
     # print "p3 new",p_3_new.ts_state.energy, p_3_new.v_gradient,
     # p_2.step_control
     optimizer.add_a_point(p_3)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
-    # #optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_4 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    #optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_4 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p4",p_4.ts_state.energy, p_4.v_gradient
-    # veri = optimizer.verify_new_point_with_latest_point(p_4)
-    # if not veri:
-    #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_4 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_4)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_4 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p4 new",p_4.ts_state.energy, p_4.v_gradient, p_3_new.step_control
-    # optimizer.add_a_point(p_4)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.add_a_point(p_4)
+    optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_5 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_5 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p5",p_5.ts_state.energy, p_5.v_gradient, p_4.step_control
-    # veri = optimizer.verify_new_point_with_latest_point(p_5)
-    # if not veri:
-    #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_5 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_5)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_5 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p5 new",p_5.ts_state.energy, p_5.v_gradient, p_4.step_control
-    # optimizer.add_a_point(p_5)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.add_a_point(p_5)
+    optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_6 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_6 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    # print "-------"
+    # print "p5",p_5.ts_state.energy, p_5.v_gradient, p_4.step_control
+    veri = optimizer.verify_new_point_with_latest_point(p_6)
+    #if not veri:
+    #    optimizer.find_stepsize_for_latest_point(method='TRIM')
+    #    p_6 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    # print "-------"
+    # print "p5 new",p_5.ts_state.energy, p_5.v_gradient, p_4.step_control
+    optimizer.add_a_point(p_6)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    # optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_7 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p6",p_6.ts_state.energy, p_6.v_gradient, p_5.step_control
-    # veri = optimizer.verify_new_point_with_latest_point(p_6)
-    # if not veri:
-    #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_6 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_7)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_7 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     #     print "-------"
-    #     print "p6 new",p_6.ts_state.energy, p_6.v_gradient, p_5.step_control
-    # optimizer.add_a_point(p_6)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
+    #    print "p6 new",p_6.ts_state.energy, p_6.v_gradient, p_5.step_control
+    optimizer.add_a_point(p_7)
+    optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_7 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_8 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p7",p_7.ts_state.energy, p_7.v_gradient, p_6.step_control
-    # veri = optimizer.verify_new_point_with_latest_point(p_7)
-    # if not veri:
-    #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_7 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_8)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_8 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     #     print "-------"
     #     print "p7 new",p_7.ts_state.energy, p_7.v_gradient, p_6.step_control
-    # optimizer.add_a_point(p_7)
+    optimizer.add_a_point(p_8)
     # optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
     # optimizer.find_stepsize_for_latest_point(method="TRIM")
@@ -164,68 +187,206 @@ def test_transitionsearch_cl_h_br():
     #     print "-------"
     #     print "p8",p_8.ts_state.energy, p_8.v_gradient, p_7.step_control
     # optimizer.add_a_point(p_8)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_9 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_9 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p9",p_9.ts_state.energy, p_9.v_gradient, p_8.step_control
-    # veri = optimizer.verify_new_point_with_latest_point(p_9)
-    # if not veri:
-    #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_9 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_9)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_9 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     #     print "-------"
     #     print "p9 new",p_9.ts_state.energy, p_9.v_gradient, p_8.step_control
-    # optimizer.add_a_point(p_9)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.add_a_point(p_9)
+    optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_10 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_10 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p10",p_10.ts_state.energy, p_10.v_gradient, p_9.step_control
-    # veri = optimizer.verify_new_point_with_latest_point(p_10)
-    # if not veri:
-    #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_10 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_10)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_10 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     #     print "-------"
     #     print "p10 new",p_10.ts_state.energy, p_10.v_gradient, p_9.step_control
-    # optimizer.add_a_point(p_10)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.add_a_point(p_10)
+    optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_11 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_11 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p11",p_11.ts_state.energy, p_11.v_gradient, p_10.step_control
-    # veri = optimizer.verify_new_point_with_latest_point(p_11)
-    # if not veri:
-    #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_11 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_11)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_11 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     #     print "-------"
     #     print "p11 new",p_11.ts_state.energy, p_11.v_gradient, p_10.step_control
-    # optimizer.add_a_point(p_11)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.add_a_point(p_11)
+    optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_12 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_12 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p12",p_12.ts_state.energy, p_12.v_gradient, p_11.step_control
-    # veri = optimizer.verify_new_point_with_latest_point(p_12)
-    # if not veri:
-    #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_12 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_12)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_12 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     #     print "-------"
     #     print "p12 new",p_12.ts_state.energy, p_12.v_gradient, p_11.step_control
-    # optimizer.add_a_point(p_12)
-    # optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.add_a_point(p_12)
+    optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
-    # optimizer.find_stepsize_for_latest_point(method="TRIM")
-    # p_13 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_13 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "-------"
     # print "p13",p_13.ts_state.energy, p_13.v_gradient, p_12.step_control
-    # veri = optimizer.verify_new_point_with_latest_point(p_13)
+    veri = optimizer.verify_new_point_with_latest_point(p_13)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_13 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_13)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    # optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_14 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    # print "-------"
+    # print "p13",p_13.ts_state.energy, p_13.v_gradient, p_12.step_control
+    veri = optimizer.verify_new_point_with_latest_point(p_14)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_14 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_14)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    # optimizer.tweak_hessian_for_latest_point()
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_15 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    # print "-------"
+    # print "p13",p_13.ts_state.energy, p_13.v_gradient, p_12.step_control
+    veri = optimizer.verify_new_point_with_latest_point(p_15)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_15 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_15)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_16 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_16)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_16 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_16)
+    
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_17 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_17)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_17 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_17)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_18 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_18)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_18 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_18)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_19 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_19)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_19 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_19)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_20 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_20)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_20 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_20)
+    '''
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_21 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_21)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_21 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_21)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_22 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_22)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_22 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_22)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_23 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_23)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_23 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_23)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_24 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_24)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_24 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_24)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_25 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_25)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_25 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_25)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_26 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_26)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_26 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_26)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_27 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_27)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_27 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_27)
+    optimizer.update_trust_radius_latest_point(method='gradient')
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_28 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_28)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method='TRIM')
+        p_28 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    optimizer.add_a_point(p_28)
+    '''
+    #p_16 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    # print "-------"
+    # print "p13",p_13.ts_state.energy, p_13.v_gradient, p_12.step_control
+    # veri = optimizer.verify_new_point_with_latest_point(p_16)
     # if not veri:
     #     optimizer.find_stepsize_for_latest_point(method='TRIM')
-    #     p_13 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    #     p_16 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    # optimizer.add_a_point(p_16)
     #     print "-------"
     # print "p13 new",p_13.ts_state.energy, p_13.v_gradient, p_12.step_control
 
