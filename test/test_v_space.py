@@ -6,6 +6,14 @@ from saddle.optimizer.saddle_optimizer import TrialOptimizer
 import pprint
 import os
 
+def test_transition_opt_ch3fh():
+    path = os.path.dirname(os.path.realpath(__file__))
+    reactant = ht.IOData.from_file(path + "/ch3_hf.xyz")
+    product = ht.IOData.from_file(path + "/ch3f_h.xyz")
+    ts = TransitionSearch(reactant, product)
+    ts.auto_ts_search(opt=True, similar=ts.product)
+    # ts.put_transition_state_molucule_in_xyz("great")
+
 
 def test_transitionsearch_cl_h_br():
     path = os.path.dirname(os.path.realpath(__file__))
@@ -214,4 +222,4 @@ def test_transitionsearch_ch3_h_cl():
 
 
 if __name__ == '__main__':
-    test_transitionsearch_cl_h_br()
+    test_transition_opt_ch3fh()

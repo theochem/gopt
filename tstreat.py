@@ -169,7 +169,7 @@ class TS_Treat(object):
         self.v_matrix = np.hstack((reduced, non_reduced))
 
     def obtain_new_cc_with_new_delta_v(self, delta_v, method, hessian=False, **kwargs):
-        """calculate the change of internal coordinates \delta q according to the 
+        """calculate the change of internal coordinates \delta q according to the
         change of the change of V coordinates \delta v.
 
         Args:
@@ -228,6 +228,14 @@ class TS_Treat(object):
             self.v_hessian)  # w is the eigenvalues while v is the eigenvectors
         self.advanced_info["eigenvalues"] = w
         self.advanced_info["eigenvectors"] = v
+
+    def _test_trust_radius_method(self):
+        """test trust radius method, defined by Derrick myself.
+        """
+        origin_step = np.dot(np.linalg.pinv(self.v_hessian), np.v_gradient)
+        length = np.linalg.norm(origin_step)
+        new_step = origin_step / length * self.step_control
+        return new_step
 
     def switch_eigens(self, one_index, the_other_index):
         """switch the eigen values and eigenvalues of two different indexes

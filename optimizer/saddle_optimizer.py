@@ -29,12 +29,12 @@ class TrialOptimizer(object):
         self.create_log_output()
 
     def _update_hessian_finite_difference(self, index, key_list, method, perturb=0.001):
-        """use finite difference method to update hessian if hessian matrix is 
+        """use finite difference method to update hessian if hessian matrix is
         not provided or it performed terribly
 
         Args:
             index (int): index of point in self.points list.
-            perturb (float, optional): the scale of perturbation added to each 
+            perturb (float, optional): the scale of perturbation added to each
         dimention for calculation
 
         """
@@ -81,7 +81,7 @@ class TrialOptimizer(object):
         """select keyword args to implement different trust radius methods
 
         Args:
-            **kwmethod: 
+            **kwmethod:
                 method: default value is "default", other choices:
                 parameter: default value is None
 
@@ -218,7 +218,7 @@ class TrialOptimizer(object):
 
     def _test_necessity_for_finite_difference(self, index, omega=1.0, nu=1.0):
         """To test hessian matrix after quasi-Newton method performance
-        if good enough, then pass, else, use call finite difference to recalculate more 
+        if good enough, then pass, else, use call finite difference to recalculate more
         accurate hessian matrix
 
         Args:
@@ -317,6 +317,8 @@ class TrialOptimizer(object):
             stepsize = point._trust_region_image_potential()
         elif method == "RFO":
             stepsize = point._rational_function_optimization()
+        elif method == "Test":
+            stepsize = point._test_trust_radius_method()
         point.stepsize = stepsize
 
     def find_stepsize_for_latest_point(self, **kwmethod):  # checked
@@ -429,7 +431,7 @@ class TrialOptimizer(object):
         """update the trust radius for a certain point
 
         Args:
-            index (int): the index of point need to be update 
+            index (int): the index of point need to be update
             **kwmethod: keyword args
                 method: the method for update trust radius
                 parameter: the parameter to use the corresponding method
@@ -474,7 +476,7 @@ class TrialOptimizer(object):
 
         Args:
             point (Ts_Treat): the points whose secand_condition you want to calculate for
-            point_old (Ts_Treat): the older point you need its information 
+            point_old (Ts_Treat): the older point you need its information
 
         Returns:
             numpy.array: the value of the secand_condition variable y
