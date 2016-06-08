@@ -25,9 +25,14 @@ def test_transition_opt_ch3fh():
     optimizer.set_trust_radius_method(method="default", parameter=6)
     optimizer.add_a_point(ts_t)
     optimizer.initialize_trm_for_point_with_index(0)
+    optimizer.tweak_hessian_for_latest_point()
     optimizer.find_stepsize_for_latest_point(method="TRIM")
     p_2 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
-
+    veri = optimizer.verify_new_point_with_latest_point(p_2)
+    if not neri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_2 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_2)
 
 
 def test_transitionsearch_cl_h_br():
