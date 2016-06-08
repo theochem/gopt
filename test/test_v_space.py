@@ -3,7 +3,6 @@ import numpy as np
 from saddle.TransitionSearch import *
 from saddle.tstreat import TS_Treat
 from saddle.optimizer.saddle_optimizer import TrialOptimizer
-import pprint
 import os
 
 def test_transition_opt_ch3fh():
@@ -11,8 +10,24 @@ def test_transition_opt_ch3fh():
     reactant = ht.IOData.from_file(path + "/ch3_hf.xyz")
     product = ht.IOData.from_file(path + "/ch3f_h.xyz")
     ts = TransitionSearch(reactant, product)
+    ts.auto_ic_select_combine()
     ts.auto_ts_search(opt=True, similar=ts.product)
-    # ts.put_transition_state_molucule_in_xyz("great")
+    print ts.ts_state.ic, ts.reactant.procedures, ts.ts_state.numbers
+    ts.select_key_ic(3, 9)
+    print ts.ts_state.ic
+    ts_t = ts.create_ts_treat()
+    ts_t.get_v_basis()
+    print (ts_t.v_matrix)
+    ts_t.ts_state.get_energy_gradient_hessian(method="gs", title='ch3hf', charge=0, spin=2)
+    ts_t.get_v_gradient()
+    ts_t.get_v_hessian()
+    optimizer = TrialOptimizer(0, 2)
+    optimizer.set_trust_radius_method(method="default", parameter=6)
+    optimizer.add_a_point(ts_t)
+    optimizer.initialize_trm_for_point_with_index(0)
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_2 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+
 
 
 def test_transitionsearch_cl_h_br():
@@ -160,7 +175,7 @@ def test_transitionsearch_ch3_h_cl():
     [ 3.90894008, 4.00695734, 3.14159265]
 
     set the gradient_matrix to be 0.5 on every direction
-    
+
     new_gradient = np.empty(9)
     new_gradient.fill(0.5)
     new_hessian = np.array([[4.44717493,  2.05356967,  1.94014292,  2.53929522,  2.22145167,

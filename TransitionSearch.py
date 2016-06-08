@@ -37,7 +37,7 @@ class TransitionSearch(object):
         self._ic_key_counter = 0
         # self._a_matrix = np.array([])
         # self._b_perturb = np.array([])
-        # self._ts_dof = None    #transitionState Degree of freedom 
+        # self._ts_dof = None    #transitionState Degree of freedom
 
     halo_atom_numbers = (7, 8, 9, 15, 16, 17)
 
@@ -91,7 +91,8 @@ class TransitionSearch(object):
                 atom1, atom2 = self.ts_state.auto_upgrade_aux_bond()
                 self.product.aux_bond.remove((atom1, atom2))
                 self.reactant.aux_bond.remove((atom1, atom2))
-                self.upgrade_aux_bond(atom1, atom2, [self.product, self.ts_state, self.reactant])
+                self.upgrade_aux_bond(
+                    atom1, atom2, [self.product, self.ts_state, self.reactant])
             else:
                 print "something wrong"
                 break
@@ -113,9 +114,9 @@ class TransitionSearch(object):
         ts_state = deepcopy(self.ts_state)
         init_point = ts_state.generate_point_object()
         optimized_point = DOM.initialize(init_point)
-        final_point = DOM.optimize(optimized_point, ts_state.cost_func_value_api, ts_state.cost_func_deriv_api, 0.0001)
-        return ts_state 
-
+        final_point = DOM.optimize(
+            optimized_point, ts_state.cost_func_value_api, ts_state.cost_func_deriv_api, 0.0001)
+        return ts_state
 
     def get_ts_guess_cc(self, similer=None):
         """calculate initial guess transition state cartesian coordinates at certain ratio, default value is 0.5
@@ -147,11 +148,13 @@ class TransitionSearch(object):
             raise AtomsNumberError
         if ratio > 1. or ratio < 0.:
             raise ValueError
-        # target_ic = self.reactant.ic #set the guess ic of target ts is the same as reactant
+        # target_ic = self.reactant.ic #set the guess ic of target ts is the
+        # same as reactant
         target_ic = self.reactant.ic * ratio + self.product.ic * (1. - ratio)
         # print "reactant ic", self.reactant.ic
         # print "product ic", self.product.ic
-        # print "target_ic", self.reactant.ic * ratio + self.product.ic * (1. - ratio)
+        # print "target_ic", self.reactant.ic * ratio + self.product.ic * (1. -
+        # ratio)
         return target_ic
 
     @staticmethod
@@ -248,9 +251,9 @@ class TransitionSearch(object):
         self._auto_dihed_select(selected_structure, target_structure)
 
     def auto_ic_select_combine(self):
-        """combine the structure of both reactant and product to produce a combined structure of 
+        """combine the structure of both reactant and product to produce a combined structure of
         initial transition state guess
-        """ 
+        """
         self.auto_ic_select(self.reactant, [self.reactant, self.product])
         self.auto_ic_select(self.product, [self.reactant, self.product])
 
@@ -353,7 +356,8 @@ class TransitionSearch(object):
                 for con_atom3 in connect_atoms1:
                     if con_atom3 == amax1 or con_atom3 == amax2:
                         continue
-                    self.add_dihed_new(amax1, amax2, cen_atom1, con_atom3, targeted)
+                    self.add_dihed_new(
+                        amax1, amax2, cen_atom1, con_atom3, targeted)
 
     def _hydrogen_halo_test(self, atomindex1, atomindex2):
         """check whether bond between atomindex and atomindex2 can form a hydrogen bond later,
@@ -384,8 +388,15 @@ class TransitionSearch(object):
                 return (flag, (index1, index2))
         return (flag,)
 
-    def select_key_ic(self):
-        print self.ic
+    def select_key_ic(self, *index):
+        """select a normal internal coordinate as a key ic
+
+        Args:
+            index(int): index of internal coordinates
+        """
+        key_ic = index
+        print ("manual key ic")
+        self._arrange_key_ic(key_ic)
 
     def auto_key_ic_select(self):
         """auto key internal coordinates generator
@@ -413,7 +424,7 @@ class TransitionSearch(object):
                         abs(self.reactant.ic[i] - self.ts_state.ic[i]) > threshhold or
                         abs(self.product.ic[i] - self.ts_state.ic[i]) > threshhold):
                     key_ic.append(i)
-        print "key ic",key_ic
+        print "key ic", key_ic
         self._arrange_key_ic(key_ic)
 
     def _arrange_key_ic(self, ic_index):
@@ -425,11 +436,10 @@ class TransitionSearch(object):
         for i in ic_index:
             self.ts_state.ic_swap(i, self._ic_key_counter)
             self._ic_key_counter += 1
-        
 
     def put_transition_state_molucule_in_xyz(self, molecule_title, path="./"):
         """output the structure of transition state into a xyz file for visualization
-        
+
         Args:
             molecule_title (str): the name of the file
             path (str, optional): the path to save the xyz file, the default "./"
@@ -459,10 +469,10 @@ if __name__ == '__main__':
     # h22.auto_ic_select(h22.product, [h22.reactant, h22.product])
     h22.auto_ts_search()
     h22.auto_key_ic_select()
-    print "ic",h22.ts_state.ic
+    print "ic", h22.ts_state.ic
     print "ic_reactant", h22.reactant.ic
     print "ic_prodect", h22.product.ic
-    ts_ob = h22.auto_ts_search(opt = True)
+    ts_ob = h22.auto_ts_search(opt=True)
     h22.put_transition_state_molucule_in_xyz("test ts_state")
     print "opt ic", h22.ts_state.ic
     # ts_ob = TS_Treat(h22.ts_state, h22._ic_key_counter)

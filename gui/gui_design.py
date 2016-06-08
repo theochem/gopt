@@ -1,13 +1,13 @@
 import sys
-import horton as ht
+# import horton as ht
 # import PyQt4 import Qt
 # import os
 
-from saddle import TransitionSearch
+# from saddle import TransitionSearch
 from PyQt4 import QtGui, QtCore
 from gui_ts_guess import Ui_MainWindow
 from subprocess import Popen
-from key_table_view import KeyIcTable
+# from key_table_view import KeyIcTable
 
 
 class Window(QtGui.QMainWindow):
