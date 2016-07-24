@@ -31,7 +31,7 @@ class DOM(object):
             #     steplength = steplength 0.2
             new_coor = point.coordinates + steplength
             new_point = Point(new_coor)
-            new_point = value_func(new_point)        
+            new_point = value_func(new_point)
             if new_point.value < point.value:
                 break
             point._stepratio *= 0.5
@@ -44,14 +44,14 @@ class DOM(object):
 
 
     @staticmethod
-    def optimize(point, value_func, deriv_func, threshold = 0.001):
+    def optimize(point, value_func, deriv_func, threshold = 0.0001):
         if point._flag != "DOM":
             raise OptimizationTypeError
         new_point = deepcopy(point)
         n = 0
         while np.dot(new_point.first_deriv, new_point.first_deriv) / len(new_point.coordinates) > threshold:
             n += 1
-            if n > 100: raise FailConvergeError
+            if n > 200: raise FailConvergeError
             new_point = DOM.update(new_point, value_func, deriv_func)
         return new_point
 

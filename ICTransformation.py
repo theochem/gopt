@@ -1,9 +1,10 @@
 import numpy as np
-import saddle.optimizer as op
 import saddle.ICFunctions as ICFunctions
 import saddle.CostFunctions as CostFunctions
-from copy import copy
+from copy import copy, deepcopy
+import optimizer as op
 from saddle.gaussianwrapper import GaussianWrapper
+from opt import GeoOptimizer
 
 __all__ = ["ICTransformation"]
 
@@ -461,13 +462,34 @@ class ICTransformation(object):
         c_x_deriv_2 = c_x_deriv_2_part_1 + c_x_deriv_2_part_2
         return c_x_deriv, c_x_deriv_2
 
+    def optimize_to_target_ic(self, iteration=100):
+        self = deepcopy(self)
+        optimizer = GeoOptimizer()
+        initial_point = self.generate_point_object()
+        optimizer.add_new(initial_point)
+        for i in range(iteration):
+            optimizer.tweak_hessian(optimizer.newest)
+            step = optimizer.trust_radius_step(optimizer.newest)
+            # print "step", step
+            new_coor = self.coordinates + step.reshape(-1, 3)
+            self.get_new_coor(new_coor)
+            new_point = self.generate_point_object()
+            # print optimizer.newest
+            optimizer.add_new(new_point)
+            # print optimizer.points[0].step
+            if optimizer.converge(optimizer.newest):
+                print ("finished")
+                return self
+            optimizer.update_trust_radius(optimizer.newest)
+        raise NotConvergeError("Fail to converge")
+
     def generate_point_object(self):
         """generate a Ponit object with present molecule's coordinates, first derivative and second derivative
         Return: a Point object; contains coordinates, cost function value, first derivative and second derivative
         """
 
         value, deriv_1, deriv_2 = self.calculate_cost()
-        return op.Point(self.coordinates.reshape(1, -1), value, deriv_1, deriv_2)
+        return op.Point(self.coordinates.reshape(1, -1), value, deriv_1, deriv_2, self.len)
 
     def cost_func_value_api(self, point):
         """accept a Point object to update local value and update the information of that object
@@ -712,6 +734,9 @@ class ICTransformation(object):
 class AtomsNumberError(Exception):
     pass
 
+class NotConvergeError(Exception):
+    pass
+
 if __name__ == '__main__':
     import horton as ht
     fn_xyz = ht.context.get_fn("test/water.xyz")
@@ -729,11 +754,17 @@ if __name__ == '__main__':
     # h2a._set_target_ic([2.8, 2.6])
     print(h2a.target_ic)
     h2a.ic_swap(0, 2)
-    print(h2a.ic)
+    h2a.target_ic = ([3.0, 3.0, 1.61])
+    # print(h2a.ic)
     print(h2a.target_ic)
-    print(h2a.procedures)
-    print(h2a.coordinates)
-    print(h2a.h_matrix.shape)
+    v,d,dd = h2a.calculate_cost()
+    va, ve = np.linalg.eigh(dd)
+    print d, va
+    result = h2a.optimize_to_target_ic()
+    print result.ic
+    # print(h2a.procedures)
+    # print(h2a.coordinates)
+    # print(h2a.h_matrix.shape)
     # h2a.energy_compute()
 #     print h2a.ic
 #     h2a.add_bond_length(0, 2)

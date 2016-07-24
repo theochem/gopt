@@ -4,7 +4,6 @@ import horton as ht
 from copy import deepcopy
 from horton.periodic import periodic
 from saddle.ICTransformation import ICTransformation
-from saddle.optimizer import DOM
 from saddle.tstreat import TS_Treat
 
 
@@ -111,12 +110,8 @@ class TransitionSearch(object):
         return TS_Treat(self.ts_state, self._ic_key_counter)
 
     def _auto_optimize_ic_to_target(self):
-        ts_state = deepcopy(self.ts_state)
-        init_point = ts_state.generate_point_object()
-        optimized_point = DOM.initialize(init_point)
-        final_point = DOM.optimize(
-            optimized_point, ts_state.cost_func_value_api, ts_state.cost_func_deriv_api, 0.0001)
-        return ts_state
+        result = self.ts_state.optimize_to_target_ic()
+        return result
 
     def get_ts_guess_cc(self, similer=None):
         """calculate initial guess transition state cartesian coordinates at certain ratio, default value is 0.5
@@ -459,20 +454,23 @@ class AtomsNumberError(Exception):
 
 
 if __name__ == '__main__':
-    fn_xyz = ht.context.get_fn("test/ammonia_hydronium.xyz")
-    fn_xyz_2 = ht.context.get_fn("test/ammonium.xyz")
-    reactant = ht.IOData.from_file(fn_xyz)
-    product = ht.IOData.from_file(fn_xyz_2)
+    import os
+    path = os.path.dirname(os.path.realpath(__file__))
+    reactant = ht.IOData.from_file(path + "/test/ch3_hf.xyz")
+    product = ht.IOData.from_file(path + "/test/ch3f_h.xyz")
+    # reactant = ht.IOData.from_file(fn_xyz)
+    # product = ht.IOData.from_file(fn_xyz_2)
     h22 = TransitionSearch(reactant, product)
     print (h22.numbers)
     h22.auto_ic_select_combine()
     # h22.auto_ic_select(h22.product, [h22.reactant, h22.product])
     h22.auto_ts_search()
-    h22.auto_key_ic_select()
+    # h22.auto_key_ic_select()
     print "ic", h22.ts_state.ic
     print "ic_reactant", h22.reactant.ic
     print "ic_prodect", h22.product.ic
-    ts_ob = h22.auto_ts_search(opt=True)
+    print "target ic", h22.ts_state.target_ic
+    ts_ob = h22.auto_ts_search(opt=True, similar=h22.product)
     h22.put_transition_state_molucule_in_xyz("test ts_state")
     print "opt ic", h22.ts_state.ic
     # ts_ob = TS_Treat(h22.ts_state, h22._ic_key_counter)
