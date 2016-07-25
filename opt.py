@@ -44,7 +44,7 @@ class GeoOptimizer(object):
             return c_step
         w, v = np.linalg.eigh(point.hessian)
         max_w = max(w)
-        print ("special 0", np.linalg.norm(-np.dot(np.dot(v, np.dot(np.diag(1. / w), v.T)), point.gradient)) - point.trust_radius)
+        # print ("special 0", np.linalg.norm(-np.dot(np.dot(v, np.dot(np.diag(1. / w), v.T)), point.gradient)) - point.trust_radius)
         def func_step(value):
             x = w.copy()
             x[:negative] = x[:negative] - value

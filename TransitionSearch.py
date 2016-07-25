@@ -93,7 +93,7 @@ class TransitionSearch(object):
                 self.upgrade_aux_bond(
                     atom1, atom2, [self.product, self.ts_state, self.reactant])
             else:
-                print "something wrong"
+                print "Not enough internal coordinates"
                 break
             self._auto_angle_select(similar, [self.reactant, self.product])
             self._auto_dihed_select(similar, [self.reactant, self.product])
@@ -471,7 +471,7 @@ if __name__ == '__main__':
     print "ic_prodect", h22.product.ic
     print "target ic", h22.ts_state.target_ic
     ts_ob = h22.auto_ts_search(opt=True, similar=h22.product)
-    h22.put_transition_state_molucule_in_xyz("test ts_state")
+    # h22.put_transition_state_molucule_in_xyz("test ts_state")
     print "opt ic", h22.ts_state.ic
     # ts_ob = TS_Treat(h22.ts_state, h22._ic_key_counter)
     # print "dof", ts_ob.ts_state._dof

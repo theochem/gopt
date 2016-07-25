@@ -1,6 +1,7 @@
 import numpy as np
 import horton as ht
 import scipy.optimize as opt
+from opt import ridders_solver
 
 from copy import deepcopy, copy
 # from saddle.saddlepoint import SaddlePoint
@@ -343,37 +344,28 @@ class TS_Treat(object):
         """
         #eigenvectors = self.advanced_info["eigenvectors"]
         #eigenvalues = self.advanced_info["eigenvalues"]
+        c_step = -np.dot(np.linalg.pinv(self.hessian), self.gradient)
+        if np.linalg.norm(c_step) <= self.step_control:
+            return c_step
         eigenvalues, eigenvectors = np.linalg.eigh(self.v_hessian)
-        # print eigenvalues
-        g_matrix = self.v_gradient
+        max_w = max(eigenvalues)
 
         def non_linear_value(lamda):  # define function for ridder method calculation
-            part_1 = np.dot(eigenvectors[:, 0].T, g_matrix)
-            part_1 /= (eigenvalues[0] - lamda)
-            part_1 = np.dot(part_1, eigenvectors[:, 0])
-            part_2 = 0
-            for i in range(1, self.ts_state.dof):
-                temp_p2 = np.dot(eigenvectors[:, i].T, g_matrix)
-                temp_p2 /= (eigenvalues[i] + lamda)
-                temp_p2 = np.dot(temp_p2, eigenvectors[:, i])
-                part_2 += temp_p2
-            s_value = - part_1 - part_2
-            # print "before"
-            return s_value
+            w = eigenvalues.copy()
+            w[:1] = w[:1] - lamda
+            w[1:] = w[1:] + lamda
+            new_hessian_inv = np.dot(v, np.dot(np.diag(1. / w), v.T))
+            return -np.dot(new_hessian_inv, self.gradient)
 
         def non_linear_func(lamda):
             s_value = non_linear_value(lamda)
             return np.linalg.norm(s_value) - self.step_control
 
-        try_value = non_linear_func(1e-7)
-        if try_value < 0:
-            return non_linear_value(0)
-        try_eigen_value = max(
-            1e-7, min(abs(eigenvalues[abs(eigenvalues) > 0])))
-        while non_linear_func(try_eigen_value) > 0:
-            try_eigen_value *= 2
-        root_for_lamda = opt.ridder(non_linear_func, 0, try_eigen_value)
-        return non_linear_value(root_for_lamda)
+        while non_linear_func(max_w) >= 0:
+            max_w *= 2
+        result = ridders_solver(non_linear_func, 0, max_w)
+        step = non_linear_value(result)
+        return step
 
     def _rational_function_optimization(self):
         """use RFO method to find proper step under the control of trust radius method
