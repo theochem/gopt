@@ -28,6 +28,24 @@ class TrialOptimizer(object):
         self._title = title
         self.create_log_output()
 
+    def optimize(self, iteration=50):
+        assert (len(self.points > 1) and self._trust_radius != None)
+        for i in range(iteration):
+            self.tweak_hessian_for_latest_point()
+            self.find_stepsize_for_latest_point(method="TRIM")
+            new_p = self.update_to_new_point_for_latest_point(True, method="gs")
+            if not sefl.verify_new_point_with_latest_point(new_p):
+                self.find_stepsize_for_latest_point(method="TRIM")
+                new_p = self.update_to_new_point_for_latest_point(True, method="gs")
+            self.add_a_point(new_p)
+            if self.verify_convergence_for_latest_point():
+                print ("finished")
+                return self.points[latest_index]
+            self.update_trust_radius_latest_point(method='gradient')
+        print("fail to converge")
+        return self.points[latest_index]
+
+
     def _update_hessian_finite_difference(self, index, key_list, method, perturb=0.001):
         """use finite difference method to update hessian if hessian matrix is
         not provided or it performed terribly

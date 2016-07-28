@@ -62,7 +62,7 @@ def test_transitionsearch_cl_h_br():
     new_ts_sample.auto_ts_search(opt=True, similar=new_ts_sample.reactant, select=False)
     new_ts_sample.auto_key_ic_select()  # auto select key ic for transition states
     ts_treat = new_ts_sample.create_ts_treat()
-    ts_treat.get_v_basis() 
+    ts_treat.get_v_basis()
     print ts_treat.v_matrix
     ts_treat.ts_state.get_energy_gradient_hessian(
         method="gs", title="clhbr", charge=0, spin=2)  # obtain energy, gradient, and hessian
@@ -72,7 +72,7 @@ def test_transitionsearch_cl_h_br():
     # print ts_treat.v_gradient
     optimizer = TrialOptimizer(0, 2)
     optimizer.set_trust_radius_method(method="default", parameter=3)
-    optimizer._trust_radius.set_min(0.01)
+    # optimizer._trust_radius.set_min(0.01)
     print "min, max {} {}".format(optimizer._trust_radius.max, optimizer._trust_radius.min)
     optimizer.add_a_point(ts_treat)
     # print "hessian, initial\n", ts_treat.v_hessian,"\n",
@@ -280,7 +280,7 @@ def test_transitionsearch_cl_h_br():
         optimizer.find_stepsize_for_latest_point(method='TRIM')
         p_16 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     optimizer.add_a_point(p_16)
-    
+
     optimizer.update_trust_radius_latest_point(method='gradient')
     optimizer.find_stepsize_for_latest_point(method="TRIM")
     p_17 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
@@ -393,7 +393,7 @@ def test_transitionsearch_cl_h_br():
     '''
     optimizer.update_hessian_for_latest_point(method='SR1')
     print "p_2 hessian \n", p_2.v_hessian, np.linalg.eigh(p_2.v_hessian)
-    
+
     hveri = optimizer._test_necessity_for_finite_difference(1)
     print "test finite diff", hveri
     optimizer._update_hessian_finite_difference(1, hveri, "gs", 0.001)
@@ -402,7 +402,7 @@ def test_transitionsearch_cl_h_br():
     optimizer.tweak_hessian_for_latest_point()
     optimizer.find_stepsize_for_latest_point(method='TRIM')
     p_3 = optimizer.update_to_new_point_for_latest_point(method='gs')
-    print "p3", p_3.v_gradient, p_3.ts_state.energy 
+    print "p3", p_3.v_gradient, p_3.ts_state.energy
     print "step,",p_2.step_control, p_2.stepsize, np.linalg.norm(p_2.stepsize)
     veri = optimizer.verify_new_point_with_latest_point(p_3)
     optimizer.find_stepsize_for_latest_point(method='TRIM')
@@ -457,7 +457,7 @@ def test_transitionsearch_cl_h_br():
     if not result:
         optimizer.find_stepsize_for_latest_point(method="TRIM")
         p_6_new = optimizer.update_to_new_point_for_latest_point(method='gs')
-        print 'p6_new', p_6_new.v_gradient, p_6_new.ts_state.energy 
+        print 'p6_new', p_6_new.v_gradient, p_6_new.ts_state.energy
     optimizer.add_a_point(p_6_new)
     optimizer.update_hessian_for_latest_point(method="SR1")
     optimizer.tweak_hessian_for_latest_point()
@@ -478,7 +478,7 @@ def test_transitionsearch_cl_h_br():
     optimizer._update_hessian_finite_difference(6, hveri, "gs", 0.001)
     optimizer.find_stepsize_for_latest_point(method="TRIM")
     p_8 = optimizer.update_to_new_point_for_latest_point(method='gs')
-    print 'p8', p_8.v_gradient, p_8.ts_state.energy 
+    print 'p8', p_8.v_gradient, p_8.ts_state.energy
     '''
     '''
     ts_treat.ts_state.get_energy_gradient_hessian() #obtain energy, gradient, and hessian
@@ -656,7 +656,7 @@ def test_transitionsearch_cl_h_br():
     optimizer.find_stepsize_for_latest_point(method='TRIM')
     _11_p = optimizer.update_to_new_point_for_latest_point()
     print "11 gradient", _11_p.v_gradient,np.linalg.norm(_11_p.ts_state.gradient_matrix)
-    
+
     veri = optimizer.verify_new_point_with_latest_point(_11_p)
     print veri
     optimizer.add_a_point(_11_p)
