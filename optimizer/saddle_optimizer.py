@@ -29,12 +29,15 @@ class TrialOptimizer(object):
         self.create_log_output()
 
     def optimize(self, iteration=50):
-        assert (len(self.points > 1) and self._trust_radius != None)
+        assert (len(self.points) > 0 and self._trust_radius != None) 
         for i in range(iteration):
+            print "iteration",i
             self.tweak_hessian_for_latest_point()
+            print "eigenvalue", self.points[self.latest_index].advanced_info["eigenvalues"]
             self.find_stepsize_for_latest_point(method="TRIM")
             new_p = self.update_to_new_point_for_latest_point(True, method="gs")
-            if not sefl.verify_new_point_with_latest_point(new_p):
+            if not self.verify_new_point_with_latest_point(new_p):
+                print "recalculate"
                 self.find_stepsize_for_latest_point(method="TRIM")
                 new_p = self.update_to_new_point_for_latest_point(True, method="gs")
             self.add_a_point(new_p)

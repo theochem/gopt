@@ -342,20 +342,24 @@ class TS_Treat(object):
         Returns:
             numpy.array: the steps to be taken to update geometry
         """
-        #eigenvectors = self.advanced_info["eigenvectors"]
-        #eigenvalues = self.advanced_info["eigenvalues"]
-        c_step = -np.dot(np.linalg.pinv(self.hessian), self.gradient)
+        eigenvectors = self.advanced_info["eigenvectors"]
+        eigenvalues = self.advanced_info["eigenvalues"]
+        c_step = -np.dot(np.linalg.pinv(self.v_hessian), self.v_gradient)
         if np.linalg.norm(c_step) <= self.step_control:
             return c_step
+        assert np.allclose(np.dot(np.dot(eigenvectors, np.diag(
+            eigenvalues)), eigenvectors.T), self.v_hessian)
         eigenvalues, eigenvectors = np.linalg.eigh(self.v_hessian)
         max_w = max(eigenvalues)
 
         def non_linear_value(lamda):  # define function for ridder method calculation
             w = eigenvalues.copy()
+            v = eigenvectors
+            print("lamda", lamda)
             w[:1] = w[:1] - lamda
             w[1:] = w[1:] + lamda
             new_hessian_inv = np.dot(v, np.dot(np.diag(1. / w), v.T))
-            return -np.dot(new_hessian_inv, self.gradient)
+            return -np.dot(new_hessian_inv, self.v_gradient)
 
         def non_linear_func(lamda):
             s_value = non_linear_value(lamda)

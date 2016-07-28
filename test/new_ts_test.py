@@ -50,3 +50,5 @@ def test_transitionsearch_cl_h_br():
     optimizer.add_a_point(ts_treat)
     optimizer.initialize_trm_for_point_with_index(0)
     result = optimizer.optimize(10)
+
+test_transitionsearch_cl_h_br()
