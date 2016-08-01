@@ -29,7 +29,7 @@ class TrialOptimizer(object):
         self.create_log_output()
 
     def optimize(self, iteration=50):
-        assert (len(self.points) > 0 and self._trust_radius != None) 
+        assert (len(self.points) > 0 and self._trust_radius != None)
         for i in range(iteration):
             print "iteration",i
             self.tweak_hessian_for_latest_point()
@@ -294,7 +294,8 @@ class TrialOptimizer(object):
             index (int): the index of point
         """
         point = self.points[index]
-        self._tweak_hessian(point)
+        point.v_hessian = point._tweak_hessian_eigenvalues(1, 0.005) # one negative eigenvalues and 0.005 threshold
+        # self._tweak_hessian(point)
 
     def tweak_hessian_for_latest_point(self):  # checked
         """tweak the hessian for the latest point
@@ -302,20 +303,20 @@ class TrialOptimizer(object):
         """
         self.tweak_hessian_for_a_point(self.latest_index)
 
-    def _tweak_hessian(self, point):
-        """the function to tweak the hessian
-
-        Args:
-            point (TYPE): Description
-
-        Returns:
-            TYPE: Description
-        """
-        point._diagnolize_h_matrix()  # diagnolize hessian matrix
-        # modify the eigenvalue of hessian to make sure there is only one
-        # negative eigenvalue
-        point._modify_h_matrix()
-        point._reconstruct_hessian_matrix()  # reconstruct hessian matrix
+    # def _tweak_hessian(self, point):
+    #     """the function to tweak the hessian
+    #
+    #     Args:
+    #         point (TYPE): Description
+    #
+    #     Returns:
+    #         TYPE: Description
+    #     """
+    #     point._diagnolize_h_matrix()  # diagnolize hessian matrix
+    #     # modify the eigenvalue of hessian to make sure there is only one
+    #     # negative eigenvalue
+    #     point._modify_h_matrix()
+    #     point._reconstruct_hessian_matrix()  # reconstruct hessian matrix
 
     def find_stepsize_for_a_point(self, index, **kwmethod):  # checked
         """find the proper stepsize for a certain point

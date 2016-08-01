@@ -63,7 +63,7 @@ class GeoOptimizer(object):
         # print ("result", result)
         step = func_step(result)
         point.step = step
-        return func_step(result)
+        return step
 
     def update_trust_radius(self, index):
         point = self.points[index]

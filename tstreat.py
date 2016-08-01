@@ -261,6 +261,32 @@ class TS_Treat(object):
         eigenvalues[positive_index] = pst_e_vl
         new_hessian = np.dot(eigenvectors, np.dot(np.diag(eigenvalues), eigenvectors.T))
         return new_hessian
+
+    def _trust_region_image_potential(self, limit, negative=0):
+        init_step = -np.dot(np.linalg.pinv(self.v_hessian), self.v_gradient)
+        if np.linalg.norm(init_step) <= limit:
+            return init_step
+        eigenvalues, eigenvectors = np.linalg.eigh(self.v_hessian)
+        max_w = max(eigenvalues)
+        def func_step(value):
+            e_v_copy = eigenvalues.copy()
+            e_v_copy[:negative] = e_v_copy[:negative] - value
+            e_v_copy[negative:] = e_v_copy[negative:] + value
+            new_hessian_inv = np.dot(v, np.dot(np.diag(1. / e_v_copy), v.T))
+            return -np.dot(new_hessian_inv, self.v_gradient)
+
+        def func_value(value):
+            step = func_step(value)
+            return np.linalg.norm(step) - limit
+
+        while func_value(max_w) >= 0:
+            max_w *= 2
+
+        result = ridders_solver(func_value, 0, max_w)
+        step = func_step(result)
+        return step
+
+
     # def _diagnolize_h_matrix(self):
     #     """diagnolize hessian matrix if it is not none
     #     """
