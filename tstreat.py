@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import horton as ht
 import scipy.optimize as opt
@@ -25,7 +26,7 @@ class TS_Treat(object):
         self.v_hessian = None
         self.step_control = None
         self.stepsize = None
-        self.advanced_info = {}
+        # self.advanced_info = {}
 
     def _matrix_a_eigen(self):
         """calculate eigenvalue of b_matrix, select 3n-5 to form the a matrix
@@ -89,7 +90,7 @@ class TS_Treat(object):
         counter = 0
         # print "eigenvalue",eig_value, "\n",eig_vector
         for i in range(vec_len):
-            if abs(eig_value[i]) > 0.0001:
+            if abs(eig_value[i]) > 1e-4:
                 basisset[:, counter] = eig_vector[:, i]
                 counter += 1
         return basisset[:, :counter]  # numpy.array, shape(, counter)
@@ -182,7 +183,7 @@ class TS_Treat(object):
         new_ts_state.v_matrix = None
         new_ts_state.v_gradient = None
         new_ts_state.v_hessian = None
-        new_ts_state.advanced_info = {}
+        # new_ts_state.advanced_info = {}
         new_ts_state.stepsize = None
         new_ts_state.ts_state.use_delta_ic_to_calculate_new_cc(delta_q)
         if hessian:
@@ -222,212 +223,250 @@ class TS_Treat(object):
         self.set_ic_hessian()
         self.ts_state.hessian_ic_to_x()
 
-    def _diagnolize_h_matrix(self):
-        """diagnolize hessian matrix if it is not none
-        """
-        w, v = np.linalg.eigh(
-            self.v_hessian)  # w is the eigenvalues while v is the eigenvectors
-        self.advanced_info["eigenvalues"] = w
-        self.advanced_info["eigenvectors"] = v
+    def _tweak_hessian_nonreduced(self, negative=0):
+        hessian = self.v_hessian.copy()
+        nonreduced = hessian[self.key_ic:, self.key_ic:]
+        w_r, v_r = np.linalg.eigh(nonreduced)
+        w_r[w_r < 0.] = 0.
+        hessian[self.key_ic:, self.key_ic:] = np.dot(v, np.dot(np.diag(w), v.T))
+        return hessian
 
-    def _test_trust_radius_method(self):
-        """test trust radius method, defined by Derrick myself.
-        """
-        origin_step = np.dot(np.linalg.pinv(self.v_hessian), np.v_gradient)
-        length = np.linalg.norm(origin_step)
-        new_step = origin_step / length * self.step_control
-        return new_step
-
-    def switch_eigens(self, one_index, the_other_index):
-        """switch the eigen values and eigenvalues of two different indexes
-
-        Args:
-            one_index (int): the one index to be switched
-            the_other_index (int): the other index to be switched
-        """
-        # set temp eigenvalue and eigenvector
-        eigenvalues = self.advanced_info["eigenvalues"]
-        eigenvectors = self.advanced_info["eigenvectors"]
-        eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[
-            the_other_index], eigenvalues[one_index]
-        # assign the other index
-        eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[
-            the_other_index], eigenvalues[one_index]
-        eigenvectors[:, one_index], eigenvectors[:, the_other_index] = np.copy(
-            eigenvectors[:, the_other_index]), np.copy(eigenvectors[:, one_index])
-
-    def _modify_h_matrix(self, pos_thresh=0.005, neg_thresh=-0.005):
-        """modify the eigenvalues of hessian matrix to make sure it has the right form
-
-        Args:
-            pos_thresh (float, optional): the threshold for positive eigenvalues, default is 0.005
-            neg_thresh (float, optional): the threshold for nagetive eigenvalues, default is -0.005
-
-        """
-        total_number = self.ts_state.dof
-        pos = 0
-        neg = 0
-        for i in range(total_number):  # here can be optimized, but i am lazy to do that
-            if self.advanced_info["eigenvalues"][i] >= 0:
-                pos += 1
-            elif self.advanced_info["eigenvalues"][i] < 0:
-                neg += 1
-
-        if neg == 1:  # ideal situation with only one negative eigenvalues
-            for i in range(1, total_number):
-                self.advanced_info["eigenvalues"][i] = max(
-                    pos_thresh, self.advanced_info["eigenvalues"][i])
-            self.advanced_info["eigenvalues"][0] = min(
-                neg_thresh, self.advanced_info["eigenvalues"][0])
-
-        if neg > 1:  # method to select the most important negative eigenvalues
-            fraction = 0  # initial value for fraction calculation
-            label_flag = -1  # default flag, value -1 is just a symbol
-            for i in range(neg):
-                corresponding_eigenvector = self.advanced_info[
-                    "eigenvectors"][:, i]
-                temp_sum = 0
-                for j in range(self.key_ic):
-                    temp_sum += corresponding_eigenvector[j] ** 2
-                if temp_sum > fraction:
-                    fraction = temp_sum
-                    label_flag = i
-                # print "find max",i, temp_sum
-            # switch the selected negative eigenvalue and vector to index 0
-            if label_flag != 0:
-                self.switch_eigens(0, label_flag)
-                # print "negative eigen flag",label_flag
-            for i in range(1, total_number):
-                self.advanced_info["eigenvalues"][i] = max(
-                    pos_thresh, self.advanced_info["eigenvalues"][i])
-            self.advanced_info["eigenvalues"][0] = min(
-                neg_thresh, self.advanced_info["eigenvalues"][0])
-
-        if neg == 0:  # choose the one more important eigenvalues to become negative
-            # index for any eigenvectors that has more than 0.5 fraction in
-            # reduced space
-            lowest_eigenvalue = None
-            label_flag = -1  # the same reason as above
-            for i in range(total_number):
-                corresponding_eigenvector = self.advanced_info[
-                    "eigenvectors"][:, i]
-                temp_sum = 0
-                for j in range(self.key_ic):
-                    temp_sum += corresponding_eigenvector[j]**2
-                if temp_sum >= 0.5:
-                    if self.advanced_info["eigenvalues"][i] < lowest_eigenvalue or lowest_eigenvalue == None:
-                        lowest_eigenvalue = self.advanced_info[
-                            "eigenvalues"][i]
-                        label_flag = i
-            if label_flag != 0:
-                self.switch_eigens(0, label_flag)
-            for i in range(1, total_number):
-                self.advanced_info["eigenvalues"][i] = max(
-                    pos_thresh, self.advanced_info["eigenvalues"][i])
-            self.advanced_info["eigenvalues"][0] = min(
-                neg_thresh, self.advanced_info["eigenvalues"][0])
-
-    def _reconstruct_hessian_matrix(self):
-        """reconstruct new hessian depends on the twieked hessian matrix
-
-        """
-        eigenvalues = self.advanced_info["eigenvalues"]
-        eigenvectors = self.advanced_info["eigenvectors"]
-        self.v_hessian = np.dot(np.dot(eigenvectors, np.diag(
-            eigenvalues)), eigenvectors.T)  # V W V.T
-
-    def _trust_region_image_potential(self):
-        """use TRIR method to find proper step under the control of trust radius method
-
-        Returns:
-            numpy.array: the steps to be taken to update geometry
-        """
-        eigenvectors = self.advanced_info["eigenvectors"]
-        eigenvalues = self.advanced_info["eigenvalues"]
-        c_step = -np.dot(np.linalg.pinv(self.v_hessian), self.v_gradient)
-        if np.linalg.norm(c_step) <= self.step_control:
-            return c_step
-        assert np.allclose(np.dot(np.dot(eigenvectors, np.diag(
-            eigenvalues)), eigenvectors.T), self.v_hessian)
+    def _tweak_hessian_eigenvalues(self, negative=0, threshold=0.005):
+        self.v_hessian = self._tweak_hessian_nonreduced(negative) #change the hessian
         eigenvalues, eigenvectors = np.linalg.eigh(self.v_hessian)
-        max_w = max(eigenvalues)
+        negative_eig = np.sum(eigenvalues < 0)
+        if negative_eig == negative: # if the negative eigenvalues equal to indended one
+            negative_index = np.arange(negative_eig)
+            positive_index = np.arange(negative_eig, len(eigenvalues))
 
-        def non_linear_value(lamda):  # define function for ridder method calculation
-            w = eigenvalues.copy()
-            v = eigenvectors
-            print("lamda", lamda)
-            w[:1] = w[:1] - lamda
-            w[1:] = w[1:] + lamda
-            new_hessian_inv = np.dot(v, np.dot(np.diag(1. / w), v.T))
-            return -np.dot(new_hessian_inv, self.v_gradient)
+        elif negative_eig < negative:
+            diff = negative - negative_eig
+            fraction = np.sum(np.square(eigenvectors[:self.key_ic, negative_eig:]), axis=0)
+            ngt_extra_index = fraction.argsort()[::-1][:diff] + negative_eig
+            negative_index = np.append(np.arange(negative_eig), ngt_extra_index)
+            positive_index = fraction.argsort()[::-1][diff:] + negative_eig
 
-        def non_linear_func(lamda):
-            s_value = non_linear_value(lamda)
-            return np.linalg.norm(s_value) - self.step_control
+        elif negative_eig > negative:
+            diff = negative_eig - negative
+            fraction = np.sum(np.square(eigenvectors[:self.key_ic, :negative_eig]), axis=0)
+            negative_index = fraction.argsort()[::-1][:negative]
+            pst_extra_index = fraction.argsort()[::-1][negative:]
+            positive_index = np.append(pst_extra_index, np.arange(negative_eig, len(self.eigenvalues)))
 
-        while non_linear_func(max_w) >= 0:
-            max_w *= 2
-        result = ridders_solver(non_linear_func, 0, max_w)
-        step = non_linear_value(result)
-        return step
-
-    def _rational_function_optimization(self):
-        """use RFO method to find proper step under the control of trust radius method
-
-        Returns:
-            numpy.array: the steps to be taken to update geometry
-        """
-        eigenvalues = self.advanced_info["eigenvalues"]
-        eigenvectors = self.advanced_info["eigenvectors"]
-        g_matrix = self.v_gradient
-        # construct neg_matrix
-        neg_matrix = np.zeros((2, 2), float)
-        neg_matrix[0][0] = eigenvalues[0]
-        neg_matrix[1][0] = np.dot(self.v_gradient.T, eigenvectors[:, 0])
-        neg_matrix[0][1] = np.dot(eigenvectors[:, 0].T, self.v_gradient)
-        eig_value_p, _ = np.linalg.eigh(neg_matrix)
-        # construct neg_matrix
-        pos_matrix = np.zeros((self.ts_state.dof, self.ts_state.dof), float)
-        for i in range(1, self.ts_state.dof):
-            pos_matrix[i - 1][i - 1] = eigenvalues[i]
-            pos_matrix[self.ts_state.dof - 1][i -
-                                              1] = np.dot(self.v_gradient.T, eigenvectors[:, i])
-            pos_matrix[i - 1][self.ts_state.dof -
-                              1] = np.dot(eigenvectors[:, i].T, self.v_gradient)
-        eig_value_n, _ = np.linalg.eigh(pos_matrix)
-
-        def non_linear_value(lamda):  # define function for ridder method calculation
-            eig_value_p_copy = deepcopy(eig_value_p)
-            eig_value_p_copy[:-1] = eig_value_p_copy[: -1] * lamda
-            lamda_p = max(eig_value_p_copy.flatten())
-            if lamda == 0:
-                lamda_p = 0
-            part_1 = np.dot(eigenvectors[0].T,
-                            g_matrix) / (eigenvalues[0] - lamda_p)
-            part_1 = np.dot(part_1, eigenvectors[0])
-            eig_value_n_copy = deepcopy(eig_value_n)
-            eig_value_n_copy[:-1] = eig_value_n_copy[: -1] * lamda
-            lamda_n = - min(eig_value_n_copy.flatten())
-            if lamda == 0 or lamda_n < 0:
-                lamda_n = 0
-            part_2 = 0
-            for i in range(1, self.ts_state.dof):
-                temp_p2 = np.dot(
-                    eigenvectors[i].T, g_matrix) / (eigenvalues[i] + lamda_n)
-                temp_p2 = np.dot(temp_p2, eigenvectors[i])
-                part_2 += temp_p2
-            s_value = - part_1 - part_2
-            return s_value
-
-        def non_linear_func(lamda):
-            s_value = non_linear_value(lamda)
-            return np.linalg.norm(s_value) - self.step_control
-
-        try_value = non_linear_func(0)
-        if try_value < 0:
-            return non_linear_value(0)
-        try_lamda = 1
-        while non_linear_func(try_lamda) > 0:
-            try_lamda *= 2
-        root_for_lamda = opt.ridder(non_linear_func, 0, try_lamda)
-        return non_linear_value(root_for_lamda)
+        ngt_e_vl = eigenvalues[negative_index] # negative eigenvalues
+        pst_e_vl = eigenvalues[positive_index] # positive eigenvalues
+        ngt_e_vl[ngt_e_vl > -threshold] = -threshold # change the nagetive eigenvalues to <= -threshold
+        pst_e_vl[pst_e_vl < threshold] = threshold # change the positive eigenvalues to >= threshold
+        eigenvalues[negative_index] = ngt_e_vl
+        eigenvalues[positive_index] = pst_e_vl
+        new_hessian = np.dot(eigenvectors, np.dot(np.diag(eigenvalues), eigenvectors.T))
+        return new_hessian
+    # def _diagnolize_h_matrix(self):
+    #     """diagnolize hessian matrix if it is not none
+    #     """
+    #     w, v = np.linalg.eigh(
+    #         self.v_hessian)  # w is the eigenvalues while v is the eigenvectors
+    #     self.advanced_info["eigenvalues"] = w
+    #     self.advanced_info["eigenvectors"] = v
+    #
+    # def _test_trust_radius_method(self):
+    #     """test trust radius method, defined by Derrick myself.
+    #     """
+    #     origin_step = np.dot(np.linalg.pinv(self.v_hessian), np.v_gradient)
+    #     length = np.linalg.norm(origin_step)
+    #     new_step = origin_step / length * self.step_control
+    #     return new_step
+    #
+    # def switch_eigens(self, one_index, the_other_index):
+    #     """switch the eigen values and eigenvalues of two different indexes
+    #
+    #     Args:
+    #         one_index (int): the one index to be switched
+    #         the_other_index (int): the other index to be switched
+    #     """
+    #     # set temp eigenvalue and eigenvector
+    #     eigenvalues = self.advanced_info["eigenvalues"]
+    #     eigenvectors = self.advanced_info["eigenvectors"]
+    #     eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[
+    #         the_other_index], eigenvalues[one_index]
+    #     # assign the other index
+    #     eigenvalues[one_index], eigenvalues[the_other_index] = eigenvalues[
+    #         the_other_index], eigenvalues[one_index]
+    #     eigenvectors[:, one_index], eigenvectors[:, the_other_index] = np.copy(
+    #         eigenvectors[:, the_other_index]), np.copy(eigenvectors[:, one_index])
+    #
+    # def _modify_h_matrix(self, pos_thresh=0.005, neg_thresh=-0.005):
+    #     """modify the eigenvalues of hessian matrix to make sure it has the right form
+    #
+    #     Args:
+    #         pos_thresh (float, optional): the threshold for positive eigenvalues, default is 0.005
+    #         neg_thresh (float, optional): the threshold for nagetive eigenvalues, default is -0.005
+    #
+    #     """
+    #     total_number = self.ts_state.dof
+    #     pos = 0
+    #     neg = 0
+    #     for i in range(total_number):  # here can be optimized, but i am lazy to do that
+    #         if self.advanced_info["eigenvalues"][i] >= 0:
+    #             pos += 1
+    #         elif self.advanced_info["eigenvalues"][i] < 0:
+    #             neg += 1
+    #
+    #     if neg == 1:  # ideal situation with only one negative eigenvalues
+    #         for i in range(1, total_number):
+    #             self.advanced_info["eigenvalues"][i] = max(
+    #                 pos_thresh, self.advanced_info["eigenvalues"][i])
+    #         self.advanced_info["eigenvalues"][0] = min(
+    #             neg_thresh, self.advanced_info["eigenvalues"][0])
+    #
+    #     if neg > 1:  # method to select the most important negative eigenvalues
+    #         fraction = 0  # initial value for fraction calculation
+    #         label_flag = -1  # default flag, value -1 is just a symbol
+    #         for i in range(neg):
+    #             corresponding_eigenvector = self.advanced_info[
+    #                 "eigenvectors"][:, i]
+    #             temp_sum = 0
+    #             for j in range(self.key_ic):
+    #                 temp_sum += corresponding_eigenvector[j] ** 2
+    #             if temp_sum > fraction:
+    #                 fraction = temp_sum
+    #                 label_flag = i
+    #             # print "find max",i, temp_sum
+    #         # switch the selected negative eigenvalue and vector to index 0
+    #         if label_flag != 0:
+    #             self.switch_eigens(0, label_flag)
+    #             # print "negative eigen flag",label_flag
+    #         for i in range(1, total_number):
+    #             self.advanced_info["eigenvalues"][i] = max(
+    #                 pos_thresh, self.advanced_info["eigenvalues"][i])
+    #         self.advanced_info["eigenvalues"][0] = min(
+    #             neg_thresh, self.advanced_info["eigenvalues"][0])
+    #
+    #     if neg == 0:  # choose the one more important eigenvalues to become negative
+    #         # index for any eigenvectors that has more than 0.5 fraction in
+    #         # reduced space
+    #         lowest_eigenvalue = None
+    #         label_flag = -1  # the same reason as above
+    #         for i in range(total_number):
+    #             corresponding_eigenvector = self.advanced_info[
+    #                 "eigenvectors"][:, i]
+    #             temp_sum = 0
+    #             for j in range(self.key_ic):
+    #                 temp_sum += corresponding_eigenvector[j]**2
+    #             if temp_sum >= 0.5:
+    #                 if self.advanced_info["eigenvalues"][i] < lowest_eigenvalue or lowest_eigenvalue == None:
+    #                     lowest_eigenvalue = self.advanced_info[
+    #                         "eigenvalues"][i]
+    #                     label_flag = i
+    #         if label_flag != 0:
+    #             self.switch_eigens(0, label_flag)
+    #         for i in range(1, total_number):
+    #             self.advanced_info["eigenvalues"][i] = max(
+    #                 pos_thresh, self.advanced_info["eigenvalues"][i])
+    #         self.advanced_info["eigenvalues"][0] = min(
+    #             neg_thresh, self.advanced_info["eigenvalues"][0])
+    #
+    # def _reconstruct_hessian_matrix(self):
+    #     """reconstruct new hessian depends on the twieked hessian matrix
+    #
+    #     """
+    #     eigenvalues = self.advanced_info["eigenvalues"]
+    #     eigenvectors = self.advanced_info["eigenvectors"]
+    #     self.v_hessian = np.dot(np.dot(eigenvectors, np.diag(
+    #         eigenvalues)), eigenvectors.T)  # V W V.T
+    #
+    # def _trust_region_image_potential(self):
+    #     """use TRIR method to find proper step under the control of trust radius method
+    #
+    #     Returns:
+    #         numpy.array: the steps to be taken to update geometry
+    #     """
+    #     eigenvectors = self.advanced_info["eigenvectors"]
+    #     eigenvalues = self.advanced_info["eigenvalues"]
+    #     c_step = -np.dot(np.linalg.pinv(self.v_hessian), self.v_gradient)
+    #     if np.linalg.norm(c_step) <= self.step_control:
+    #         return c_step
+    #     assert np.allclose(np.dot(np.dot(eigenvectors, np.diag(
+    #         eigenvalues)), eigenvectors.T), self.v_hessian)
+    #     eigenvalues, eigenvectors = np.linalg.eigh(self.v_hessian)
+    #     max_w = max(eigenvalues)
+    #
+    #     def non_linear_value(lamda):  # define function for ridder method calculation
+    #         w = eigenvalues.copy()
+    #         v = eigenvectors
+    #         print("lamda", lamda)
+    #         w[:1] = w[:1] - lamda
+    #         w[1:] = w[1:] + lamda
+    #         new_hessian_inv = np.dot(v, np.dot(np.diag(1. / w), v.T))
+    #         return -np.dot(new_hessian_inv, self.v_gradient)
+    #
+    #     def non_linear_func(lamda):
+    #         s_value = non_linear_value(lamda)
+    #         return np.linalg.norm(s_value) - self.step_control
+    #
+    #     while non_linear_func(max_w) >= 0:
+    #         max_w *= 2
+    #     result = ridders_solver(non_linear_func, 0, max_w)
+    #     step = non_linear_value(result)
+    #     return step
+    #
+    # def _rational_function_optimization(self):
+    #     """use RFO method to find proper step under the control of trust radius method
+    #
+    #     Returns:
+    #         numpy.array: the steps to be taken to update geometry
+    #     """
+    #     eigenvalues = self.advanced_info["eigenvalues"]
+    #     eigenvectors = self.advanced_info["eigenvectors"]
+    #     g_matrix = self.v_gradient
+    #     # construct neg_matrix
+    #     neg_matrix = np.zeros((2, 2), float)
+    #     neg_matrix[0][0] = eigenvalues[0]
+    #     neg_matrix[1][0] = np.dot(self.v_gradient.T, eigenvectors[:, 0])
+    #     neg_matrix[0][1] = np.dot(eigenvectors[:, 0].T, self.v_gradient)
+    #     eig_value_p, _ = np.linalg.eigh(neg_matrix)
+    #     # construct neg_matrix
+    #     pos_matrix = np.zeros((self.ts_state.dof, self.ts_state.dof), float)
+    #     for i in range(1, self.ts_state.dof):
+    #         pos_matrix[i - 1][i - 1] = eigenvalues[i]
+    #         pos_matrix[self.ts_state.dof - 1][i -
+    #                                           1] = np.dot(self.v_gradient.T, eigenvectors[:, i])
+    #         pos_matrix[i - 1][self.ts_state.dof -
+    #                           1] = np.dot(eigenvectors[:, i].T, self.v_gradient)
+    #     eig_value_n, _ = np.linalg.eigh(pos_matrix)
+    #
+    #     def non_linear_value(lamda):  # define function for ridder method calculation
+    #         eig_value_p_copy = deepcopy(eig_value_p)
+    #         eig_value_p_copy[:-1] = eig_value_p_copy[: -1] * lamda
+    #         lamda_p = max(eig_value_p_copy.flatten())
+    #         if lamda == 0:
+    #             lamda_p = 0
+    #         part_1 = np.dot(eigenvectors[0].T,
+    #                         g_matrix) / (eigenvalues[0] - lamda_p)
+    #         part_1 = np.dot(part_1, eigenvectors[0])
+    #         eig_value_n_copy = deepcopy(eig_value_n)
+    #         eig_value_n_copy[:-1] = eig_value_n_copy[: -1] * lamda
+    #         lamda_n = - min(eig_value_n_copy.flatten())
+    #         if lamda == 0 or lamda_n < 0:
+    #             lamda_n = 0
+    #         part_2 = 0
+    #         for i in range(1, self.ts_state.dof):
+    #             temp_p2 = np.dot(
+    #                 eigenvectors[i].T, g_matrix) / (eigenvalues[i] + lamda_n)
+    #             temp_p2 = np.dot(temp_p2, eigenvectors[i])
+    #             part_2 += temp_p2
+    #         s_value = - part_1 - part_2
+    #         return s_value
+    #
+    #     def non_linear_func(lamda):
+    #         s_value = non_linear_value(lamda)
+    #         return np.linalg.norm(s_value) - self.step_control
+    #
+    #     try_value = non_linear_func(0)
+    #     if try_value < 0:
+    #         return non_linear_value(0)
+    #     try_lamda = 1
+    #     while non_linear_func(try_lamda) > 0:
+    #         try_lamda *= 2
+    #     root_for_lamda = opt.ridder(non_linear_func, 0, try_lamda)
+    #     return non_linear_value(root_for_lamda)

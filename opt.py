@@ -26,13 +26,13 @@ class GeoOptimizer(object):
     def add_new(self, point):
         self.points.append(point)
 
-    def tweak_hessian(self, index, negative=0, threshold=0.05):
+    def tweak_hessian(self, index, negative=0, threshold=0.005):
         point = self.points[index]
         w, v = np.linalg.eigh(point.hessian)
         negative_slice = w[: negative]
         positive_slice = w[negative:]
-        negative_slice[negative_slice > -0.05] = -0.05
-        positive_slice[positive_slice < 0.05] = 0.05
+        negative_slice[negative_slice > -threshold] = -threshold
+        positive_slice[positive_slice < threshold] = threshold
         new_hessian = np.dot(v, np.dot(np.diag(w), v.T))
         point.hessian = new_hessian
 
