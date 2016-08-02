@@ -228,11 +228,11 @@ class TS_Treat(object):
         nonreduced = hessian[self.key_ic:, self.key_ic:]
         w_r, v_r = np.linalg.eigh(nonreduced)
         w_r[w_r < 0.] = 0.
-        hessian[self.key_ic:, self.key_ic:] = np.dot(v, np.dot(np.diag(w), v.T))
+        hessian[self.key_ic:, self.key_ic:] = np.dot(v_r, np.dot(np.diag(w_r), v_r.T))
         return hessian
 
     def _tweak_hessian_eigenvalues(self, negative=0, threshold=0.005):
-        self.v_hessian = self._tweak_hessian_nonreduced(negative) #change the hessian
+        self.v_hessian = self._tweak_hessian_nonreduced(0) #change the hessian
         eigenvalues, eigenvectors = np.linalg.eigh(self.v_hessian)
         negative_eig = np.sum(eigenvalues < 0)
         if negative_eig == negative: # if the negative eigenvalues equal to indended one
@@ -262,8 +262,9 @@ class TS_Treat(object):
         new_hessian = np.dot(eigenvectors, np.dot(np.diag(eigenvalues), eigenvectors.T))
         return new_hessian
 
-    def _trust_region_image_potential(self, limit, negative=0):
+    def _trust_region_image_potential(self, negative=0):
         init_step = -np.dot(np.linalg.pinv(self.v_hessian), self.v_gradient)
+        limit = self.step_control
         if np.linalg.norm(init_step) <= limit:
             return init_step
         eigenvalues, eigenvectors = np.linalg.eigh(self.v_hessian)
@@ -272,7 +273,7 @@ class TS_Treat(object):
             e_v_copy = eigenvalues.copy()
             e_v_copy[:negative] = e_v_copy[:negative] - value
             e_v_copy[negative:] = e_v_copy[negative:] + value
-            new_hessian_inv = np.dot(v, np.dot(np.diag(1. / e_v_copy), v.T))
+            new_hessian_inv = np.dot(eigenvectors, np.dot(np.diag(1. / e_v_copy), eigenvectors.T))
             return -np.dot(new_hessian_inv, self.v_gradient)
 
         def func_value(value):

@@ -78,28 +78,38 @@ def test_transitionsearch_cl_h_br():
     # print "hessian, initial\n", ts_treat.v_hessian,"\n",
     # np.linalg.eigh(ts_treat.v_hessian)
     optimizer.initialize_trm_for_point_with_index(0)
-    # optimizer.tweak_hessian_for_latest_point()
+    optimizer.tweak_hessian_for_latest_point()
     optimizer.find_stepsize_for_latest_point(method="TRIM")
     p_2 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
-    # print "-------"
+    # print "-------2"
     # print p_2.ts_state.energy
     # print "p2", p_2.v_gradient
     veri = optimizer.verify_new_point_with_latest_point(p_2)
     if not veri:
+        #print "again 2"
         optimizer.find_stepsize_for_latest_point(method="TRIM")
         p_2 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     # print "test gradient",veri
     optimizer.add_a_point(p_2)
     optimizer.update_trust_radius_latest_point(method='gradient')
     # print "finite test", optimizer._test_necessity_for_finite_difference(1)
-    # optimizer.tweak_hessian_for_latest_point()
+    optimizer.tweak_hessian_for_latest_point()
+    #print("p2 eigen 1", p_2, p_2.v_hessian,p_2,np.linalg.eigh(p_2.v_hessian)[0])
     optimizer.find_stepsize_for_latest_point(method="TRIM")
+    #print("p2 eigen 2", p_2, hex(id(p_2.v_hessian)),p_2,np.linalg.eigh(p_2.v_hessian)[0])
     p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    #print "---------3"
+    #print("p2 eigen 3", p_2, hex(id(p_2.v_hessian)),p_2,np.linalg.eigh(p_2.v_hessian)[0])
     veri = optimizer.verify_new_point_with_latest_point(p_3)
+    #print("p2 eigen 4", p_2, p_2.v_hessian,p_2,np.linalg.eigh(p_2.v_hessian)[0])
     if not veri:
+        #print "again 3"
+        #print ("p2 eigen 5",p_2,p_2.v_hessian, np.linalg.eigh(p_2.v_hessian)[0])
         optimizer.find_stepsize_for_latest_point(method="TRIM")
         p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
-    # print "-------"
+    #print "_______"
+'''
+    print "-------"
     # print "p3",p_3.ts_state.energy, p_3.v_gradient
     # veri = optimizer.verify_new_point_with_latest_point(p_3)
     # if not veri:
@@ -161,6 +171,7 @@ def test_transitionsearch_cl_h_br():
     #     print "-------"
     #    print "p6 new",p_6.ts_state.energy, p_6.v_gradient, p_5.step_control
     optimizer.add_a_point(p_7)
+    
     optimizer.update_trust_radius_latest_point(method='gradient')
     # optimizer.tweak_hessian_for_latest_point()
     optimizer.find_stepsize_for_latest_point(method="TRIM")
@@ -313,7 +324,7 @@ def test_transitionsearch_cl_h_br():
         optimizer.find_stepsize_for_latest_point(method='TRIM')
         p_20 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     optimizer.add_a_point(p_20)
-    '''
+    
     optimizer.update_trust_radius_latest_point(method='gradient')
     optimizer.find_stepsize_for_latest_point(method="TRIM")
     p_21 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
@@ -390,7 +401,7 @@ def test_transitionsearch_cl_h_br():
     #     print "-------"
     # print "p13 new",p_13.ts_state.energy, p_13.v_gradient, p_12.step_control
 
-    '''
+'''
     optimizer.update_hessian_for_latest_point(method='SR1')
     print "p_2 hessian \n", p_2.v_hessian, np.linalg.eigh(p_2.v_hessian)
 
@@ -480,7 +491,7 @@ def test_transitionsearch_cl_h_br():
     p_8 = optimizer.update_to_new_point_for_latest_point(method='gs')
     print 'p8', p_8.v_gradient, p_8.ts_state.energy
     '''
-    '''
+'''
     ts_treat.ts_state.get_energy_gradient_hessian() #obtain energy, gradient, and hessian
     ts_treat.ts_state.get_energy_gradient()
     # print "hessian", ts_treat.ts_state.hessian_matrix
@@ -908,7 +919,7 @@ def test_transitionsearch_cl_h_br():
     # print optimizer.verify_new_point_with_latest_point(third_trial)
     # print new_second_point.step_control
     # need to update trm. method need to be implelemented here
-    ''' step for optimization
+''' step for optimization
     add_a_point
     verify_convergence_for_latest_point
     update_trust_radius_latest_point

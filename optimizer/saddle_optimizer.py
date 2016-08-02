@@ -336,7 +336,7 @@ class TrialOptimizer(object):
         if kwmethod:
             raise TypeError('Unexpected **kwargs: {}'.format(kwmethod))
         if method == "TRIM":
-            stepsize = point._trust_region_image_potential()
+            stepsize = point._trust_region_image_potential(negative=1)
         elif method == "RFO":
             stepsize = point._rational_function_optimization()
         elif method == "Test":
@@ -366,6 +366,7 @@ class TrialOptimizer(object):
             Ts_Treat: the new point for further treatment and update
         """
         point = self.points[index]
+        print('trace', point, hex(id(point.v_hessian)))
         method = kwmethod.pop("method")
         title = kwmethod.pop("title","untitled")
         kwargs = {}
@@ -376,7 +377,7 @@ class TrialOptimizer(object):
             kwargs["spin"] = self._spin
             kwargs["title"] = title
         new_point = point.obtain_new_cc_with_new_delta_v(point.stepsize, method, hessian, **kwargs)
-        self.procruste_process_for_a_point(index, hessian)
+        # self.procruste_process_for_a_point(index, hessian) #todo: this cause the tweaked hessian change back to unchanged shape
         return new_point
 
     def update_to_new_point_for_latest_point(self, hessian=False, **kwmethod):  # checked
