@@ -251,7 +251,7 @@ class TS_Treat(object):
             fraction = np.sum(np.square(eigenvectors[:self.key_ic, :negative_eig]), axis=0)
             negative_index = fraction.argsort()[::-1][:negative]
             pst_extra_index = fraction.argsort()[::-1][negative:]
-            positive_index = np.append(pst_extra_index, np.arange(negative_eig, len(self.eigenvalues)))
+            positive_index = np.append(pst_extra_index, np.arange(negative_eig, len(eigenvalues)))
 
         ngt_e_vl = eigenvalues[negative_index] # negative eigenvalues
         pst_e_vl = eigenvalues[positive_index] # positive eigenvalues

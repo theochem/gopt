@@ -3,7 +3,10 @@ import numpy as np
 from saddle.TransitionSearch import *
 from saddle.tstreat import TS_Treat
 from saddle.optimizer.saddle_optimizer import TrialOptimizer
+import logging
 import os
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def test_transition_opt_ch3fh():
     path = os.path.dirname(os.path.realpath(__file__))
@@ -12,28 +15,181 @@ def test_transition_opt_ch3fh():
     ts = TransitionSearch(reactant, product)
     ts.auto_ic_select_combine()
     ts.auto_ts_search(opt=True, similar=ts.product)
-    print ts.ts_state.ic, ts.reactant.procedures, ts.ts_state.numbers
+    #print ts.ts_state.ic, ts.reactant.procedures, ts.ts_state.numbers
     ts.select_key_ic(3, 9)
-    print ts.ts_state.ic
+    #print ts.ts_state.ic
     ts_t = ts.create_ts_treat()
     ts_t.get_v_basis()
-    print (ts_t.v_matrix)
+    #print (ts_t.v_matrix)
     ts_t.ts_state.get_energy_gradient_hessian(method="gs", title='ch3hf', charge=0, spin=2)
     ts_t.get_v_gradient()
     ts_t.get_v_hessian()
+    logger.info('Start optimization')
     optimizer = TrialOptimizer(0, 2)
     optimizer.set_trust_radius_method(method="default", parameter=6)
     optimizer.add_a_point(ts_t)
     optimizer.initialize_trm_for_point_with_index(0)
     optimizer.tweak_hessian_for_latest_point()
+    logger.info('gradient: {}'.format(ts_t.ts_state.gradient_matrix))
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(ts_t.v_hessian)[0]))
     optimizer.find_stepsize_for_latest_point(method="TRIM")
     p_2 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
     veri = optimizer.verify_new_point_with_latest_point(p_2)
-    if not neri:
+    if not veri:
         optimizer.find_stepsize_for_latest_point(method="TRIM")
         p_2 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
     optimizer.add_a_point(p_2)
+    logger.info('gradient: {}'.format(p_2.ts_state.gradient_matrix))
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_2.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_3 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_3)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_3 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_3)
+    logger.info('gradient: {}'.format(p_3.ts_state.gradient_matrix))
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_3.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_4 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_4)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_4 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_4)
+    logger.info('gradient: {}'.format(p_4.ts_state.gradient_matrix))
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_4.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_5 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_5)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_5 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_5)
+    logger.info('gradient: {}'.format(p_5.ts_state.gradient_matrix))
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_5.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_6 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_6)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_6 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_6)
+    logger.info('gradient: {}'.format(p_6.ts_state.gradient_matrix))
 
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_6.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_7 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_7)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_7 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_7)
+    logger.info('gradient: {}'.format(p_7.ts_state.gradient_matrix))
+
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_7.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_8 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_8)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_8 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_8)
+    logger.info('gradient: {}'.format(p_8.ts_state.gradient_matrix))
+
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_8.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_9 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_9)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_9 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_9)
+    logger.info('gradient: {}'.format(p_9.ts_state.gradient_matrix))
+
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_9.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_10 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_10)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_10 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_10)
+    logger.info('gradient: {}'.format(p_10.ts_state.gradient_matrix))
+
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_10.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_11 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_11)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_11 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_11)
+    logger.info('gradient: {}'.format(p_11.ts_state.gradient_matrix))
+
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_11.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_12 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_12)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_12 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_12)
+    logger.info('gradient: {}'.format(p_12.ts_state.gradient_matrix))
+
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_12.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_13 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_13)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_13 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_13)
+    logger.info('gradient: {}'.format(p_13.ts_state.gradient_matrix))
+
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_13.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_14 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_14)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_14 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_14)
+    logger.info('gradient: {}'.format(p_14.ts_state.gradient_matrix))
+
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_14.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_15 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_15)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_15 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_15)
+    logger.info('gradient: {}'.format(p_15.ts_state.gradient_matrix))
+
+    optimizer.tweak_hessian_for_latest_point()
+    logger.info('hessian eigenvalue: {}'.format(np.linalg.eigh(p_15.v_hessian)[0]))
+    optimizer.find_stepsize_for_latest_point(method="TRIM")
+    p_16 = optimizer.update_to_new_point_for_latest_point(True, method='gs')
+    veri = optimizer.verify_new_point_with_latest_point(p_16)
+    if not veri:
+        optimizer.find_stepsize_for_latest_point(method="TRIM")
+        p_16 = optimizer.update_to_new_point_for_latest_point(True, method="gs")
+    optimizer.add_a_point(p_16)
+    logger.info('gradient: {}'.format(p_16.ts_state.gradient_matrix))
 
 def test_transitionsearch_cl_h_br():
     path = os.path.dirname(os.path.realpath(__file__))
