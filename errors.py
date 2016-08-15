@@ -1,0 +1,2 @@
+class NotSetError(Exception):
+    pass
