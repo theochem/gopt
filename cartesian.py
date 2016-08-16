@@ -2,25 +2,69 @@ from __future__ import absolute_import, print_function
 import numpy as np
 from errors import NotSetError
 
+
 class Cartesian(object):
-    def __init__(self, coordinates, atoms):
+
+    def __init__(self, coordinates, numbers):
         self._coordinates = coordinates
-        self._atoms = atoms
+        self._numbers = numbers
         self._energy = None
+        self._energy_gradient = None
+        self._energy_hessian = None
 
-    def energy_gradient(self): # return number array
-        pass
+    @property
+    def energy_gradient(self):  # return number array
+        if self._energy_gradient == None:
+            raise NotSetError(
+                "The value is None, do the calculation to calculate it first")
+        else:
+            return self._energy_gradient
 
-    def energy_hessian(self): # return number array
-        pass
+    @property
+    def energy_hessian(self):  # return number array
+        if self._energy_hessian == None:
+            raise NotSetError(
+                "The value is None, do the calculation to calculate it first")
+        else:
+            return self._energy_hessian
 
     @property
     def energy(self):
         if self._energy == None:
-            raise NotSetError("The value is None, do the calculation to calculate it first")
+            raise NotSetError(
+                "The value is None, do the calculation to calculate it first")
         else:
             return self._energy
 
+    @property
+    def numbers(self):
+        return self._numbers
+
+    @property
+    def coordinates(self):
+        return self._coordinates
+
     def energy_calculation(self, *methods):
+        # set self._energy
+        # set self._energy_gradient
+        # sel self._energy_hessian
         pass
+
+    def distance(self, index1, index2):
+        coord1 = self.coordinates[index1]
+        coord2 = self.coordinates[index2]
+        diff = coord1 - coord2
+        distance = np.linalg.norm(diff)
+        return distance
+
+    def angle(self, index1, index2, index3):
+        coord1 = self.coordinates[index1]
+        coord2 = self.coordinates[index2]
+        coord3 = self.coordinates[index3]
+        diff_1 = coord2 - coord1
+        diff_2 = coord2 - coord3
+        cos_angle = np.dot(diff_1, diff_2) / \
+            (np.linalg.norm(diff1) * np.linalg.norm(diff2))
+        return cos_angle
+
 # a = Cartesian(1,1)
