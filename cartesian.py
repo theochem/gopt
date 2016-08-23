@@ -1,13 +1,16 @@
 from __future__ import absolute_import, print_function
 import numpy as np
 from errors import NotSetError
+from gaussianwrapper import GaussianWrapper
 
 
 class Cartesian(object):
 
-    def __init__(self, coordinates, numbers):
+    def __init__(self, coordinates, numbers, charge, spin):
         self._coordinates = coordinates
         self._numbers = numbers
+        self._charge = charge
+        self._spin = spin
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None
@@ -16,7 +19,7 @@ class Cartesian(object):
     def energy_gradient(self):  # return number array
         if self._energy_gradient == None:
             raise NotSetError(
-                "The value is None, do the calculation to calculate it first")
+                "The value 'energy_gradient' is None, do the calculation first")
         else:
             return self._energy_gradient
 
@@ -24,7 +27,7 @@ class Cartesian(object):
     def energy_hessian(self):  # return number array
         if self._energy_hessian == None:
             raise NotSetError(
-                "The value is None, do the calculation to calculate it first")
+                "The value 'energy_hessian' is None, do the calculation first")
         else:
             return self._energy_hessian
 
@@ -32,7 +35,7 @@ class Cartesian(object):
     def energy(self):
         if self._energy == None:
             raise NotSetError(
-                "The value is None, do the calculation to calculate it first")
+                "The value 'energy' is None, do the calculation first")
         else:
             return self._energy
 
@@ -41,14 +44,28 @@ class Cartesian(object):
         return self._numbers
 
     @property
+    def charge(self):
+        return self._charge
+
+    @property
+    def spin(self):
+        return self._spin
+
+    @property
     def coordinates(self):
         return self._coordinates
 
-    def energy_calculation(self, *methods):
+    def energy_calculation(self, **kwargs`):
+        title = kwargs.pop('title', 'untitled')
+        method = kwargs.pop('method', 'g09')
+        if method == "g09":
+            ob = GaussianWrapper(self, title)
+            self._energy, self._energy_gradient, self._energy_hessian = ob.run_gaussian_and_get_result(
+                self.charge, self.spin, energy=True, gradient=True, hessian=True)
+
         # set self._energy
         # set self._energy_gradient
         # sel self._energy_hessian
-        pass
 
     def distance(self, index1, index2):
         coord1 = self.coordinates[index1]
