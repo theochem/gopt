@@ -31,14 +31,17 @@ class Scalar(object):
         if deriv > 1:
             self.dd = np.zeros((size, size), float)
         if deriv > 2:
-            raise ValueError("This implementation (only) supports up to second order derivatives.")
+            raise ValueError(
+                "This implementation (only) supports up to second order derivatives.")
 
     def copy(self):
         """Return a deep copy"""
         result = Scalar(self.size, self.deriv)
         result.v = self.v
-        if self.deriv > 0: result.d[:] = self.d[:]
-        if self.deriv > 1: result.dd[:] = self.dd[:]
+        if self.deriv > 0:
+            result.d[:] = self.d[:]
+        if self.deriv > 1:
+            result.dd[:] = self.dd[:]
         return result
 
     def results(self):
@@ -51,8 +54,10 @@ class Scalar(object):
             return self.v, self.d, self.dd
 
     def __iadd__(self, other):
-        if self.deriv > 1: self.dd += other.dd
-        if self.deriv > 0: self.d += other.d
+        if self.deriv > 1:
+            self.dd += other.dd
+        if self.deriv > 0:
+            self.d += other.d
         self.v += other.v
         return self
 
@@ -62,8 +67,10 @@ class Scalar(object):
         return result
 
     def __isub__(self, other):
-        if self.deriv > 1: self.dd -= other.dd
-        if self.deriv > 0: self.d -= other.d
+        if self.deriv > 1:
+            self.dd -= other.dd
+        if self.deriv > 0:
+            self.d -= other.d
         self.v -= other.v
         return self
 
@@ -83,13 +90,13 @@ class Scalar(object):
             # trying to avoid temporaries as much as possible
             if self.deriv > 1:
                 self.dd *= other.v
-                self.dd += self.v*other.dd
+                self.dd += self.v * other.dd
                 tmp = np.outer(self.d, other.d)
                 self.dd += tmp
                 self.dd += tmp.transpose()
             if self.deriv > 0:
                 self.d *= other.v
-                self.d += self.v*other.d
+                self.d += self.v * other.d
             self.v *= other.v
         else:
             raise TypeError("Second argument must be float, int or Scalar")
@@ -111,10 +118,10 @@ class Scalar(object):
             # trying to avoid temporaries as much as possible
             self.v /= other.v
             if self.deriv > 0:
-                self.d -= self.v*other.d
+                self.d -= self.v * other.d
                 self.d /= other.v
             if self.deriv > 1:
-                self.dd -= self.v*other.dd
+                self.dd -= self.v * other.dd
                 tmp = np.outer(self.d, other.d)
                 self.dd -= tmp
                 self.dd -= tmp.transpose()
@@ -125,13 +132,13 @@ class Scalar(object):
 
     def inv(self):
         """In place invert"""
-        self.v = 1/self.v
+        self.v = 1 / self.v
         tmp = self.v**2
         if self.deriv > 1:
-            self.dd[:] = tmp*(2*self.v*np.outer(self.d, self.d) - self.dd)
+            self.dd[:] = tmp * \
+                (2 * self.v * np.outer(self.d, self.d) - self.dd)
         if self.deriv > 0:
-            self.d[:] = -tmp*self.d[:]
-
+            self.d[:] = -tmp * self.d[:]
 
 
 class Vector3(object):
@@ -201,27 +208,29 @@ class Vector3(object):
         result = Scalar(self.size, self.deriv)
         result.v = np.sqrt(self.x.v**2 + self.y.v**2 + self.z.v**2)
         if self.deriv > 0:
-            result.d += self.x.v*self.x.d
-            result.d += self.y.v*self.y.d
-            result.d += self.z.v*self.z.d
+            result.d += self.x.v * self.x.d
+            result.d += self.y.v * self.y.d
+            result.d += self.z.v * self.z.d
             result.d /= result.v
         if self.deriv > 1:
-            result.dd += self.x.v*self.x.dd
-            result.dd += self.y.v*self.y.dd
-            result.dd += self.z.v*self.z.dd
+            result.dd += self.x.v * self.x.dd
+            result.dd += self.y.v * self.y.dd
+            result.dd += self.z.v * self.z.dd
             denom = result.v**2
-            result.dd += (1 - self.x.v**2/denom)*np.outer(self.x.d, self.x.d)
-            result.dd += (1 - self.y.v**2/denom)*np.outer(self.y.d, self.y.d)
-            result.dd += (1 - self.z.v**2/denom)*np.outer(self.z.d, self.z.d)
-            tmp = -self.x.v*self.y.v/denom*np.outer(self.x.d, self.y.d)
-            result.dd += tmp+tmp.transpose()
-            tmp = -self.y.v*self.z.v/denom*np.outer(self.y.d, self.z.d)
-            result.dd += tmp+tmp.transpose()
-            tmp = -self.z.v*self.x.v/denom*np.outer(self.z.d, self.x.d)
-            result.dd += tmp+tmp.transpose()
+            result.dd += (1 - self.x.v**2 / denom) * \
+                np.outer(self.x.d, self.x.d)
+            result.dd += (1 - self.y.v**2 / denom) * \
+                np.outer(self.y.d, self.y.d)
+            result.dd += (1 - self.z.v**2 / denom) * \
+                np.outer(self.z.d, self.z.d)
+            tmp = -self.x.v * self.y.v / denom * np.outer(self.x.d, self.y.d)
+            result.dd += tmp + tmp.transpose()
+            tmp = -self.y.v * self.z.v / denom * np.outer(self.y.d, self.z.d)
+            result.dd += tmp + tmp.transpose()
+            tmp = -self.z.v * self.x.v / denom * np.outer(self.z.d, self.x.d)
+            result.dd += tmp + tmp.transpose()
             result.dd /= result.v
         return result
-
 
 
 def dot(r1, r2):
@@ -236,7 +245,7 @@ def dot(r1, r2):
         raise ValueError("Both arguments must have the same input size.")
     if r1.deriv != r2.deriv:
         raise ValueError("Both arguments must have the same deriv.")
-    return r1.x*r2.x + r1.y*r2.y + r1.z*r2.z
+    return r1.x * r2.x + r1.y * r2.y + r1.z * r2.z
 
 
 def cross(r1, r2):
@@ -252,9 +261,9 @@ def cross(r1, r2):
     if r1.deriv != r2.deriv:
         raise ValueError("Both arguments must have the same deriv.")
     result = Vector3(r1.size, r1.deriv)
-    result.x = r1.y*r2.z - r1.z*r2.y
-    result.y = r1.z*r2.x - r1.x*r2.z
-    result.z = r1.x*r2.y - r1.y*r2.x
+    result.x = r1.y * r2.z - r1.z * r2.y
+    result.y = r1.z * r2.x - r1.x * r2.z
+    result.z = r1.x * r2.y - r1.y * r2.x
     return result
 
 
@@ -408,7 +417,7 @@ def _bend_transform(rs, fn_low, deriv):
         return v,
     d = np.zeros((3, 3), float)
     d[0] = result[1][:3]
-    d[1] = -result[1][:3]-result[1][3:]
+    d[1] = -result[1][:3] - result[1][3:]
     d[2] = result[1][3:]
     if deriv == 1:
         return v, d
@@ -417,15 +426,15 @@ def _bend_transform(rs, fn_low, deriv):
     ab = result[2][:3, 3:]
     ba = result[2][3:, :3]
     bb = result[2][3:, 3:]
-    dd[0, :, 0, :] =   aa
+    dd[0, :, 0, :] = aa
     dd[0, :, 1, :] = - aa - ab
-    dd[0, :, 2, :] =   ab
+    dd[0, :, 2, :] = ab
     dd[1, :, 0, :] = - aa - ba
-    dd[1, :, 1, :] =   aa + ba + ab + bb
+    dd[1, :, 1, :] = aa + ba + ab + bb
     dd[1, :, 2, :] = - ab - bb
-    dd[2, :, 0, :] =   ba
+    dd[2, :, 0, :] = ba
     dd[2, :, 1, :] = - ba - bb
-    dd[2, :, 2, :] =   bb
+    dd[2, :, 2, :] = bb
     if deriv == 2:
         return v, d, dd
     raise ValueError("deriv must be 0, 1 or 2.")
@@ -441,8 +450,8 @@ def _dihed_transform(rs, fn_low, deriv):
         return v,
     d = np.zeros((4, 3), float)
     d[0] = result[1][:3]
-    d[1] = -result[1][:3]-result[1][3:6]
-    d[2] = result[1][3:6]-result[1][6:]
+    d[1] = -result[1][:3] - result[1][3:6]
+    d[2] = result[1][3:6] - result[1][6:]
     d[3] = result[1][6:]
     if deriv == 1:
         return v, d
@@ -457,25 +466,25 @@ def _dihed_transform(rs, fn_low, deriv):
     cb = result[2][6:, 3:6]
     cc = result[2][6:, 6:]
 
-    dd[0, :, 0, :] =   aa
+    dd[0, :, 0, :] = aa
     dd[0, :, 1, :] = - aa - ab
-    dd[0, :, 2, :] =   ab - ac
-    dd[0, :, 3, :] =   ac
+    dd[0, :, 2, :] = ab - ac
+    dd[0, :, 3, :] = ac
 
     dd[1, :, 0, :] = - aa - ba
-    dd[1, :, 1, :] =   aa + ba + ab + bb
+    dd[1, :, 1, :] = aa + ba + ab + bb
     dd[1, :, 2, :] = - ab - bb + ac + bc
     dd[1, :, 3, :] = - ac - bc
 
-    dd[2, :, 0, :] =   ba - ca
+    dd[2, :, 0, :] = ba - ca
     dd[2, :, 1, :] = - ba + ca - bb + cb
-    dd[2, :, 2, :] =   bb - cb - bc + cc
-    dd[2, :, 3, :] =   bc - cc
+    dd[2, :, 2, :] = bb - cb - bc + cc
+    dd[2, :, 3, :] = bc - cc
 
-    dd[3, :, 0, :] =   ca
+    dd[3, :, 0, :] = ca
     dd[3, :, 1, :] = - ca - cb
-    dd[3, :, 2, :] =   cb - cc
-    dd[3, :, 3, :] =   cc
+    dd[3, :, 2, :] = cb - cc
+    dd[3, :, 3, :] = cc
     if deriv == 2:
         return v, d, dd
     raise ValueError("deriv must be 0, 1 or 2.")
@@ -490,7 +499,7 @@ def _opbend_transform(rs, fn_low, deriv):
     if deriv == 0:
         return v,
     d = np.zeros((4, 3), float)
-    d[0] = -result[1][:3]-result[1][3:6]-result[1][6:]
+    d[0] = -result[1][:3] - result[1][3:6] - result[1][6:]
     d[1] = result[1][:3]
     d[2] = result[1][3:6]
     d[3] = result[1][6:]
@@ -507,25 +516,25 @@ def _opbend_transform(rs, fn_low, deriv):
     cb = result[2][6:, 3:6]
     cc = result[2][6:, 6:]
 
-    dd[0, :, 0, :] =   aa + ab + ac + ba + bb + bc + ca + cb + cc
+    dd[0, :, 0, :] = aa + ab + ac + ba + bb + bc + ca + cb + cc
     dd[0, :, 1, :] = - aa - ba - ca
     dd[0, :, 2, :] = - ab - bb - cb
     dd[0, :, 3, :] = - ac - bc - cc
 
     dd[1, :, 0, :] = - aa - ab - ac
-    dd[1, :, 1, :] =   aa
-    dd[1, :, 2, :] =   ab
-    dd[1, :, 3, :] =   ac
+    dd[1, :, 1, :] = aa
+    dd[1, :, 2, :] = ab
+    dd[1, :, 3, :] = ac
 
     dd[2, :, 0, :] = - ba - bb - bc
-    dd[2, :, 1, :] =   ba
-    dd[2, :, 2, :] =   bb
-    dd[2, :, 3, :] =   bc
+    dd[2, :, 1, :] = ba
+    dd[2, :, 2, :] = bb
+    dd[2, :, 3, :] = bc
 
     dd[3, :, 0, :] = - ca - cb - cc
-    dd[3, :, 1, :] =   ca
-    dd[3, :, 2, :] =   cb
-    dd[3, :, 3, :] =   cc
+    dd[3, :, 1, :] = ca
+    dd[3, :, 2, :] = cb
+    dd[3, :, 3, :] = cc
     if deriv == 2:
         return v, d, dd
     raise ValueError("deriv must be 0, 1 or 2.")
@@ -535,46 +544,48 @@ def _opbend_transform_mean(rs, fn_low, deriv=0):
     """Compute the mean of the 3 opbends
     """
     v = 0.0
-    d = np.zeros((4,3), float)
-    dd = np.zeros((4,3,4,3), float)
-    #loop over the 3 cyclic permutations
-    for p in np.array([[0,1,2], [2,0,1], [1,2,0]]):
-        opbend = _opbend_transform([rs[p[0]], rs[p[1]], rs[p[2]], rs[3]], fn_low, deriv)
-        v += opbend[0]/3
-        index0 = np.where(p==0)[0][0] #index0 is the index of the 0th atom (rs[0])
-        index1 = np.where(p==1)[0][0]
-        index2 = np.where(p==2)[0][0]
+    d = np.zeros((4, 3), float)
+    dd = np.zeros((4, 3, 4, 3), float)
+    # loop over the 3 cyclic permutations
+    for p in np.array([[0, 1, 2], [2, 0, 1], [1, 2, 0]]):
+        opbend = _opbend_transform(
+            [rs[p[0]], rs[p[1]], rs[p[2]], rs[3]], fn_low, deriv)
+        v += opbend[0] / 3
+        # index0 is the index of the 0th atom (rs[0])
+        index0 = np.where(p == 0)[0][0]
+        index1 = np.where(p == 1)[0][0]
+        index2 = np.where(p == 2)[0][0]
         index3 = 3
-        if deriv>0:
-            d[0] += opbend[1][index0]/3
-            d[1] += opbend[1][index1]/3
-            d[2] += opbend[1][index2]/3
-            d[3] += opbend[1][index3]/3
-        if deriv>1:
-            dd[0, :, 0, :] += opbend[2][index0, :, index0, :]/3
-            dd[0, :, 1, :] += opbend[2][index0, :, index1, :]/3
-            dd[0, :, 2, :] += opbend[2][index0, :, index2, :]/3
-            dd[0, :, 3, :] += opbend[2][index0, :, index3, :]/3
+        if deriv > 0:
+            d[0] += opbend[1][index0] / 3
+            d[1] += opbend[1][index1] / 3
+            d[2] += opbend[1][index2] / 3
+            d[3] += opbend[1][index3] / 3
+        if deriv > 1:
+            dd[0, :, 0, :] += opbend[2][index0, :, index0, :] / 3
+            dd[0, :, 1, :] += opbend[2][index0, :, index1, :] / 3
+            dd[0, :, 2, :] += opbend[2][index0, :, index2, :] / 3
+            dd[0, :, 3, :] += opbend[2][index0, :, index3, :] / 3
 
-            dd[1, :, 0, :] += opbend[2][index1, :, index0, :]/3
-            dd[1, :, 1, :] += opbend[2][index1, :, index1, :]/3
-            dd[1, :, 2, :] += opbend[2][index1, :, index2, :]/3
-            dd[1, :, 3, :] += opbend[2][index1, :, index3, :]/3
+            dd[1, :, 0, :] += opbend[2][index1, :, index0, :] / 3
+            dd[1, :, 1, :] += opbend[2][index1, :, index1, :] / 3
+            dd[1, :, 2, :] += opbend[2][index1, :, index2, :] / 3
+            dd[1, :, 3, :] += opbend[2][index1, :, index3, :] / 3
 
-            dd[2, :, 0, :] += opbend[2][index2, :, index0, :]/3
-            dd[2, :, 1, :] += opbend[2][index2, :, index1, :]/3
-            dd[2, :, 2, :] += opbend[2][index2, :, index2, :]/3
-            dd[2, :, 3, :] += opbend[2][index2, :, index3, :]/3
+            dd[2, :, 0, :] += opbend[2][index2, :, index0, :] / 3
+            dd[2, :, 1, :] += opbend[2][index2, :, index1, :] / 3
+            dd[2, :, 2, :] += opbend[2][index2, :, index2, :] / 3
+            dd[2, :, 3, :] += opbend[2][index2, :, index3, :] / 3
 
-            dd[3, :, 0, :] += opbend[2][index3, :, index0, :]/3
-            dd[3, :, 1, :] += opbend[2][index3, :, index1, :]/3
-            dd[3, :, 2, :] += opbend[2][index3, :, index2, :]/3
-            dd[3, :, 3, :] += opbend[2][index3, :, index3, :]/3
-    if deriv==0:
+            dd[3, :, 0, :] += opbend[2][index3, :, index0, :] / 3
+            dd[3, :, 1, :] += opbend[2][index3, :, index1, :] / 3
+            dd[3, :, 2, :] += opbend[2][index3, :, index2, :] / 3
+            dd[3, :, 3, :] += opbend[2][index3, :, index3, :] / 3
+    if deriv == 0:
         return v,
-    elif deriv==1:
+    elif deriv == 1:
         return v, d
-    elif deriv==2:
+    elif deriv == 2:
         return v, d, dd
     else:
         raise ValueError("deriv must be 0, 1 or 2.")
@@ -605,6 +616,28 @@ def _bend_angle_low(a, b, deriv):
     """Similar to bend_angle, but with relative vectors"""
     result = _bend_cos_low(a, b, deriv)
     return _cos_to_angle(result, deriv)
+
+
+def _dihed_new_dot(a, b, c, deriv):  # self defined function by Derrick Yang
+    """Similar to new_dihed_cos, but with relative vectors"""
+    a = Vector3(9, deriv, a, (0, 1, 2))
+    b = Vector3(9, deriv, b, (3, 4, 5))
+    c = Vector3(9, deriv, c, (6, 7, 8))
+    a /= a.norm()
+    c /= c.norm()
+    return dot(a, c).results()
+
+
+def _dihed_new_cross(a, b, c, deriv):  # self defined function by Derrick Yang
+    """Similar to new_dihed_cross, but with relative vectors"""
+    a = Vector3(9, deriv, a, (0, 1, 2))
+    b = Vector3(9, deriv, b, (3, 4, 5))
+    c = Vector3(9, deriv, c, (6, 7, 8))
+    a /= a.norm()
+    b /= b.norm()
+    c /= c.norm()
+    tmp = cross(a, c)
+    return dot(b, tmp).results()
 
 
 def _dihed_cos_low(a, b, c, deriv):
@@ -643,13 +676,13 @@ def _dihed_angle_low(av, bv, cv, deriv):
     if abs(result[0]) < 0.5:
         # if the cosine is far away for -1 or +1, it is safe to take the arccos
         # and fix the sign of the angle.
-        sign = 1-(np.linalg.det([av, bv, cv]) > 0)*2
+        sign = 1 - (np.linalg.det([av, bv, cv]) > 0) * 2
         return _cos_to_angle(result, deriv, sign)
     else:
         # if the cosine is close to -1 or +1, it is better to compute the sine,
         # take the arcsin and fix the sign of the angle
         d = cross(b, a)
-        side = (result[0] > 0)*2-1 # +1 means angle in range [-pi/2,pi/2]
+        side = (result[0] > 0) * 2 - 1  # +1 means angle in range [-pi/2,pi/2]
         result = dot(d, c).results()
         return _sin_to_angle(result, deriv, side)
 
@@ -659,7 +692,7 @@ def _opdist_low(av, bv, cv, deriv):
     a = Vector3(9, deriv, av, (0, 1, 2))
     b = Vector3(9, deriv, bv, (3, 4, 5))
     c = Vector3(9, deriv, cv, (6, 7, 8))
-    n  = cross(a, b)
+    n = cross(a, b)
     n /= n.norm()
     dist = dot(c, n)
     return dist.results()
@@ -670,19 +703,19 @@ def _opbend_cos_low(a, b, c, deriv):
     a = Vector3(9, deriv, a, (0, 1, 2))
     b = Vector3(9, deriv, b, (3, 4, 5))
     c = Vector3(9, deriv, c, (6, 7, 8))
-    n  = cross(a,b)
+    n = cross(a, b)
     n /= n.norm()
     c /= c.norm()
-    temp = dot(n,c)
+    temp = dot(n, c)
     result = temp.copy()
-    result.v = np.sqrt(1.0-temp.v**2)
+    result.v = np.sqrt(1.0 - temp.v**2)
     if result.deriv > 0:
         result.d *= -temp.v
         result.d /= result.v
     if result.deriv > 1:
         result.dd *= -temp.v
         result.dd /= result.v
-        temp2 = np.array([temp.d]).transpose()*temp.d
+        temp2 = np.array([temp.d]).transpose() * temp.d
         temp2 /= result.v**3
         result.dd -= temp2
     return result.results()
@@ -704,18 +737,18 @@ def _cos_to_angle(result, deriv, sign=1):
     """Convert a cosine and its derivatives to an angle and its derivatives"""
     v = np.arccos(np.clip(result[0], -1, 1))
     if deriv == 0:
-        return v*sign,
+        return v * sign,
     if abs(result[0]) >= 1:
         factor1 = 0
     else:
-        factor1 = -1.0/np.sqrt(1-result[0]**2)
-    d = factor1*result[1]
+        factor1 = -1.0 / np.sqrt(1 - result[0]**2)
+    d = factor1 * result[1]
     if deriv == 1:
-        return v*sign, d*sign
-    factor2 = result[0]*factor1**3
-    dd = factor2*np.outer(result[1], result[1]) + factor1*result[2]
+        return v * sign, d * sign
+    factor2 = result[0] * factor1**3
+    dd = factor2 * np.outer(result[1], result[1]) + factor1 * result[2]
     if deriv == 2:
-        return v*sign, d*sign, dd*sign
+        return v * sign, d * sign, dd * sign
     raise ValueError("deriv must be 0, 1 or 2.")
 
 
@@ -731,16 +764,16 @@ def _sin_to_angle(result, deriv, side=1):
     else:
         offset = 0.0
     if deriv == 0:
-        return v*sign + offset,
+        return v * sign + offset,
     if abs(result[0]) >= 1:
         factor1 = 0
     else:
-        factor1 = 1.0/np.sqrt(1-result[0]**2)
-    d = factor1*result[1]
+        factor1 = 1.0 / np.sqrt(1 - result[0]**2)
+    d = factor1 * result[1]
     if deriv == 1:
-        return v*sign + offset, d*sign
-    factor2 = result[0]*factor1**3
-    dd = factor2*np.outer(result[1], result[1]) + factor1*result[2]
+        return v * sign + offset, d * sign
+    factor2 = result[0] * factor1**3
+    dd = factor2 * np.outer(result[1], result[1]) + factor1 * result[2]
     if deriv == 2:
-        return v*sign + offset, d*sign, dd*sign
+        return v * sign + offset, d * sign, dd * sign
     raise ValueError("deriv must be 0, 1 or 2.")

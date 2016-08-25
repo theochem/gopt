@@ -33,8 +33,10 @@ class Points(object):
     def set_hessian():
         pass
 
+    @abstractmethod
     def set_trust_radius():
         pass
+
 
 class TrustRadius(object):
 

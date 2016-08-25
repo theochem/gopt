@@ -55,7 +55,7 @@ class Cartesian(object):
     def coordinates(self):
         return self._coordinates
 
-    def energy_calculation(self, **kwargs`):
+    def energy_calculation(self, **kwargs):
         title = kwargs.pop('title', 'untitled')
         method = kwargs.pop('method', 'g09')
         if method == "g09":
