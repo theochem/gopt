@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function
 import numpy as np
-from errors import NotSetError
-from gaussianwrapper import GaussianWrapper
+from .errors import NotSetError
+from .gaussianwrapper import GaussianWrapper
 
 
 class Cartesian(object):
@@ -55,7 +55,7 @@ class Cartesian(object):
     def coordinates(self):
         return self._coordinates
 
-    def energy_calculation(self, **kwargs):
+    def energy_calculation(self, **kwargs):  # need test
         title = kwargs.pop('title', 'untitled')
         method = kwargs.pop('method', 'g09')
         if method == "g09":
@@ -81,7 +81,7 @@ class Cartesian(object):
         diff_1 = coord2 - coord1
         diff_2 = coord2 - coord3
         cos_angle = np.dot(diff_1, diff_2) / \
-            (np.linalg.norm(diff1) * np.linalg.norm(diff2))
+            (np.linalg.norm(diff_1) * np.linalg.norm(diff_2))
         return cos_angle
 
 # a = Cartesian(1,1)

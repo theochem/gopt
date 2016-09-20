@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 import numpy as np
-from abclass import CoordinateTypes
-from errors import AtomsNumberError
+from .abclass import CoordinateTypes
+from .errors import AtomsNumberError
 
 class Bond_Length(CoordinateTypes):
 
@@ -9,10 +9,7 @@ class Bond_Length(CoordinateTypes):
         self._value = value
         if len(atoms) != 2:
             raise AtomsNumberError, "The number of atoms for this coordinate should be 2"
-        c_atoms = list(atoms)
-        if c_atoms[0] > c_atoms[1]:
-            c_atoms[0], c_atoms[1] = c_atoms[1], c_atoms[0]
-        self._atoms = tuple(c_atoms)
+        self._atoms = atoms
 
     @property
     def value(self):
