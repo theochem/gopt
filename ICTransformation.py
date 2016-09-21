@@ -744,9 +744,14 @@ if __name__ == '__main__':
     print("pse", mol.pseudo_numbers)
     h2a = ICTransformation(mol)
     h2a.add_bond_length(0, 1)
+    print "\n \n \n"
+    print h2a.h_matrix
     h2a.add_bond_length(1, 2)
-    h2a.add_bond_length(2, 1)
-    h2a.add_bend_angle(0, 1, 2)
+    # h2a.add_bond_length(2, 1)
+    # h2a.add_bend_angle(0, 1, 2)
+    print h2a.b_matrix
+    print "\n \n \n"
+    print h2a.h_matrix
     print(h2a.angle_calculate(0, 1, 2))
     print(h2a.ic_info)
     print(h2a.ic)
