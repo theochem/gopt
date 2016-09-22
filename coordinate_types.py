@@ -1,15 +1,18 @@
 from __future__ import print_function, absolute_import
 import numpy as np
-from .abclass import CoordinateTypes
-from .errors import AtomsNumberError
+from saddle.abclass import CoordinateTypes
+from saddle.errors import AtomsNumberError
 
-class Bond_Length(CoordinateTypes):
+class BondLength(CoordinateTypes):
 
     def __init__(self, value, atoms):
         self._value = value
         if len(atoms) != 2:
             raise AtomsNumberError, "The number of atoms for this coordinate should be 2"
-        self._atoms = atoms
+        c_atoms = list(atoms)
+        if c_atoms[0] > c_atoms[1]:
+            c_atoms[0], c_atoms[1] = c_atoms[1], c_atoms[0]
+        self._atoms = tuple(c_atoms)
 
     @property
     def value(self):
@@ -23,7 +26,7 @@ class Bond_Length(CoordinateTypes):
     def info(self):
         pass
 
-class Bend_Angle(CoordinateTypes):
+class BendAngle(CoordinateTypes):
     def __init__(self, value, atoms):
         self._value = value
         if len(atoms) != 3:
@@ -45,7 +48,7 @@ class Bend_Angle(CoordinateTypes):
     def info(self):
         pass
 
-class Convention_Dihedral(CoordinateTypes):
+class ConventionDihedral(CoordinateTypes):
     def __init__(self, value, atoms):
         self._value = value
         if len(atoms) != 4:
@@ -69,7 +72,7 @@ class Convention_Dihedral(CoordinateTypes):
     def info(self):
         pass
 
-class New_Convention_Dot(CoordinateTypes):
+class NewConventionDot(CoordinateTypes):
     def __init__(self, value, atoms):
         self._value = value
         if len(atoms) != 4:
@@ -93,7 +96,7 @@ class New_Convention_Dot(CoordinateTypes):
     def info(self):
         pass
 
-class New_Convention_Cross(CoordinateTypes):
+class NewConventionCross(CoordinateTypes):
     def __init__(self, value, atoms):
         self._value = value
         if len(atoms) != 4:

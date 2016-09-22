@@ -1,8 +1,8 @@
 from __future__ import print_function, absolute_import
 from saddle.cartesian import Cartesian
 from saddle.errors import NotSetError, AtomsNumberError
-from saddle.molmod import bond_length
-from saddle.coordinate_types import Bond_Length
+from saddle.molmod import bond_length, bend_cos, dihed_cos
+from saddle.coordinate_types import BondLength, BendAngle, ConventionDihedral
 import numpy as np
 
 
@@ -21,28 +21,49 @@ class Internal(Cartesian):
         atoms = (atom1, atom2)
         # reorder the sequence of atoms indice
         atoms = self._atoms_sequence_reorder(atoms)
-        rs = np.vstack(
-            (self.coordinates[atoms[0]], self.coordinates[atoms[1]]))
+        rs = self.coordinates[np.array(atoms)]
         # gradient and hessian need to be set
         v, d, dd = bond_length(rs, deriv=2)
-        new_ic_obj = Bond_Length(v, atoms)
+        new_ic_obj = BondLength(v, atoms)
         if self._repeat_check(new_ic_obj):  # repeat internal coordinates check
-            self._ic.append(new_ic_obj)
-            self._add_cc_to_ic_gradient(d, atoms) # update gradient
-            self._add_cc_to_ic_hessian(dd, atoms) # update hessian
+            self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
+            # after adding a bond, change the connectivity of atoms pair to 1
             self._add_connectivity(atoms)
 
-    def add_angle(self, atom1, atom2, atom3):
+    def add_angle_cos(self, atom1, atom2, atom3):  # tested
+        atoms = (atom1, atom2, atom3)
+        atoms = self._atoms_sequence_reorder(atoms)
+        rs = self.coordinates[np.array(atoms)]
+        v, d, dd = bend_cos(rs, deriv=2)
+        new_ic_obj = BendAngle(v, atoms)
+        # check if the angle is formed by two connected bonds
+        if self._check_connectivity(atom1, atom2) and self._check_connectivity(atom2, atom3):
+            if self._repeat_check(new_ic_obj):
+                self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
+
+    def add_dihedral(self, atom1, atom2, atom3, atom4): # need to be tested
+        atoms = (atom1, atmo2, atom3, atom4)
+        atoms = self._atoms_sequence_reorder(atoms)
+        rs = self.coordinates[np.array(atoms)]
+        v, d, dd = dihed(rs, deriv=2)
+        new_ic_obj = ConventionDihedral(v, atoms)
+        if self._check_connectivity(atom2, atom3) and (self._check_connectivity(atom1, atom2) or self._check_connectivity(atom1, atom3)) and (self._check_connectivity(atom4, atom3) or self._check_connectivity(atom4, atom2)):
+            if self._repeat_check(new_ic_obj):
+                self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
+
+    def set_target_ic(self, new_ic):
+        if len(new_ic) != len(self.ic):
+            raise AtomsNumberError, "The ic is not in the same shape"
+        self._target_ic = new_ic
+
+    def converge_to_target_ic(self): # to be set
         pass
 
-    def add_dihedral(self, atom1, atom2, atom3):
-        pass
-
-    def set_targe_ic(self, new_ic):
-        self._target_ic=new_ic
-
-    def converge_to_target_ic(self):
-        pass
+    def _check_connectivity(self, atom1, atom2):
+        if self.connectivity[atom1, atom2] == 1:
+            return True
+        elif self.connectivity[atom1, atom2] == 0:
+            return False
 
     def _repeat_check(self, ic_obj):
         for ic in self.ic:
@@ -50,6 +71,11 @@ class Internal(Cartesian):
                 return False
         else:
             return True
+
+    def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):
+        self._ic.append(new_ic)
+        self._add_cc_to_ic_gradient(d, atoms)  # add gradient
+        self._add_cc_to_ic_hessian(dd, atoms)  # add hessian
 
     def _add_connectivity(self, atoms):
         if len(atoms) != 2:
@@ -59,41 +85,43 @@ class Internal(Cartesian):
         self._connectivity[num2, num1] = 1
 
     def _atoms_sequence_reorder(self, atoms):
-        atoms=list(atoms)
+        atoms = list(atoms)
         if len(atoms) == 2:
             if atoms[0] > atoms[1]:
-                atoms[0], atoms[1]=atoms[1], atoms[0]
+                atoms[0], atoms[1] = atoms[1], atoms[0]
         elif len(atoms) == 3:
             if atoms[0] > atoms[2]:
-                atoms[0], atoms[2]=atoms[2], atoms[0]
+                atoms[0], atoms[2] = atoms[2], atoms[0]
         elif len(atoms) == 4:
             if atoms[0] > atoms[3]:
-                atoms[0], atoms[3]=atoms[3], atoms[0]
+                atoms[0], atoms[3] = atoms[3], atoms[0]
             if atoms[1] > atoms[2]:
-                atoms[1], atoms[2]=atoms[2], atoms[1]
+                atoms[1], atoms[2] = atoms[2], atoms[1]
         else:
             raise AtomsNumberError, "The number of atoms is not correct"
         return tuple(atoms)
 
     def _add_cc_to_ic_gradient(self, deriv, atoms):  # need to be tested
         if self._cc_to_ic_gradient is None:
-            self._cc_to_ic_gradient=np.zeros((0, 3 * len(self.numbers)))
+            self._cc_to_ic_gradient = np.zeros((0, 3 * len(self.numbers)))
         tmp_vector = np.zeros((1, 3 * len(self.numbers)))
         for i in range(len(atoms)):
             tmp_vector[0, 3 * atoms[i]: 3 * atoms[i] + 3] += deriv[i]
-        self._cc_to_ic_gradient=np.vstack(
+        self._cc_to_ic_gradient = np.vstack(
             (self._cc_to_ic_gradient, tmp_vector))
 
     def _add_cc_to_ic_hessian(self, deriv, atoms):  # need to be tested
         if self._cc_to_ic_hessian is None:
-            self._cc_to_ic_hessian=np.zeros(
+            self._cc_to_ic_hessian = np.zeros(
                 (0, 3 * len(self.numbers), 3 * len(self.numbers)))
-        tmp_vector=np.zeros((1, 3 * len(self.numbers), 3 * len(self.numbers)))
+        tmp_vector = np.zeros(
+            (1, 3 * len(self.numbers), 3 * len(self.numbers)))
         for i in range(len(atoms)):
             for j in range(len(atoms)):
-                tmp_vector[0, 3 * atoms[i]: 3 * atoms[i] + 3, 3 * \
-                    atoms[j]: 3 * atoms[j] + 3] += deriv[i, :3, j]
-        self._cc_to_ic_hessian=np.vstack((self._cc_to_ic_hessian, tmp_vector))
+                tmp_vector[0, 3 * atoms[i]: 3 * atoms[i] + 3, 3 *
+                           atoms[j]: 3 * atoms[j] + 3] += deriv[i, :3, j]
+        self._cc_to_ic_hessian = np.vstack(
+            (self._cc_to_ic_hessian, tmp_vector))
 
     @property
     def ic(self):
