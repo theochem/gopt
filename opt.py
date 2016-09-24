@@ -8,6 +8,9 @@ class GeoOptimizer(object):
     def __init__(self):
         self.points = []
 
+    def __getitem__(self, index):
+        return self.points[index]
+
     def converge(self, index):
         point = self.points[index]
         if max(point.gradient) <= 3e-4:

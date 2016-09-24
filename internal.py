@@ -3,6 +3,7 @@ from saddle.cartesian import Cartesian
 from saddle.errors import NotSetError, AtomsNumberError
 from saddle.molmod import bond_length, bend_cos, dihed_cos
 from saddle.coordinate_types import BondLength, BendAngle, ConventionDihedral
+from saddle.cost_functions import direct_square
 import numpy as np
 
 
@@ -17,7 +18,7 @@ class Internal(Cartesian):
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
 
-    def add_bond(self, atom1, atom2):
+    def add_bond(self, atom1, atom2):  # tested
         atoms = (atom1, atom2)
         # reorder the sequence of atoms indice
         atoms = self._atoms_sequence_reorder(atoms)
@@ -41,11 +42,11 @@ class Internal(Cartesian):
             if self._repeat_check(new_ic_obj):
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
 
-    def add_dihedral(self, atom1, atom2, atom3, atom4): # need to be tested
-        atoms = (atom1, atmo2, atom3, atom4)
+    def add_dihedral(self, atom1, atom2, atom3, atom4):  # tested
+        atoms = (atom1, atom2, atom3, atom4)
         atoms = self._atoms_sequence_reorder(atoms)
         rs = self.coordinates[np.array(atoms)]
-        v, d, dd = dihed(rs, deriv=2)
+        v, d, dd = dihed_cos(rs, deriv=2)
         new_ic_obj = ConventionDihedral(v, atoms)
         if self._check_connectivity(atom2, atom3) and (self._check_connectivity(atom1, atom2) or self._check_connectivity(atom1, atom3)) and (self._check_connectivity(atom4, atom3) or self._check_connectivity(atom4, atom2)):
             if self._repeat_check(new_ic_obj):
@@ -54,10 +55,41 @@ class Internal(Cartesian):
     def set_target_ic(self, new_ic):
         if len(new_ic) != len(self.ic):
             raise AtomsNumberError, "The ic is not in the same shape"
-        self._target_ic = new_ic
+        self._target_ic = np.array(new_ic)
 
-    def converge_to_target_ic(self): # to be set
+    def converge_to_target_ic(self):  # to be set
         pass
+
+    @property
+    def cost_value(self):
+        v, d, dd = self._calculate_cost_value()
+        return v, d, dd
+        # x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
+        # return v, x_d, x_dd
+
+    def _calculate_cost_value(self):
+        if self.target_ic is None:
+            raise NotSetError, "The value of target_ic is not set"
+        # initialize function value, gradient and hessian
+        value = 0
+        deriv = np.zeros(len(self.ic))
+        deriv2 = np.zeros((len(self.ic), len(self.ic)), float)
+        for i in range(len(self.ic)):
+            if self.ic[i].__class__.__name__ in ("BondLength", "BendAngle",):
+                v, d, dd = direct_square(self.ic_values[i], self.target_ic[i])
+                value += v
+                deriv[i] += d
+                deriv2[i, i] += dd
+        return value, deriv, deriv2
+
+    def _ic_gradient_hessian_transform_to_cc(self, gradient, hessian):
+        cartesian_gradient = np.dot(gradient, self._cc_to_ic_gradient)
+        cartesian_hessian_part_1 = np.dot(
+            np.dot(self._cc_to_ic_gradient.T, hessian), self._cc_to_ic_gradient)
+        cartesian_hessian_part_2 = np.tensordot(
+            gradient, self._cc_to_ic_hessian, 1)
+        cartesian_hessian = cartesian_hessian_part_1 + cartesian_hessian_part_2
+        return cartesian_gradient, cartesian_hessian
 
     def _check_connectivity(self, atom1, atom2):
         if self.connectivity[atom1, atom2] == 1:
