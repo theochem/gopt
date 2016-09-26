@@ -2,11 +2,13 @@ from __future__ import print_function, absolute_import
 import numpy as np
 from saddle.abclass import CoordinateTypes
 from saddle.errors import AtomsNumberError
+# from saddle.molmod import bond_length, bend_cos, dihed_cos
 
 class BondLength(CoordinateTypes):
 
     def __init__(self, value, atoms):
         self._value = value
+        # self._coordinates = coordinates
         if len(atoms) != 2:
             raise AtomsNumberError, "The number of atoms for this coordinate should be 2"
         c_atoms = list(atoms)
@@ -25,6 +27,25 @@ class BondLength(CoordinateTypes):
     @property
     def info(self):
         pass
+
+# class BondLengthNew(CoordinateTypes):
+#
+#     def __init__(self, atoms, coordinates):
+#         self.coordinates = coordinates
+#
+#     @property
+#     def value(self):
+#         return self._
+#
+#     @property
+#     def atoms(self):
+#         return self._atoms
+#
+#     @property
+#     def info(self):
+#         pass
+
+
 
 class BendAngle(CoordinateTypes):
     def __init__(self, value, atoms):

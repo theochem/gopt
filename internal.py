@@ -4,6 +4,7 @@ from saddle.errors import NotSetError, AtomsNumberError
 from saddle.molmod import bond_length, bend_cos, dihed_cos
 from saddle.coordinate_types import BondLength, BendAngle, ConventionDihedral
 from saddle.cost_functions import direct_square
+from saddle.opt import GeoOptimizer
 import numpy as np
 
 
@@ -58,7 +59,13 @@ class Internal(Cartesian):
         self._target_ic = np.array(new_ic)
 
     def converge_to_target_ic(self):  # to be set
+        point_0 = self._create_a_point_structure()
+        optimizer = GeoOptimizer()
+        optimizer.add_new(point_0)
+
+    def _optimization_process(self, iteration=100):
         pass
+
 
     @property
     def cost_value(self):
@@ -66,6 +73,13 @@ class Internal(Cartesian):
         return v, d, dd
         # x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
         # return v, x_d, x_dd
+
+    @property
+    def cost_value_in_cc(self):
+        v, d, dd = self.cost_value
+        x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
+        return v, x_d, x_dd
+
 
     def _calculate_cost_value(self):
         if self.target_ic is None:

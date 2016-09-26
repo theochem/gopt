@@ -2,13 +2,14 @@ from __future__ import absolute_import, print_function
 import numpy as np
 from .errors import NotSetError
 from .gaussianwrapper import GaussianWrapper
+from copy import deepcopy
 
 
 class Cartesian(object):
 
     def __init__(self, coordinates, numbers, charge, spin):
-        self._coordinates = coordinates
-        self._numbers = numbers
+        self._coordinates = deepcopy(coordinates)
+        self._numbers = deepcopy(numbers)
         self._charge = charge
         self._spin = spin
         self._energy = None

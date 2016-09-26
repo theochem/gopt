@@ -161,3 +161,10 @@ class TestInternal(object):
                                 [0., 0., 2.,]])
         assert np.allclose(dd, ref_hessian)
         # assert False
+        new_v, xd, xdd = mol.cost_value_in_cc
+        assert new_v == v
+        assert np.allclose(xd, np.dot(mol._cc_to_ic_gradient.T, d))
+        ref_x_hessian = np.dot(np.dot(mol._cc_to_ic_gradient.T, dd), mol._cc_to_ic_gradient)
+        K = np.tensordot(d, mol._cc_to_ic_hessian, 1)
+        ref_x_hessian += K
+        assert np.allclose(xdd, ref_x_hessian)
