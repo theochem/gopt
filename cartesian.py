@@ -40,6 +40,14 @@ class Cartesian(object):
         else:
             return self._energy
 
+    def set_new_coordinates(self, new_coor):
+        if self._coordinates.shape != new_coor.shape:
+            raise AtomsNumberError, "the dimentsion of coordinates are not the same"
+        self._coordinates = new_coor
+        self._energy = None
+        self._energy_gradient = None
+        self._energy_hessian = None
+
     @property
     def numbers(self):
         return self._numbers

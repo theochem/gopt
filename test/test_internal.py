@@ -168,3 +168,9 @@ class TestInternal(object):
         K = np.tensordot(d, mol._cc_to_ic_hessian, 1)
         ref_x_hessian += K
         assert np.allclose(xdd, ref_x_hessian)
+        new_coor = np.array([
+            [ 1.40, -0.93019123, -0.        ],
+            [-0.        ,  0.11720081, -0.        ],
+            [-1.40, -0.93019123, -0.        ]])
+        mol.set_new_coordinates(new_coor)
+        assert np.allclose(mol.ic_values, [1.7484364736491811, 1.7484364736491811, -0.28229028459335431])

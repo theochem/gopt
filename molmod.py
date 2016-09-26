@@ -308,6 +308,12 @@ def bend_angle(rs, deriv=0):
     """
     return _bend_transform(rs, _bend_angle_low, deriv)
 
+def dihed_new_dot(rs, deriv=0):
+    return _dihed_transform(rs, _dihed_new_dot, deriv)
+
+def dihed_new_cross(rs, deriv=0):
+    return _dihed_transform(rs, _dihed_new_cross, deriv)
+
 
 def dihed_cos(rs, deriv=0):
     """Compute the cosine of the angle between the planes rs[0], rs[1], rs[2] and rs[1], rs[2], rs[3]

@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import
 from saddle.cartesian import Cartesian
 from saddle.errors import NotSetError, AtomsNumberError
-from saddle.molmod import bond_length, bend_cos, dihed_cos
 from saddle.coordinate_types import BondLength, BendAngle, ConventionDihedral
 from saddle.cost_functions import direct_square
 from saddle.opt import GeoOptimizer
@@ -24,9 +23,9 @@ class Internal(Cartesian):
         # reorder the sequence of atoms indice
         atoms = self._atoms_sequence_reorder(atoms)
         rs = self.coordinates[np.array(atoms)]
+        new_ic_obj = BondLength(atoms, rs)
+        d, dd = new_ic_obj.get_gradient_hessian()
         # gradient and hessian need to be set
-        v, d, dd = bond_length(rs, deriv=2)
-        new_ic_obj = BondLength(v, atoms)
         if self._repeat_check(new_ic_obj):  # repeat internal coordinates check
             self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
             # after adding a bond, change the connectivity of atoms pair to 1
@@ -36,8 +35,8 @@ class Internal(Cartesian):
         atoms = (atom1, atom2, atom3)
         atoms = self._atoms_sequence_reorder(atoms)
         rs = self.coordinates[np.array(atoms)]
-        v, d, dd = bend_cos(rs, deriv=2)
-        new_ic_obj = BendAngle(v, atoms)
+        new_ic_obj = BendAngle(atoms, rs)
+        d, dd = new_ic_obj.get_gradient_hessian()
         # check if the angle is formed by two connected bonds
         if self._check_connectivity(atom1, atom2) and self._check_connectivity(atom2, atom3):
             if self._repeat_check(new_ic_obj):
@@ -47,8 +46,8 @@ class Internal(Cartesian):
         atoms = (atom1, atom2, atom3, atom4)
         atoms = self._atoms_sequence_reorder(atoms)
         rs = self.coordinates[np.array(atoms)]
-        v, d, dd = dihed_cos(rs, deriv=2)
-        new_ic_obj = ConventionDihedral(v, atoms)
+        new_ic_obj = ConventionDihedral(atoms, rs)
+        d, dd = new_ic_obj.get_gradient_hessian()
         if self._check_connectivity(atom2, atom3) and (self._check_connectivity(atom1, atom2) or self._check_connectivity(atom1, atom3)) and (self._check_connectivity(atom4, atom3) or self._check_connectivity(atom4, atom2)):
             if self._repeat_check(new_ic_obj):
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
@@ -58,10 +57,20 @@ class Internal(Cartesian):
             raise AtomsNumberError, "The ic is not in the same shape"
         self._target_ic = np.array(new_ic)
 
+    def set_new_coordinates(self, new_coor): # to be tested
+        super(Internal, self).set_new_coordinates(new_coor)
+        for i in self.ic:
+            rs = self.coordinates[np.array(i.atoms)]
+            i.set_new_coordinates(rs)
+            d, dd = i.get_gradient_hessian()
+            self._add_cc_to_ic_gradient(d, i.atoms)  # add gradient
+            self._add_cc_to_ic_hessian(dd, i.atoms)  # add hessian
+
     def converge_to_target_ic(self):  # to be set
-        point_0 = self._create_a_point_structure()
-        optimizer = GeoOptimizer()
-        optimizer.add_new(point_0)
+        # point_0 = self._create_a_point_structure()
+        # optimizer = GeoOptimizer()
+        # optimizer.add_new(point_0)
+        pass
 
     def _optimization_process(self, iteration=100):
         pass
