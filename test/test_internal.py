@@ -153,7 +153,7 @@ class TestInternal(object):
         assert np.allclose(mol.ic_values, [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
         mol.set_target_ic([1.7, 1.7, -0.4])
         assert np.allclose(mol.target_ic, [1.7, 1.7, -0.4])
-        v, d, dd = mol.cost_value
+        v, d, dd = mol._cost_value()
         assert np.allclose(0.030498966617378116, v)
         ref_gradient = np.array([0.22827448441597653, 0.22827448441597653, 0.13333186415389475])
         assert np.allclose(d, ref_gradient)

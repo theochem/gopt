@@ -4,4 +4,6 @@
 *.chk
 *.fchk
 *.com
+*.swp
+*.swo
 !single_hf_template.com

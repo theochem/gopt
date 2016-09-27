@@ -6,7 +6,38 @@ from copy import deepcopy
 
 
 class Cartesian(object):
+    """ Cartesian Coordinate
 
+    Properties
+    ----------
+    numbers : np.ndarray(K)
+        A list of atomic number for input coordinates
+    spin : int
+        Spin multiplicity of the molecule
+    charge : int
+        Charge of the input molecule
+    energy : float
+        Energy of given Cartesian coordinates system molecule
+    energy_gradient : np.ndarray(K)
+        Gradient of Energy that calculated through certain method
+    energy_hessian : np.ndarray(K, K)
+        Hessian of Energy that calculated through cartain method
+    coordinates : np.ndarray(K, 3)
+        Cartesian information of input molecule
+
+    Methods
+    -------
+    __init__(self, coordinates, numbers, charge, spin)
+        Initializes molecule
+    set_new_coordinates(new_coor)
+        Set molecule with a set of coordinates
+    energy_calculation(**kwargs)
+        Calculate system energy with different methods through software like gaussian
+    distance(index1, index2)
+        Calculate distance between two atoms with index1 and index2
+    angle(index1, index2, index3)
+        Calculate angle between atoms with index1, index2, and index3
+    """
     def __init__(self, coordinates, numbers, charge, spin):
         self._coordinates = deepcopy(coordinates)
         self._numbers = deepcopy(numbers)

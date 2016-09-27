@@ -10,7 +10,60 @@ import numpy as np
 
 
 class Internal(Cartesian):
+    """ Cartesian Coordinate
 
+    Properties
+    ----------
+    numbers : np.ndarray(K)
+        A list of atomic number for input coordinates
+    spin : int
+        Spin multiplicity of the molecule
+    charge : int
+        Charge of the input molecule
+    energy : float
+        Energy of given Cartesian coordinates system molecule
+    energy_gradient : np.ndarray(K)
+        Gradient of Energy that calculated through certain method
+    energy_hessian : np.ndarray(K, K)
+        Hessian of Energy that calculated through cartain method
+    coordinates : np.ndarray(K, 3)
+        Cartesian information of input molecule
+    cost_value_in_cc : tuple(float, np.ndarray(K), np.ndarray(K, K))
+        Return the cost function value, 1st, and 2nd derivative verse cartesian coordinates
+    ic : list[CoordinateTypes]
+        A list of CoordinateTypes instance to represent internal coordinates information
+    ic_values : list[float]
+        A list of internal coordinates values
+    target_ic : list[float]
+        A list of target internal coordinates
+    connectivity : np.ndarray(K, K)
+        A square matrix represents the connectivity of molecule internal coordinates
+
+    Methods
+    -------
+    __init__(self, coordinates, numbers, charge, spin)
+        Initializes molecule
+    set_new_coordinates(new_coor)
+        Set molecule with a set of coordinates
+    energy_calculation(**kwargs)
+        Calculate system energy with different methods through software like gaussian
+    distance(index1, index2)
+        Calculate distance between two atoms with index1 and index2
+    angle(index1, index2, index3)
+        Calculate angle between atoms with index1, index2, and index3
+    add_bond(atom1, atom2)
+        Add a bond between atom1 and atom2
+    add_angle_cos(atom1, atom2, atom3)
+        Add a cos of a angle consist of atom1, atom2, and atom3
+    add_dihedral(atom1, atom2, atom3, atom4)
+        Add a dihedral of plain consists of atom1, atom2, and atom3 and the other one consist of atom2, atom3, and atom4
+    set_target_ic(new_ic)
+        Set a target internal coordinates to transform into
+    converge_to_target_ic(iteration=100, copy=True)
+        Implement optimization process to transform geometry to target internal coordinates
+    print_connectivity()
+        print connectivity matrix information on the screen
+    """
     def __init__(self, coordinates, numbers, charge, spin):
         super(Internal, self).__init__(coordinates, numbers, charge, spin)
         self._ic = []  # type np.array([float 64])
@@ -93,8 +146,7 @@ class Internal(Cartesian):
         _, x_d, x_dd = self.cost_value_in_cc
         return Point(x_d, x_dd, len(self.numbers))
 
-    @property
-    def cost_value(self):
+    def _cost_value(self):
         v, d, dd = self._calculate_cost_value()
         return v, d, dd
         # x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
@@ -102,7 +154,7 @@ class Internal(Cartesian):
 
     @property
     def cost_value_in_cc(self):
-        v, d, dd = self.cost_value
+        v, d, dd = self._cost_value()
         x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
         return v, x_d, x_dd
 
