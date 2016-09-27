@@ -3,3 +3,6 @@ class NotSetError(Exception):
 
 class AtomsNumberError(Exception):
     pass
+
+class NotConvergeError(Exception):
+    pass

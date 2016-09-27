@@ -2,6 +2,13 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 from saddle.solver import ridders_solver
 
+class Point(object):
+
+    def __init__(self, gradient, hessian, ele_number):
+        self.gradient = gradient
+        self.hessian = hessian
+        self.trust_radius = np.sqrt(ele_number)
+        self.step = None
 
 class GeoOptimizer(object):
 

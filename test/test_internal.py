@@ -1,5 +1,6 @@
 import numpy as np
 from saddle.internal import Internal
+from saddle.opt import Point
 from copy import deepcopy
 import horton as ht
 
@@ -174,3 +175,31 @@ class TestInternal(object):
             [-1.40, -0.93019123, -0.        ]])
         mol.set_new_coordinates(new_coor)
         assert np.allclose(mol.ic_values, [1.7484364736491811, 1.7484364736491811, -0.28229028459335431])
+        assert np.allclose(mol._cc_to_ic_gradient[0, :6], np.array([ 0.80071539, -0.59904495,  0.  ,-0.80071539, 0.59904495, -0.]))
+        ref_hessian = np.array([
+            [ 0.20524329,  0.27433912,  0.        , -0.20524329, -0.27433912,
+            -0.        ],
+            [ 0.27433912,  0.36669628,  0.        , -0.27433912, -0.36669628,
+            -0.        ],
+            [ 0.        ,  0.        ,  0.57193957, -0.        , -0.        ,
+            -0.57193957],
+            [-0.20524329, -0.27433912, -0.        ,  0.20524329,  0.27433912,
+            0.        ],
+            [-0.27433912, -0.36669628, -0.        ,  0.27433912,  0.36669628,
+            0.        ],
+            [-0.        , -0.        , -0.57193957,  0.        ,  0.        ,
+            0.57193957]])
+        assert np.allclose(mol._cc_to_ic_hessian[0, :6, :6], ref_hessian)
+
+    def test_transform_function(self):
+        mol = deepcopy(self.internal)
+        mol.add_bond(0, 1)
+        mol.add_bond(1, 2)
+        mol.add_angle_cos(0, 1, 2)
+        mol.set_target_ic([1.7, 1.7, -0.4])
+        n_p = mol._create_geo_point()
+        assert isinstance(n_p, Point)
+        assert n_p.trust_radius == 1.7320508075688772
+        result = mol.converge_to_target_ic()
+        g_array = result.cost_value_in_cc[1]
+        assert len(g_array[abs(g_array) > 3e-6]) == 0

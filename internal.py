@@ -1,10 +1,12 @@
 from __future__ import print_function, absolute_import
 from saddle.cartesian import Cartesian
-from saddle.errors import NotSetError, AtomsNumberError
+from saddle.errors import NotSetError, AtomsNumberError, NotConvergeError
 from saddle.coordinate_types import BondLength, BendAngle, ConventionDihedral
 from saddle.cost_functions import direct_square
-from saddle.opt import GeoOptimizer
+from saddle.opt import GeoOptimizer, Point
+from copy import deepcopy
 import numpy as np
+
 
 
 class Internal(Cartesian):
@@ -59,6 +61,8 @@ class Internal(Cartesian):
 
     def set_new_coordinates(self, new_coor): # to be tested
         super(Internal, self).set_new_coordinates(new_coor)
+        self._cc_to_ic_gradient = None
+        self._cc_to_ic_hessian = None
         for i in self.ic:
             rs = self.coordinates[np.array(i.atoms)]
             i.set_new_coordinates(rs)
@@ -66,15 +70,28 @@ class Internal(Cartesian):
             self._add_cc_to_ic_gradient(d, i.atoms)  # add gradient
             self._add_cc_to_ic_hessian(dd, i.atoms)  # add hessian
 
-    def converge_to_target_ic(self):  # to be set
-        # point_0 = self._create_a_point_structure()
-        # optimizer = GeoOptimizer()
-        # optimizer.add_new(point_0)
-        pass
+    def converge_to_target_ic(self, iteration=100, copy=True):  # to be test
+        if copy:
+            self = deepcopy(self)
+        optimizer = GeoOptimizer()
+        init_point = self._create_geo_point()
+        optimizer.add_new(init_point)
+        for i in range(iteration):
+            optimizer.tweak_hessian(optimizer.newest)
+            step = optimizer.trust_radius_step(optimizer.newest)
+            new_coor = self.coordinates + step.reshape(-1, 3)
+            self.set_new_coordinates(new_coor)
+            new_point = self._create_geo_point()
+            optimizer.add_new(new_point)
+            if optimizer.converge(optimizer.newest):
+                print ("finished")
+                return self
+            optimizer.update_trust_radius(optimizer.newest)
+        raise NotConvergeError, "The optimization failed to converge"
 
-    def _optimization_process(self, iteration=100):
-        pass
-
+    def _create_geo_point(self):
+        _, x_d, x_dd = self.cost_value_in_cc
+        return Point(x_d, x_dd, len(self.numbers))
 
     @property
     def cost_value(self):
