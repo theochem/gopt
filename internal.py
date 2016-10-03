@@ -152,6 +152,11 @@ class Internal(Cartesian):
             optimizer.update_trust_radius(optimizer.newest)
         raise NotConvergeError("The optimization failed to converge")
 
+    def connected_indices(self, index):
+        connection = self.connectivity[index]
+        connected_index = np.where(connection > 0)[0]
+        return connected_index
+
     def _create_geo_point(self):
         _, x_d, x_dd = self.cost_value_in_cc
         return Point(x_d, x_dd, len(self.numbers))
