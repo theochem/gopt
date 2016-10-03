@@ -1,12 +1,11 @@
 from __future__ import print_function, absolute_import
 from saddle.cartesian import Cartesian
-from saddle.errors import NotSetError, AtomsNumberError, NotConvergeError
+from saddle.errors import NotSetError, AtomsNumberError, NotConvergeError, AtomsIndexError
 from saddle.coordinate_types import BondLength, BendAngle, ConventionDihedral
 from saddle.cost_functions import direct_square
 from saddle.opt import GeoOptimizer, Point
 from copy import deepcopy
 import numpy as np
-
 
 
 class Internal(Cartesian):
@@ -64,6 +63,7 @@ class Internal(Cartesian):
     print_connectivity()
         print connectivity matrix information on the screen
     """
+
     def __init__(self, coordinates, numbers, charge, spin):
         super(Internal, self).__init__(coordinates, numbers, charge, spin)
         self._ic = []  # type np.array([float 64])
@@ -74,6 +74,8 @@ class Internal(Cartesian):
         self._cc_to_ic_hessian = None
 
     def add_bond(self, atom1, atom2):  # tested
+        if atom1 == atom2:
+            raise AtomsIndexError("The two indece are the same")
         atoms = (atom1, atom2)
         # reorder the sequence of atoms indice
         atoms = self._atoms_sequence_reorder(atoms)
@@ -87,6 +89,8 @@ class Internal(Cartesian):
             self._add_connectivity(atoms)
 
     def add_angle_cos(self, atom1, atom2, atom3):  # tested
+        if atom1 == atom3:
+            raise AtomsIndexError("The two indece are the same")
         atoms = (atom1, atom2, atom3)
         atoms = self._atoms_sequence_reorder(atoms)
         rs = self.coordinates[np.array(atoms)]
@@ -98,21 +102,27 @@ class Internal(Cartesian):
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
 
     def add_dihedral(self, atom1, atom2, atom3, atom4):  # tested
+        if atom1 == atom4 or atom2 == atom3:
+            raise AtomsIndexError("The two indece are the same")
         atoms = (atom1, atom2, atom3, atom4)
         atoms = self._atoms_sequence_reorder(atoms)
         rs = self.coordinates[np.array(atoms)]
         new_ic_obj = ConventionDihedral(atoms, rs)
         d, dd = new_ic_obj.get_gradient_hessian()
-        if self._check_connectivity(atom2, atom3) and (self._check_connectivity(atom1, atom2) or self._check_connectivity(atom1, atom3)) and (self._check_connectivity(atom4, atom3) or self._check_connectivity(atom4, atom2)):
+        if (self._check_connectivity(atom2, atom3) and
+                (self._check_connectivity(atom1, atom2) or
+                self._check_connectivity(atom1, atom3)) and
+                (self._check_connectivity(atom4, atom3) or
+                self._check_connectivity(atom4, atom2))):
             if self._repeat_check(new_ic_obj):
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
 
     def set_target_ic(self, new_ic):
         if len(new_ic) != len(self.ic):
-            raise AtomsNumberError, "The ic is not in the same shape"
+            raise AtomsNumberError("The ic is not in the same shape")
         self._target_ic = np.array(new_ic)
 
-    def set_new_coordinates(self, new_coor): # to be tested
+    def set_new_coordinates(self, new_coor):  # to be tested
         super(Internal, self).set_new_coordinates(new_coor)
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
@@ -140,7 +150,7 @@ class Internal(Cartesian):
                 print ("finished")
                 return self
             optimizer.update_trust_radius(optimizer.newest)
-        raise NotConvergeError, "The optimization failed to converge"
+        raise NotConvergeError("The optimization failed to converge")
 
     def _create_geo_point(self):
         _, x_d, x_dd = self.cost_value_in_cc
@@ -158,10 +168,9 @@ class Internal(Cartesian):
         x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
         return v, x_d, x_dd
 
-
     def _calculate_cost_value(self):
         if self.target_ic is None:
-            raise NotSetError, "The value of target_ic is not set"
+            raise NotSetError("The value of target_ic is not set")
         # initialize function value, gradient and hessian
         value = 0
         deriv = np.zeros(len(self.ic))
@@ -203,7 +212,7 @@ class Internal(Cartesian):
 
     def _add_connectivity(self, atoms):
         if len(atoms) != 2:
-            raise AtomsNumberError, "The number of atoms is not correct"
+            raise AtomsNumberError("The number of atoms is not correct")
         num1, num2 = atoms
         self._connectivity[num1, num2] = 1
         self._connectivity[num2, num1] = 1
@@ -222,7 +231,7 @@ class Internal(Cartesian):
             if atoms[1] > atoms[2]:
                 atoms[1], atoms[2] = atoms[2], atoms[1]
         else:
-            raise AtomsNumberError, "The number of atoms is not correct"
+            raise AtomsNumberError("The number of atoms is not correct")
         return tuple(atoms)
 
     def _add_cc_to_ic_gradient(self, deriv, atoms):  # need to be tested
