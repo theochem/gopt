@@ -38,6 +38,7 @@ class Cartesian(object):
     angle(index1, index2, index3)
         Calculate angle between atoms with index1, index2, and index3
     """
+
     def __init__(self, coordinates, numbers, charge, spin):
         self._coordinates = deepcopy(coordinates)
         self._numbers = deepcopy(numbers)
@@ -101,7 +102,11 @@ class Cartesian(object):
         if method == "g09":
             ob = GaussianWrapper(self, title)
             self._energy, self._energy_gradient, self._energy_hessian = ob.run_gaussian_and_get_result(
-                self.charge, self.spin, energy=True, gradient=True, hessian=True)
+                self.charge,
+                self.spin,
+                energy=True,
+                gradient=True,
+                hessian=True)
 
         # set self._energy
         # set self._energy_gradient
@@ -114,7 +119,7 @@ class Cartesian(object):
         distance = np.linalg.norm(diff)
         return distance
 
-    def angle(self, index1, index2, index3):
+    def angle_cos(self, index1, index2, index3):
         coord1 = self.coordinates[index1]
         coord2 = self.coordinates[index2]
         coord3 = self.coordinates[index3]
@@ -124,4 +129,7 @@ class Cartesian(object):
             (np.linalg.norm(diff_1) * np.linalg.norm(diff_2))
         return cos_angle
 
+    def angle(self, index1, index2, index3):
+        cos_value = self.angle_cos(index1, index2, index3)
+        return np.arccos(cos_value)
 # a = Cartesian(1,1)

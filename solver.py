@@ -2,10 +2,10 @@ import numpy as np
 
 
 def ridders_solver(func, x1, x2, iteration=30, error=10e-6):
+
     """The ridders solver to solver nonlinear equation to find a mathematical
     root for a continuous function. the value of the two end should be of
     different sign.
-
 
     Args:
         func (function): function to find the right root

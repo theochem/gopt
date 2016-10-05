@@ -1,11 +1,15 @@
-from __future__ import print_function, absolute_import
-from saddle.cartesian import Cartesian
-from saddle.errors import NotSetError, AtomsNumberError, NotConvergeError, AtomsIndexError
-from saddle.coordinate_types import BondLength, BendAngle, ConventionDihedral
-from saddle.cost_functions import direct_square
-from saddle.opt import GeoOptimizer, Point
+from __future__ import absolute_import, print_function
+
 from copy import deepcopy
+
 import numpy as np
+
+from saddle.cartesian import Cartesian
+from saddle.coordinate_types import BendAngle, BondLength, ConventionDihedral
+from saddle.cost_functions import direct_square
+from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
+                           NotSetError)
+from saddle.opt import GeoOptimizer, Point
 
 
 class Internal(Cartesian):
@@ -97,7 +101,8 @@ class Internal(Cartesian):
         new_ic_obj = BendAngle(atoms, rs)
         d, dd = new_ic_obj.get_gradient_hessian()
         # check if the angle is formed by two connected bonds
-        if self._check_connectivity(atom1, atom2) and self._check_connectivity(atom2, atom3):
+        if self._check_connectivity(atom1, atom2) and self._check_connectivity(
+                atom2, atom3):
             if self._repeat_check(new_ic_obj):
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
 
@@ -110,10 +115,10 @@ class Internal(Cartesian):
         new_ic_obj = ConventionDihedral(atoms, rs)
         d, dd = new_ic_obj.get_gradient_hessian()
         if (self._check_connectivity(atom2, atom3) and
-                (self._check_connectivity(atom1, atom2) or
-                self._check_connectivity(atom1, atom3)) and
-                (self._check_connectivity(atom4, atom3) or
-                self._check_connectivity(atom4, atom2))):
+            (self._check_connectivity(atom1, atom2) or
+             self._check_connectivity(atom1, atom3)) and
+            (self._check_connectivity(atom4, atom3) or
+             self._check_connectivity(atom4, atom2))):
             if self._repeat_check(new_ic_obj):
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
 
@@ -133,9 +138,7 @@ class Internal(Cartesian):
             self._add_cc_to_ic_gradient(d, i.atoms)  # add gradient
             self._add_cc_to_ic_hessian(dd, i.atoms)  # add hessian
 
-    def converge_to_target_ic(self, iteration=100, copy=True):  # to be test
-        if copy:
-            self = deepcopy(self)
+    def converge_to_target_ic(self, iteration=100):  # to be test
         optimizer = GeoOptimizer()
         init_point = self._create_geo_point()
         optimizer.add_new(init_point)
@@ -147,8 +150,8 @@ class Internal(Cartesian):
             new_point = self._create_geo_point()
             optimizer.add_new(new_point)
             if optimizer.converge(optimizer.newest):
-                print ("finished")
-                return self
+                print("finished")
+                return
             optimizer.update_trust_radius(optimizer.newest)
         raise NotConvergeError("The optimization failed to converge")
 
@@ -181,7 +184,8 @@ class Internal(Cartesian):
         deriv = np.zeros(len(self.ic))
         deriv2 = np.zeros((len(self.ic), len(self.ic)), float)
         for i in range(len(self.ic)):
-            if self.ic[i].__class__.__name__ in ("BondLength", "BendAngle",):
+            if self.ic[i].__class__.__name__ in ("BondLength",
+                                                 "BendAngle", ):
                 v, d, dd = direct_square(self.ic_values[i], self.target_ic[i])
                 value += v
                 deriv[i] += d
@@ -191,9 +195,10 @@ class Internal(Cartesian):
     def _ic_gradient_hessian_transform_to_cc(self, gradient, hessian):
         cartesian_gradient = np.dot(gradient, self._cc_to_ic_gradient)
         cartesian_hessian_part_1 = np.dot(
-            np.dot(self._cc_to_ic_gradient.T, hessian), self._cc_to_ic_gradient)
-        cartesian_hessian_part_2 = np.tensordot(
-            gradient, self._cc_to_ic_hessian, 1)
+            np.dot(self._cc_to_ic_gradient.T, hessian),
+            self._cc_to_ic_gradient)
+        cartesian_hessian_part_2 = np.tensordot(gradient,
+                                                self._cc_to_ic_hessian, 1)
         cartesian_hessian = cartesian_hessian_part_1 + cartesian_hessian_part_2
         return cartesian_gradient, cartesian_hessian
 
@@ -244,7 +249,7 @@ class Internal(Cartesian):
             self._cc_to_ic_gradient = np.zeros((0, 3 * len(self.numbers)))
         tmp_vector = np.zeros((1, 3 * len(self.numbers)))
         for i in range(len(atoms)):
-            tmp_vector[0, 3 * atoms[i]: 3 * atoms[i] + 3] += deriv[i]
+            tmp_vector[0, 3 * atoms[i]:3 * atoms[i] + 3] += deriv[i]
         self._cc_to_ic_gradient = np.vstack(
             (self._cc_to_ic_gradient, tmp_vector))
 
@@ -256,8 +261,8 @@ class Internal(Cartesian):
             (1, 3 * len(self.numbers), 3 * len(self.numbers)))
         for i in range(len(atoms)):
             for j in range(len(atoms)):
-                tmp_vector[0, 3 * atoms[i]: 3 * atoms[i] + 3, 3 *
-                           atoms[j]: 3 * atoms[j] + 3] += deriv[i, :3, j]
+                tmp_vector[0, 3 * atoms[i]:3 * atoms[i] + 3, 3 * atoms[j]:3 *
+                           atoms[j] + 3] += deriv[i, :3, j]
         self._cc_to_ic_hessian = np.vstack(
             (self._cc_to_ic_hessian, tmp_vector))
 
@@ -267,7 +272,8 @@ class Internal(Cartesian):
 
     @property
     def ic_values(self):
-        return [i.value for i in self._ic]
+        value = [i.value for i in self._ic]
+        return np.array(value)
 
     @property
     def target_ic(self):
@@ -279,11 +285,10 @@ class Internal(Cartesian):
 
     def print_connectivity(self):
         format_func = "{:3}".format
-        print ("--Connectivity Starts-- \n")
+        print("--Connectivity Starts-- \n")
         for i in range(len(self.numbers)):
-            print (" ".join(map(format_func, self.connectivity[i, :i + 1])))
-        print ("\n--Connectivity Ends--")
-
+            print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
+        print("\n--Connectivity Ends--")
 
 # import horton as ht
 # fn_xyz = ht.context.get_fn("test/water.xyz")
