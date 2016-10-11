@@ -150,6 +150,14 @@ class TestInternal(object):
             mol.ic_values,
             [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
         mol.set_target_ic([1.7, 1.7, -0.4])
+        mol.swap_internal_coordinates(0, 2)
+        assert np.allclose(
+            mol.ic_values,
+            [-0.33333406792305265, 1.8141372422079882, 1.8141372422079882])
+        mol.swap_internal_coordinates(0, 2)
+        assert np.allclose(
+            mol.ic_values,
+            [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
         assert np.allclose(mol.target_ic, [1.7, 1.7, -0.4])
         v, d, dd = mol._cost_value()
         assert np.allclose(0.030498966617378116, v)

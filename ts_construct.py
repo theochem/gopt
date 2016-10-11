@@ -5,7 +5,7 @@ from copy import deepcopy
 import numpy as np
 from horton import periodic
 
-from saddle.errors import AtomsNumberError, InputTypeError
+from saddle.errors import AtomsNumberError, InputTypeError, NotSetError
 from saddle.internal import Internal
 
 
@@ -21,6 +21,8 @@ class TSConstruct(object):
                 raise AtomsNumberError("The number of atoms is not the same")
         else:
             raise InputTypeError("The type of input data is illegal.")
+        self._key_ic_counter = 0
+        self._ts = None
 
     @property
     def reactant(self):
@@ -31,8 +33,18 @@ class TSConstruct(object):
         return self._product
 
     @property
+    def ts(self):
+        if self._ts is None:
+            raise NotSetError("TS state hasn't been set")
+        return self._ts
+
+    @property
     def numbers(self):
         return self._numbers
+
+    @property
+    def key_ic_counter(self):
+        return self._key_ic_counter
 
     def add_bond(self, atom1, atom2):
         self._reactant.add_bond(atom1, atom2)
@@ -66,7 +78,14 @@ class TSConstruct(object):
             1. - ratio) * self.product.ic_values
         ts_internal.set_target_ic(target_ic)
         ts_internal.converge_to_target_ic(100)
-        return ts_internal
+        self._ts = ts_internal  # set _ts attribute
+
+    def select_key_ic(self, ic_index):
+        if ic_index < self._key_ic_counter:
+            # if the index is smaller then ic counter, it is pointless to swap
+            return
+        self._ts.swap_internal_coordinates(self._key_ic_counter, ic_index)
+        self._key_ic_counter += 1
 
     def _auto_select_bond(self):
         halidish_atom = set([7, 8, 9, 15, 16, 17])

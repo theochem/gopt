@@ -6,6 +6,7 @@ from saddle.internal import Internal
 
 
 class Test_TS_Construct(object):
+
     @classmethod
     def setup_class(self):
         path = os.path.dirname(os.path.realpath(__file__))
@@ -58,13 +59,16 @@ class Test_TS_Construct(object):
         assert np.allclose(ts_ins.product.ic_values, ref_ic)
 
     def test_ts_construct(self):
+        from copy import deepcopy
         reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
         product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
         ts_ins = TSConstruct(reactant_ic, product_ic)
         ts_ins.auto_select_ic()
-        result = ts_ins.create_ts_state(start_with="product")
+        ts_ins.create_ts_state(start_with="product")
+        result = deepcopy(ts_ins.ts)
         # print result.ic_values
-        result_2 = ts_ins.create_ts_state(start_with="reactant")
+        ts_ins.create_ts_state(start_with="reactant")
+        result_2 = deepcopy(ts_ins.ts)
         # print result_2.ic_values
         ref_tar_ic = reactant_ic.ic_values * 0.5 + product_ic.ic_values * 0.5
         assert np.allclose(ref_tar_ic, result.target_ic)
@@ -73,4 +77,8 @@ class Test_TS_Construct(object):
             result.ic_values[:5], result.target_ic[:5], atol=1e-7)
         assert np.allclose(
             result_2.ic_values[:5], result_2.target_ic[:5], atol=1e-7)
+        ts_ins.select_key_ic(1)
+        assert ts_ins.key_ic_counter == 1
+        assert np.allclose(ts_ins.ts.ic_values[:2][
+                           ::-1], result_2.ic_values[:2])
         # assert False

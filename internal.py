@@ -129,14 +129,11 @@ class Internal(Cartesian):
 
     def set_new_coordinates(self, new_coor):  # to be tested
         super(Internal, self).set_new_coordinates(new_coor)
-        self._cc_to_ic_gradient = None
-        self._cc_to_ic_hessian = None
-        for i in self.ic:
-            rs = self.coordinates[np.array(i.atoms)]
-            i.set_new_coordinates(rs)
-            d, dd = i.get_gradient_hessian()
-            self._add_cc_to_ic_gradient(d, i.atoms)  # add gradient
-            self._add_cc_to_ic_hessian(dd, i.atoms)  # add hessian
+        self._regenerate_ic()
+
+    def swap_internal_coordinates(self, index_1, index_2):
+        self._ic[index_1], self._ic[index_2] = self._ic[index_2], self._ic[index_1]
+        self._regenerate_ic()
 
     def converge_to_target_ic(self, iteration=100):  # to be test
         optimizer = GeoOptimizer()
@@ -159,6 +156,16 @@ class Internal(Cartesian):
         connection = self.connectivity[index]
         connected_index = np.where(connection > 0)[0]
         return connected_index
+
+    def _regenerate_ic(self):
+        self._cc_to_ic_gradient = None
+        self._cc_to_ic_hessian = None
+        for ic in self.ic:
+            rs = self.coordinates[np.array(ic.atoms)]
+            ic.set_new_coordinates(rs)
+            d, dd = ic.get_gradient_hessian()
+            self._add_cc_to_ic_gradient(d, ic.atoms)  # add gradient
+            self._add_cc_to_ic_hessian(dd, ic.atoms)  # add hessian
 
     def _create_geo_point(self):
         _, x_d, x_dd = self.cost_value_in_cc
