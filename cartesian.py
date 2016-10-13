@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function
 import numpy as np
-from .errors import NotSetError
-from .gaussianwrapper import GaussianWrapper
+from saddle.errors import NotSetError, AtomsNumberError
+from saddle.gaussianwrapper import GaussianWrapper
 from copy import deepcopy
 
 
@@ -32,7 +32,8 @@ class Cartesian(object):
     set_new_coordinates(new_coor)
         Set molecule with a set of coordinates
     energy_calculation(**kwargs)
-        Calculate system energy with different methods through software like gaussian
+        Calculate system energy with different methods through software
+        like gaussian
     distance(index1, index2)
         Calculate distance between two atoms with index1 and index2
     angle(index1, index2, index3)
@@ -50,15 +51,15 @@ class Cartesian(object):
 
     @property
     def energy_gradient(self):  # return number array
-        if self._energy_gradient == None:
+        if self._energy_gradient is None:
             raise NotSetError(
-                "The value 'energy_gradient' is None, do the calculation first")
+                "The value 'energy_gradient' unset, do the calculation first")
         else:
             return self._energy_gradient
 
     @property
     def energy_hessian(self):  # return number array
-        if self._energy_hessian == None:
+        if self._energy_hessian is None:
             raise NotSetError(
                 "The value 'energy_hessian' is None, do the calculation first")
         else:
@@ -66,7 +67,7 @@ class Cartesian(object):
 
     @property
     def energy(self):
-        if self._energy == None:
+        if self._energy is None:
             raise NotSetError(
                 "The value 'energy' is None, do the calculation first")
         else:
@@ -74,7 +75,8 @@ class Cartesian(object):
 
     def set_new_coordinates(self, new_coor):
         if self._coordinates.shape != new_coor.shape:
-            raise AtomsNumberError, "the dimentsion of coordinates are not the same"
+            raise AtomsNumberError(
+                "the dimentsion of coordinates are not the same")
         self._coordinates = new_coor
         self._energy = None
         self._energy_gradient = None
@@ -101,12 +103,13 @@ class Cartesian(object):
         method = kwargs.pop('method', 'g09')
         if method == "g09":
             ob = GaussianWrapper(self, title)
-            self._energy, self._energy_gradient, self._energy_hessian = ob.run_gaussian_and_get_result(
-                self.charge,
-                self.spin,
-                energy=True,
-                gradient=True,
-                hessian=True)
+            self._energy, self._energy_gradient, self._energy_hessian =\
+                ob.run_gaussian_and_get_result(
+                    self.charge,
+                    self.spin,
+                    energy=True,
+                    gradient=True,
+                    hessian=True)
 
         # set self._energy
         # set self._energy_gradient

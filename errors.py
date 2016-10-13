@@ -16,3 +16,7 @@ class NotConvergeError(Exception):
 
 class InputTypeError(Exception):
     pass
+
+
+class PositiveProductError(Exception):
+    pass

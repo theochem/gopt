@@ -7,6 +7,7 @@ from horton import periodic
 
 from saddle.errors import AtomsNumberError, InputTypeError, NotSetError
 from saddle.internal import Internal
+from saddle.reduced_internal import ReducedInternal
 
 
 class TSConstruct(object):
@@ -77,7 +78,9 @@ class TSConstruct(object):
         target_ic = ratio * self.reactant.ic_values + (
             1. - ratio) * self.product.ic_values
         ts_internal.set_target_ic(target_ic)
-        ts_internal.converge_to_target_ic(100)
+        ts_internal.converge_to_target_ic()
+        ReducedInternal.update_to_reduced_internal(ts_internal)
+        # change the ts_internal to Class ReducedInternal
         self._ts = ts_internal  # set _ts attribute
 
     def select_key_ic(self, ic_index):

@@ -32,15 +32,18 @@ class Internal(Cartesian):
     coordinates : np.ndarray(K, 3)
         Cartesian information of input molecule
     cost_value_in_cc : tuple(float, np.ndarray(K), np.ndarray(K, K))
-        Return the cost function value, 1st, and 2nd derivative verse cartesian coordinates
+        Return the cost function value, 1st, and 2nd
+        derivative verse cartesian coordinates
     ic : list[CoordinateTypes]
-        A list of CoordinateTypes instance to represent internal coordinates information
+        A list of CoordinateTypes instance to represent
+        internal coordinates information
     ic_values : list[float]
         A list of internal coordinates values
     target_ic : list[float]
         A list of target internal coordinates
     connectivity : np.ndarray(K, K)
-        A square matrix represents the connectivity of molecule internal coordinates
+        A square matrix represents the connectivity of molecule
+        internal coordinates
 
     Methods
     -------
@@ -49,7 +52,8 @@ class Internal(Cartesian):
     set_new_coordinates(new_coor)
         Set molecule with a set of coordinates
     energy_calculation(**kwargs)
-        Calculate system energy with different methods through software like gaussian
+        Calculate system energy with different methods through
+        software like gaussian
     distance(index1, index2)
         Calculate distance between two atoms with index1 and index2
     angle(index1, index2, index3)
@@ -59,11 +63,13 @@ class Internal(Cartesian):
     add_angle_cos(atom1, atom2, atom3)
         Add a cos of a angle consist of atom1, atom2, and atom3
     add_dihedral(atom1, atom2, atom3, atom4)
-        Add a dihedral of plain consists of atom1, atom2, and atom3 and the other one consist of atom2, atom3, and atom4
+        Add a dihedral of plain consists of atom1, atom2, and atom3
+        and the other one consist of atom2, atom3, and atom4
     set_target_ic(new_ic)
         Set a target internal coordinates to transform into
     converge_to_target_ic(iteration=100, copy=True)
-        Implement optimization process to transform geometry to target internal coordinates
+        Implement optimization process to transform geometry to
+        target internal coordinates
     print_connectivity()
         print connectivity matrix information on the screen
     """
@@ -88,7 +94,8 @@ class Internal(Cartesian):
         d, dd = new_ic_obj.get_gradient_hessian()
         # gradient and hessian need to be set
         if self._repeat_check(new_ic_obj):  # repeat internal coordinates check
-            self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
+            self._add_new_internal_coordinate(
+                new_ic_obj, d, dd, atoms)
             # after adding a bond, change the connectivity of atoms pair to 1
             self._add_connectivity(atoms)
 
@@ -132,7 +139,8 @@ class Internal(Cartesian):
         self._regenerate_ic()
 
     def swap_internal_coordinates(self, index_1, index_2):
-        self._ic[index_1], self._ic[index_2] = self._ic[index_2], self._ic[index_1]
+        self._ic[index_1], self._ic[index_2] = self._ic[index_2], self._ic[
+            index_1]
         self._regenerate_ic()
 
     def converge_to_target_ic(self, iteration=100):  # to be test

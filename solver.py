@@ -1,8 +1,8 @@
 import numpy as np
+from saddle.errors import PositiveProductError
 
 
 def ridders_solver(func, x1, x2, iteration=30, error=10e-6):
-
     """The ridders solver to solver nonlinear equation to find a mathematical
     root for a continuous function. the value of the two end should be of
     different sign.
@@ -12,11 +12,12 @@ def ridders_solver(func, x1, x2, iteration=30, error=10e-6):
         x1 (float): left end of interval
         x2 (float): right end of interval
         iteration (int, optional): numbers of iterations, default is 30
-        error (float, optional): the threshold for convergence, default is 10e-6
+        error (float, optional): the threshold for convergence,
+            default is 10e-6
 
     Raises:
-        PositiveProductError: when the function value of two ends of the interval
-                              is of the same sign
+        PositiveProductError: when the function value of two ends of the
+            interval is of the same sign
     return:
         (float): the root for function in the interval between x1 and x2
 
@@ -54,12 +55,12 @@ def ridders_solver(func, x1, x2, iteration=30, error=10e-6):
         else:
             raise PositiveProductError("The two end point are of same sign")
 
+def diagonalize(matrix):
+    product = np.dot(matrix, matrix.T)
+    w, v = np.linalg.eigh(product)
+    return w, v
 
-
-class PositiveProductError(Exception):
-    pass
 
 if __name__ == "__main__":
-    fcn = lambda x: x**2 - 4
-    result = ridders_solver(fcn, -10, -1)
+    result = ridders_solver(lambda x: x**2 - 4, -10, -1)
     print(result)

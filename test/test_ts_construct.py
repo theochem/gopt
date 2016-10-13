@@ -6,7 +6,6 @@ from saddle.internal import Internal
 
 
 class Test_TS_Construct(object):
-
     @classmethod
     def setup_class(self):
         path = os.path.dirname(os.path.realpath(__file__))
@@ -79,6 +78,7 @@ class Test_TS_Construct(object):
             result_2.ic_values[:5], result_2.target_ic[:5], atol=1e-7)
         ts_ins.select_key_ic(1)
         assert ts_ins.key_ic_counter == 1
-        assert np.allclose(ts_ins.ts.ic_values[:2][
-                           ::-1], result_2.ic_values[:2])
-        # assert False
+        assert np.allclose(ts_ins.ts.ic_values[:2][::-1],
+                           result_2.ic_values[:2])
+        assert np.allclose(ts_ins.ts._cc_to_ic_gradient[1],
+                           result_2._cc_to_ic_gradient[0])

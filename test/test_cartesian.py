@@ -33,7 +33,8 @@ class TestCartesian(object):
 
     def test_distance(self):
         ref_distance = np.linalg.norm(np.array(
-            [0.783837, -0.492236, -0.000000]) - np.array([-0.000000, 0.062020, -0.000000]))
+            [0.783837, -0.492236, -0.000000]) - np.array(
+            [-0.000000, 0.062020, -0.000000]))
         assert self.cartesian.distance(0, 1) / ht.angstrom == ref_distance
 
     def test_angle(self):
@@ -43,4 +44,6 @@ class TestCartesian(object):
             np.array([-0.783837, -0.492236, -0.000000])
         ref_angle_cos = np.dot(vector1, vector2) / \
             np.linalg.norm(vector1) / np.linalg.norm(vector2)
-        assert np.allclose(self.cartesian.angle(0, 1, 2), ref_angle_cos)
+        assert np.allclose(self.cartesian.angle_cos(0, 1, 2), ref_angle_cos)
+        assert np.allclose(
+            self.cartesian.angle(0, 1, 2), np.arccos(ref_angle_cos))
