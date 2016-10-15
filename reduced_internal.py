@@ -14,7 +14,7 @@ class ReducedInternal(Internal):  # need tests
                                               spin)
         self._k_ic_n = key_ic_number
         self._red_space = None
-        self._nonreduce_space = None
+        self._non_red_space = None
 
     @property
     def df(self):
@@ -24,8 +24,12 @@ class ReducedInternal(Internal):  # need tests
     def key_ic_number(self):
         return self._k_ic_n
 
-    def vspace_transfm(self):
-        pass
+    @property
+    def vspace(self):
+        if self._red_space is None or self._non_red_space is None:
+            self._generate_reduce_space()
+            self._generate_nonreduce_space()
+        return np.hstack((self._red_space, self._non_red_space))
 
     def set_key_ic_number(self, number):
         self._k_ic_n = number
@@ -36,22 +40,22 @@ class ReducedInternal(Internal):  # need tests
         internal_ob.__class__ = cls
         internal_ob._k_ic_n = key_ic_number
 
-    def _svd_of_cc_to_ic_gradient(self, threshold=1e-5):
+    def _svd_of_cc_to_ic_gradient(self, threshold=1e-6):  # tested
         u, s, v = np.linalg.svd(self._cc_to_ic_gradient)
         return u[:, np.abs(s) > threshold][:, :self.df]
 
-    def _reduced_unit_vectors(self):
+    def _reduced_unit_vectors(self):  # tested
         unit_mtx = np.zeros((len(self.ic), self.key_ic_number))
-        unit_mtx[self._k_ic_n, self._k_ic_n] = np.eye(3)
+        unit_mtx[:self._k_ic_n, :self._k_ic_n] = np.eye(self._k_ic_n)
         return unit_mtx
 
-    def _reduced_perturbation(self):
-        unit_mtx = self._reduced_perturbation()
+    def _reduced_perturbation(self):  # tested
+        unit_mtx = self._reduced_unit_vectors()
         tsfm = np.dot(self._cc_to_ic_gradient, np.linalg.pinv(
             self._cc_to_ic_gradient))
         return np.dot(tsfm, unit_mtx)
 
-    def _generate_reduce_space(self, threshold=1e-5):
+    def _generate_reduce_space(self, threshold=1e-6):  # tested
         b_mtx = self._reduced_perturbation()
         w, v = diagonalize(b_mtx)
         self._red_space = v[:, abs(w) > threshold]
@@ -63,8 +67,8 @@ class ReducedInternal(Internal):  # need tests
         non_reduce_vectors = a_mtx - np.dot(prj_rd_space, a_mtx)
         return non_reduce_vectors
 
-    def _generate_nonreduce_space(self, threshold=1e-5):
+    def _generate_nonreduce_space(self, threshold=1e-6):  # tested
         d_mtx = self._nonreduce_vectors()
         w, v = diagonalize(d_mtx)
-        self._nonred_space = v[:, abs(w) > threshold][:, :self.df - len(
-            self._red_space[0])]
+        self._non_red_space = v[:, abs(w) > threshold][:, :self.df - len(
+                                                      self._red_space[0])]
