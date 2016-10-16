@@ -1,8 +1,11 @@
 from __future__ import absolute_import, print_function
-import numpy as np
-from saddle.errors import NotSetError, AtomsNumberError
-from saddle.gaussianwrapper import GaussianWrapper
+
 from copy import deepcopy
+
+import numpy as np
+
+from saddle.errors import AtomsNumberError, NotSetError
+from saddle.gaussianwrapper import GaussianWrapper
 
 
 class Cartesian(object):

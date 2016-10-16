@@ -1,8 +1,10 @@
-import horton as ht
-import numpy as np
 import os
-from saddle.ts_construct import TSConstruct
+
+import numpy as np
+
+import horton as ht
 from saddle.internal import Internal
+from saddle.ts_construct import TSConstruct
 
 
 class Test_TS_Construct(object):

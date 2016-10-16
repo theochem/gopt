@@ -1,4 +1,5 @@
 import numpy as np
+
 from saddle.errors import PositiveProductError
 
 
@@ -54,6 +55,7 @@ def ridders_solver(func, x1, x2, iteration=30, error=10e-6):
             x1, f1 = x4, f4
         else:
             raise PositiveProductError("The two end point are of same sign")
+
 
 def diagonalize(matrix):
     product = np.dot(matrix, matrix.T)

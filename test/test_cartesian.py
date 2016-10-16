@@ -1,10 +1,10 @@
 import numpy as np
-from saddle.cartesian import Cartesian
+
 import horton as ht
+from saddle.cartesian import Cartesian
 
 
 class TestCartesian(object):
-
     @classmethod
     def setup_class(self):
         import horton as ht
@@ -14,12 +14,11 @@ class TestCartesian(object):
 
     def test_coordinates(self):
         ref_coordinates = np.array([
-            [0.783837, -0.492236, -0.000000],
-            [-0.000000, 0.062020, -0.000000],
+            [0.783837, -0.492236, -0.000000], [-0.000000, 0.062020, -0.000000],
             [-0.783837, -0.492236, -0.000000]
         ])
-        assert np.allclose(self.cartesian.coordinates /
-                           ht.angstrom, ref_coordinates)
+        assert np.allclose(self.cartesian.coordinates / ht.angstrom,
+                           ref_coordinates)
 
     def test_numbers(self):
         ref_numbers = np.array([1, 8, 1])
@@ -32,9 +31,9 @@ class TestCartesian(object):
         assert (self.cartesian.charge == ref_charge)
 
     def test_distance(self):
-        ref_distance = np.linalg.norm(np.array(
-            [0.783837, -0.492236, -0.000000]) - np.array(
-            [-0.000000, 0.062020, -0.000000]))
+        ref_distance = np.linalg.norm(
+            np.array([0.783837, -0.492236, -0.000000]) - np.array(
+                [-0.000000, 0.062020, -0.000000]))
         assert self.cartesian.distance(0, 1) / ht.angstrom == ref_distance
 
     def test_angle(self):

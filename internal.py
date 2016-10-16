@@ -94,8 +94,7 @@ class Internal(Cartesian):
         d, dd = new_ic_obj.get_gradient_hessian()
         # gradient and hessian need to be set
         if self._repeat_check(new_ic_obj):  # repeat internal coordinates check
-            self._add_new_internal_coordinate(
-                new_ic_obj, d, dd, atoms)
+            self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
             # after adding a bond, change the connectivity of atoms pair to 1
             self._add_connectivity(atoms)
 

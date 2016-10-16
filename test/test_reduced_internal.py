@@ -8,7 +8,6 @@ from saddle.reduced_internal import ReducedInternal
 
 
 class TestReduceInternal(object):
-
     @classmethod
     def setup_class(self):
         fn_xyz = ht.context.get_fn('test/water.xyz')
@@ -28,32 +27,26 @@ class TestReduceInternal(object):
         assert self.red_int.df == 3
 
     def test_reduce_coordinates(self):
-        assert np.allclose(self.red_int.ic_values, [1.81413724,
-                                                    1.81413724,
-                                                    2.96247453,
-                                                    -0.33333407,
-                                                    0.81649681])
+        assert np.allclose(self.red_int.ic_values,
+                           [1.81413724, 1.81413724, 2.96247453, -0.33333407,
+                            0.81649681])
         svd = self.red_int._svd_of_cc_to_ic_gradient()
         ref_vectors = np.array([
             [-4.62909977e-01, 6.15617488e-01, 4.67707997e-01],
             [-4.62909977e-01, -7.40644124e-01, 1.30142388e-01],
             [-7.55929035e-01, 7.65628443e-02, -3.66106995e-01],
             [2.77555756e-16, -1.60808621e-01, 7.68952115e-01],
-            [-1.97758476e-16, 2.01841790e-01, -1.97460125e-01]])
+            [-1.97758476e-16, 2.01841790e-01, -1.97460125e-01]
+        ])
         assert np.allclose(svd, ref_vectors)
 
-        ref_unit = np.array([[1., 0.],
-                             [0., 1.],
-                             [0., 0.],
-                             [0., 0.],
-                             [0., 0.]])
+        ref_unit = np.array([[1., 0.], [0., 1.], [0., 0.], [0., 0.], [0., 0.]])
         assert np.allclose(self.red_int._reduced_unit_vectors(), ref_unit)
         ptrb = self.red_int._reduced_perturbation()
-        ref_vec = np.array([[0.81202131, -0.18079919],
-                            [-0.18079919, 0.77977641],
-                            [0.22582935, 0.24557523],
-                            [0.26064845, 0.21917522],
-                            [0.03190366, -0.17519087]])
+        ref_vec = np.array(
+            [[0.81202131, -0.18079919], [-0.18079919, 0.77977641],
+             [0.22582935, 0.24557523], [0.26064845, 0.21917522],
+             [0.03190366, -0.17519087]])
         assert np.allclose(ref_vec, ptrb)
         ref_space = np.array([[0.52906158, -0.72946223],  # reduced_internal
                               [0.57833907, 0.66730827],
@@ -100,15 +93,11 @@ class TestReduceInternal(object):
         assert ri_mol._non_red_space is None
         ri_mol.set_key_ic_number(2)
         assert np.allclose(ri_mol.vspace, vp_ref)
-        new_coor = np.array([[1.40, -0.93019123, -0.],
-                             [-0., 0.11720081, -0.],
+        new_coor = np.array([[1.40, -0.93019123, -0.], [-0., 0.11720081, -0.],
                              [-1.40, -0.93019123, -0.]])
         ri_mol.set_new_coordinates(new_coor)
-        ref_ic = [1.7484364736491811,
-                  1.7484364736491811,
-                  2.8,
-                  -0.28229028459335431,
-                  0.8007154]
+        ref_ic = [1.7484364736491811, 1.7484364736491811, 2.8,
+                  -0.28229028459335431, 0.8007154]
         assert np.allclose(ri_mol.ic_values, ref_ic)
         ri_mol.vspace
         assert ri_mol._red_space is not None

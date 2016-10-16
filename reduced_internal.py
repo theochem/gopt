@@ -8,7 +8,6 @@ from saddle.solver import diagonalize
 
 
 class ReducedInternal(Internal):  # need tests
-
     def __init__(self, coordinates, numbers, charge, spin, key_ic_number=0):
         super(ReducedInternal, self).__init__(coordinates, numbers, charge,
                                               spin)
@@ -47,8 +46,8 @@ class ReducedInternal(Internal):  # need tests
         self._reset_v_space()
 
     def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):  # add reset
-        super(ReducedInternal, self)._add_new_internal_coordinate(
-            new_ic, d, dd, atoms)
+        super(ReducedInternal, self)._add_new_internal_coordinate(new_ic, d,
+                                                                  dd, atoms)
         self._reset_v_space()
 
     def _reset_v_space(self):
@@ -66,8 +65,8 @@ class ReducedInternal(Internal):  # need tests
 
     def _reduced_perturbation(self):  # tested
         unit_mtx = self._reduced_unit_vectors()
-        tsfm = np.dot(self._cc_to_ic_gradient, np.linalg.pinv(
-            self._cc_to_ic_gradient))
+        tsfm = np.dot(self._cc_to_ic_gradient,
+                      np.linalg.pinv(self._cc_to_ic_gradient))
         return np.dot(tsfm, unit_mtx)
 
     def _generate_reduce_space(self, threshold=1e-6):  # tested

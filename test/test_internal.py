@@ -1,8 +1,10 @@
+from copy import deepcopy
+
 import numpy as np
+
+import horton as ht
 from saddle.internal import Internal
 from saddle.opt import Point
-from copy import deepcopy
-import horton as ht
 
 
 class TestInternal(object):

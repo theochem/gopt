@@ -1,8 +1,11 @@
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import, print_function
+
 import numpy as np
+
 from saddle.abclass import CoordinateTypes
 from saddle.errors import AtomsNumberError
-from saddle.molmod import bond_length, bend_cos, dihed_cos, dihed_new_dot, dihed_new_cross
+from saddle.molmod import (bend_cos, bond_length, dihed_cos, dihed_new_cross,
+                           dihed_new_dot)
 
 
 class BondLength(CoordinateTypes):

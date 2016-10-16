@@ -100,5 +100,5 @@ class GeoOptimizer(object):
         else:
             point.trust_radius = pre_point.trust_radius * .5
         point.trust_radius = min(
-            max(point.trust_radius, 0.1 * np.sqrt(point._ele)), 2. *
-            np.sqrt(point._ele))
+            max(point.trust_radius, 0.1 * np.sqrt(point._ele)),
+            2. * np.sqrt(point._ele))

@@ -3,8 +3,8 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 import numpy as np
-from horton import periodic
 
+from horton import periodic
 from saddle.errors import AtomsNumberError, InputTypeError, NotSetError
 from saddle.internal import Internal
 from saddle.reduced_internal import ReducedInternal
@@ -71,11 +71,9 @@ class TSConstruct(object):
         elif start_with == "product":
             model = self.product
         else:
-            raise InputTypeError(
-                "The input of start_with is not supported")
+            raise InputTypeError("The input of start_with is not supported")
         if ratio > 1. or ratio < 0:
-            raise InputTypeError(
-                "The input of ratio is not supported")
+            raise InputTypeError("The input of ratio is not supported")
         ts_internal = deepcopy(model)
         target_ic = ratio * self.reactant.ic_values + (
             1. - ratio) * self.product.ic_values
