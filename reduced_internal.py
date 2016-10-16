@@ -33,12 +33,27 @@ class ReducedInternal(Internal):  # need tests
 
     def set_key_ic_number(self, number):
         self._k_ic_n = number
+        self._reset_v_space()
 
     @classmethod
     def update_to_reduced_internal(cls, internal_ob, key_ic_number=0):
         assert isinstance(internal_ob, Internal)
         internal_ob.__class__ = cls
         internal_ob._k_ic_n = key_ic_number
+        internal_ob._reset_v_space()
+
+    def set_new_coordinates(self, new_coor):
+        super(ReducedInternal, self).set_new_coordinates(new_coor)
+        self._reset_v_space()
+
+    def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):  # add reset
+        super(ReducedInternal, self)._add_new_internal_coordinate(
+            new_ic, d, dd, atoms)
+        self._reset_v_space()
+
+    def _reset_v_space(self):
+        self._red_space = None
+        self._non_red_space = None
 
     def _svd_of_cc_to_ic_gradient(self, threshold=1e-6):  # tested
         u, s, v = np.linalg.svd(self._cc_to_ic_gradient)
@@ -71,4 +86,4 @@ class ReducedInternal(Internal):  # need tests
         d_mtx = self._nonreduce_vectors()
         w, v = diagonalize(d_mtx)
         self._non_red_space = v[:, abs(w) > threshold][:, :self.df - len(
-                                                      self._red_space[0])]
+            self._red_space[0])]
