@@ -105,3 +105,25 @@ class TestReduceInternal(object):
         ri_mol.add_angle_cos(0, 2, 1)
         assert ri_mol._red_space is None
         assert ri_mol._non_red_space is None
+
+    def test_ric_add_ic(self):
+        fn_xyz = ht.context.get_fn('test/water.xyz')
+        mol = ht.IOData.from_file(fn_xyz)
+        ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        ReducedInternal.update_to_reduced_internal(ri_mol)
+        ri_mol.add_bond(1, 0)
+        ri_mol.add_bond(1, 2)
+        ri_mol.add_bond(0, 2)
+        ri_mol.vspace
+        ri_mol.add_angle_cos(0, 1, 2)
+        ri_mol.add_angle_cos(1, 0, 2)
+        ri_mol.set_key_ic_number(2)
+        vp_ref = np.array([[5.29061584e-01, -7.29462233e-01, 6.88757214e-17],
+                           [5.78339073e-01, 6.67308267e-01, -2.22044605e-16],
+                           [4.25636302e-01, -8.79460122e-04, 7.28119408e-01],
+                           [4.30768766e-01, -4.48895735e-02, -6.55415872e-01],
+                           [-1.37440048e-01, -1.43417851e-01, 2.00679252e-01]])
+        assert np.allclose(ri_mol.vspace, vp_ref)
+        ri_mol.set_key_ic_number(1)
+        assert ri_mol._red_space is None
+        assert ri_mol._non_red_space is None

@@ -44,8 +44,8 @@ class Cartesian(object):
     """
 
     def __init__(self, coordinates, numbers, charge, spin):
-        self._coordinates = deepcopy(coordinates)
-        self._numbers = deepcopy(numbers)
+        self._coordinates = coordinates.copy()
+        self._numbers = numbers.copy()
         self._charge = charge
         self._spin = spin
         self._energy = None
@@ -80,7 +80,7 @@ class Cartesian(object):
         if self._coordinates.shape != new_coor.shape:
             raise AtomsNumberError(
                 "the dimentsion of coordinates are not the same")
-        self._coordinates = new_coor
+        self._coordinates = new_coor.copy()
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None
@@ -106,13 +106,16 @@ class Cartesian(object):
         method = kwargs.pop('method', 'g09')
         if method == "g09":
             ob = GaussianWrapper(self, title)
-            self._energy, self._energy_gradient, self._energy_hessian =\
-                ob.run_gaussian_and_get_result(
-                    self.charge,
-                    self.spin,
-                    energy=True,
-                    gradient=True,
-                    hessian=True)
+            coor, ener, grad, hess = ob.run_gaussian_and_get_result(
+                                                        self.charge,
+                                                        self.spin,
+                                                        energy=True,
+                                                        gradient=True,
+                                                        hessian=True)
+            self.set_new_coordinates(coor.reshape(-1, 3))
+            self._energy = ener
+            self._energy_gradient = grad
+            self._energy_hessian = hess
 
         # set self._energy
         # set self._energy_gradient

@@ -1,9 +1,10 @@
-from saddle.fchk import FCHKFile
-from horton import angstrom
-from horton import periodic
-from string import Template
-import numpy as np
 import os
+from string import Template
+
+import numpy as np
+
+from horton import angstrom, periodic
+from saddle.fchk import FCHKFile
 
 
 class GaussianWrapper(object):
@@ -18,6 +19,7 @@ class GaussianWrapper(object):
         self.title = title
 
     def run_gaussian_and_get_result(self, charge, multi, **kwargs):
+        coordinates = kwargs.pop('coordinates', True)
         energy = kwargs.pop('energy', True)
         gradient = kwargs.pop('gradient', False)
         hessian = kwargs.pop('hessian', False)
@@ -28,10 +30,14 @@ class GaussianWrapper(object):
         else:
             freq = ""
         filename = self.create_input_file(charge, multi, freq=freq)
-        print "gausian is going to run \n{} \n{} \n{}".format(charge, multi, self.molecule.ic)
+        print "gausian is going to run \n{} \n{} \n{}".format(charge, multi,
+                                                              self.molecule.ic)
         fchk_file = self._run_gaussian(filename)
-        assert isinstance(fchk_file, FCHKFile), "Gaussian calculation didn't run properly"
+        assert isinstance(fchk_file,
+                          FCHKFile), "Gaussian calculation didn't run properly"
         result = []
+        if coordinates:
+            result.append(fchk_file.get_coordinates())
         if energy:
             result.append(fchk_file.get_energy())
         if gradient:
@@ -50,8 +56,13 @@ class GaussianWrapper(object):
         postfix = ".com"
         file_path = "/test/gauss/" + filename + postfix
         with open(self.pwd + file_path, "w") as f:
-            f.write(self.template.substitute(charge=charge, freq=freq, multi=multi,
-                                             atoms=atoms, title="{}_{}".format(self.title, GaussianWrapper.counter)))
+            f.write(
+                self.template.substitute(
+                    charge=charge,
+                    freq=freq,
+                    multi=multi,
+                    atoms=atoms,
+                    title="{}_{}".format(self.title, GaussianWrapper.counter)))
             GaussianWrapper.counter += 1
         return filename
         # if run_cal:
@@ -65,9 +76,10 @@ class GaussianWrapper(object):
         os.system("{0} {1}.com".format(command_bin, filename))
         if fchk:
             logname = "{0}.log".format(filename)
-            if os.path.isfile(path + logname) and self._log_finish_test(path + logname):
-                os.system(
-                    "formchk {0}{1}.chk {0}{1}.fchk".format(path, filename))
+            if os.path.isfile(path + logname) and self._log_finish_test(
+                    path + logname):
+                os.system("formchk {0}{1}.chk {0}{1}.fchk".format(path,
+                                                                  filename))
                 fchk_ob = FCHKFile("{0}{1}.fchk".format(path, filename))
         return fchk_ob
 
@@ -78,6 +90,7 @@ class GaussianWrapper(object):
                 if "Normal termination" in line:
                     flag = True
         return flag
+
 
 if __name__ == '__main__':
     from collections import namedtuple

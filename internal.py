@@ -131,7 +131,7 @@ class Internal(Cartesian):
     def set_target_ic(self, new_ic):
         if len(new_ic) != len(self.ic):
             raise AtomsNumberError("The ic is not in the same shape")
-        self._target_ic = np.array(new_ic)
+        self._target_ic = np.array(new_ic).copy()
 
     def set_new_coordinates(self, new_coor):  # to be tested
         super(Internal, self).set_new_coordinates(new_coor)
@@ -164,6 +164,36 @@ class Internal(Cartesian):
         connected_index = np.where(connection > 0)[0]
         return connected_index
 
+    @property
+    def cost_value_in_cc(self):
+        v, d, dd = self._cost_value()
+        x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
+        return v, x_d, x_dd
+
+    @property
+    def ic(self):
+        return self._ic
+
+    @property
+    def ic_values(self):
+        value = [i.value for i in self._ic]
+        return np.array(value)
+
+    @property
+    def target_ic(self):
+        return self._target_ic
+
+    @property
+    def connectivity(self):
+        return self._connectivity
+
+    def print_connectivity(self):
+        format_func = "{:3}".format
+        print("--Connectivity Starts-- \n")
+        for i in range(len(self.numbers)):
+            print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
+            print("\n--Connectivity Ends--")
+
     def _regenerate_ic(self):
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
@@ -183,12 +213,6 @@ class Internal(Cartesian):
         return v, d, dd
         # x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
         # return v, x_d, x_dd
-
-    @property
-    def cost_value_in_cc(self):
-        v, d, dd = self._cost_value()
-        x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
-        return v, x_d, x_dd
 
     def _calculate_cost_value(self):
         if self.target_ic is None:
@@ -279,30 +303,6 @@ class Internal(Cartesian):
                            atoms[j] + 3] += deriv[i, :3, j]
         self._cc_to_ic_hessian = np.vstack(
             (self._cc_to_ic_hessian, tmp_vector))
-
-    @property
-    def ic(self):
-        return self._ic
-
-    @property
-    def ic_values(self):
-        value = [i.value for i in self._ic]
-        return np.array(value)
-
-    @property
-    def target_ic(self):
-        return self._target_ic
-
-    @property
-    def connectivity(self):
-        return self._connectivity
-
-    def print_connectivity(self):
-        format_func = "{:3}".format
-        print("--Connectivity Starts-- \n")
-        for i in range(len(self.numbers)):
-            print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
-        print("\n--Connectivity Ends--")
 
 # import horton as ht
 # fn_xyz = ht.context.get_fn("test/water.xyz")
