@@ -81,6 +81,9 @@ class Cartesian(object):
             raise AtomsNumberError(
                 "the dimentsion of coordinates are not the same")
         self._coordinates = new_coor.copy()
+        self._reset_cartesian()
+
+    def _reset_cartesian(self):
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None

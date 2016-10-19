@@ -31,8 +31,8 @@ class GaussianWrapper(object):
         else:
             freq = ""
         filename = self.create_input_file(charge, multi, freq=freq)
-        print "gausian is going to run \n{} \n{} \n{}".format(charge, multi,
-                                                              self.molecule.ic)
+        # print "gausian is going to run \n{} \n{} \n{}".format(charge, multi,
+                                                            #   self.molecule.ic)
         fchk_file = self._run_gaussian(filename)
         assert isinstance(fchk_file,
                           FCHKFile), "Gaussian calculation didn't run properly"

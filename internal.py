@@ -209,6 +209,8 @@ class Internal(Cartesian):
     def _regenerate_ic(self):
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
+        self._internal_gradient = None
+        self._internal_hessian = None
         for ic in self.ic:
             rs = self.coordinates[np.array(ic.atoms)]
             ic.set_new_coordinates(rs)

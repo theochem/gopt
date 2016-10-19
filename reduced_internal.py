@@ -53,6 +53,10 @@ class ReducedInternal(Internal):  # need tests
         self._vspace_hessian = np.dot(
             np.dot(self.vspace.T, self._internal_hessian), self.vspace)
 
+    def swap_internal_coordinates(self, index_1, index_2):
+        super(ReducedInternal, self).swap_internal_coordinates(index_1, index_2)
+        self._reset_v_space()
+
     def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):  # add reset
         super(ReducedInternal, self)._add_new_internal_coordinate(new_ic, d,
                                                                   dd, atoms)
@@ -61,6 +65,8 @@ class ReducedInternal(Internal):  # need tests
     def _reset_v_space(self):
         self._red_space = None
         self._non_red_space = None
+        self._vspace_gradient = None
+        self._vspace_hessian = None
 
     def _svd_of_cc_to_ic_gradient(self, threshold=1e-6):  # tested
         u, s, v = np.linalg.svd(self._cc_to_ic_gradient)
