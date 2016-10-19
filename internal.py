@@ -170,7 +170,7 @@ class Internal(Cartesian):
             np.linalg.pinv(self._cc_to_ic_gradient.T), self._energy_gradient)
         # g_q = (B^T)^+ \cdot g_x
         hes_K = self._energy_hessian - np.tensordot(
-            self._energy_gradient, self._cc_to_ic_hessian, axes=1)
+            self._internal_gradient, self._cc_to_ic_hessian, axes=1)
         self._internal_hessian = np.dot(
             np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_K),
             np.linalg.pinv(self._cc_to_ic_gradient))
