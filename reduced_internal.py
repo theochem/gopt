@@ -14,6 +14,8 @@ class ReducedInternal(Internal):  # need tests
         self._k_ic_n = key_ic_number
         self._red_space = None
         self._non_red_space = None
+        self._vspace_gradient = None
+        self._vspace_hessian = None
 
     @property
     def df(self):
@@ -44,6 +46,12 @@ class ReducedInternal(Internal):  # need tests
     def set_new_coordinates(self, new_coor):
         super(ReducedInternal, self).set_new_coordinates(new_coor)
         self._reset_v_space()
+
+    def energy_calculation(self, **kwargs):
+        super(ReducedInternal, self).energy_calculation(**kwargs)
+        self._vspace_gradient = np.dot(self.vspace.T, self._internal_gradient)
+        self._vspace_hessian = np.dot(
+            np.dot(self.vspace.T, self._internal_hessian), self.vspace)
 
     def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):  # add reset
         super(ReducedInternal, self)._add_new_internal_coordinate(new_ic, d,

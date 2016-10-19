@@ -117,6 +117,7 @@ class Cartesian(object):
             self._energy_gradient = grad
             self._energy_hessian = hess
 
+        # set new coordinates after rotation
         # set self._energy
         # set self._energy_gradient
         # sel self._energy_hessian

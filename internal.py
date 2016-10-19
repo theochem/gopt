@@ -1,7 +1,5 @@
 from __future__ import absolute_import, print_function
 
-from copy import deepcopy
-
 import numpy as np
 
 from saddle.cartesian import Cartesian
@@ -82,6 +80,8 @@ class Internal(Cartesian):
         self._target_ic = None
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
+        self._internal_gradient = None
+        self._internal_hessian = None
 
     def add_bond(self, atom1, atom2):  # tested
         if atom1 == atom2:
@@ -163,6 +163,18 @@ class Internal(Cartesian):
         connection = self.connectivity[index]
         connected_index = np.where(connection > 0)[0]
         return connected_index
+
+    def energy_calculation(self, **kwargs):
+        super(Internal, self).energy_calculation(**kwargs)
+        self._internal_gradient = np.dot(
+            np.linalg.pinv(self._cc_to_ic_gradient.T), self._energy_gradient)
+        # g_q = (B^T)^+ \cdot g_x
+        hes_K = self._energy_hessian - np.tensordot(
+            self._energy_gradient, self._cc_to_ic_hessian, axes=1)
+        self._internal_hessian = np.dot(
+            np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_K),
+            np.linalg.pinv(self._cc_to_ic_gradient))
+        # h_q = (B^T)^+ \cdot (H_x - K) \cdot B^+
 
     @property
     def cost_value_in_cc(self):
