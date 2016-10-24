@@ -5,7 +5,7 @@ import numpy as np
 from saddle.opt.abclass import TrustRadius
 
 
-class DefaultTrustRadius(TrustRadius):
+class DefaultTrustRadius(TrustRadius): # need to be tested
     def __init__(self, number_of_atoms):
         self._number_of_atoms = number_of_atoms
 

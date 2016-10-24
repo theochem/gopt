@@ -49,8 +49,3 @@ class SaddlePoint(Point):
 
     def set_trust_radius_stride(self, stride):
         self._trust_radius_stride = stride
-
-
-a = ReducedInternal(np.array([1]), np.array([1]), 1, 1, 1)
-b = SaddlePoint(a)
-print(a.vspace_gradient)
