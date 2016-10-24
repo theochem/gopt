@@ -9,7 +9,7 @@ from saddle.gaussianwrapper import GaussianWrapper
 
 
 class Cartesian(object):
-    """ Cartesian Coordinate
+    """ Cartesian Coordinate.
 
     Properties
     ----------

@@ -209,14 +209,17 @@ class Internal(Cartesian):
     def _regenerate_ic(self):
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
-        self._internal_gradient = None
-        self._internal_hessian = None
+        self._clear_g_and_h()
         for ic in self.ic:
             rs = self.coordinates[np.array(ic.atoms)]
             ic.set_new_coordinates(rs)
             d, dd = ic.get_gradient_hessian()
             self._add_cc_to_ic_gradient(d, ic.atoms)  # add gradient
             self._add_cc_to_ic_hessian(dd, ic.atoms)  # add hessian
+
+    def _clear_g_and_h(self):
+        self._internal_gradient = None
+        self._internal_hessian = None
 
     def _create_geo_point(self):
         _, x_d, x_dd = self.cost_value_in_cc
@@ -268,6 +271,7 @@ class Internal(Cartesian):
             return True
 
     def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):
+        self._clear_g_and_h()
         self._ic.append(new_ic)
         self._add_cc_to_ic_gradient(d, atoms)  # add gradient
         self._add_cc_to_ic_hessian(dd, atoms)  # add hessian

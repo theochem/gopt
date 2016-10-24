@@ -2,7 +2,7 @@ from __future__ import absolute_import, print_function
 
 import numpy as np
 
-# from saddle.errors import AtomsNumberError, InputTypeError, NotSetError
+from saddle.errors import NotSetError
 from saddle.internal import Internal
 from saddle.solver import diagonalize
 
@@ -32,6 +32,18 @@ class ReducedInternal(Internal):  # need tests
             self._generate_nonreduce_space()
         return np.hstack((self._red_space, self._non_red_space))
 
+    @property
+    def vspace_gradient(self):
+        if self._vspace_gradient is None:
+            raise NotSetError
+        return self._vspace_gradient
+
+    @property
+    def vspace_hessian(self):
+        if self._vspace_hessian is None:
+            raise NotSetError
+        return self._vspace_hessian
+
     def set_key_ic_number(self, number):
         self._k_ic_n = number
         self._reset_v_space()
@@ -54,7 +66,8 @@ class ReducedInternal(Internal):  # need tests
             np.dot(self.vspace.T, self._internal_hessian), self.vspace)
 
     def swap_internal_coordinates(self, index_1, index_2):
-        super(ReducedInternal, self).swap_internal_coordinates(index_1, index_2)
+        super(ReducedInternal, self).swap_internal_coordinates(index_1,
+                                                               index_2)
         self._reset_v_space()
 
     def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):  # add reset
