@@ -9,8 +9,13 @@ class SaddleHessianModifier(object):
     negative = -0.005
 
     @staticmethod
-    def modify_hessian(hessian, key_ic_number=0,
-                       negative_eigen=0):  # need to be tested
+    def modify_hessian(point, key_ic_number=0, negative_eigen=0):
+        new_hessian = SaddleHessianModifier._modify_hessian(point.hessian, key_ic_number, negative_eigen)
+        point.set_hessian(new_hessian)
+
+    @staticmethod
+    def _modify_hessian(hessian, key_ic_number,
+                       negative_eigen):  # need to be tested
         assert hessian.shape[0] == hessian.shape[1]
         assert len(hessian.shape) == 2
         dimension = hessian.shape[0]
@@ -46,11 +51,8 @@ class SaddleHessianModifier(object):
             pos_index = (fraction.argsort() + total_neg)[:-diff]
             neg_index = np.append((fraction.argsort()+ total_neg)[-diff:],
                                   np.arange(total_neg))
-            print "neg", neg_index
         ngt_e_vl = w[neg_index] # negative eigenvalues
-        print "nega",ngt_e_vl
         pst_e_vl = w[pos_index] # positive eigenvalues
-        print "posi",pst_e_vl
         ngt_e_vl[ngt_e_vl > SaddleHessianModifier.negative] = SaddleHessianModifier.negative # change the nagetive eigenvalues to <= -threshold
         pst_e_vl[pst_e_vl < SaddleHessianModifier.positive] = SaddleHessianModifier.positive # change the positive eigenvalues to >= threshold
         w[neg_index] = ngt_e_vl

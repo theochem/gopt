@@ -13,6 +13,9 @@ class SaddlePoint(Point):
         self._structure = structure
         self._step = None
         self._trust_radius_stride = None
+        if self._structure.vspace_hessian is None:
+            raise NotSetError
+        self._hessian = self._structure.vspace_hessian.copy()
 
     @property
     def gradient(self):
@@ -22,9 +25,7 @@ class SaddlePoint(Point):
 
     @property
     def hessian(self):
-        if self._structure.vspace_hessian is None:
-            raise NotSetError
-        return self._structure.vspace_hessian
+        return self._hessian
 
     @property
     def step(self):
@@ -49,3 +50,6 @@ class SaddlePoint(Point):
 
     def set_trust_radius_stride(self, stride):
         self._trust_radius_stride = stride
+
+    def set_hessian(self, hessian):
+        self._hessian = hessian

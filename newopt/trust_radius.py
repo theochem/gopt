@@ -2,7 +2,7 @@ from __future__ import absolute_import, division
 
 import numpy as np
 
-from saddle.opt.abclass import TrustRadius
+from saddle.newopt.abclass import TrustRadius
 
 
 class DefaultTrustRadius(TrustRadius): # need to be tested
@@ -13,7 +13,7 @@ class DefaultTrustRadius(TrustRadius): # need to be tested
         if criterion.lower() == "energy":
             delta_m = np.dot(pre_point.gradient, pre_point.step) + np.dot(
                 np.dot(pre_point.step.T, pre_point.hessian), pre_point.step)
-            delta_u = target_point.energy - pre_point.energy
+            delta_u = target_point.value - pre_point.value
             ratio = delta_m / delta_u
             if 2 / 3 < ratio < 3 / 2:
                 value = min(max(self.floor, 2 * pre_point.step), self.ceiling)

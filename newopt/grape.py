@@ -4,7 +4,7 @@ from saddle.newopt.abclass import Point
 
 import numpy as np
 
-class Opt(object):
+class Grape(object):
 
     def __init__(self, trust_radius, hessian_update, step_scale, hessian_modifier):
         self._points = []

@@ -5,12 +5,17 @@ import numpy as np
 from saddle.solver import ridders_solver
 
 
-class TRIM(object): # need tests
+class TRIM(object):  # need tests
     @staticmethod
-    def calculate_step(hessian,
-                       gradient,
-                       trust_radius_stride,
-                       nagetive_eigen=0):
+    def calculated_step(point, negative_eigen=0):
+        new_step = TRIM._calculate_step(point.hessian, point, gradient,
+                                        point.trust_radius_stride,
+                                        negative_eigen)
+        point.set_step(new_step)
+
+    @staticmethod
+    def _calculate_step(hessian, gradient, trust_radius_stride,
+                        nagetive_eigen):
         c_step = -np.dot(np.linalg.pinv(hessian), gradient)
         if np.linalg.norm(c_step) <= trust_radius_stride:
             return c_step
