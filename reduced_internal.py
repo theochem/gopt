@@ -70,6 +70,16 @@ class ReducedInternal(Internal):  # need tests
                                                                index_2)
         self._reset_v_space()
 
+    def update_to_new_structure(self, delta_v): # to be tested
+        delta_ic = self._get_delta_ic_from_delta_v(delta_v)
+        new_ic = delta_ic + self.ic_values
+        self.set_target_ic(new_ic)
+        self.converge_to_target_ic()
+        self._reset_v_space()
+
+    def _get_delta_ic_from_delta_v(self, delta_v):
+        return np.dot(self.vspace, delta_v)
+
     def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):  # add reset
         super(ReducedInternal, self)._add_new_internal_coordinate(new_ic, d,
                                                                   dd, atoms)

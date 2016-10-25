@@ -2,6 +2,8 @@ from __future__ import absolute_import, print_function
 
 from saddle.newopt.abclass import Point
 
+from copy import deepcopy
+
 import numpy as np
 
 class Grape(object):
@@ -19,11 +21,16 @@ class Grape(object):
 
     @property
     def last(self):
-        return self._points[-1]
+        try: return self._points[-1]
+        except IndexError:
+            return None
 
     def add_point(self, new_point):
         assert isinstance(new_point, Point)
-        self._points.append(new_point)
+        copy_n_p = deepcopy(new_point)
+        if self.last is None:
+            self._t_r.initialize(copy_n_p)
+        self._points.append(copy_n_p)
 
     def modify_hessian(self, *args, **kwargs):
         self._h_m.modify_hessian(self.last, *args, **kwargs)
@@ -32,4 +39,5 @@ class Grape(object):
         self._s_s.calculate_step(self.last, *args, **kwargs)
 
     def calculate_new_point(self, *args, **kwargs):
-        pass
+        new_point = self.last.update_point(*args, **kwargs)
+        return new_point

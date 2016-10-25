@@ -2,7 +2,7 @@ from __future__ import absolute_import, division
 
 import numpy as np
 
-from saddle.newopt.abclass import TrustRadius
+from saddle.newopt.abclass import TrustRadius, Point
 
 
 class DefaultTrustRadius(TrustRadius): # need to be tested
@@ -23,9 +23,14 @@ class DefaultTrustRadius(TrustRadius): # need to be tested
                 value = min(1 / 4 * pre_point.step, self.ceiling)
             target_point.set_trust_radius_stride(value)
 
-    def readjust(self, point, target_point):
+    def readjust(self, point):
+        assert isinstance(point, Point)
         new_stride = 1 / 4 * point.trust_radius_stride
         return new_stride
+
+    def initialize(self, point):
+        assert isinstance(point, Point)
+        point.set_trust_radius_stride(self.starting)
 
     @property
     def ceiling(self):

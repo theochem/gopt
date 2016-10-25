@@ -2,7 +2,10 @@ import numpy as np
 
 import horton as ht
 from saddle.newopt.grape import Grape
+from saddle.newopt.hessian_modifier import SaddleHessianModifier
 from saddle.newopt.saddle_point import SaddlePoint
+from saddle.newopt.step_scaler import TRIM
+from saddle.newopt.trust_radius import DefaultTrustRadius
 from saddle.reduced_internal import ReducedInternal
 
 
@@ -60,20 +63,46 @@ class TestGrape(object):
             [[0.54831182, -0.01345925, -0.04730117],
              [-0.01345925, 0.54831182, -0.04730117],
              [-0.04730117, -0.04730117, 0.18274632]])
-        # self.ri._vspace_gradient = np.array(
-        #     [-0.0142825, -0.01240347, -0.00711985])
-        # self.ri._vspace_hessian = np.array(
-        #     [[0.54831182, 0.00938767, -0.04827446],
-        #      [0.00938767, 0.51170175, 0.11950097],
-        #      [-0.04827446, 0.11950097, 0.21935639]])
+        self.ri._vspace_gradient = np.dot(self.ri.vspace.T,
+                                          self.ri._internal_gradient)
+        self.ri._vspace_hessian = np.dot(
+            np.dot(self.ri.vspace.T, self.ri._internal_hessian),
+            self.ri.vspace)
 
     def test_vspace_value(self):
-        ref_vspace = np.array(
-            [[1.00000000e+00, 2.19203002e-16, 3.63182638e-17],
-             [-2.22044605e-16, 8.91892117e-01, 4.52248219e-01],
-             [5.89805982e-17, -4.52248219e-01, 8.91892117e-01]])
-        print self.ri.vspace
-        print self.ri._red_space
+        test_x_step = np.array([0.1, 0., 0., 0., 0.2, 0., 0., 0.1, 0.1])
+        test_ic_step = np.dot(self.ri._cc_to_ic_gradient, test_x_step)
+        test_v_step = np.dot(self.ri.vspace.T, test_ic_step)
+        g_x = np.dot(self.ri.energy_gradient, test_x_step)
+        g_ic = np.dot(self.ri._internal_gradient, test_ic_step)
+        g_v = np.dot(self.ri._vspace_gradient, test_v_step)
+        assert np.allclose(g_x, g_ic)
+        assert np.allclose(g_ic, g_v)
 
-        # assert np.allclose(self.ri.vspace, ref_vspace)
-        assert False
+    def test_optimizer_initializataion(self):
+        f_p = SaddlePoint(structure=self.ri)
+        tr = DefaultTrustRadius(number_of_atoms=3)
+        ss = TRIM()
+        hm = SaddleHessianModifier()
+        li_grape = Grape(
+            hessian_update=None,
+            trust_radius=tr,
+            step_scale=ss,
+            hessian_modifier=hm)
+        li_grape.add_point(f_p)
+        assert np.allclose(f_p.hessian, self.ri._vspace_hessian)
+        # print(f_p.hessian)
+        li_grape.modify_hessian(key_ic_number=1, negative_eigen=1)
+        # print li_grape._points[0].hessian
+        # print(f_p.hessian)
+        p_w, _ = np.linalg.eigh(f_p.hessian)
+        w, _ = np.linalg.eigh(li_grape._points[0].hessian)
+        assert np.allclose(w, np.array([-0.005, 0.17046595, 0.54713294]))
+        assert np.allclose(p_w, np.array([0.17046595, 0.54713294, 0.56177107]))
+        assert li_grape.total == 1
+        assert np.allclose(li_grape.last.trust_radius_stride,
+                           1.7320508075688772 * 0.35)
+        li_grape.calculate_step(negative_eigen=1)
+        assert (np.linalg.norm(li_grape.last.step) <=
+                li_grape.last.trust_radius_stride)
+        # assert False

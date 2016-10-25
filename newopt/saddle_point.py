@@ -6,6 +6,7 @@ from saddle.errors import NotSetError
 from saddle.newopt.abclass import Point
 from saddle.reduced_internal import ReducedInternal
 
+from copy import deepcopy
 
 class SaddlePoint(Point):
     def __init__(self, structure):
@@ -53,3 +54,15 @@ class SaddlePoint(Point):
 
     def set_hessian(self, hessian):
         self._hessian = hessian
+
+    def update_point(self):
+        if self.step is None:
+            raise NotSetError
+        new_self = deepcopy(self)
+        new_self._structure.update_to_new_structure(new_self.step)
+        new_self._reset_saddle_point()
+        return new_self
+
+    def _reset_saddle_point(self):
+        self._step = None
+        self._trust_radius_stride = None

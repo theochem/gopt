@@ -41,6 +41,14 @@ class Point(object):
     def set_trust_radius_stride(self, *args, **kwargs):
         pass
 
+    @abstractmethod
+    def set_hessian(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def update_point(self, *args, **kwargs):
+        pass
+
 
 class TrustRadius(object):
 

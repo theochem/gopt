@@ -127,3 +127,17 @@ class TestReduceInternal(object):
         ri_mol.set_key_ic_number(1)
         assert ri_mol._red_space is None
         assert ri_mol._non_red_space is None
+
+    def test_get_delta_v(self):
+        fn_xyz = ht.context.get_fn('test/water.xyz')
+        mol = ht.IOData.from_file(fn_xyz)
+        ri_mol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        ri_mol.add_bond(1, 0)
+        ri_mol.add_bond(1, 2)
+        ri_mol.add_angle_cos(0, 1, 2)
+        v_change = np.array([-0.14714498, 0.12726298, -0.20531072])
+        ic_change = np.dot(ri_mol.vspace, v_change)
+        assert np.allclose(ic_change, np.array([0.2, 0.2, 0.]))
+        ri_mol.update_to_new_structure(v_change)
+        assert np.allclose(ri_mol.ic_values,
+                           np.array([2.01413724, 2.01413724, -0.33333407]))

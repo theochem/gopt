@@ -7,8 +7,8 @@ from saddle.solver import ridders_solver
 
 class TRIM(object):  # need tests
     @staticmethod
-    def calculated_step(point, negative_eigen=0):
-        new_step = TRIM._calculate_step(point.hessian, point, gradient,
+    def calculate_step(point, negative_eigen=0):
+        new_step = TRIM._calculate_step(point.hessian, point.gradient,
                                         point.trust_radius_stride,
                                         negative_eigen)
         point.set_step(new_step)
