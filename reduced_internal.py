@@ -70,7 +70,7 @@ class ReducedInternal(Internal):  # need tests
                                                                index_2)
         self._reset_v_space()
 
-    def update_to_new_structure(self, delta_v): # to be tested
+    def update_to_new_structure_with_delta_v(self, delta_v):
         delta_ic = self._get_delta_ic_from_delta_v(delta_v)
         new_ic = delta_ic + self.ic_values
         self.set_target_ic(new_ic)

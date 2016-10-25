@@ -55,11 +55,11 @@ class SaddlePoint(Point):
     def set_hessian(self, hessian):
         self._hessian = hessian
 
-    def update_point(self):
+    def update_point(self): # to be tested
         if self.step is None:
             raise NotSetError
         new_self = deepcopy(self)
-        new_self._structure.update_to_new_structure(new_self.step)
+        new_self._structure.update_to_new_structure_with_delta_v(new_self.step)
         new_self._reset_saddle_point()
         return new_self
 
