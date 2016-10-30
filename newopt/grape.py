@@ -14,7 +14,6 @@ class Grape(object):
         self._h_u = hessian_update
         self._s_s = step_scale
         self._h_m = hessian_modifier
-        self._e
 
     @property
     def total(self):
