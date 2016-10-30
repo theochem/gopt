@@ -25,6 +25,7 @@ class TestGrape(object):
         mol.add_angle_cos(0, 1, 2)
         mol.energy_calculation()
         f_p = SaddlePoint(structure=mol)
+        print f_p.energy
         tr = DefaultTrustRadius(number_of_atoms=3)
         ss = TRIM()
         hm = SaddleHessianModifier()
@@ -37,5 +38,5 @@ class TestGrape(object):
         li_grape.modify_hessian(key_ic_number=1, negative_eigen=0)
         li_grape.calculate_step(negative_eigen=0)
         s_p = li_grape.calculate_new_point()
-        s_p.energy_calculation()
-        
+        s_p._structure.nergy_calculation()
+        print s_p.energy
