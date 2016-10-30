@@ -1,4 +1,4 @@
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, division
 
 from saddle.newopt.abclass import Point
 
@@ -14,6 +14,7 @@ class Grape(object):
         self._h_u = hessian_update
         self._s_s = step_scale
         self._h_m = hessian_modifier
+        self._e
 
     @property
     def total(self):
@@ -41,3 +42,14 @@ class Grape(object):
     def calculate_new_point(self, *args, **kwargs):
         new_point = self.last.update_point(*args, **kwargs)
         return new_point
+
+    def verify_new_point(self, new_point, *args, **kwargs):
+        if new_point.value < self.last.value:
+            return 1
+        else:
+            new_point.set_trust_radius_scale(0.25)
+            if new_point < 0.1 * self._s_s.floor:
+                new_point.set_trust_radius_stride(self._s_s.floor)
+                return 0
+            else:
+                return -1

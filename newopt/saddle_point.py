@@ -1,12 +1,13 @@
 from __future__ import absolute_import, print_function
 
+from copy import deepcopy
+
 import numpy as np
 
 from saddle.errors import NotSetError
 from saddle.newopt.abclass import Point
 from saddle.reduced_internal import ReducedInternal
 
-from copy import deepcopy
 
 class SaddlePoint(Point):
     def __init__(self, structure):
@@ -51,6 +52,10 @@ class SaddlePoint(Point):
 
     def set_trust_radius_stride(self, stride):
         self._trust_radius_stride = stride
+
+    def set_trust_radius_scale(self, scale=1.0):
+        assert scale > 0.
+        self._trust_radius_stride *= scale
 
     def set_hessian(self, hessian):
         self._hessian = hessian

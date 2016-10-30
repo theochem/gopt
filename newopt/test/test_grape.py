@@ -106,3 +106,22 @@ class TestGrape(object):
         assert (np.linalg.norm(li_grape.last.step) <=
                 li_grape.last.trust_radius_stride)
         # assert False
+
+    def test_optimizer_process(self):
+        f_p = SaddlePoint(structure=self.ri)
+        tr = DefaultTrustRadius(number_of_atoms=3)
+        ss = TRIM()
+        hm = SaddleHessianModifier()
+        li_grape = Grape(
+            hessian_update=None,
+            trust_radius=tr,
+            step_scale=ss,
+            hessian_modifier=hm)
+        li_grape.add_point(f_p)
+        li_grape.modify_hessian(key_ic_number=1, negative_eigen=0)
+        li_grape.calculate_step(negative_eigen=0)
+        s_p = li_grape.calculate_new_point()
+        # print f_p._structure.ic_values
+        # print s_p._structure.ic_values
+        # print s_p.value
+        s_p.energy_calculation()
