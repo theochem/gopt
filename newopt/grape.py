@@ -42,8 +42,13 @@ class Grape(object):
         new_point = self.last.update_point(*args, **kwargs)
         return new_point
 
+    def update_trust_radius(self, *args, **kwargs):
+        new_point = self.last
+        pre_point = self._points[-2]
+        self._t_r.update(new_point, pre_point, *args, **kwargs)
+
     def verify_new_point(self, new_point, *args, **kwargs):
-        if new_point.value < self.last.value:
+        if np.linalg.norm(new_point.gradient) < np.linalg.norm(self.last.value):
             return 1
         else:
             new_point.set_trust_radius_scale(0.25)

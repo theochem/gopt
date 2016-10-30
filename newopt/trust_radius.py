@@ -16,11 +16,11 @@ class DefaultTrustRadius(TrustRadius): # need to be tested
             delta_u = target_point.value - pre_point.value
             ratio = delta_m / delta_u
             if 2 / 3 < ratio < 3 / 2:
-                value = min(max(self.floor, 2 * pre_point.step), self.ceiling)
+                value = min(max(self.floor, 2 * pre_point.trust_radius_stride), self.ceiling)
             elif 1 / 3 < ratio < 3:
-                value = max(pre_point.step, self.ceiling)
+                value = max(pre_point.trust_radius_stride, self.ceiling)
             else:
-                value = min(1 / 4 * pre_point.step, self.ceiling)
+                value = min(1 / 4 * pre_point.trust_radius_stride, self.ceiling)
             target_point.set_trust_radius_stride(value)
 
     def readjust(self, point):
