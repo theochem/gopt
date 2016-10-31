@@ -47,6 +47,9 @@ class SaddlePoint(Point):
             raise NotSetError
         return self._structure.energy
 
+    def get_value(self):
+        self._structure.energy_calculation()
+
     def set_step(self, step):
         self._step = step
 
