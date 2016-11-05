@@ -82,6 +82,7 @@ class Internal(Cartesian):
         self._cc_to_ic_hessian = None
         self._internal_gradient = None
         self._internal_hessian = None
+        self._tilt_internal_hessian = None
 
     def add_bond(self, atom1, atom2):  # tested
         if atom1 == atom2:
@@ -173,6 +174,10 @@ class Internal(Cartesian):
             self._internal_gradient, self._cc_to_ic_hessian, axes=1)
         self._internal_hessian = np.dot(
             np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_K),
+            np.linalg.pinv(self._cc_to_ic_gradient))
+        self._tilt_internal_hessian = np.dot(
+            np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T),
+                   self._energy_hessian),
             np.linalg.pinv(self._cc_to_ic_gradient))
         # h_q = (B^T)^+ \cdot (H_x - K) \cdot B^+
 
