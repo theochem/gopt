@@ -66,3 +66,7 @@ class SaddleHessianModifier(object):
         w[w < threshold] = 0.001
         result = np.dot(np.dot(v, np.diag(w)), v.T)
         return result
+
+class Test_Saddle_Modifier(SaddleHessianModifier):
+
+    positive = 0.0001

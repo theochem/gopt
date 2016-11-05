@@ -1,5 +1,5 @@
 %chk=${title}.chk
-#p b3lyp/6-31G ${freq} SCF(XQC)
+#p hf/6-31+G ${freq} SCF(XQC)
 
 ${title}
 
