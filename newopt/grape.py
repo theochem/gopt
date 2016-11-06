@@ -85,3 +85,6 @@ class Grape(object):
         elif np.max(np.abs(pre_p.step)) < 3e-4:
             return True
         return False
+
+    def hessian_update(self, *args, **kwargs):
+        self._h_u.update_hessian(*args, **kwargs)

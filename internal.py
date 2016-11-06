@@ -204,6 +204,14 @@ class Internal(Cartesian):
     def connectivity(self):
         return self._connectivity
 
+    @property
+    def b_matrix(self):
+        return self._cc_to_ic_gradient
+
+    @property
+    def internal_gradient(self):
+        return self.internal_gradient
+
     def print_connectivity(self):
         format_func = "{:3}".format
         print("--Connectivity Starts-- \n")

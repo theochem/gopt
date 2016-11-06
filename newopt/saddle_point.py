@@ -20,6 +20,10 @@ class SaddlePoint(Point):
         self._hessian = self._structure.vspace_hessian.copy()
 
     @property
+    def structure(self):
+        return self._structure
+
+    @property
     def gradient(self):
         if self._structure.vspace_gradient is None:
             raise NotSetError
