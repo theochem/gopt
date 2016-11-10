@@ -6,6 +6,7 @@ import numpy as np
 
 from saddle.errors import AtomsNumberError, NotSetError
 from saddle.gaussianwrapper import GaussianWrapper
+from saddle.fchk import FCHKFile
 
 
 class Cartesian(object):
@@ -103,6 +104,15 @@ class Cartesian(object):
     @property
     def coordinates(self):
         return self._coordinates
+
+    def energy_from_fchk(self, abs_path, gradient=True, hessian=True):
+        fchk_file = FCHKFile(filename=abs_path)
+        self.set_new_coordinates(fchk_file.get_coordinates().reshape(-1,3))
+        self._energy = fchk_file.get_energy()
+        if gradient:
+            self._energy_gradient = fchk_file.get_gradient()
+        if hessian:
+            self._energy_hessian = fchk_file.get_hessian()
 
     def energy_calculation(self, **kwargs):  # need test
         title = kwargs.pop('title', 'untitled')

@@ -165,20 +165,13 @@ class Internal(Cartesian):
         connected_index = np.where(connection > 0)[0]
         return connected_index
 
+    def energy_from_fchk(self, abs_path, gradient=True, hessian=True):
+        super(Internal, self).energy_from_fchk(abs_path, gradient, hessian)
+        self._energy_hessian_transformation()
+
     def energy_calculation(self, **kwargs):
         super(Internal, self).energy_calculation(**kwargs)
-        self._internal_gradient = np.dot(
-            np.linalg.pinv(self._cc_to_ic_gradient.T), self._energy_gradient)
-        # g_q = (B^T)^+ \cdot g_x
-        hes_K = self._energy_hessian - np.tensordot(
-            self._internal_gradient, self._cc_to_ic_hessian, axes=1)
-        self._internal_hessian = np.dot(
-            np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_K),
-            np.linalg.pinv(self._cc_to_ic_gradient))
-        self._tilt_internal_hessian = np.dot(
-            np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T),
-                   self._energy_hessian),
-            np.linalg.pinv(self._cc_to_ic_gradient))
+        self._energy_hessian_transformation()
         # h_q = (B^T)^+ \cdot (H_x - K) \cdot B^+
 
     @property
@@ -218,6 +211,20 @@ class Internal(Cartesian):
         for i in range(len(self.numbers)):
             print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
             print("\n--Connectivity Ends--")
+
+    def _energy_hessian_transformation(self):
+        self._internal_gradient = np.dot(
+            np.linalg.pinv(self._cc_to_ic_gradient.T), self._energy_gradient)
+        # g_q = (B^T)^+ \cdot g_x
+        hes_K = self._energy_hessian - np.tensordot(
+            self._internal_gradient, self._cc_to_ic_hessian, axes=1)
+        self._internal_hessian = np.dot(
+            np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_K),
+            np.linalg.pinv(self._cc_to_ic_gradient))
+        self._tilt_internal_hessian = np.dot(
+            np.dot(
+                np.linalg.pinv(self._cc_to_ic_gradient.T),
+                self._energy_hessian), np.linalg.pinv(self._cc_to_ic_gradient))
 
     def _regenerate_ic(self):
         self._cc_to_ic_gradient = None

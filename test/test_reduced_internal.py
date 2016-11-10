@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+import os
+
 import numpy as np
 
 import horton as ht
@@ -67,6 +69,7 @@ class TestReduceInternal(object):
                            [4.25636302e-01, -8.79460122e-04, 7.28119408e-01],
                            [4.30768766e-01, -4.48895735e-02, -6.55415872e-01],
                            [-1.37440048e-01, -1.43417851e-01, 2.00679252e-01]])
+        self.red_int._reset_v_space()
         assert np.allclose(self.red_int.vspace, vp_ref)
 
     def test_ic_ric_transform(self):
@@ -138,6 +141,35 @@ class TestReduceInternal(object):
         v_change = np.array([-0.14714498, 0.12726298, -0.20531072])
         ic_change = np.dot(ri_mol.vspace, v_change)
         assert np.allclose(ic_change, np.array([0.2, 0.2, 0.]))
-        ri_mol.update_to_new_structure(v_change)
+        ri_mol.update_to_new_structure_with_delta_v(v_change)
         assert np.allclose(ri_mol.ic_values,
                            np.array([2.01413724, 2.01413724, -0.33333407]))
+
+    def test_align_v_space(self):
+        fn_xyz = ht.context.get_fn('test/water.xyz')
+        mol = ht.IOData.from_file(fn_xyz)
+        mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        mol_1.add_bond(1, 0)
+        mol_1.add_bond(1, 2)
+        mol_1.add_angle_cos(0, 1, 2)
+        mol_1.set_key_ic_number(1)
+        mol_2 = deepcopy(mol_1)
+        mol_1.set_target_ic([2.0, 2.0, -0.5])
+        mol_1.converge_to_target_ic()
+        assert np.allclose(mol_1.ic_values, [2., 2., -0.5])
+        copy1 = deepcopy(mol_1)
+        copy2 = deepcopy(mol_2)
+        ReducedInternal.align_vspace(copy1, copy2)
+        assert np.allclose(copy1.vspace, mol_2.vspace)
+        path = os.path.dirname(os.path.realpath(__file__))
+        fchk_path = path+"/water_1.fchk"
+        #print 'cv2',copy2.vspace
+        copy2.energy_from_fchk(fchk_path)
+        #print 'cv2, new',copy2.vspace, copy2.vspace_gradient
+        ref_ic_gradient = np.dot(copy2.vspace, copy2.vspace_gradient)
+        #print 'cv2,energy'
+        ReducedInternal.align_vspace(copy2, copy1)
+        #print 'cv2', copy2.vspace, copy2.vspace_gradient
+        new_ic_gradient = np.dot(copy2.vspace, copy2.vspace_gradient)
+        assert np.allclose(ref_ic_gradient, new_ic_gradient)
+        assert np.allclose(copy1.vspace, copy2.vspace)

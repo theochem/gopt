@@ -16,6 +16,7 @@ class ReducedInternal(Internal):  # need tests
         self._non_red_space = None
         self._vspace_gradient = None
         self._vspace_hessian = None
+        self._vspace = None
 
     @property
     def df(self):
@@ -30,18 +31,21 @@ class ReducedInternal(Internal):  # need tests
         if self._red_space is None or self._non_red_space is None:
             self._generate_reduce_space()
             self._generate_nonreduce_space()
-        return np.hstack((self._red_space, self._non_red_space))
+            self._vspace = np.hstack((self._red_space, self._non_red_space))
+        return self._vspace
+
 
     @property
     def vspace_gradient(self):
         if self._vspace_gradient is None:
-            raise NotSetError
+            self._vspace_gradient = np.dot(self.vspace.T, self._internal_gradient)
         return self._vspace_gradient
 
     @property
     def vspace_hessian(self):
         if self._vspace_hessian is None:
-            raise NotSetError
+            self._vspace_hessian = np.dot(
+                np.dot(self.vspace.T, self._internal_hessian), self.vspace)
         return self._vspace_hessian
 
     def set_key_ic_number(self, number):
@@ -55,15 +59,30 @@ class ReducedInternal(Internal):  # need tests
         internal_ob._k_ic_n = key_ic_number
         internal_ob._reset_v_space()
 
+    @classmethod
+    def align_vspace(cls, one, target):
+        assert isinstance(one, cls)
+        assert isinstance(target, cls)
+        overlap = np.dot(one.vspace.T, target.vspace)
+        u, s, v = np.linalg.svd(overlap)
+        q_min = np.dot(u, v)
+        new_v = np.dot(one.vspace, q_min)
+        one.set_vspace(new_v)
+
+    def set_vspace(self, new_vspace):
+        self._vspace = new_vspace
+        self._vspace_gradient = None
+        self._vspace_hessian = None
+
     def set_new_coordinates(self, new_coor):
         super(ReducedInternal, self).set_new_coordinates(new_coor)
         self._reset_v_space()
 
+    def energy_from_fchk(self, abs_path, gradient=True, hessian=True):
+        super(ReducedInternal, self).energy_from_fchk(abs_path, gradient, hessian)
+
     def energy_calculation(self, **kwargs):
         super(ReducedInternal, self).energy_calculation(**kwargs)
-        self._vspace_gradient = np.dot(self.vspace.T, self._internal_gradient)
-        self._vspace_hessian = np.dot(
-            np.dot(self.vspace.T, self._internal_hessian), self.vspace)
 
     def swap_internal_coordinates(self, index_1, index_2):
         super(ReducedInternal, self).swap_internal_coordinates(index_1,
@@ -90,6 +109,7 @@ class ReducedInternal(Internal):  # need tests
         self._non_red_space = None
         self._vspace_gradient = None
         self._vspace_hessian = None
+        self._vspace = None
 
     def _svd_of_cc_to_ic_gradient(self, threshold=1e-6):  # tested
         u, s, v = np.linalg.svd(self._cc_to_ic_gradient)

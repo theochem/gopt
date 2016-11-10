@@ -1,8 +1,9 @@
 import numpy as np
+import os
 
 import horton as ht
 from saddle.cartesian import Cartesian
-
+from copy import deepcopy
 
 class TestCartesian(object):
     @classmethod
@@ -46,3 +47,21 @@ class TestCartesian(object):
         assert np.allclose(self.cartesian.angle_cos(0, 1, 2), ref_angle_cos)
         assert np.allclose(
             self.cartesian.angle(0, 1, 2), np.arccos(ref_angle_cos))
+
+    def test_get_energy_from_fchk(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        fchk_path = path+"/water_1.fchk"
+        mole = deepcopy(self.cartesian)
+        mole.energy_from_fchk(fchk_path)
+        assert np.allclose(mole.energy, -7.599264122862e1)
+        ref_gradient = [2.44329621e-17, 4.95449892e-03, -9.09914286e-03,
+            7.79137241e-16, -3.60443012e-16, 1.81982857e-02, -8.03570203e-16,
+            -4.95449892e-03, -9.09914286e-03]
+        assert np.allclose(mole.energy_gradient, ref_gradient)
+        ref_coor = np.array([0.00000000e+00, 1.48124293e+00, -8.37919685e-01,
+                    0.00000000e+00, 3.42113883e-49, 2.09479921e-01,
+                    -1.81399942e-16, -1.48124293e+00,
+                             -8.37919685e-01]).reshape(-1, 3)
+        assert np.allclose(mole.coordinates, ref_coor)
+
+        #assert False
