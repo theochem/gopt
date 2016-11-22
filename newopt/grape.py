@@ -27,6 +27,33 @@ class Grape(object):
         except IndexError:
             return None
 
+    def start_optimization(self,
+                           iteration=10,
+                           key_ic_number=0,
+                           negative_eigen=0,
+                           quasint=True,
+                           init_hessian=True):
+        assert self.total > 0
+        assert iteration > 0
+        if self.total == 1:
+            if init_hessian == False:
+                self.last.set_hessian = np.eye(len(self.last.gradient))
+            self.modify_hessian(key_ic_number, negative_eigen)
+            self.calculate_step(negative_eigen)
+            self.update_to_new_point()
+            self.align_last_point()
+            iteration -= 1
+        if self.total > 1:
+            while iteration > 0:
+                if quasint == True:
+                    self.update_hessian()
+                self.modify_hessian(key_ic_number, negative_eigen)
+                self.update_trust_radius(criterion="energy")
+                self.calculate_step(negative_eigen)
+                self.update_to_new_point()
+                self.align_last_point()
+                itration -= 1
+
     def add_point(self, new_point):
         assert isinstance(new_point, Point)
         copy_n_p = deepcopy(new_point)
@@ -50,6 +77,9 @@ class Grape(object):
         pre_point = self._points[-2]
         self._t_r.update(new_point, pre_point, *args, **kwargs)
 
+    def align_last_point(self):
+        self.last.structure.align_vspace(self._points[-2].structure)
+
     def _verify_new_point(self, new_point, *args, **kwargs):
         if np.linalg.norm(new_point.gradient) < np.linalg.norm(
                 self.last.gradient):
@@ -57,8 +87,7 @@ class Grape(object):
         else:
             self.last.set_trust_radius_scale(0.25)
             if self.last.trust_radius_stride < 0.01 * self._t_r.floor:
-                self.last.set_trust_radius_stride(
-                    self._t_r.floor)
+                self.last.set_trust_radius_stride(self._t_r.floor)
                 return 0
             else:
                 return -1
@@ -86,7 +115,9 @@ class Grape(object):
             return True
         return False
 
-    def hessian_update(self, *args, **kwargs):
+    def update_hessian(self, *args, **kwargs):
         new_point = self.last
         pre_point = self._points[-2]
-        self._h_u.update_hessian(pre_point, new_point, *args, **kwargs)
+        new_hessian = self._h_u.update_hessian(pre_point, new_point, *args,
+                                               **kwargs)
+        new_point.set_hessian(new_hessian)

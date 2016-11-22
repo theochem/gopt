@@ -94,5 +94,6 @@ class TestGrape(object):
             temp_g, temp_g) / np.dot(s_0.step, temp_g)
         h_new = optser._h_u.update_hessian(s_0, s_1)
         assert np.allclose(h_ref, h_new)
-
-        # assert False
+        assert not np.allclose(s_1.hessian, h_ref)
+        optser.update_hessian()
+        assert np.allclose(s_1.hessian, h_ref)
