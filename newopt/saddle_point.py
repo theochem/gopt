@@ -12,7 +12,7 @@ from saddle.reduced_internal import ReducedInternal
 class SaddlePoint(Point):
     def __init__(self, structure):
         assert isinstance(structure, ReducedInternal)
-        self._structure = structure
+        self._structure = deepcopy(structure)
         self._step = None
         self._trust_radius_stride = None
         if self._structure.vspace_hessian is None:
@@ -31,6 +31,8 @@ class SaddlePoint(Point):
 
     @property
     def hessian(self):
+        if self._hessian is None:
+            self._hessian = self._structure.vspace_hessian.copy()
         return self._hessian
 
     @property
@@ -78,3 +80,4 @@ class SaddlePoint(Point):
     def _reset_saddle_point(self):
         self._step = None
         self._trust_radius_stride = None
+        self._hessian = None

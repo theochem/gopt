@@ -59,15 +59,13 @@ class ReducedInternal(Internal):  # need tests
         internal_ob._k_ic_n = key_ic_number
         internal_ob._reset_v_space()
 
-    @classmethod
-    def align_vspace(cls, one, target):
-        assert isinstance(one, cls)
-        assert isinstance(target, cls)
-        overlap = np.dot(one.vspace.T, target.vspace)
+    def align_vspace(self, target):
+        assert isinstance(target, ReducedInternal)
+        overlap = np.dot(self.vspace.T, target.vspace)
         u, s, v = np.linalg.svd(overlap)
         q_min = np.dot(u, v)
-        new_v = np.dot(one.vspace, q_min)
-        one.set_vspace(new_v)
+        new_v = np.dot(self.vspace, q_min)
+        self.set_vspace(new_v)
 
     def set_vspace(self, new_vspace):
         self._vspace = new_vspace

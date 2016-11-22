@@ -159,7 +159,7 @@ class TestReduceInternal(object):
         assert np.allclose(mol_1.ic_values, [2., 2., -0.5])
         copy1 = deepcopy(mol_1)
         copy2 = deepcopy(mol_2)
-        ReducedInternal.align_vspace(copy1, copy2)
+        copy1.align_vspace(copy2)
         assert np.allclose(copy1.vspace, mol_2.vspace)
         path = os.path.dirname(os.path.realpath(__file__))
         fchk_path = path+"/water_1.fchk"
@@ -168,7 +168,7 @@ class TestReduceInternal(object):
         #print 'cv2, new',copy2.vspace, copy2.vspace_gradient
         ref_ic_gradient = np.dot(copy2.vspace, copy2.vspace_gradient)
         #print 'cv2,energy'
-        ReducedInternal.align_vspace(copy2, copy1)
+        copy2.align_vspace(copy1)
         #print 'cv2', copy2.vspace, copy2.vspace_gradient
         new_ic_gradient = np.dot(copy2.vspace, copy2.vspace_gradient)
         assert np.allclose(ref_ic_gradient, new_ic_gradient)

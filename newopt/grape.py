@@ -66,13 +66,13 @@ class Grape(object):
     def update_to_new_point(self, *args, **kwargs):
         new_point = self.calculate_new_point()
         verify_result = self._verify_new_point(new_point)
-        print('result', verify_result)
+        # print('result', verify_result)
         while verify_result == -1:
             new_point = self.calculate_new_point()
             verify_result = self._verify_new_point(new_point)
         if verify_result == 0:
             new_point = self.calculate_new_point()
-        print("result", verify_result, "after loop")
+        # print("result", verify_result, "after loop")
         self.add_point(new_point)
 
     def converge_test(self, *args, **kwargs):
@@ -87,4 +87,6 @@ class Grape(object):
         return False
 
     def hessian_update(self, *args, **kwargs):
-        self._h_u.update_hessian(*args, **kwargs)
+        new_point = self.last
+        pre_point = self._points[-2]
+        self._h_u.update_hessian(pre_point, new_point, *args, **kwargs)
