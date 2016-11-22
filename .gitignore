@@ -2,7 +2,6 @@
 *.DS_Store
 *.log
 *.chk
-*.fchk
 *.com
 *.swp
 *.swo

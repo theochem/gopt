@@ -35,7 +35,7 @@ class SR1(HessianUpdate):
         if numerator / denominator <= 1e-18:
             return old.vspace_hessian.copy()
         else:
-            old.vspace_hessian + np.outer(delta_y, delta_y.T) / (np.dot(
+            return old.vspace_hessian + np.outer(delta_y, delta_y.T) / (np.dot(
                 delta_y, old_struct.step))
 
 
@@ -47,12 +47,12 @@ class PSB(HessianUpdate):
         new = new_struct.structure
         y = self.secant_condition(old=old, new=new)
         delta_y = y - np.dot(old.vspace_hessian, old_struct.step)
-        term2 = ((np.outer(delta_y, old_struct.step.T) +
-                  np.outer(old_struct.step, delta_y.T)) /
-                  np.dot(old_struct.step.T, old_struct.step))
+        term2 = ((np.outer(delta_y, old_struct.step.T) + np.outer(
+            old_struct.step, delta_y.T)) /
+                 np.dot(old_struct.step.T, old_struct.step))
         term3 = (np.dot(old_struct.step.T, delta_y) /
-                 np.dot(old_struct.step.T, old_struct.step)**2 *
-                 np.outer(old_struct.step, old_struct.step.T))
+                 np.dot(old_struct.step.T, old_struct.step)
+                 **2 * np.outer(old_struct.step, old_struct.step.T))
         return old.vspace_hessian + term2 - term3
 
 

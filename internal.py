@@ -203,7 +203,7 @@ class Internal(Cartesian):
 
     @property
     def internal_gradient(self):
-        return self.internal_gradient
+        return self._internal_gradient
 
     def print_connectivity(self):
         format_func = "{:3}".format
