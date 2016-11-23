@@ -8,189 +8,47 @@ from saddle.newopt.hessian_modifier import SaddleHessianModifier, Test_Saddle_Mo
 from saddle.newopt.saddle_point import SaddlePoint
 from saddle.newopt.step_scaler import TRIM
 from saddle.newopt.trust_radius import DefaultTrustRadius
+from saddle.newopt.hessian_update import BFGS
 from saddle.reduced_internal import ReducedInternal
 
 
 class TestGrape(object):
     @classmethod
     def setup_class(self):
-        fn_xyz = ht.context.get_fn("test/methyl.xyz")
+        fn_xyz = ht.context.get_fn("test/water.xyz")
         mol = ht.IOData.from_file(fn_xyz)  # create a water molecule
-        self.ri = ReducedInternal(mol.coordinates, mol.numbers, 0, 2)
+        self.ri = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
 
     def test_minimun_water_from_other_ic(self):
         mol = deepcopy(self.ri)
         mol.add_bond(0, 1)
-        mol.add_bond(0, 2)
-        mol.add_bond(0, 3)
-        mol.add_angle_cos(1, 0, 2)
-        mol.add_angle_cos(1, 0, 3)
-        mol.add_angle_cos(2, 0, 3)
-        mol.add_dihedral(1, 0, 2, 3)
-        print mol.ic_values
+        mol.add_bond(1, 2)
+        mol.add_angle_cos(0, 1, 2)
+        mol.set_target_ic((2.0, 2.0, -0.2))
+        mol.converge_to_target_ic()
+        mol.set_key_ic_number(0)
         mol.energy_calculation()
         f_p = SaddlePoint(structure=mol)
         tr = DefaultTrustRadius(number_of_atoms=3)
         ss = TRIM()
         hm = Test_Saddle_Modifier()
+        hu = BFGS()
         li_grape = Grape(
-            hessian_update=None,
+            hessian_update=hu,
             trust_radius=tr,
             step_scale=ss,
             hessian_modifier=hm)
         li_grape.add_point(f_p)
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
+        #li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
+        #li_grape.calculate_step(negative_eigen=0)
         # print li_grape.last.step
         # s_p = li_grape.calculate_new_point()
-        li_grape.update_to_new_point()
-        print li_grape.total
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=0, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        print li_grape.last._structure.energy_gradient
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=1, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=1, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        li_grape.update_trust_radius(criterion="energy")
-        li_grape.modify_hessian(key_ic_number=1, negative_eigen=0)
-        li_grape.calculate_step(negative_eigen=0)
-        print li_grape.last.step
-        li_grape.update_to_new_point()
-        print li_grape.last.value
-        print li_grape.last._structure.ic_values
-        print np.linalg.norm(li_grape.last.gradient)
-        assert False
+        #li_grape.update_to_new_point()
+        #print li_grape.total
+        #print li_grape.last.value
+        #print li_grape.last._structure.ic_values
+        #print np.linalg.norm(li_grape.last.gradient)
+        li_grape.start_optimization(iteration=10)
 
 
 '''

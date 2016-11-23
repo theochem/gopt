@@ -47,12 +47,16 @@ class Grape(object):
             while iteration > 0:
                 if quasint == True:
                     self.update_hessian()
+                conver_flag = self.converge_test()
+                if conver_flag:
+                    print("Optimization finished")
+                    break
                 self.modify_hessian(key_ic_number, negative_eigen)
                 self.update_trust_radius(criterion="energy")
                 self.calculate_step(negative_eigen)
                 self.update_to_new_point()
                 self.align_last_point()
-                itration -= 1
+                iteration -= 1
 
     def add_point(self, new_point):
         assert isinstance(new_point, Point)
@@ -107,12 +111,12 @@ class Grape(object):
     def converge_test(self, *args, **kwargs):
         final_p = self.last
         pre_p = self._points[-2]
-        if np.max(np.abs(final_p.gradient)) < 5e-4:
+        if np.max(np.abs(final_p.structure.energy_gradient)) < 3e-4:
             return True
         elif np.abs(final_p.value - pre_p.value) < 1e-6:
             return True
-        elif np.max(np.abs(pre_p.step)) < 3e-4:
-            return True
+        #elif np.max(np.abs(pre_p.step)) < 3e-4:
+        #    return True
         return False
 
     def update_hessian(self, *args, **kwargs):
