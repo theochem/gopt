@@ -24,9 +24,9 @@ class TestGrape(object):
         mol.add_bond(0, 1)
         mol.add_bond(1, 2)
         mol.add_angle_cos(0, 1, 2)
-        mol.set_target_ic((2.0, 2.0, -0.2))
+        mol.set_target_ic((2.4, 2.4, -0.5))
         mol.converge_to_target_ic()
-        mol.set_key_ic_number(0)
+        mol.set_key_ic_number(2)
         mol.energy_calculation()
         f_p = SaddlePoint(structure=mol)
         tr = DefaultTrustRadius(number_of_atoms=3)
@@ -48,7 +48,7 @@ class TestGrape(object):
         #print li_grape.last.value
         #print li_grape.last._structure.ic_values
         #print np.linalg.norm(li_grape.last.gradient)
-        li_grape.start_optimization(iteration=10)
+        li_grape.start_optimization(key_ic_number=2, iteration=20, init_hessian=False)
 
 
 '''

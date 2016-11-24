@@ -37,7 +37,7 @@ class Grape(object):
         assert iteration > 0
         if self.total == 1:
             if init_hessian == False:
-                self.last.set_hessian = np.eye(len(self.last.gradient))
+                self.last.set_hessian(np.eye(len(self.last.gradient)))
             self.modify_hessian(key_ic_number, negative_eigen)
             self.calculate_step(negative_eigen)
             self.update_to_new_point()
