@@ -110,7 +110,7 @@ class ReducedInternal(Internal):  # need tests
         self._vspace = None
 
     def _svd_of_cc_to_ic_gradient(self, threshold=1e-6):  # tested
-        u, s, v = np.linalg.svd(self._cc_to_ic_gradient)
+        u, s, v = np.linalg.svd(self._cc_to_ic_gradient, full_matrices=0)
         return u[:, np.abs(s) > threshold][:, :self.df]
 
     def _reduced_unit_vectors(self):  # tested

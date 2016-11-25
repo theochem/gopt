@@ -51,11 +51,11 @@ class TestGrape(object):
         #print li_grape.last._structure.ic_values
         #print np.linalg.norm(li_grape.last.gradient)
         li_grape.start_optimization(key_ic_number=2, iteration=20, init_hessian=False)
-
+        assert np.allclose(li_grape.last.value, -75.99305873, atol=1e-8)
 
     def test_optimization_for_methanol(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + '/../test/methanol.xyz'
+        mol_path = path + '/../../test/methanol.xyz'
         mol = ht.IOData.from_file(mol_path)
         methanol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         methanol.auto_select_ic()
@@ -71,7 +71,27 @@ class TestGrape(object):
             step_scale=ss,
             hessian_modifier=hm)
         li_grape.add_point(f_p)
-        print methanol.ic
-        print methanol.b_matrix.shape
-        print (methanol.vspace.shape)
-        assert False
+        li_grape.start_optimization(key_ic_number=0, iteration=20, init_hessian=False)
+        assert np.allclose(li_grape.last.value, -114.993961302, atol=1e-08)
+
+    def test_optimization_for_ethane(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + '/../../test/ethane.xyz'
+        mol = ht.IOData.from_file(mol_path)
+        ethane = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        ethane.auto_select_ic()
+        ethane.energy_calculation()
+        f_p = SaddlePoint(structure=ethane)
+        tr = DefaultTrustRadius(number_of_atoms=6)
+        ss = TRIM()
+        hm = Test_Saddle_Modifier()
+        hu = BFGS()
+        li_grape = Grape(
+            hessian_update=hu,
+            trust_radius=tr,
+            step_scale=ss,
+            hessian_modifier=hm)
+        li_grape.add_point(f_p)
+        li_grape.start_optimization(key_ic_number=0, iteration=20, init_hessian=False)
+        assert np.allclose(li_grape.last.value, -79.1984229063, atol=1e-08)
+
