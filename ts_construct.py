@@ -111,7 +111,7 @@ class TSConstruct(object):
                             h_index = index_j
                             halo_index = index_i
                         for index_k in range(index_j + 1, len(self._numbers)):
-                            atom_num3 = self.number[index_k]
+                            atom_num3 = self.numbers[index_k]
                             if atom_num3 in halidish_atom:
                                 dis_r = self._reactant.distance(h_index,
                                                                 index_k)

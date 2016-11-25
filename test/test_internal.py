@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 
 import numpy as np
@@ -215,3 +216,25 @@ class TestInternal(object):
         mol.converge_to_target_ic(iteration=100)
         g_array = mol.cost_value_in_cc[1]
         assert len(g_array[abs(g_array) > 3e-6]) == 0
+
+    def test_auto_ic_select_water(self):
+        mol = deepcopy(self.internal)
+        mol.auto_select_ic()
+        assert np.allclose(mol.ic_values, [1.8141372422079882,
+                                           1.8141372422079882,
+                                           -0.33333406792305265])
+    def test_auto_ic_select_ethane(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path +"/ethane.xyz"
+        mol = ht.IOData.from_file(mol_path)
+        ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
+        ethane.auto_select_ic()
+        assert len(ethane.ic) == 24
+
+    def test_auto_ic_select_methanol(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path +"/methanol.xyz"
+        mol = ht.IOData.from_file(mol_path)
+        methanol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        methanol.auto_select_ic()
+        assert len(methanol.ic) == 15

@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function
 
 import numpy as np
 
+from horton import periodic
 from saddle.cartesian import Cartesian
 from saddle.coordinate_types import BendAngle, BondLength, ConventionDihedral
 from saddle.cost_functions import direct_square
@@ -211,6 +212,90 @@ class Internal(Cartesian):
         for i in range(len(self.numbers)):
             print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
             print("\n--Connectivity Ends--")
+
+    def auto_select_ic(self, dihed_special=False):
+        self._auto_select_bond()
+        self._auto_select_angle()
+        self._auto_select_dihed_normal()
+        self._auto_select_dihed_improper()
+
+    def _auto_select_bond(self):
+        halidish_atom = set([7, 8, 9, 15, 16, 17])
+        for index_i in range(len(self.numbers)):
+            for index_j in range(index_i + 1, len(self.numbers)):
+                atom_num1 = self.numbers[index_i]
+                atom_num2 = self.numbers[index_j]
+                distance = self.distance(index_i, index_j)
+                radius_sum = periodic[atom_num1].cov_radius + periodic[
+                    atom_num2].cov_radius
+                if distance < 1.3 * radius_sum:
+                    self.add_bond(index_i, index_j)
+                    if (min(atom_num1, atom_num2) == 1 and
+                            max(atom_num1, atom_num2) in halidish_atom):
+                        if atom_num1 == 1:
+                            h_index = index_i
+                            halo_index = index_j
+                        else:
+                            h_index = index_j
+                            halo_index = index_i
+                        for index_k in range(index_j + 1, len(self._numbers)):
+                            atom_num3 = self.numbers[index_k]
+                            if atom_num3 in halidish_atom:
+                                dis = self.distance(h_index, index_k)
+                                angle = self.angle(halo_index, h_index,
+                                                   index_k)
+                                thresh_sum = periodic[self._numbers[
+                                    h_index]].vdw_radius + \
+                                    periodic[self._numbers[index_k]].vdw_radius
+                                if dis <= 0.9 * thresh_sum and angle >= 1.5708:
+                                    self.add_bond(h_index, index_k)
+
+    def _auto_select_angle(self):
+        for center_index in range(len(self.numbers)):
+            connected = self.connected_indices(center_index)
+            if len(connected) >= 2:
+                for edge_1 in range(len(connected)):
+                    for edge_2 in range(edge_1 + 1, len(connected)):
+                        self.add_angle_cos(connected[edge_1], center_index,
+                                           connected[edge_2])
+
+    def _auto_select_dihed_normal(self):
+        for center_ind_1 in range(len(self.numbers)):
+            connected = self.connected_indices(center_ind_1)
+            if len(connected) >= 2:
+                for center_ind_2 in connected:
+                    sum_cnct = np.sum(self.connectivity, axis=0)
+                    sum_select_cnct = sum_cnct[connected]
+                    sorted_index = sum_select_cnct.argsort()[::-1]
+                    side_1 = connected[sorted_index[0]]
+                    if connected[sorted_index[0]] == center_ind_2:
+                        side_1 = connected[sorted_index[1]]
+                    connected_to_index_2 = self.connected_indices(center_ind_2)
+                    for side_2 in connected_to_index_2:
+                        if side_2 not in (center_ind_1, center_ind_2, side_1):
+                            self.add_dihedral(side_1, center_ind_1,
+                                              center_ind_2, side_2)
+
+    def _auto_select_dihed_improper(self):
+        connect_sum = np.sum(self.connectivity, axis=0)
+        for center_ind in range(len(connect_sum)):
+            if connect_sum[center_ind] >= 3:
+                cnct_atoms = self.connected_indices(center_ind)
+                cnct_total = len(cnct_atoms)
+                for i in range(cnct_total):
+                    for j in range(i + 1, cnct_total):
+                        for k in range(j + 1, cnct_total):
+                            ind_i, ind_j, ind_k = cnct_atoms[[i, j, k]]
+                            ang1_r = self.angle(ind_i, center_ind,
+                                                          ind_j)
+                            ang2_r = self.angle(ind_i, center_ind,
+                                                          ind_k)
+                            ang3_r = self.angle(ind_j, center_ind,
+                                                          ind_k)
+                            sum_r = ang1_r + ang2_r + ang3_r
+                            if sum_r >= 6.02139:
+                                self.add_dihedral(ind_i, center_ind, ind_j,
+                                                  ind_k)
 
     def _energy_hessian_transformation(self):
         self._internal_gradient = np.dot(
