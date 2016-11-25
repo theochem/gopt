@@ -57,11 +57,11 @@ class TestGrape(object):
         path = os.path.dirname(os.path.realpath(__file__))
         mol_path = path + '/../test/methanol.xyz'
         mol = ht.IOData.from_file(mol_path)
-        methanol = ReducedInternal(mol.coordinates=, mol.numbers, 0, 1)
-        methanol.auto_select_ic
+        methanol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        methanol.auto_select_ic()
         methanol.energy_calculation()
-        f_p = SaddlePoint(structure=mol)
-        tr = DefaultTrustRadius(number_of_atoms=3)
+        f_p = SaddlePoint(structure=methanol)
+        tr = DefaultTrustRadius(number_of_atoms=5)
         ss = TRIM()
         hm = Test_Saddle_Modifier()
         hu = BFGS()
@@ -71,3 +71,7 @@ class TestGrape(object):
             step_scale=ss,
             hessian_modifier=hm)
         li_grape.add_point(f_p)
+        print methanol.ic
+        print methanol.b_matrix.shape
+        print (methanol.vspace.shape)
+        assert False
