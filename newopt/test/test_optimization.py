@@ -61,7 +61,7 @@ class TestGrape(object):
         methanol.auto_select_ic()
         methanol.energy_calculation()
         f_p = SaddlePoint(structure=methanol)
-        tr = DefaultTrustRadius(number_of_atoms=5)
+        tr = DefaultTrustRadius(number_of_atoms=6)
         ss = TRIM()
         hm = Test_Saddle_Modifier()
         hu = BFGS()
@@ -82,7 +82,7 @@ class TestGrape(object):
         ethane.auto_select_ic()
         ethane.energy_calculation()
         f_p = SaddlePoint(structure=ethane)
-        tr = DefaultTrustRadius(number_of_atoms=6)
+        tr = DefaultTrustRadius(number_of_atoms=8)
         ss = TRIM()
         hm = Test_Saddle_Modifier()
         hu = BFGS()
@@ -95,3 +95,23 @@ class TestGrape(object):
         li_grape.start_optimization(key_ic_number=0, iteration=20, init_hessian=False)
         assert np.allclose(li_grape.last.value, -79.1984229063, atol=1e-08)
 
+    def test_optimization_for_ethanol(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + '/../../test/ethanol.xyz'
+        mol = ht.IOData.from_file(mol_path)
+        ethanol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        ethanol.auto_select_ic()
+        ethanol.energy_calculation()
+        f_p = SaddlePoint(structure=ethanol)
+        tr = DefaultTrustRadius(number_of_atoms=9)
+        ss = TRIM()
+        hm = Test_Saddle_Modifier()
+        hu = BFGS()
+        li_grape = Grape(
+            hessian_update=hu,
+            trust_radius=tr,
+            step_scale=ss,
+            hessian_modifier=hm)
+        li_grape.add_point(f_p)
+        li_grape.start_optimization(key_ic_number=0, iteration=20, init_hessian=False)
+        assert np.allclose(li_grape.last.value, -154.01859838, atol=1e-07)

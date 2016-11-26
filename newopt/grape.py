@@ -108,10 +108,10 @@ class Grape(object):
         # print("result", verify_result, "after loop")
         self.add_point(new_point)
 
-    def converge_test(self, *args, **kwargs):
+    def converge_test(self, g_cutoff=1e-4, *args, **kwargs):
         final_p = self.last
         pre_p = self._points[-2]
-        if np.max(np.abs(final_p.structure.energy_gradient)) < 3e-4:
+        if np.max(np.abs(final_p.structure.energy_gradient)) < g_cutoff:
             return True
         elif np.abs(final_p.value - pre_p.value) < 1e-6:
             return True
