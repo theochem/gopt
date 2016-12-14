@@ -25,7 +25,7 @@ class ReducedInternal(Internal):  # need tests
         Energy Gradient of system versus reduced internal coordinates
     vspace_hessian : np.ndarray(3N - 6, 3N - 6)
         Energy Hessian of system versus reduced internal coordinates
-    numbers : np.ndarray(N)
+    numbers : np.ndarray(N,)
         A numpy array of atomic number for input coordinates
     spin : int
         Spin multiplicity of the molecule

@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function
 
 from copy import deepcopy
+from itertools import combinations
 
 import numpy as np
 
@@ -11,13 +12,48 @@ from saddle.reduced_internal import ReducedInternal
 
 
 class TSConstruct(object):
+    """Transitian State Constructor
+
+    Properties
+    ----------
+    reactant : Internal
+        internal coordinates structure of reactant of certain reaction
+    product : Internal
+        internal coordinates structure of product of certain reaction
+    ts : Internal
+        internal coordinates structure of initial transition state guess of
+        certain chemical reaction
+    numbers : np.ndarray(N,)
+        A numpy array of atomic number for input coordinates
+    key_ic_number : int
+        Number of key internal coordinates which correspond to important
+        chemical property
+
+    Methods
+    -------
+    __init__(reactant_ic, product_ic)
+        Initializes constructor with the input of two Internal instance, each represent the structure of reactant and product respectively
+    add_bond(atom1, atom2)
+        Auto add bond
+    add_angle_cos(atom1, atom2, atom3)
+    add_dihedral(atom1, atom2, atom3)
+    auto_select_ic()
+    create_ts_state(start_with, ratio=0.5)
+    select_key_ic(ic_index)
+
+    """
+
     def __init__(self, reactant_ic, product_ic):
         if isinstance(reactant_ic, Internal) and isinstance(product_ic,
                                                             Internal):
             if np.allclose(reactant_ic.numbers, product_ic.numbers):
                 self._numbers = reactant_ic.numbers
-                self._reactant = reactant_ic
-                self._product = product_ic
+                self._reactant = deepcopy(reactant_ic)
+                self._reactant.wipe_ic_info(True)
+                self._product = deepcopy(product_ic)
+                self._product.wipe_ic_info(True)
+                self._tmp_rct_ic = reactant_ic.ic  # the ref to reactant_ic
+                self._tmp_prd_ic = product_ic.ic  # the ref to product_ic
             else:
                 raise AtomsNumberError("The number of atoms is not the same")
         else:
@@ -59,11 +95,24 @@ class TSConstruct(object):
         self._reactant.add_dihedral(atom1, atom2, atom3, atom4)
         self._product.add_dihedral(atom1, atom2, atom3, atom4)
 
-    def auto_select_ic(self):
+    def auto_select_ic(self, reconstruct=True):
+        self._reactant.wipe_ic_info(True)
+        self._product.wipe_ic_info(True)
+        if reconstruct:
+            self._auto_select_ic_restart()
+        else:
+            self._auto_select_ic_combine()
+
+    def _auto_select_ic_restart(self):
         self._auto_select_bond()
         self._auto_select_angle()
         self._auto_select_dihed_normal()
         self._auto_select_dihed_improper()
+
+    def _auto_select_ic_combine(self):
+        union_ic_list = self._get_union_of_ics()
+        self._reactant.set_new_ics(union_ic_list)
+        self._product.set_new_ics(union_ic_list)
 
     def create_ts_state(self, start_with, ratio=0.5):
         if start_with == "reactant":
@@ -89,6 +138,16 @@ class TSConstruct(object):
             return
         self._ts.swap_internal_coordinates(self._key_ic_counter, ic_index)
         self._key_ic_counter += 1
+
+    def _get_union_of_ics(self):  # need tests
+        basic_ic = deepcopy(self._tmp_rct_ic)
+        for new_ic in self._tmp_prd_ic:
+            for ic in self._tmp_rct_ic:
+                if new_ic.atoms == ic.atoms and type(new_ic) == type(ic):
+                    break
+            else:
+                basic_ic.append(new_ic)
+        return basic_ic
 
     def _auto_select_bond(self):
         halidish_atom = set([7, 8, 9, 15, 16, 17])

@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function
 import numpy as np
 
 from horton import periodic
+from saddle.abclass import CoordinateTypes
 from saddle.cartesian import Cartesian
 from saddle.coordinate_types import BendAngle, BondLength, ConventionDihedral
 from saddle.cost_functions import direct_square
@@ -74,6 +75,11 @@ class Internal(Cartesian):
     converge_to_target_ic(iteration=100, copy=True)
         Implement optimization process to transform geometry to
         target internal coordinates
+    wipe_ic_info(I_am_sure_i_am_going_to_wipe_all_ic_info)
+        wipe internal coordinates information in this structure
+    set_new_ics(new_ics)
+        Set the internal coordinates depends on the given internal
+        coordinates
     print_connectivity()
         print connectivity matrix information on the screen
     swap_internal_coordinates(index_1, index_2)
@@ -88,7 +94,7 @@ class Internal(Cartesian):
 
     def __init__(self, coordinates, numbers, charge, spin):
         super(Internal, self).__init__(coordinates, numbers, charge, spin)
-        self._ic = []  # type np.array([float 64])
+        self._ic = []
         # 1 is connected, 0 is not, -1 is itself
         self._connectivity = np.diag([-1] * len(self.numbers))
         self._target_ic = None
@@ -289,6 +295,27 @@ class Internal(Cartesian):
         self._energy_hessian_transformation()
         # h_q = (B^T)^+ \cdot (H_x - K) \cdot B^+
 
+    def wipe_ic_info(self, I_am_sure_i_am_going_to_wipe_all_ic_info):
+        """wipe all internal coordinates information in this structure
+        including ic, ic_values, target_ic, b_matrix, internal gradient and
+        internal hessian
+
+        Arguments
+        ---------
+        I_am_sure_i_am_going_to_wipe_all_ic_info : bool
+            Double check for wipe important ic info. True for confirm,
+            otherwise False
+        """
+        if I_am_sure_i_am_going_to_wipe_all_ic_info:
+            self._clear_ic_info()
+
+    def set_new_ics(self, new_ics):
+        assert all(isinstance(ic, CoordinateTypes) for ic in new_ics)
+        self.wipe_ic_info(True)
+        self._ic = list(new_ics)
+        self._regenerate_ic()
+        self._regenerate_connectivity()
+
     @property
     def cost_value_in_cc(self):
         """Cost function value and its gradient, hessian versus Cartesian
@@ -390,6 +417,17 @@ class Internal(Cartesian):
         self._auto_select_angle()
         self._auto_select_dihed_normal()
         self._auto_select_dihed_improper()
+
+    def _clear_ic_info(self):  # tested
+        """Wipe all the internal information in this structure
+        """
+        self._ic = []
+        self._connectivity = np.diag([-1] * len(self.numbers))
+        self._target_ic = None
+        self._cc_to_ic_gradient = None
+        self._cc_to_ic_hessian = None
+        self._internal_gradient = None
+        self._internal_hessian = None
 
     def _auto_select_bond(self):
         """A private method for automatically selecting bond
@@ -502,19 +540,31 @@ class Internal(Cartesian):
         """
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
-        self._clear_g_and_h()
         for ic in self.ic:
             rs = self.coordinates[np.array(ic.atoms)]
             ic.set_new_coordinates(rs)
             d, dd = ic.get_gradient_hessian()
             self._add_cc_to_ic_gradient(d, ic.atoms)  # add transform gradient
             self._add_cc_to_ic_hessian(dd, ic.atoms)  # add transform hessian
+        self._recal_g_and_h()  # clean internal gradient and hessian
 
-    def _clear_g_and_h(self):
-        """reset transformation gradient and hessian matrix
+    def _regenerate_connectivity(self):
+        """regenerate the connectivity of molecule depends on present
+        internal coordinates
+        """
+        self._connectivity = np.diag([-1] * len(self.numbers))
+        for ic in self.ic:
+            if isinstance(ic, BondLength):
+                self._add_connectivity(ic.atoms)
+
+    def _recal_g_and_h(self):
+        """reset internal energy gradient and hessian matrix
         """
         self._internal_gradient = None
         self._internal_hessian = None
+        if (self._energy_gradient is not None and
+                self._energy_hessian is not None):
+            self._energy_hessian_transformation()
 
     def _create_geo_point(self):
         """create a Point object based on self internal coordinates to undergo
@@ -634,10 +684,10 @@ class Internal(Cartesian):
         """Add a new ic object to the system and add corresponding
         transformation matrix parts
         """
-        self._clear_g_and_h()
         self._ic.append(new_ic)
         self._add_cc_to_ic_gradient(d, atoms)  # add gradient
         self._add_cc_to_ic_hessian(dd, atoms)  # add hessian
+        self._recal_g_and_h()
 
     def _add_connectivity(self, atoms):
         """Change the value of connectivity matrix to 1 for two atoms

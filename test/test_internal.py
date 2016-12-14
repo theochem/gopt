@@ -220,12 +220,13 @@ class TestInternal(object):
     def test_auto_ic_select_water(self):
         mol = deepcopy(self.internal)
         mol.auto_select_ic()
-        assert np.allclose(mol.ic_values, [1.8141372422079882,
-                                           1.8141372422079882,
-                                           -0.33333406792305265])
+        assert np.allclose(mol.ic_values,
+                           [1.8141372422079882, 1.8141372422079882,
+                            -0.33333406792305265])
+
     def test_auto_ic_select_ethane(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path +"/ethane.xyz"
+        mol_path = path + "/ethane.xyz"
         mol = ht.IOData.from_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
@@ -233,8 +234,53 @@ class TestInternal(object):
 
     def test_auto_ic_select_methanol(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path +"/methanol.xyz"
+        mol_path = path + "/methanol.xyz"
         mol = ht.IOData.from_file(mol_path)
         methanol = Internal(mol.coordinates, mol.numbers, 0, 1)
         methanol.auto_select_ic()
         assert len(methanol.ic) == 15
+
+    def test_wipe_ic(self):
+        mol = deepcopy(self.internal)
+        mol.add_bond(0, 1)
+        mol.add_bond(1, 2)
+        mol.add_bond(0, 2)
+        assert len(mol.ic) == 3
+        mol.wipe_ic_info(False)
+        assert len(mol.ic) == 3
+        mol.wipe_ic_info(True)
+        assert len(mol.ic) == 0
+
+    def test_set_new_ic(self):
+        mol1 = deepcopy(self.internal)
+        mol2 = deepcopy(self.internal)
+        mol1.add_bond(0, 1)
+        mol1.add_bond(0, 2)
+        mol1.add_angle_cos(1, 0, 2)
+        mol2.set_new_ics(mol1.ic)
+        assert np.allclose(mol2.ic_values, mol1.ic_values)
+        mol2.wipe_ic_info(True)
+        mol2.add_bond(2, 0)
+        assert len(mol2.ic) == 1
+        assert not np.allclose(mol2.connectivity, mol1.connectivity)
+        mol2.set_new_ics(mol1.ic)
+        assert np.allclose(mol1.connectivity, mol2.connectivity)
+
+    def test_get_energy_from_fchk(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        fchk_path = path + "/water_1.fchk"
+        mole = deepcopy(self.internal)
+        mole.add_bond(0, 1)
+        mole.add_bond(1, 2)
+        mole.add_angle_cos(0, 1, 2)
+        mole.energy_from_fchk(fchk_path)
+        ref_g = mole.internal_gradient.copy()
+        assert np.allclose(mole.internal_gradient, ref_g)
+        ic_ref = deepcopy(mole.ic)
+        mole.add_bond(0, 2)
+        assert not np.allclose(mole.internal_gradient.shape, ref_g.shape)
+        mole.set_new_ics(ic_ref)
+        assert np.allclose(mole.internal_gradient, ref_g)
+        mole.swap_internal_coordinates(0, 2)
+        assert np.allclose(mole.internal_gradient[2], ref_g[0])
+        assert np.allclose(mole.internal_gradient[0], ref_g[2])

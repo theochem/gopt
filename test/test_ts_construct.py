@@ -71,7 +71,7 @@ class Test_TS_Construct(object):
         ts_ins.create_ts_state(start_with="reactant")
         result_2 = deepcopy(ts_ins.ts)
         # print result_2.ic_values
-        ref_tar_ic = reactant_ic.ic_values * 0.5 + product_ic.ic_values * 0.5
+        ref_tar_ic = ts_ins._reactant.ic_values * 0.5 + ts_ins._product.ic_values * 0.5
         assert np.allclose(ref_tar_ic, result.target_ic)
         assert np.allclose(result.target_ic, result_2.target_ic)
         assert np.allclose(
@@ -84,3 +84,16 @@ class Test_TS_Construct(object):
                            result_2.ic_values[:2])
         assert np.allclose(ts_ins.ts._cc_to_ic_gradient[1],
                            result_2._cc_to_ic_gradient[0])
+
+    def test_ts_union(self):
+        reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
+        reactant_ic.add_bond(0, 1)
+        reactant_ic.add_bond(1, 2)
+        reactant_ic.add_angle_cos(0, 1, 2)
+        product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
+        product_ic.add_bond(1, 0)
+        product_ic.add_bond(0, 2)
+        product_ic.add_angle_cos(1, 0, 2)
+        ts_ins = TSConstruct(reactant_ic, product_ic)
+        union_ic = ts_ins._get_union_of_ics()
+        assert len(union_ic) == 5
