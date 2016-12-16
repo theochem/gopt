@@ -34,13 +34,26 @@ class TSConstruct(object):
     __init__(reactant_ic, product_ic)
         Initializes constructor with the input of two Internal instance, each represent the structure of reactant and product respectively
     add_bond(atom1, atom2)
-        Auto add bond
+        Add bond connection for both reactant and product structures
+        between atoms1 and atoms2
     add_angle_cos(atom1, atom2, atom3)
+        Add angle cos to both reactant and product between angle atom1,
+        atom2, and atom3
     add_dihedral(atom1, atom2, atom3)
+        Add normal dihedral to both reactant and product between plane
+        (atom1, atom2, and atom3) and plane(atom2, atom3, and atom4)
     auto_select_ic()
+        Auto select internal coordinates of reactant and product with
+        specific choices
     create_ts_state(start_with, ratio=0.5)
-    select_key_ic(ic_index)
-
+        Create transition state based on reactant and product internal
+        coordinates
+    select_key_ic(ic_indices)
+        Select certain internal coordinates to be the key ic which is
+        important to chemical reaction
+    auto_generate_ts(ratio=0.5, start_with="reactant, reconstruct=True)
+        Generate transition state structure automatically based on the reactant
+        and product structure and corresponding setting parameters
     """
 
     def __init__(self, reactant_ic, product_ic):
@@ -57,45 +70,122 @@ class TSConstruct(object):
             else:
                 raise AtomsNumberError("The number of atoms is not the same")
         else:
-            raise InputTypeError("The type of input data is illegal.")
+            raise InputTypeError("The type of input data is invalid.")
         self._key_ic_counter = 0
         self._ts = None
 
     @property
     def reactant(self):
+        """Internal coordinates instance of reactant structure
+
+        Returns
+        -------
+        reactant : Internal
+        """
         return self._reactant
 
     @property
     def product(self):
+        """Internal coordinates instance of product structure
+
+        Returns
+        -------
+        product : Internal
+        """
         return self._product
 
     @property
     def ts(self):
+        """Internal cooridnates instance of transition structure if
+        it has been generated already. Otherwise, raise NotSetError.
+
+        Returns
+        -------
+        ts : Internal
+        """
         if self._ts is None:
             raise NotSetError("TS state hasn't been set")
         return self._ts
 
     @property
     def numbers(self):
+        """A numpy array of atomic number for input coordinates
+
+        Returns
+        -------
+        numbers : np.ndarray(N,)
+        """
         return self._numbers
 
     @property
     def key_ic_counter(self):
+        """Number of key internal coordinates in this reaction
+
+        Returns
+        -------
+        key_ic_counter : int
+        """
         return self._key_ic_counter
 
     def add_bond(self, atom1, atom2):
+        """Add bond connection between atom1 and atom2 for both reactant
+        and product structure
+
+        Arguments
+        ---------
+        atom1 : int
+            The index of the first atom of a bond
+        atom2 : int
+            The index of the second atom of a bond
+        """
         self._reactant.add_bond(atom1, atom2)
         self._product.add_bond(atom1, atom2)
 
     def add_angle_cos(self, atom1, atom2, atom3):
+        """Add cos angle connection between atom1, atom2, and atom3 for
+        both reactant and product structure
+
+        Arguments
+        ---------
+        atom1 : int
+            The index of the first atom of the angle
+        atom2 : int
+            The index of the second atom of the angle
+        atom3 : int
+            The index of the third atom of the angle
+        """
         self._reactant.add_angle_cos(atom1, atom2, atom3)
         self._product.add_angle_cos(atom1, atom2, atom3)
 
     def add_dihedral(self, atom1, atom2, atom3, atom4):
+        """Add dihedral angle between plane1(atom1, atom2, and atom3)
+        and plane2(atom2, atom3, and atom4) for both reactant and
+        product structures
+
+        Arguments
+        ---------
+        atom1 : int
+            The index of atom1 in plane1
+        atom2 : int
+            The index of atom2 in plane1 and plane2
+        atom3 : int
+            The index of atom3 in plane1 and plane2
+        atom4 : int
+            The index of atom4 in plane2
+        """
         self._reactant.add_dihedral(atom1, atom2, atom3, atom4)
         self._product.add_dihedral(atom1, atom2, atom3, atom4)
 
     def auto_select_ic(self, reconstruct=True):
+        """automatically select internal coordinates based on the internal
+        structures of reactant and product
+
+        Arguments
+        ---------
+        reconstruct : bool, default is True
+            The flag of whether to construct the internal structure of reactant
+            and product from scratch. True for start from scrach, otherwise False.
+        """
         self._reactant.wipe_ic_info(True)
         self._product.wipe_ic_info(True)
         if reconstruct:
@@ -103,18 +193,18 @@ class TSConstruct(object):
         else:
             self._auto_select_ic_combine()
 
-    def _auto_select_ic_restart(self):
-        self._auto_select_bond()
-        self._auto_select_angle()
-        self._auto_select_dihed_normal()
-        self._auto_select_dihed_improper()
-
-    def _auto_select_ic_combine(self):
-        union_ic_list = self._get_union_of_ics()
-        self._reactant.set_new_ics(union_ic_list)
-        self._product.set_new_ics(union_ic_list)
-
     def create_ts_state(self, start_with, ratio=0.5):
+        """Create transition state structure based on the linear combination of
+        internal structure of both reactant and product.
+
+        Arguments
+        ---------
+        start_with : string
+            The initial structure of transition state to optimize from.
+        ratio : float, default is 0.5
+            The ratio of linear combination of ic for reactant and product.
+            ts = ratio * reactant + (1 - ratio) * product
+        """
         if start_with == "reactant":
             model = self.reactant
         elif start_with == "product":
@@ -132,14 +222,66 @@ class TSConstruct(object):
         # change the ts_internal to Class ReducedInternal
         self._ts = ts_internal  # set _ts attribute
 
-    def select_key_ic(self, ic_index):
-        if ic_index < self._key_ic_counter:
-            # if the index is smaller then ic counter, it is pointless to swap
-            return
-        self._ts.swap_internal_coordinates(self._key_ic_counter, ic_index)
-        self._key_ic_counter += 1
+    def select_key_ic(self, *ic_indices):
+        """Set one or multiply internal coordinate(s) as the the key internal
+        coordinates
+
+        Arguments
+        ---------
+        *ic_indices : *int
+            the index(indices) of internal coordinates
+        """
+        for index in ic_indices:
+            if index < self._key_ic_counter:
+                # if the index is smaller then ic counter, it is pointless to swap
+                continue
+            self.ts.swap_internal_coordinates(self._key_ic_counter, index)
+            self._key_ic_counter += 1
+            self.ts.set_key_ic_number(self._key_ic_counter)
+
+    def auto_generate_ts(self,
+                         ratio=0.5,
+                         start_with="reactant",
+                         reconstruct=True):
+        """Complete auto generate transition state structure based on some
+        default parameters
+
+        Arguments
+        ---------
+        ratio : float, default is 0.5
+            The ratio of linear combination of ic for reactant and product.
+            ts = ratio * reactant + (1 - ratio) * product
+        start_with : string, default is "reactant"
+            The initial structure of transition state to optimize from.
+        reconstruct : bool, default is True
+            The flag of whether to construct the internal structure of reactant
+            and product from scratch. True for start from scrach, otherwise False.
+        """
+        self.auto_select_ic(reconstruct)
+        self.create_ts_state(start_with, ratio)
+
+    def _auto_select_ic_restart(self):
+        """Based on buildin to auto-select algorithm to select internal
+        coordinates from scrach. Do not include any initial structure of
+        reactant or product
+        """
+        self._auto_select_bond()
+        self._auto_select_angle()
+        self._auto_select_dihed_normal()
+        self._auto_select_dihed_improper()
+
+    def _auto_select_ic_combine(self):
+        """Based the internal structure of both reactant and product,
+        combine the structure to form a unified structure.
+        """
+        union_ic_list = self._get_union_of_ics()
+        self._reactant.set_new_ics(union_ic_list)
+        self._product.set_new_ics(union_ic_list)
 
     def _get_union_of_ics(self):  # need tests
+        """Get the combined internal coordinates based on the ic structure of
+        both reactant and product
+        """
         basic_ic = deepcopy(self._tmp_rct_ic)
         for new_ic in self._tmp_prd_ic:
             for ic in self._tmp_rct_ic:
@@ -150,6 +292,9 @@ class TSConstruct(object):
         return basic_ic
 
     def _auto_select_bond(self):
+        """Automatically select bond connection based on buildin algorithm
+        for both reactant and product
+        """
         halidish_atom = set([7, 8, 9, 15, 16, 17])
         for index_i in range(len(self.numbers)):
             for index_j in range(index_i + 1, len(self.numbers)):
@@ -189,6 +334,9 @@ class TSConstruct(object):
         # did't add aux bond method
 
     def _auto_select_angle(self):
+        """Automatically select angle based on buildin algorithm for both
+        reactant and product
+        """
         for center_index in range(len(self.numbers)):
             connected = self._reactant.connected_indices(center_index)
             if len(connected) >= 2:
@@ -198,6 +346,9 @@ class TSConstruct(object):
                                            connected[edge_2])
 
     def _auto_select_dihed_normal(self):
+        """Automatically select dihedral based on buildin algorithm for both
+        reactant and product
+        """
         for center_ind_1 in range(len(self.numbers)):
             connected = self._reactant.connected_indices(center_ind_1)
             if len(connected) >= 2:
@@ -216,6 +367,9 @@ class TSConstruct(object):
                                               center_ind_2, side_2)
 
     def _auto_select_dihed_improper(self):
+        """Automatically select improper dihedral based on buildin algorithm for both
+        reactant and product
+        """
         connect_sum = np.sum(self._reactant.connectivity, axis=0)
         for center_ind in range(len(connect_sum)):
             if connect_sum[center_ind] >= 3:

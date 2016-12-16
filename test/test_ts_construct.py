@@ -4,6 +4,7 @@ import numpy as np
 
 import horton as ht
 from saddle.internal import Internal
+from saddle.reduced_internal import ReducedInternal
 from saddle.ts_construct import TSConstruct
 
 
@@ -97,3 +98,20 @@ class Test_TS_Construct(object):
         ts_ins = TSConstruct(reactant_ic, product_ic)
         union_ic = ts_ins._get_union_of_ics()
         assert len(union_ic) == 5
+
+    def test_ts_create(self):
+        reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
+        product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
+        ts_ins = TSConstruct(reactant_ic, product_ic)
+        ts_ins.auto_select_ic()
+        ts_ins.create_ts_state(start_with='reactant')
+        ts_ins.select_key_ic(3, 4)
+        assert type(ts_ins.ts.ic[0]) is type(ts_ins.product.ic[3])
+        assert type(ts_ins.ts.ic[1]) is type(ts_ins.product.ic[4])
+        assert ts_ins.ts.key_ic_number == 2
+        new_ins = TSConstruct(reactant_ic, product_ic)
+        assert new_ins is not ts_ins
+        new_ins.auto_generate_ts()
+        new_ins.select_key_ic(3, 4)
+        assert np.allclose(new_ins.ts.ic_values, ts_ins.ts.ic_values)
+        assert isinstance(new_ins.ts, ReducedInternal)
