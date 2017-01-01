@@ -5,7 +5,8 @@ import numpy as np
 from horton import periodic
 from saddle.abclass import CoordinateTypes
 from saddle.cartesian import Cartesian
-from saddle.coordinate_types import BendAngle, BondLength, ConventionDihedral
+from saddle.coordinate_types import (BendAngle, BendCos, BondLength,
+                                     ConventionDihedral)
 from saddle.cost_functions import direct_square
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
@@ -128,6 +129,32 @@ class Internal(Cartesian):
             # after adding a bond, change the connectivity of atoms pair to 1
             self._add_connectivity(atoms)
 
+    # def add_angle(self, atom1, atom2, atom3):  # tested
+    #     """Add angle connection between atom1, atom2 and atom3. The angle
+    #     is consist of vector(atom1 - atom2) and vector(atom3 - atom2)
+    #
+    #     Arguments
+    #     ---------
+    #     atom1 : int
+    #         the index of the first atom
+    #     atom2 : int
+    #         the index of the second(central) atom
+    #     atom3 : int
+    #         the index of the third atom
+    #     """
+    #     if atom1 == atom3:
+    #         raise AtomsIndexError("The two indece are the same")
+    #     atoms = (atom1, atom2, atom3)
+    #     atoms = self._atoms_sequence_reorder(atoms)
+    #     rs = self.coordinates[np.array(atoms)]
+    #     new_ic_obj = BendAngle(atoms, rs)
+    #     d, dd = new_ic_obj.get_gradient_hessian()
+    #     # check if the angle is formed by two connected bonds
+    #     if self._check_connectivity(atom1, atom2) and self._check_connectivity(
+    #             atom2, atom3):
+    #         if self._repeat_check(new_ic_obj):
+    #             self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
+
     def add_angle_cos(self, atom1, atom2, atom3):  # tested
         """Add cos angle connection between atom1, atom2 and atom3. The angle
         is consist of vector(atom1 - atom2) and vector(atom3 - atom2)
@@ -146,7 +173,7 @@ class Internal(Cartesian):
         atoms = (atom1, atom2, atom3)
         atoms = self._atoms_sequence_reorder(atoms)
         rs = self.coordinates[np.array(atoms)]
-        new_ic_obj = BendAngle(atoms, rs)
+        new_ic_obj = BendCos(atoms, rs)
         d, dd = new_ic_obj.get_gradient_hessian()
         # check if the angle is formed by two connected bonds
         if self._check_connectivity(atom1, atom2) and self._check_connectivity(
@@ -608,8 +635,8 @@ class Internal(Cartesian):
         deriv = np.zeros(len(self.ic))
         deriv2 = np.zeros((len(self.ic), len(self.ic)), float)
         for i in range(len(self.ic)):
-            if self.ic[i].__class__.__name__ in ("BondLength",
-                                                 "BendAngle", ):
+            if self.ic[i].__class__.__name__ in ("BondLength", "BendCos",
+                                                 "BendAngle"):
                 v, d, dd = direct_square(self.ic_values[i], self.target_ic[i])
                 value += v
                 deriv[i] += d
