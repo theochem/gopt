@@ -9,6 +9,25 @@ from saddle.molmod import (bend_cos, bond_length, dihed_cos, dihed_new_cross,
 
 
 class BondLength(CoordinateTypes):
+    """BondLength type internal coordinates class
+
+    Properties
+    ----------
+    value : float
+        The value of bond length
+    atoms : np.ndarray(N,)
+        The atoms consist of this internal coordinates
+    info : string
+        The string to describe the property and important information
+
+    methods
+    -------
+    get_gradient_hessian()
+        Obtain the transformation gradient and hessian of this internal
+        coordinates
+    set_new_coordinates(new_coor)
+        Set the cartesian coordinates of this internal coodinates
+    """
     def __init__(self, atoms, coordinates):
         self._coordinates = coordinates
         self._atoms = atoms
@@ -38,6 +57,26 @@ class BondLength(CoordinateTypes):
 
 
 class BendAngle(CoordinateTypes):
+    """BendAngle type internal coordinates class
+
+    Properties
+    ----------
+    value : float
+        The value of cosine value of bend_angle
+    atoms : np.ndarray(N,)
+        The atoms consist of this internal coordinates
+    info : string
+        The string to describe the property and important information
+
+    methods
+    -------
+    get_gradient_hessian()
+        Obtain the transformation gradient and hessian of this internal
+        coordinates
+    set_new_coordinates(new_coor)
+        Set the cartesian coordinates of this internal coodinates
+    """
+
     def __init__(self, atoms, coordinates):
         self._coordinates = coordinates
         self._atoms = atoms
@@ -67,6 +106,25 @@ class BendAngle(CoordinateTypes):
 
 
 class ConventionDihedral(CoordinateTypes):
+    """ConventionDihedral type internal coordinates class
+
+    Properties
+    ----------
+    value : float
+        The cosine value of dihedral
+    atoms : np.ndarray(N,)
+        The atoms consist of this internal coordinates
+    info : string
+        The string to describe the property and important information
+
+    methods
+    -------
+    get_gradient_hessian()
+        Obtain the transformation gradient and hessian of this internal
+        coordinates
+    set_new_coordinates(new_coor)
+        Set the cartesian coordinates of this internal coodinates
+    """
     def __init__(self, atoms, coordinates):
         self._coordinates = coordinates
         self._atoms = atoms
@@ -95,7 +153,26 @@ class ConventionDihedral(CoordinateTypes):
         return "Dihed-{}-({})".format(self.atoms, self.value)
 
 
-class NewConventionDot(CoordinateTypes):  # to be fixed
+class NewDihedralDot(CoordinateTypes):  # need tests
+    """NewDihedralDot type internal coordinates class
+
+    Properties
+    ----------
+    value : float
+        The value of new dihedral dot internal cooridnate
+    atoms : np.ndarray(N,)
+        The atoms consist of this internal coordinates
+    info : string
+        The string to describe the property and important information
+
+    methods
+    -------
+    get_gradient_hessian()
+        Obtain the transformation gradient and hessian of this internal
+        coordinates
+    set_new_coordinates(new_coor)
+        Set the cartesian coordinates of this internal coodinates
+    """
     def __init__(self, atoms, coordinates):
         self._coordinates = coordinates
         self._atoms = atoms
@@ -121,7 +198,26 @@ class NewConventionDot(CoordinateTypes):  # to be fixed
         pass
 
 
-class NewConventionCross(CoordinateTypes):  # to be fixed
+class NewDihedralCross(CoordinateTypes):  # need tests
+    """NewDihedralCross type internal coordinates class
+
+    Properties
+    ----------
+    value : float
+        The value of new dihedral cross internal cooridnate
+    atoms : np.ndarray(N,)
+        The atoms consist of this internal coordinates
+    info : string
+        The string to describe the property and important information
+
+    methods
+    -------
+    get_gradient_hessian()
+        Obtain the transformation gradient and hessian of this internal
+        coordinates
+    set_new_coordinates(new_coor)
+        Set the cartesian coordinates of this internal coodinates
+    """
     def __init__(self, atoms, coordinates):
         self._coordinates = coordinates
         self._atoms = atoms
@@ -145,10 +241,3 @@ class NewConventionCross(CoordinateTypes):  # to be fixed
     @property
     def info(self):
         pass
-
-
-if __name__ == "__main__":
-    a = BondLength(2.5, (3, 2))
-    assert (a.atoms == (2, 3))
-    b = BendAngle(1.5, (5, 6, 2))
-    assert (b.atoms == (2, 6, 5))

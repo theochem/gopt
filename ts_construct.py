@@ -51,7 +51,7 @@ class TSConstruct(object):
     select_key_ic(ic_indices)
         Select certain internal coordinates to be the key ic which is
         important to chemical reaction
-    auto_generate_ts(ratio=0.5, start_with="reactant, reconstruct=True)
+    auto_generate_ts(ratio=0.5, start_with="reactant", reconstruct=True)
         Generate transition state structure automatically based on the reactant
         and product structure and corresponding setting parameters
     """
