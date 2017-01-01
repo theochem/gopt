@@ -36,6 +36,7 @@ class TestTS(object):
         ts_structure.set_key_ic_number(2)
         assert ts_structure.key_ic_number == 2
         # assert False
+        ts_structure.energy_calculation()
         first_p = SaddlePoint(structure=ts_structure)
         tr = DefaultTrustRadius(number_of_atoms=3)
         ss = TRIM()
