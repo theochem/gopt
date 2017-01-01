@@ -48,5 +48,8 @@ class TestTS(object):
             step_scale=ss,
             hessian_modifier=hm)
         li_grape.add_point(first_p)
-        li_grape.start_optimization(
-            iteration=20, key_ic_number=2, negative_eigen=1)
+        li_grape.modify_hessian(key_ic_number=2, negative_eigen=1)
+        li_grape.calculate_step(negative_eigen=1)
+        print li_grape.last.step
+        s_p = li_grape.calculate_new_point()
+        li_grape.update_to_new_point()
