@@ -6,7 +6,7 @@ import numpy as np
 
 import horton as ht
 from saddle.newopt.grape import Grape
-from saddle.newopt.hessian_modifier import SaddleHessianModifier, Test_Saddle_Modifier
+from saddle.newopt.hessian_modifier import SaddleHessianModifier
 from saddle.newopt.saddle_point import SaddlePoint
 from saddle.newopt.step_scaler import TRIM
 from saddle.newopt.trust_radius import DefaultTrustRadius
