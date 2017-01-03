@@ -33,7 +33,7 @@ class TestGrape(object):
         f_p = SaddlePoint(structure=mol)
         tr = DefaultTrustRadius(number_of_atoms=3)
         ss = TRIM()
-        hm = Test_Saddle_Modifier()
+        hm = SaddleHessianModifier()
         hu = BFGS()
         li_grape = Grape(
             hessian_update=hu,
