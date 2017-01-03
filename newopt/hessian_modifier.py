@@ -23,11 +23,12 @@ class SaddleHessianModifier(object):
         assert key_ic_number <= dimension
         hessian = hessian.copy()
         non_reduce = hessian[key_ic_number:, key_ic_number:]
-        result = SaddleHessianModifier._change_to_positive_eigen(non_reduce)
-        hessian[
-            key_ic_number:,
-            key_ic_number:] = SaddleHessianModifier._change_to_positive_eigen(
-                non_reduce)
+        #result = SaddleHessianModifier._change_to_positive_eigen(non_reduce)
+        if non_reduce.size == 0:
+            hessian[
+                key_ic_number:,
+                key_ic_number:] = SaddleHessianModifier._change_to_positive_eigen(
+                    non_reduce)
         new_hessian = SaddleHessianModifier._select_main_column(
             hessian, key_ic_number, negative_eigen)
         return new_hessian
@@ -70,8 +71,3 @@ class SaddleHessianModifier(object):
         w[w < threshold] = 0.001
         result = np.dot(np.dot(v, np.diag(w)), v.T)
         return result
-
-
-class Test_Saddle_Modifier(SaddleHessianModifier):
-
-    positive = 0.0001

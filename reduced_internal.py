@@ -191,6 +191,16 @@ class ReducedInternal(Internal):  # need tests
         self._k_ic_n = number
         self._reset_v_space()
 
+    def select_key_ic(self, *indices):
+        self._k_ic_n = 0
+        indices = np.sort(np.array(indices))
+        assert len(indices) <= len(self.ic)
+        assert max(indices) < len(self.ic)
+        for index in indices:
+            self.swap_internal_coordinates(self._k_ic_n, index)
+            self._k_ic_n += 1
+        self._reset_v_space()
+
     @classmethod
     def update_to_reduced_internal(cls, internal_ob, key_ic_number=0):
         """Update a internal coordinates object into reduced internal
@@ -222,6 +232,10 @@ class ReducedInternal(Internal):  # need tests
         q_min = np.dot(u, v)
         new_v = np.dot(self.vspace, q_min)
         self.set_vspace(new_v)
+
+    def delete_ic(self, *indices):
+        super(ReducedInternal, self).delete_ic(*indices)
+        self._reset_v_space
 
     def set_vspace(self, new_vspace):
         """Set vspace of system with given values

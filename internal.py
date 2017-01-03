@@ -5,8 +5,7 @@ import numpy as np
 from horton import periodic
 from saddle.abclass import CoordinateTypes
 from saddle.cartesian import Cartesian
-from saddle.coordinate_types import (BendAngle, BendCos, BondLength,
-                                     ConventionDihedral)
+from saddle.coordinate_types import BendCos, BondLength, ConventionDihedral
 from saddle.cost_functions import direct_square
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
@@ -211,6 +210,13 @@ class Internal(Cartesian):
              self._check_connectivity(atom4, atom2))):
             if self._repeat_check(new_ic_obj):
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
+
+    def delete_ic(self, *indices):
+        indices = np.sort(np.array(indices))
+        assert len(indices) <= len(self.ic)
+        assert np.max(indices) < len(self.ic)
+        for seq, index in enumerate(indices):
+            self._delete_ic_index(index - seq)
 
     def set_target_ic(self, new_ic):
         """Set a target internal coordinates to optimize
@@ -430,7 +436,7 @@ class Internal(Cartesian):
             print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
             print("\n--Connectivity Ends--")
 
-    def auto_select_ic(self, dihed_special=False):
+    def auto_select_ic(self, dihed_special=False, reset_ic=True, keep_bond=False):
         """A method for Automatically selecting internal coordinates based on
         out buildin algorithm
 
@@ -440,10 +446,22 @@ class Internal(Cartesian):
             choice of special dihedral indicator for dealing with collinear problem.
             True for enable, otherwise False
         """
-        self._auto_select_bond()
+        bonds = [i for i in self.ic if isinstance(i, BondLength)]
+        if reset_ic is True:
+            self._clear_ic_info()
+        if keep_bond is False:
+            self._auto_select_bond()
+        else:
+            self.set_new_ics(bonds)
         self._auto_select_angle()
         self._auto_select_dihed_normal()
         self._auto_select_dihed_improper()
+        self._recal_g_and_h()
+
+    def _delete_ic_index(self, index):
+        del self._ic[index]
+        self._regenerate_ic()
+        self._regenerate_connectivity()
 
     def _clear_ic_info(self):  # tested
         """Wipe all the internal information in this structure

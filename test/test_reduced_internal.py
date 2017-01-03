@@ -1,6 +1,5 @@
-from copy import deepcopy
-
 import os
+from copy import deepcopy
 
 import numpy as np
 
@@ -162,7 +161,7 @@ class TestReduceInternal(object):
         copy1.align_vspace(copy2)
         assert np.allclose(copy1.vspace, mol_2.vspace)
         path = os.path.dirname(os.path.realpath(__file__))
-        fchk_path = path+"/water_1.fchk"
+        fchk_path = path + "/water_1.fchk"
         #print 'cv2',copy2.vspace
         copy2.energy_from_fchk(fchk_path)
         #print 'cv2, new',copy2.vspace, copy2.vspace_gradient
@@ -173,3 +172,17 @@ class TestReduceInternal(object):
         new_ic_gradient = np.dot(copy2.vspace, copy2.vspace_gradient)
         assert np.allclose(ref_ic_gradient, new_ic_gradient)
         assert np.allclose(copy1.vspace, copy2.vspace)
+
+    def test_select_key_ic(self):
+        fn_xyz = ht.context.get_fn('test/water.xyz')
+        mol = ht.IOData.from_file(fn_xyz)
+        mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        mol_1.add_bond(1, 0)
+        mol_1.add_bond(1, 2)
+        mol_1.add_angle_cos(0, 1, 2)
+        mol_1.select_key_ic(0)
+        assert mol_1.key_ic_number == 1
+        mol_1.select_key_ic(2)
+        assert mol_1.key_ic_number == 1
+        mol_1.select_key_ic(0, 1, 2)
+        assert mol_1.key_ic_number == 3

@@ -284,3 +284,19 @@ class TestInternal(object):
         mole.swap_internal_coordinates(0, 2)
         assert np.allclose(mole.internal_gradient[2], ref_g[0])
         assert np.allclose(mole.internal_gradient[0], ref_g[2])
+
+    def test_delete_ic(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/ethane.xyz"
+        mol = ht.IOData.from_file(mol_path)
+        ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
+        ethane.auto_select_ic()
+        ethane._delete_ic_index(0)
+        assert len(ethane.ic) == 23
+        ethane.auto_select_ic(keep_bond=True)
+        assert len(ethane.ic) == 12
+        print ethane.ic
+        ethane.delete_ic(1,2,3)
+        assert len(ethane.ic) == 9
+        print ethane.ic
+        # assert False
