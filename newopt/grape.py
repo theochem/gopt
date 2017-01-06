@@ -125,3 +125,12 @@ class Grape(object):
         new_hessian = self._h_u.update_hessian(pre_point, new_point, *args,
                                                **kwargs)
         new_point.set_hessian(new_hessian)
+
+    # def finite_diff_hessian(self):
+    #     self._finite_hessian_verify(self._t_r.number_of_atoms)
+
+    # def _finite_hessian_rows(self, number_of_atoms):
+    #     point = self.last
+    #     pre_point = self._points[-2]
+    #     for i in range(point.stu)
+    #     if (np.linalg.norm(point.gradient[:point.structure.key_ic_number]) > np.linalg.norm(point.gradient) / np.sqrt(3 * number_of_atoms - 6)) and

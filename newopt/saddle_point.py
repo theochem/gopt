@@ -69,13 +69,36 @@ class SaddlePoint(Point):
     def set_hessian(self, hessian):
         self._hessian = hessian
 
-    def update_point(self): # to be tested
+    def update_point(self):  # to be tested
         if self.step is None:
             raise NotSetError
         new_self = deepcopy(self)
         new_self._structure.update_to_new_structure_with_delta_v(new_self.step)
         new_self._reset_saddle_point()
         return new_self
+
+    # def finite_diff_hessian(self, epsilon=0.001):
+    #     tmp_self = deepcopy(self)
+    #     for i in range(key_ic_number):
+    #         delta_v = np.zeros(tmp_self.structure.df.shape[1], float)
+    #         delta_v[i] = 1  # create a unit vector that is zero except i
+    #         tmp_self.structure.update_to_new_structure_with_delta_v(delta_v *
+    #                                                                 epsilon)
+    #         tmp_self.align_vspace(self)
+    #         tmp_self.energy_calculation()
+    #         part1 = (tmp_self.gradient - self.gradient) / epsilon
+    #         part2 = np.dot(self.structure.vspace.T,
+    #                        np.linalg.pinv(self.structure.b_matrix.T))
+    #         part3 = np.dot(
+    #             np.dot(self.structure.b_matrix.T,
+    #                    (tmp_self.structure.vspace - self.structure.vspace) /
+    #                    epsilon), self.gradient)
+    #         part4 = np.dot(
+    #             (tmp_self.structure.b_matrix - self.structure.b_matrix).T /
+    #             epsilon, self.internal_gradient)
+    #         h_vector = part1 - np.dot(part2, part3 + part4)
+    #         self._hessian[i, :] = h_vector
+    #         self._hessian[:, i] = h_vector
 
     def _reset_saddle_point(self):
         self._step = None

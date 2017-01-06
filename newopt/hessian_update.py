@@ -21,6 +21,47 @@ class HessianUpdate(object):
             (delta_v + delta_b))
         return y
 
+    def finite_update_hessian(self, old_struct, new_struct, epsilon=0.001):
+        update_index = self._update_index(old_struct, new_struct)
+        for i in update_index:
+            tmp_red_int = deepcopy(new_struct)
+            delta_v = np.zeros(tmp_red_int.structure.df.shape[1], float)
+            delta_v[i] = 1  # create a unit vector that is zero except i
+            tmp_red_int.structure.update_to_new_structure_with_delta_v(delta_v *
+                                                                    epsilon)
+            tmp_red_int.structure.align_vspace(new_struct.structure)
+            tmp_red_int.structure.nergy_calculation()
+            part1 = (tmp_red_int.gradient - new_struct.gradient) / epsilon
+            part2 = np.dot(new_struct.ure.vspace.T,
+                           np.linalg.pinv(new_struct.ure.b_matrix.T))
+            part3 = np.dot(
+                np.dot(new_struct.ure.b_matrix.T,
+                       (tmp_red_int.structure.vspace - new_struct.ure.vspace) /
+                       epsilon), new_struct.gradient)
+            part4 = np.dot(
+                (tmp_red_int.structure.b_matrix - new_struct.ure.b_matrix).T /
+                epsilon, new_struct.internal_gradient)
+            h_vector = part1 - np.dot(part2, part3 + part4)
+            new_struct._hessian[i, :] = h_vector
+            new_struct._hessian[:, i] = h_vector
+
+    def _update_index(self, old_struct, new_struct):
+        # update_index = self._finite_reduce(self)  # obtain reduced ic need fd.
+        update_index = []
+        for i in range(new_struct.structure.key_ic_number):
+            condition1 = (np.linalg.norm(new_struct.gradient[i]) >
+                          np.linalg.norm(new_struct.gradient) /
+                          np.sqrt(new_struct.structure.df))
+            unit_vector = np.zeros(new_struct.structure.vspace.shape[1], foat)
+            unit_vector[i] = 1
+            condition2 = (
+                np.linalg.norm(
+                    np.dot(new_struct.hessian, unit_vector) - np.dot(
+                        old_struct.hessian, unit_vector)) > 1. *
+                np.linalg.norm(np.dot(old_struct.hessian, unit_vector)))
+            if condition1 and condition2:
+                update_index.append(i)
+        return update_index
 
 class SR1(HessianUpdate):
     def update_hessian(self, old_struct, new_struct):

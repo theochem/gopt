@@ -33,6 +33,10 @@ class DefaultTrustRadius(TrustRadius): # need to be tested
         point.set_trust_radius_stride(self.starting)
 
     @property
+    def number_of_atoms(self):
+        return self._number_of_atoms
+
+    @property
     def ceiling(self):
         return np.sqrt(self._number_of_atoms)
 
