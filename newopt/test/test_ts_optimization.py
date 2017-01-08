@@ -4,7 +4,7 @@ from copy import deepcopy
 import numpy as np
 
 import horton as ht
-from saddle.internal import Internal
+from saddle.reduced_internal import ReducedInternal
 from saddle.newopt.grape import Grape
 from saddle.newopt.hessian_modifier import (SaddleHessianModifier)
 from saddle.newopt.hessian_update import BFGS
@@ -17,14 +17,14 @@ from saddle.ts_construct import TSConstruct
 class TestTS(object):
     def test_br_ch3_cl(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        fn_xyz = path + '/../../test/cl_ch3_br.xyz'
+        fn_xyz = path + '/../test/cl_ch3_br.xyz'
         mol = ht.IOData.from_file(fn_xyz)
         red_mol = ReducedInternal(
             mol.coordinates, mol.numbers, spin=1, charge=-1)
         red_mol.auto_select_ic()
         red_mol.delete_ic(5, 6)
         red_mol.auto_select_ic(keep_bond=True)
-        assert len(red_mol) == 19
+        assert len(red_mol.ic) == 19
         red_mol.select_key_ic(0, 2)
         # product = path + '/../../test/Cl_HBr.xyz'
         # rct_mol = ht.IOData.from_file(reactant)
@@ -54,8 +54,5 @@ class TestTS(object):
             step_scale=ss,
             hessian_modifier=hm)
         li_grape.add_point(first_p)
-        li_grape.modify_hessian(key_ic_number=2, negative_eigen=1)
-        li_grape.calculate_step(negative_eigen=1)
-        print li_grape.last.step
-        s_p = li_grape.calculate_new_point()
-        li_grape.update_to_new_point()
+        li_grape.start_optimization(key_ic_number=2, iteration=20,
+                                    init_hessian=True, negative_eigen=1)
