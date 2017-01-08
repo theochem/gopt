@@ -30,13 +30,16 @@ class HessianUpdate(object):
         update_index = self._update_index(
             old_struct, new_struct, omega=omega, nu=nu)
         for i in update_index:
+            self._update_hessian_with_index(new_struct, i)
+
+    def _update_hessian_with_index(self, new_struct, index, epsilon=0.001):
             tmp_red_int = deepcopy(new_struct)
             delta_v = np.zeros(tmp_red_int.structure.vspace.shape[1], float)
-            delta_v[i] = 1  # create a unit vector that is zero except i
+            delta_v[index] = 1  # create a unit vector that is zero except i
             tmp_red_int.structure.update_to_new_structure_with_delta_v(
                 delta_v * epsilon)
             tmp_red_int.structure.align_vspace(new_struct.structure)
-            tmp_red_int.structure.nergy_calculation()
+            tmp_red_int.structure.energy_calculation()
             part1 = (tmp_red_int.gradient - new_struct.gradient) / epsilon
             part2 = np.dot(new_struct.structure.vspace.T,
                            np.linalg.pinv(new_struct.structure.b_matrix.T))
@@ -48,8 +51,8 @@ class HessianUpdate(object):
                 (tmp_red_int.structure.b_matrix - new_struct.structure.b_matrix).T /
                 epsilon, new_struct.internal_gradient)
             h_vector = part1 - np.dot(part2, part3 + part4)
-            new_struct._hessian[i, :] = h_vector  # not good assignment
-            new_struct._hessian[:, i] = h_vector
+            new_struct._hessian[index, :] = h_vector  # not good assignment
+            new_struct._hessian[:, index] = h_vector
 
     def _update_index(self, old_struct, new_struct, omega, nu):
         # update_index = self._finite_reduce(self)  # obtain reduced ic need fd.
