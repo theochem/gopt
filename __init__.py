@@ -25,5 +25,3 @@ __version__ = '1.0.0'
 __author__ = 'Derrick Yang'
 
 
-from saddle.ICTransformation import *
-from saddle.optimizer import *

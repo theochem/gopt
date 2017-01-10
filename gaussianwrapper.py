@@ -14,7 +14,7 @@ class GaussianWrapper(object):
     def __init__(self, molecule, title):
         self.molecule = molecule
         self.pwd = os.path.dirname(os.path.realpath(__file__))
-        print('psw',self.pwd)
+        #print('psw',self.pwd)
         with open(self.pwd + "/single_hf_template.com", "r") as f:
             self.template = Template(f.read())
         self.title = title
@@ -82,6 +82,8 @@ class GaussianWrapper(object):
                 os.system("formchk {0}{1}.chk {0}{1}.fchk".format(path,
                                                                   filename))
                 fchk_ob = FCHKFile("{0}{1}.fchk".format(path, filename))
+        os.chdir(self.pwd+'/../')
+        #print("change_back", self.pwd)
         return fchk_ob
 
     def _log_finish_test(self, logname):

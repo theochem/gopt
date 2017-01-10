@@ -2,6 +2,8 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from copy import deepcopy
+
 from saddle.newopt.saddle_point import SaddlePoint
 from saddle.reduced_internal import ReducedInternal
 
@@ -36,20 +38,27 @@ class HessianUpdate(object):
             tmp_red_int = deepcopy(new_struct)
             delta_v = np.zeros(tmp_red_int.structure.vspace.shape[1], float)
             delta_v[index] = 1  # create a unit vector that is zero except i
+            #print("delta v", delta_v, tmp_red_int.structure.vspace)
             tmp_red_int.structure.update_to_new_structure_with_delta_v(
                 delta_v * epsilon)
+            tmp_red_int.structure.energy_calculation()  #vspace changes
             tmp_red_int.structure.align_vspace(new_struct.structure)
-            tmp_red_int.structure.energy_calculation()
             part1 = (tmp_red_int.gradient - new_struct.gradient) / epsilon
+            #print ('part1',part1)
+            #print (new_struct.hessian)
             part2 = np.dot(new_struct.structure.vspace.T,
                            np.linalg.pinv(new_struct.structure.b_matrix.T))
+            #print('part2',part2)
             part3 = np.dot(
                 np.dot(new_struct.structure.b_matrix.T,
                        (tmp_red_int.structure.vspace - new_struct.structure.vspace) /
                        epsilon), new_struct.gradient)
+            #print('part3', part3)
             part4 = np.dot(
                 (tmp_red_int.structure.b_matrix - new_struct.structure.b_matrix).T /
-                epsilon, new_struct.internal_gradient)
+                epsilon, new_struct.structure.internal_gradient)
+            #print('part4',part4)
+            print(tmp_red_int.structure.b_matrix - new_struct.structure.b_matrix) 
             h_vector = part1 - np.dot(part2, part3 + part4)
             new_struct._hessian[index, :] = h_vector  # not good assignment
             new_struct._hessian[:, index] = h_vector
