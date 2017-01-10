@@ -63,7 +63,7 @@ class TestGrape(object):
         f_p = SaddlePoint(structure=methanol)
         tr = DefaultTrustRadius(number_of_atoms=6)
         ss = TRIM()
-        hm = Test_Saddle_Modifier()
+        hm = SaddleHessianModifier()
         hu = BFGS()
         li_grape = Grape(
             hessian_update=hu,
@@ -84,7 +84,7 @@ class TestGrape(object):
         f_p = SaddlePoint(structure=ethane)
         tr = DefaultTrustRadius(number_of_atoms=8)
         ss = TRIM()
-        hm = Test_Saddle_Modifier()
+        hm = SaddleHessianModifier()
         hu = BFGS()
         li_grape = Grape(
             hessian_update=hu,
@@ -105,7 +105,7 @@ class TestGrape(object):
         f_p = SaddlePoint(structure=ethanol)
         tr = DefaultTrustRadius(number_of_atoms=9)
         ss = TRIM()
-        hm = Test_Saddle_Modifier()
+        hm = SaddleHessianModifier()
         hu = BFGS()
         li_grape = Grape(
             hessian_update=hu,

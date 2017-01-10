@@ -58,7 +58,7 @@ class HessianUpdate(object):
                 (tmp_red_int.structure.b_matrix - new_struct.structure.b_matrix).T /
                 epsilon, new_struct.structure.internal_gradient)
             #print('part4',part4)
-            print(tmp_red_int.structure.b_matrix - new_struct.structure.b_matrix) 
+            #print(tmp_red_int.structure.b_matrix - new_struct.structure.b_matrix) 
             h_vector = part1 - np.dot(part2, part3 + part4)
             new_struct._hessian[index, :] = h_vector  # not good assignment
             new_struct._hessian[:, index] = h_vector
