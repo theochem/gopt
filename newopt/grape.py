@@ -47,6 +47,7 @@ class Grape(object):
             while iteration > 0:
                 if quasint == True:
                     self.update_hessian()
+                    self.update_hessian_with_finite_diff()
                 conver_flag = self.converge_test()
                 if conver_flag:
                     print("Optimization finished")
@@ -118,6 +119,13 @@ class Grape(object):
         #elif np.max(np.abs(pre_p.step)) < 3e-4:
         #    return True
         return False
+
+    def update_hessian_with_finite_diff(self, *args, **kwargs): # to be test
+        new_point = self.last
+        pre_point = self._points[-2]
+        new_hessian = self._h_u.update_hessian_with_finite_diff(pre_point,
+                                                                new_point)
+        new_point.set_hessian(new_hessian)
 
     def update_hessian(self, *args, **kwargs):
         new_point = self.last
