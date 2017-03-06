@@ -23,9 +23,9 @@ class Cartesian(object):
     energy : float
         Energy of given Cartesian coordinates system molecule
     energy_gradient : np.ndarray(N)
-        Gradient of Energy that calculated through certain method
+        Gradient of Energy that calculated under Cartesian coordinates
     energy_hessian : np.ndarray(N, N)
-        Hessian of Energy that calculated through cartain method
+        Hessian of Energy that calculated under Cartesian coordinates
     coordinates : np.ndarray(K, 3)
         Cartesian information of input molecule
 
@@ -193,8 +193,8 @@ class Cartesian(object):
             name of the program(method) used to calculate energy and other
             property
         """
-        title = kwargs.pop('title', 'untitled')
-        method = kwargs.pop('method', 'g09')
+        title = kwargs.pop('title', 'untitled') # get title arg
+        method = kwargs.pop('method', 'g09') # get calculation method arg
         if method == "g09":
             ob = GaussianWrapper(self, title)
             coor, ener, grad, hess = ob.run_gaussian_and_get_result(

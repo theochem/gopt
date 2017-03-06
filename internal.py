@@ -212,6 +212,13 @@ class Internal(Cartesian):
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
 
     def delete_ic(self, *indices):
+        """Delete a exsiting internal coordinates
+
+        Arguments
+        ---------
+        *indices : int
+            The index of each internal coordinate 
+        """
         indices = np.sort(np.array(indices))
         assert len(indices) <= len(self.ic)
         assert np.max(indices) < len(self.ic)
@@ -443,8 +450,14 @@ class Internal(Cartesian):
         Arguments
         ---------
         dihed_special : bool, default is False
-            choice of special dihedral indicator for dealing with collinear problem.
-            True for enable, otherwise False
+            choice of special dihedral indicator for dealing with collinear
+            problem. True for enable, otherwise False
+        reset_ic : bool, default is True
+            wipe all the existing internal coordinates, regenerate all the
+            internal coordinates. True for enable, otherwise False
+        keep_bond : bool, default is False
+            keep bond information and regenerate bend angle and dihedral
+            information.
         """
         bonds = [i for i in self.ic if isinstance(i, BondLength)]
         if reset_ic is True:
