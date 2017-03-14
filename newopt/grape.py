@@ -5,6 +5,10 @@ from copy import deepcopy
 import numpy as np
 
 from saddle.newopt.abclass import Point
+from saddle.newopt.hessian_modifier import SaddleHessianModifier
+from saddle.newopt.step_scaler import TRIM
+from saddle.newopt.trust_radius import DefaultTrustRadius
+from saddle.newopt.hessian_update import BFGS
 
 
 class Grape(object):
@@ -37,6 +41,7 @@ class Grape(object):
         assert iteration > 0
         if self.total == 1:
             if init_hessian == False:
+            # if init hessian not provide, use identity
                 self.last.set_hessian(np.eye(len(self.last.gradient)))
             self.modify_hessian(key_ic_number, negative_eigen)
             self.calculate_step(negative_eigen)
@@ -91,7 +96,7 @@ class Grape(object):
             return 1
         else:
             self.last.set_trust_radius_scale(0.25)
-            if self.last.trust_radius_stride < 0.01 * self._t_r.floor:
+            if self.last.trust_radius_stride < 0.1 * self._t_r.floor:
                 self.last.set_trust_radius_stride(self._t_r.floor)
                 return 0
             else:
@@ -107,6 +112,7 @@ class Grape(object):
         if verify_result == 0:
             new_point = self.calculate_new_point()
         # print("result", verify_result, "after loop")
+        print("add a point with higher energy")
         self.add_point(new_point)
 
     def converge_test(self, g_cutoff=1e-4, *args, **kwargs):
@@ -120,7 +126,7 @@ class Grape(object):
         #    return True
         return False
 
-    def update_hessian_with_finite_diff(self, *args, **kwargs): # to be test
+    def update_hessian_with_finite_diff(self, *args, **kwargs):  # to be test
         new_point = self.last
         pre_point = self._points[-2]
         new_hessian = self._h_u.update_hessian_with_finite_diff(pre_point,
@@ -134,6 +140,14 @@ class Grape(object):
                                                **kwargs)
         new_point.set_hessian(new_hessian)
 
+
+def basic_optimizer(number_atoms):
+    hm = SaddleHessianModifier()
+    ss = TRIM()
+    tr = DefaultTrustRadius(number_atoms)
+    hu = BFGS()
+    return Grape(
+        trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
     # def finite_diff_hessian(self):
     #     self._finite_hessian_verify(self._t_r.number_of_atoms)
 
