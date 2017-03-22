@@ -8,7 +8,7 @@ from saddle.newopt.abclass import Point
 from saddle.newopt.hessian_modifier import SaddleHessianModifier
 from saddle.newopt.step_scaler import TRIM
 from saddle.newopt.trust_radius import DefaultTrustRadius
-from saddle.newopt.hessian_update import BFGS
+from saddle.newopt.hessian_update import SR1
 
 
 class Grape(object):
@@ -58,7 +58,7 @@ class Grape(object):
                     print("Optimization finished")
                     break
                 self.modify_hessian(key_ic_number, negative_eigen)
-                self.update_trust_radius(criterion="energy")
+                self.update_trust_radius(criterion="gradient")
                 self.calculate_step(negative_eigen)
                 self.update_to_new_point()
                 self.align_last_point()
@@ -70,6 +70,7 @@ class Grape(object):
         if self.last is None:
             self._t_r.initialize(copy_n_p)
         self._points.append(copy_n_p)
+        print("this is a new point, {}".format(len(self._points)))
 
     def modify_hessian(self, *args, **kwargs):
         self._h_m.modify_hessian(self.last, *args, **kwargs)
@@ -89,6 +90,7 @@ class Grape(object):
 
     def align_last_point(self):
         self.last.structure.align_vspace(self._points[-2].structure)
+        self.last.reset_hessian()
 
     def _verify_new_point(self, new_point, *args, **kwargs):
         if np.linalg.norm(new_point.gradient) < np.linalg.norm(
@@ -111,8 +113,7 @@ class Grape(object):
             verify_result = self._verify_new_point(new_point)
         if verify_result == 0:
             new_point = self.calculate_new_point()
-        # print("result", verify_result, "after loop")
-        print("add a point with higher energy")
+        # print("add a point with higher energy")
         self.add_point(new_point)
 
     def converge_test(self, g_cutoff=1e-4, *args, **kwargs):
@@ -127,10 +128,10 @@ class Grape(object):
         return False
 
     def update_hessian_with_finite_diff(self, *args, **kwargs):  # to be test
+        print("running finite diff")
         new_point = self.last
         pre_point = self._points[-2]
-        new_hessian = self._h_u.update_hessian_with_finite_diff(pre_point,
-                                                                new_point)
+        new_hessian = self._h_u.finite_update_hessian(pre_point, new_point)
         new_point.set_hessian(new_hessian)
 
     def update_hessian(self, *args, **kwargs):
@@ -145,7 +146,7 @@ def basic_optimizer(number_atoms):
     hm = SaddleHessianModifier()
     ss = TRIM()
     tr = DefaultTrustRadius(number_atoms)
-    hu = BFGS()
+    hu = SR1()
     return Grape(
         trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
     # def finite_diff_hessian(self):

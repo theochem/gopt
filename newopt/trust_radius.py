@@ -22,6 +22,40 @@ class DefaultTrustRadius(TrustRadius): # need to be tested
             else:
                 value = min(1 / 4 * pre_point.trust_radius_stride, self.ceiling)
             target_point.set_trust_radius_stride(value)
+        elif criterion.lower()=='gradient':
+
+            def p_10(d):
+                return np.sqrt(1.6424 / d + 1.11 / d**2)
+
+            def p_40(d):
+                return np.sqrt(0.064175 / d + 0.0946 / d**2)
+
+            g_pre = pre_point.gradient + np.dot(pre_point.hessian,
+                                                pre_point.step)
+            norm = np.linalg.norm
+            rho = ((norm(g_pre) - norm(pre_point.gradient)) /
+                  (norm(target_point.gradient) - norm(pre_point.gradient)))
+            cos_theta = np.dot(g_pre - pre_point.gradient,
+                               target_point.gradient -
+                               pre_point.gradient) / np.dot(norm(g_pre -
+                                                                 pre_point.gradient),
+                                                           norm(target_point.gradient
+                                                               - pre_point.gradient))
+            if (0.8 < rho < 1.25 and p_10(3 * self._number_of_atoms - 6) <
+            cos_theta):
+                print('trust 1')
+                value = min(max(self.floor, 2 * pre_point.trust_radius_stride),
+                            self.ceiling)
+            elif (0.2 < rho < 6 and p_40(3 * self._number_of_atoms - 6) <
+            cos_theta):
+                print('trust 2')
+                value = max(pre_point.trust_radius_stride, self.floor)
+            else:
+                print('trust 3')
+                value = min(0.5 * pre_point.trust_radius_stride, self.floor)
+            target_point.set_trust_radius_stride(value)
+
+
 
     def readjust(self, point):
         assert isinstance(point, Point)

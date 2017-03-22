@@ -193,7 +193,7 @@ class ReducedInternal(Internal):  # need tests
 
     def select_key_ic(self, *indices):
         self._k_ic_n = 0
-        indices = np.sort(np.array(set(indices)))
+        indices = np.sort(np.array(indices))
         assert len(indices) <= len(self.ic)
         assert max(indices) < len(self.ic)
         for index in indices:

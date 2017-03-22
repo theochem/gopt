@@ -69,6 +69,10 @@ class SaddlePoint(Point):
     def set_hessian(self, hessian):
         self._hessian = hessian
 
+    def reset_hessian(self):
+        self._hessian = None
+
+
     def update_point(self):  # to be tested
         if self.step is None:
             raise NotSetError
