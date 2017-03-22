@@ -6,9 +6,9 @@ import numpy as np
 
 from saddle.newopt.abclass import Point
 from saddle.newopt.hessian_modifier import SaddleHessianModifier
+from saddle.newopt.hessian_update import SR1
 from saddle.newopt.step_scaler import TRIM
 from saddle.newopt.trust_radius import DefaultTrustRadius
-from saddle.newopt.hessian_update import SR1
 
 
 class Grape(object):
@@ -41,7 +41,7 @@ class Grape(object):
         assert iteration > 0
         if self.total == 1:
             if init_hessian == False:
-            # if init hessian not provide, use identity
+                # if init hessian not provide, use identity
                 self.last.set_hessian(np.eye(len(self.last.gradient)))
             self.modify_hessian(key_ic_number, negative_eigen)
             self.calculate_step(negative_eigen)

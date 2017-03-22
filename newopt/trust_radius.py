@@ -2,10 +2,10 @@ from __future__ import absolute_import, division
 
 import numpy as np
 
-from saddle.newopt.abclass import TrustRadius, Point
+from saddle.newopt.abclass import Point, TrustRadius
 
 
-class DefaultTrustRadius(TrustRadius): # need to be tested
+class DefaultTrustRadius(TrustRadius):  # need to be tested
     def __init__(self, number_of_atoms):
         self._number_of_atoms = number_of_atoms
 
@@ -16,13 +16,16 @@ class DefaultTrustRadius(TrustRadius): # need to be tested
             delta_u = target_point.value - pre_point.value
             ratio = delta_m / delta_u
             if 2 / 3 < ratio < 3 / 2:
-                value = min(max(self.floor, 2 * pre_point.trust_radius_stride), self.ceiling)
+                value = min(
+                    max(self.floor, 2 * pre_point.trust_radius_stride),
+                    self.ceiling)
             elif 1 / 3 < ratio < 3:
                 value = max(pre_point.trust_radius_stride, self.ceiling)
             else:
-                value = min(1 / 4 * pre_point.trust_radius_stride, self.ceiling)
+                value = min(1 / 4 * pre_point.trust_radius_stride,
+                            self.ceiling)
             target_point.set_trust_radius_stride(value)
-        elif criterion.lower()=='gradient':
+        elif criterion.lower() == 'gradient':
 
             def p_10(d):
                 return np.sqrt(1.6424 / d + 1.11 / d**2)
@@ -34,28 +37,26 @@ class DefaultTrustRadius(TrustRadius): # need to be tested
                                                 pre_point.step)
             norm = np.linalg.norm
             rho = ((norm(g_pre) - norm(pre_point.gradient)) /
-                  (norm(target_point.gradient) - norm(pre_point.gradient)))
-            cos_theta = np.dot(g_pre - pre_point.gradient,
-                               target_point.gradient -
-                               pre_point.gradient) / np.dot(norm(g_pre -
-                                                                 pre_point.gradient),
-                                                           norm(target_point.gradient
-                                                               - pre_point.gradient))
-            if (0.8 < rho < 1.25 and p_10(3 * self._number_of_atoms - 6) <
-            cos_theta):
+                   (norm(target_point.gradient) - norm(pre_point.gradient)))
+            cos_theta = np.dot(
+                g_pre - pre_point.gradient,
+                target_point.gradient - pre_point.gradient) / np.dot(
+                    norm(g_pre - pre_point.gradient),
+                    norm(target_point.gradient - pre_point.gradient))
+            if (0.8 < rho < 1.25 and
+                    p_10(3 * self._number_of_atoms - 6) < cos_theta):
                 print('trust 1')
-                value = min(max(self.floor, 2 * pre_point.trust_radius_stride),
-                            self.ceiling)
-            elif (0.2 < rho < 6 and p_40(3 * self._number_of_atoms - 6) <
-            cos_theta):
+                value = min(
+                    max(self.floor, 2 * pre_point.trust_radius_stride),
+                    self.ceiling)
+            elif (0.2 < rho < 6 and
+                  p_40(3 * self._number_of_atoms - 6) < cos_theta):
                 print('trust 2')
                 value = max(pre_point.trust_radius_stride, self.floor)
             else:
                 print('trust 3')
                 value = min(0.5 * pre_point.trust_radius_stride, self.floor)
             target_point.set_trust_radius_stride(value)
-
-
 
     def readjust(self, point):
         assert isinstance(point, Point)

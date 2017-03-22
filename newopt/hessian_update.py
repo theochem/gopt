@@ -1,8 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
-
 from copy import deepcopy
+
+import numpy as np
 
 from saddle.newopt.saddle_point import SaddlePoint
 from saddle.reduced_internal import ReducedInternal
@@ -67,9 +67,9 @@ class HessianUpdate(object):
         # update_index = self._finite_reduce(self)  # obtain reduced ic need fd.
         update_index = []
         for i in range(new_struct.structure.key_ic_number):
-            condition1 = (np.linalg.norm(new_struct.gradient[i]) > omega *
-                          np.linalg.norm(new_struct.gradient) /
-                          np.sqrt(new_struct.structure.df))
+            condition1 = (np.linalg.norm(new_struct.gradient[i])
+                          ) > (omega * np.linalg.norm(new_struct.gradient) /
+                               np.sqrt(new_struct.structure.df))
             unit_vector = np.zeros(new_struct.structure.vspace.shape[1], float)
             unit_vector[i] = 1
             condition2 = (
