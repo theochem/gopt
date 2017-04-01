@@ -11,6 +11,8 @@ from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
 from saddle.opt import GeoOptimizer, Point
 
+__all__ = ['Internal']
+
 
 class Internal(Cartesian):
     """Internal Coordinate

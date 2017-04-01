@@ -6,6 +6,8 @@ import numpy as np
 from saddle.periodic import angstrom, periodic
 from saddle.fchk import FCHKFile
 
+__all__ = ['GaussianWrapper']
+
 
 class GaussianWrapper(object):
 
@@ -100,6 +102,6 @@ if __name__ == '__main__':
     molecule = namedtuple("molecule", "numbers, coordinates")
     aa = molecule([1, 3], np.array([[0., 0., 0.], [1., 1., 1.]]))
     a = GaussianWrapper(aa, "text_wrapper")
-    print a.template
+    print(a.template)
     a.create_input_file(0, 2)
     a.create_input_file(0, 2, "freq")

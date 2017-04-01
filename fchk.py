@@ -116,22 +116,22 @@ class FCHKFile(object):
             return True
 
         self.fields = {}
-        f = file(filename, 'r')
-        self.title = f.readline()[:-1].strip()
-        words = f.readline().split()
-        if len(words) == 3:
-            self.command, self.lot, self.basis = words
-        elif len(words) == 2:
-            self.command, self.lot = words
-        else:
-            raise FileFormatError(
-                'The second line of the FCHK file should contain two or three words.'
-            )
+        with open(filename, 'r') as f:
+            self.title = f.readline()[:-1].strip()
+            words = f.readline().split()
+            if len(words) == 3:
+                self.command, self.lot, self.basis = words
+            elif len(words) == 2:
+                self.command, self.lot = words
+            else:
+                raise FileFormatError(
+                    'The second line of the FCHK file should contain two or three words.'
+                )
 
-        while read_field(f):
-            pass
+            while read_field(f):
+                pass
 
-        f.close()
+            f.close()
 
     def _analyze(self):
         """Convert a few elementary fields into a molecule object"""
@@ -155,7 +155,7 @@ class FCHKFile(object):
         N = len(self.molecule.numbers)
         result = np.zeros((3 * N, 3 * N), float)
         counter = 0
-        for row in xrange(3 * N):
+        for row in range(3 * N):
             result[row, :row + 1] = force_const[counter:counter + row + 1]
             result[:row + 1, row] = force_const[counter:counter + row + 1]
             counter += row + 1

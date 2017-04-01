@@ -2,6 +2,8 @@ import numpy as np
 
 from saddle.errors import PositiveProductError
 
+__all__ = ['ridders_solver', 'diagonalize']
+
 
 def ridders_solver(func, x1, x2, iteration=30, error=10e-6):
     """The ridders solver to solver nonlinear equation to find a mathematical

@@ -30,16 +30,9 @@
 '''
 
 
-# from horton.io.cif import *
-# from horton.io.cp2k import *
-# from horton.io.cube import *
 from .gaussian import *
 from .iodata import *
-# from horton.io.internal import *
-# from horton.io.lockedh5 import *
-# from horton.io.molden import *
-# from horton.io.molekel import *
-# from horton.io.molpro import *
-# from horton.io.vasp import *
-# from horton.io.wfn import *
-# from .xyz import *
+from .internal import *
+from .lockedh5 import *
+from .molpro import *
+from .xyz import *

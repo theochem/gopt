@@ -10,6 +10,8 @@ from saddle.errors import AtomsNumberError, InputTypeError, NotSetError
 from saddle.internal import Internal
 from saddle.reduced_internal import ReducedInternal
 
+__all__ = ['TSConstruct']
+
 
 class TSConstruct(object):
     """Transitian State Constructor

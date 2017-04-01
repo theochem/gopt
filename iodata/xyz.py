@@ -40,18 +40,19 @@ def load_xyz(filename):
 
        **Returns:** dictionary with ``title`, ``coordinates`` and ``numbers``.
     '''
-    f = file(filename)
-    size = int(f.next())
-    title = f.next().strip()
-    coordinates = np.empty((size, 3), float)
-    numbers = np.empty(size, int)
-    for i in xrange(size):
-        words = f.next().split()
-        numbers[i] = periodic[words[0]].number
-        coordinates[i,0] = float(words[1])*angstrom
-        coordinates[i,1] = float(words[2])*angstrom
-        coordinates[i,2] = float(words[3])*angstrom
-    f.close()
+    # f = file(filename)
+    with open(filename) as f:
+        size = int(next(f))
+        title = next(f).strip()
+        coordinates = np.empty((size, 3), float)
+        numbers = np.empty(size, int)
+        for i in range(size):
+            words = next(f).split()
+            numbers[i] = periodic[words[0]].number
+            coordinates[i,0] = float(words[1])*angstrom
+            coordinates[i,1] = float(words[2])*angstrom
+            coordinates[i,2] = float(words[3])*angstrom
+        f.close()
     return {
         'title': title,
         'coordinates': coordinates,

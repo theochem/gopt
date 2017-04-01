@@ -4,6 +4,8 @@ import numpy as np
 
 from saddle.solver import ridders_solver
 
+__all__ = ['Point', 'GeoOptimizer']
+
 
 class Point(object):
     def __init__(self, gradient, hessian, ele_number):

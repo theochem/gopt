@@ -25,7 +25,7 @@ class Test_TS_Construct(object):
         ts_ins._auto_select_angle()
         ts_ins._auto_select_dihed_normal()
         assert len(ts_ins.reactant.ic) == len(ts_ins.product.ic)
-        print ts_ins.product.ic
+        # print ts_ins.product.ic
         # print ts_ins.product.ic_values
         ref_value = [
             2.0399259678469988, 2.0399141882105529, 2.03976416977833,
@@ -36,7 +36,7 @@ class Test_TS_Construct(object):
         ]
         assert np.allclose(ts_ins.product.ic_values, ref_value)
         ts_ins._auto_select_dihed_improper()
-        print ts_ins.product.ic
+        # print ts_ins.product.ic
         ref_value = [2.0399259678469988, 2.0399141882105529, 2.03976416977833,
                      2.6533652025753693, 5.5244442325320069,
                      -0.33511068208525152, -0.33461558852288653,

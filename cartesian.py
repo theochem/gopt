@@ -8,6 +8,8 @@ from saddle.errors import AtomsNumberError, NotSetError
 from saddle.fchk import FCHKFile
 from saddle.gaussianwrapper import GaussianWrapper
 
+__all__ = ['Cartesian']
+
 
 class Cartesian(object):
     """ Cartesian Coordinate.
@@ -193,8 +195,8 @@ class Cartesian(object):
             name of the program(method) used to calculate energy and other
             property
         """
-        title = kwargs.pop('title', 'untitled') # get title arg
-        method = kwargs.pop('method', 'g09') # get calculation method arg
+        title = kwargs.pop('title', 'untitled')  # get title arg
+        method = kwargs.pop('method', 'g09')  # get calculation method arg
         if method == "g09":
             ob = GaussianWrapper(self, title)
             coor, ener, grad, hess = ob.run_gaussian_and_get_result(

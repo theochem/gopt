@@ -6,6 +6,8 @@ from saddle.errors import NotSetError
 from saddle.internal import Internal
 from saddle.solver import diagonalize
 
+__all__ = ['ReducedInternal']
+
 
 class ReducedInternal(Internal):  # need tests
     """Reduced Internal Coordinate
