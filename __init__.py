@@ -23,7 +23,7 @@
 __version__ = '0.1.0'
 __author__ = 'Derrick Yang'
 
-from cartesian import *
-from internal import *
-from reduced_internal import *
-from ts_construct import *
+from .cartesian import *
+from .internal import *
+from .reduced_internal import *
+from .ts_construct import *
