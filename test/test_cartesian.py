@@ -1,7 +1,8 @@
 import numpy as np
 import os
 
-import horton as ht
+from saddle.iodata import IOData
+from saddle.periodic import angstrom
 from saddle.cartesian import Cartesian
 from copy import deepcopy
 
@@ -9,9 +10,9 @@ from copy import deepcopy
 class TestCartesian(object):
     @classmethod
     def setup_class(self):
-        import horton as ht
-        fn_xyz = ht.context.get_fn("test/water.xyz")
-        mol = ht.IOData.from_file(fn_xyz)  # create a water molecule
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/water.xyz"
+        mol = IOData.from_file(mol_path)
         self.cartesian = Cartesian(mol.coordinates, mol.numbers, 0, 1)
 
     def test_coordinates(self):
@@ -19,7 +20,7 @@ class TestCartesian(object):
             [0.783837, -0.492236, -0.000000], [-0.000000, 0.062020, -0.000000],
             [-0.783837, -0.492236, -0.000000]
         ])
-        assert np.allclose(self.cartesian.coordinates / ht.angstrom,
+        assert np.allclose(self.cartesian.coordinates / angstrom,
                            ref_coordinates)
 
     def test_numbers(self):
@@ -36,7 +37,7 @@ class TestCartesian(object):
         ref_distance = np.linalg.norm(
             np.array([0.783837, -0.492236, -0.000000]) - np.array(
                 [-0.000000, 0.062020, -0.000000]))
-        assert self.cartesian.distance(0, 1) / ht.angstrom == ref_distance
+        assert self.cartesian.distance(0, 1) / angstrom == ref_distance
 
     def test_angle(self):
         vector1 = np.array([-0.000000, 0.062020, -0.000000]) - \
@@ -51,7 +52,7 @@ class TestCartesian(object):
 
     def test_get_energy_from_fchk(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        fchk_path = path + "/water_1.fchk"
+        fchk_path = path + "/../data/water_1.fchk"
         mole = deepcopy(self.cartesian)
         mole.energy_from_fchk(fchk_path)
         assert np.allclose(mole.energy, -7.599264122862e1)

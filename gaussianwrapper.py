@@ -3,7 +3,7 @@ from string import Template
 
 import numpy as np
 
-from horton import angstrom, periodic
+from saddle.periodic import angstrom, periodic
 from saddle.fchk import FCHKFile
 
 

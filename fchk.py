@@ -97,9 +97,9 @@ class FCHKFile(object):
                         for word in line.split():
                             try:
                                 value[counter] = datatype(word)
-                            except (ValueError, OverflowError), e:
-                                print 'WARNING: could not interpret word while reading %s: %s' % (
-                                    word, self.filename)
+                            except (ValueError, OverflowError) as e:
+                                print('WARNING: could not interpret word while reading %s: %s' % (
+                                    word, self.filename))
                                 if self.ignore_errors:
                                     value[counter] = unreadable
                                 else:
@@ -185,5 +185,5 @@ if __name__ == '__main__':
     gradient = a.get_gradient()
     energy = a.get_energy()
     # print hessian
-    print gradient
-    print energy
+    print(gradient)
+    print(energy)

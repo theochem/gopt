@@ -3,7 +3,7 @@ from copy import deepcopy
 
 import numpy as np
 
-import horton as ht
+from saddle.iodata import IOData
 from saddle.internal import Internal
 from saddle.opt import Point
 
@@ -11,8 +11,9 @@ from saddle.opt import Point
 class TestInternal(object):
     @classmethod
     def setup_class(self):
-        fn_xyz = ht.context.get_fn("test/water.xyz")
-        mol = ht.IOData.from_file(fn_xyz)  # create a water molecule
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/water.xyz"
+        mol = IOData.from_file(mol_path)
         self.internal = Internal(mol.coordinates, mol.numbers, 0, 1)
 
     def test_connectivity(self):
@@ -90,8 +91,9 @@ class TestInternal(object):
         assert np.allclose(mol.target_ic, np.array([1.6, 1.7, -0.5]))
 
     def test_dihedral_add(self):
-        fn_xyz = ht.context.get_fn("test/2h-azirine.xyz")
-        mol = ht.IOData.from_file(fn_xyz)  # create a water molecule
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/2h-azirine.xyz"
+        mol = IOData.from_file(mol_path)  # create a water molecule
         internal = Internal(mol.coordinates, mol.numbers, 0, 1)
         internal.add_bond(0, 1)
         internal.add_bond(1, 2)
@@ -226,16 +228,16 @@ class TestInternal(object):
 
     def test_auto_ic_select_ethane(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/ethane.xyz"
-        mol = ht.IOData.from_file(mol_path)
+        mol_path = path + "/../data/ethane.xyz"
+        mol = IOData.from_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
         assert len(ethane.ic) == 24
 
     def test_auto_ic_select_methanol(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/methanol.xyz"
-        mol = ht.IOData.from_file(mol_path)
+        mol_path = path + "/../data/methanol.xyz"
+        mol = IOData.from_file(mol_path)
         methanol = Internal(mol.coordinates, mol.numbers, 0, 1)
         methanol.auto_select_ic()
         assert len(methanol.ic) == 15
@@ -268,7 +270,7 @@ class TestInternal(object):
 
     def test_get_energy_from_fchk(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        fchk_path = path + "/water_1.fchk"
+        fchk_path = path + "/../data/water_1.fchk"
         mole = deepcopy(self.internal)
         mole.add_bond(0, 1)
         mole.add_bond(1, 2)
@@ -287,8 +289,8 @@ class TestInternal(object):
 
     def test_delete_ic(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/ethane.xyz"
-        mol = ht.IOData.from_file(mol_path)
+        mol_path = path + "/../data/ethane.xyz"
+        mol = IOData.from_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
         ethane._delete_ic_index(0)

@@ -3,7 +3,7 @@ from copy import deepcopy
 
 import numpy as np
 
-import horton as ht
+from saddle.iodata import IOData
 from saddle.internal import Internal
 from saddle.reduced_internal import ReducedInternal
 
@@ -11,8 +11,9 @@ from saddle.reduced_internal import ReducedInternal
 class TestReduceInternal(object):
     @classmethod
     def setup_class(self):
-        fn_xyz = ht.context.get_fn('test/water.xyz')
-        mol = ht.IOData.from_file(fn_xyz)
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/water.xyz"
+        mol = IOData.from_file(mol_path)
         self.red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         self.red_int.add_bond(1, 0)
         self.red_int.add_bond(1, 2)
@@ -72,8 +73,9 @@ class TestReduceInternal(object):
         assert np.allclose(self.red_int.vspace, vp_ref)
 
     def test_ic_ric_transform(self):
-        fn_xyz = ht.context.get_fn('test/water.xyz')
-        mol = ht.IOData.from_file(fn_xyz)
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/water.xyz"
+        mol = IOData.from_file(mol_path)
         ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
@@ -109,8 +111,9 @@ class TestReduceInternal(object):
         assert ri_mol._non_red_space is None
 
     def test_ric_add_ic(self):
-        fn_xyz = ht.context.get_fn('test/water.xyz')
-        mol = ht.IOData.from_file(fn_xyz)
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/water.xyz"
+        mol = IOData.from_file(mol_path)
         ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         ReducedInternal.update_to_reduced_internal(ri_mol)
         ri_mol.add_bond(1, 0)
@@ -131,8 +134,9 @@ class TestReduceInternal(object):
         assert ri_mol._non_red_space is None
 
     def test_get_delta_v(self):
-        fn_xyz = ht.context.get_fn('test/water.xyz')
-        mol = ht.IOData.from_file(fn_xyz)
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/water.xyz"
+        mol = IOData.from_file(mol_path)
         ri_mol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
@@ -145,8 +149,9 @@ class TestReduceInternal(object):
                            np.array([2.01413724, 2.01413724, -0.33333407]))
 
     def test_align_v_space(self):
-        fn_xyz = ht.context.get_fn('test/water.xyz')
-        mol = ht.IOData.from_file(fn_xyz)
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/water.xyz"
+        mol = IOData.from_file(mol_path)
         mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         mol_1.add_bond(1, 0)
         mol_1.add_bond(1, 2)
@@ -161,7 +166,7 @@ class TestReduceInternal(object):
         copy1.align_vspace(copy2)
         assert np.allclose(copy1.vspace, mol_2.vspace)
         path = os.path.dirname(os.path.realpath(__file__))
-        fchk_path = path + "/water_1.fchk"
+        fchk_path = path + "/../data/water_1.fchk"
         #print 'cv2',copy2.vspace
         copy2.energy_from_fchk(fchk_path)
         #print 'cv2, new',copy2.vspace, copy2.vspace_gradient
@@ -174,8 +179,9 @@ class TestReduceInternal(object):
         assert np.allclose(copy1.vspace, copy2.vspace)
 
     def test_select_key_ic(self):
-        fn_xyz = ht.context.get_fn('test/water.xyz')
-        mol = ht.IOData.from_file(fn_xyz)
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/water.xyz"
+        mol = IOData.from_file(mol_path)
         mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         mol_1.add_bond(1, 0)
         mol_1.add_bond(1, 2)

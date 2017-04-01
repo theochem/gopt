@@ -2,7 +2,7 @@ from __future__ import absolute_import, print_function
 
 import numpy as np
 
-from horton import periodic
+from saddle.periodic import periodic
 from saddle.abclass import CoordinateTypes
 from saddle.cartesian import Cartesian
 from saddle.coordinate_types import BendCos, BondLength, ConventionDihedral
@@ -217,7 +217,7 @@ class Internal(Cartesian):
         Arguments
         ---------
         *indices : int
-            The index of each internal coordinate 
+            The index of each internal coordinate
         """
         indices = np.sort(np.array(indices))
         assert len(indices) <= len(self.ic)

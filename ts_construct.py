@@ -5,7 +5,7 @@ from itertools import combinations
 
 import numpy as np
 
-from horton import periodic
+from saddle.periodic import periodic
 from saddle.errors import AtomsNumberError, InputTypeError, NotSetError
 from saddle.internal import Internal
 from saddle.reduced_internal import ReducedInternal

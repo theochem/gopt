@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 
-import horton as ht
+from saddle.iodata import IOData
 from saddle.internal import Internal
 from saddle.reduced_internal import ReducedInternal
 from saddle.ts_construct import TSConstruct
@@ -12,8 +12,8 @@ class Test_TS_Construct(object):
     @classmethod
     def setup_class(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        self.rct = ht.IOData.from_file(path + "/ch3_hf.xyz")
-        self.prd = ht.IOData.from_file(path + "/ch3f_h.xyz")
+        self.rct = IOData.from_file(path + "/../data/ch3_hf.xyz")
+        self.prd = IOData.from_file(path + "/../data/ch3f_h.xyz")
 
     def test_create_instance(self):
         reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
