@@ -5,7 +5,7 @@ from saddle.fchk import FCHKFile
 
 def test_water_fchk():
     path = os.path.dirname(os.path.realpath(__file__))
-    f = FCHKFile(path + "/water_0.fchk")
+    f = FCHKFile(path + "/../data/water_0.fchk")
     hessian = f.get_hessian()
     gradient = f.get_gradient()
     energy = f.get_energy()
