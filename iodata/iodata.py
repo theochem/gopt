@@ -289,6 +289,9 @@ class IOData(object):
             if isinstance(filename, h5.Group) or filename.endswith('.h5'):
                 from .internal import load_h5
                 result.update(load_h5(filename))
+            elif filename.endswith('.com'):
+                from .gaussinput import load_com
+                result.update(load_com(filename))
             elif filename.endswith('.xyz'):
                 from .xyz import load_xyz
                 result.update(load_xyz(filename))
