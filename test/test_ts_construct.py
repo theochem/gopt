@@ -2,8 +2,8 @@ import os
 
 import numpy as np
 
-from saddle.iodata import IOData
 from saddle.internal import Internal
+from saddle.iodata import IOData
 from saddle.reduced_internal import ReducedInternal
 from saddle.ts_construct import TSConstruct
 
@@ -115,3 +115,15 @@ class Test_TS_Construct(object):
         new_ins.select_key_ic(3, 4)
         assert np.allclose(new_ins.ts.ic_values, ts_ins.ts.ic_values)
         assert isinstance(new_ins.ts, ReducedInternal)
+
+    def test_ts_combine(self):
+        reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
+        product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
+        reactant_ic.auto_select_ic()
+        product_ic.auto_select_ic()
+        new_ins = TSConstruct(reactant_ic, product_ic)
+        new_ins.auto_generate_ts(start_with='product', reconstruct=False)
+        assert np.allclose(new_ins.ts.ic_values, np.array(
+            [2.03377915, 2.03380703, 2.0336914, 3.64975115, -0.42991017,
+             -0.42979586, -0.42970384, 4.35274887, -0.21651925, -0.21648026,
+             -0.21598441]))

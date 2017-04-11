@@ -298,7 +298,7 @@ class TestInternal(object):
         ethane.auto_select_ic(keep_bond=True)
         assert len(ethane.ic) == 12
         print(ethane.ic)
-        ethane.delete_ic(1,2,3)
+        ethane.delete_ic(1, 2, 3)
         assert len(ethane.ic) == 9
         print(ethane.ic)
         # assert False

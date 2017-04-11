@@ -1,8 +1,9 @@
 from __future__ import absolute_import, print_function
 
+from copy import deepcopy
+
 import numpy as np
 
-from saddle.periodic import periodic
 from saddle.abclass import CoordinateTypes
 from saddle.cartesian import Cartesian
 from saddle.coordinate_types import BendCos, BondLength, ConventionDihedral
@@ -10,6 +11,7 @@ from saddle.cost_functions import direct_square
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
 from saddle.opt import GeoOptimizer, Point
+from saddle.periodic import periodic
 
 __all__ = ['Internal']
 
@@ -354,7 +356,7 @@ class Internal(Cartesian):
     def set_new_ics(self, new_ics):
         assert all(isinstance(ic, CoordinateTypes) for ic in new_ics)
         self.wipe_ic_info(True)
-        self._ic = list(new_ics)
+        self._ic = deepcopy(list(new_ics))
         self._regenerate_ic()
         self._regenerate_connectivity()
 
@@ -445,7 +447,10 @@ class Internal(Cartesian):
             print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
             print("\n--Connectivity Ends--")
 
-    def auto_select_ic(self, dihed_special=False, reset_ic=True, keep_bond=False):
+    def auto_select_ic(self,
+                       dihed_special=False,
+                       reset_ic=True,
+                       keep_bond=False):
         """A method for Automatically selecting internal coordinates based on
         out buildin algorithm
 
