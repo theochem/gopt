@@ -143,6 +143,7 @@ class TestReduceInternal(object):
         ri_mol.add_angle_cos(0, 1, 2)
         v_change = np.array([-0.14714498, 0.12726298, -0.20531072])
         ic_change = np.dot(ri_mol.vspace, v_change)
+        print(ic_change)
         assert np.allclose(ic_change, np.array([0.2, 0.2, 0.]))
         ri_mol.update_to_new_structure_with_delta_v(v_change)
         assert np.allclose(ri_mol.ic_values,
