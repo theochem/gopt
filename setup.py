@@ -17,4 +17,4 @@ setup(
         'saddle': ['data/*.xyz', 'data/*.fchk'],
         'saddle.periodic': ['data/*.csv'],
     },
-    install_requires=['numpy', ], )
+    install_requires=['numpy',], )

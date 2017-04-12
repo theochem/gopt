@@ -32,7 +32,5 @@
 
 from .gaussian import *
 from .iodata import *
-from .internal import *
-from .lockedh5 import *
 from .molpro import *
 from .xyz import *

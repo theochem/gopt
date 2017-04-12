@@ -26,7 +26,6 @@
 '''
 
 
-import h5py as h5
 import os
 import numpy as np
 
@@ -286,10 +285,7 @@ class IOData(object):
             raise TypeError('Keyword argument(s) not supported: %s' % kwargs.keys())
 
         for filename in filenames:
-            if isinstance(filename, h5.Group) or filename.endswith('.h5'):
-                from .internal import load_h5
-                result.update(load_h5(filename))
-            elif filename.endswith('.com'):
+            if filename.endswith('.com'):
                 from .gaussinput import load_com
                 result.update(load_com(filename))
             elif filename.endswith('.xyz'):
@@ -301,33 +297,6 @@ class IOData(object):
             elif filename.endswith('.log'):
                 from .gaussian import load_operators_g09
                 result.update(load_operators_g09(filename, lf))
-            elif filename.endswith('.mkl'):
-                from .molekel import load_mkl
-                result.update(load_mkl(filename, lf))
-            elif filename.endswith('.molden.input') or filename.endswith('.molden'):
-                from .molden import load_molden
-                result.update(load_molden(filename, lf))
-            elif filename.endswith('.cube'):
-                from .cube import load_cube
-                result.update(load_cube(filename))
-            elif filename.endswith('.wfn'):
-                from .wfn import load_wfn
-                result.update(load_wfn(filename, lf))
-            elif os.path.basename(filename).startswith('POSCAR'):
-                from .vasp import load_poscar
-                result.update(load_poscar(filename))
-            elif os.path.basename(filename)[:6] in ['CHGCAR', 'AECCAR']:
-                from .vasp import load_chgcar
-                result.update(load_chgcar(filename))
-            elif os.path.basename(filename).startswith('LOCPOT'):
-                from .vasp import load_locpot
-                result.update(load_locpot(filename))
-            elif filename.endswith('.cp2k.out'):
-                from .cp2k import load_atom_cp2k
-                result.update(load_atom_cp2k(filename, lf))
-            elif filename.endswith('.cif'):
-                from .cif import load_cif
-                result.update(load_cif(filename, lf))
             elif 'FCIDUMP' in os.path.basename(filename):
                 from .molpro import load_fcidump
                 result.update(load_fcidump(filename, lf))
