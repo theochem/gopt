@@ -165,7 +165,7 @@ class TestReduceInternal(object):
                            [-1.57750703e-16, 3.51986473e-01, 9.36005087e-01],
                            [-1.73472348e-16, -9.36005087e-01, 3.51986473e-01]])
         ri_mol.set_vspace(vp_ref)
-        print(ri_mol.vsapce)
+        print(ri_mol.vspace)
         assert np.allclose(ri_mol.vspace, vp_ref)
         v_change = np.array([-0.2, 0.07039729, 0.18720102])
         ic_change = np.dot(ri_mol.vspace, v_change)
