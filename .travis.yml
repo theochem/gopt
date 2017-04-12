@@ -1,0 +1,12 @@
+# https://travis-ci.com/tczorro/SpSaddle
+language: python
+python:
+    - 2.7
+    - 3.3
+    - 3.4
+    - 3.5
+    - 3.6
+
+install: python setup.py install
+
+script: make test
