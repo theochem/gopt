@@ -248,6 +248,8 @@ class ReducedInternal(Internal):  # need tests
             The new value of vspace
         """
         self._vspace = new_vspace
+        self._red_space = new_vspace[:, :self.key_ic_number]
+        self._non_red_space = new_vspace[:, self.key_ic_number:] 
         self._vspace_gradient = None
         self._vspace_hessian = None
 

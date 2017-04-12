@@ -174,6 +174,19 @@ class TestReduceInternal(object):
         assert np.allclose(ri_mol.ic_values,
                            np.array([2.01413724, 2.01413724, -0.33333407]))
 
+    def test_set_new_vspace(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/water.xyz"
+        mol = IOData.from_file(mol_path)
+        ri_mol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        ri_mol.add_bond(1, 0)
+        ri_mol.add_bond(1, 2)
+        ri_mol.add_angle_cos(0, 1, 2)
+        ri_mol.set_key_ic_number(1)
+        new_vp = np.eye(3)
+        ri_mol.set_vspace(new_vp)
+        assert(np.allclose(ri_mol.vspace, np.eye(3)))
+
     def test_align_v_space(self):
         path = os.path.dirname(os.path.realpath(__file__))
         mol_path = path + "/../data/water.xyz"
