@@ -1,5 +1,5 @@
 # Saddle
-<a href='https://travis-ci.com/tczorro/SpSaddle'><img src='https://secure.travis-ci.org/tczorro/SpSaddle.png?branch=master'></a>
+<a href='https://travis-ci.com/tczorro/SpSaddle'><img src='https://travis-ci.com/tczorro/SpSaddle.svg?token=wtCKs521Yw1urAV4F5DM&branch=master'></a>
 
 ## Synopsis
 
