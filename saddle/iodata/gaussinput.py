@@ -2,7 +2,7 @@ import re
 
 import numpy as np
 
-from saddle.periodic import angstrom, periodic
+from ..periodic import angstrom, periodic
 
 __all__ = ['load_com', 'load_gjf']
 

@@ -4,9 +4,9 @@ from copy import deepcopy
 
 import numpy as np
 
-from saddle.errors import NotSetError
-from saddle.newopt.abclass import Point
-from saddle.reduced_internal import ReducedInternal
+from ..errors import NotSetError
+from ..reduced_internal import ReducedInternal
+from .abclass import Point
 
 
 class SaddlePoint(Point):

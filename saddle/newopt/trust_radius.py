@@ -2,7 +2,7 @@ from __future__ import absolute_import, division
 
 import numpy as np
 
-from saddle.newopt.abclass import Point, TrustRadius
+from .abclass import Point, TrustRadius
 
 
 class DefaultTrustRadius(TrustRadius):  # need to be tested

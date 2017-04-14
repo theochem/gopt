@@ -4,14 +4,14 @@ from copy import deepcopy
 
 import numpy as np
 
-from saddle.abclass import CoordinateTypes
-from saddle.cartesian import Cartesian
-from saddle.coordinate_types import BendCos, BondLength, ConventionDihedral
-from saddle.cost_functions import direct_square
-from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
-                           NotSetError)
-from saddle.opt import GeoOptimizer, Point
-from saddle.periodic import periodic
+from .abclass import CoordinateTypes
+from .cartesian import Cartesian
+from .coordinate_types import BendCos, BondLength, ConventionDihedral
+from .cost_functions import direct_square
+from .errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
+                     NotSetError)
+from .opt import GeoOptimizer, Point
+from .periodic import periodic
 
 __all__ = ['Internal']
 
@@ -277,7 +277,7 @@ class Internal(Cartesian):
         optimizer = GeoOptimizer()
         init_point = self._create_geo_point()
         optimizer.add_new(init_point)
-        for i in range(iteration):
+        for _ in range(iteration):
             optimizer.tweak_hessian(optimizer.newest)
             step = optimizer.trust_radius_step(optimizer.newest)
             new_coor = self.coordinates + step.reshape(-1, 3)
@@ -466,6 +466,9 @@ class Internal(Cartesian):
             keep bond information and regenerate bend angle and dihedral
             information.
         """
+        if dihed_special:
+            raise NotImplementedError(
+                "This functionality hasn't been implemented")
         bonds = [i for i in self.ic if isinstance(i, BondLength)]
         if reset_ic is True:
             self._clear_ic_info()
@@ -561,7 +564,7 @@ class Internal(Cartesian):
         """A private method for automatically selecting improper dihedral
         """
         connect_sum = np.sum(self.connectivity, axis=0)
-        for center_ind in range(len(connect_sum)):
+        for center_ind, _ in enumerate(connect_sum):
             if connect_sum[center_ind] >= 3:
                 cnct_atoms = self.connected_indices(center_ind)
                 cnct_total = len(cnct_atoms)
@@ -583,7 +586,7 @@ class Internal(Cartesian):
         ..math::
             g_q = (B_T)^+ g_x
             H_q = B_T^+ (H_x - K) B^+ + K, where
-            K = g_q b^\prime
+            K = g_q b^\\prime
         """
         self._internal_gradient = np.dot(
             np.linalg.pinv(self._cc_to_ic_gradient.T), self._energy_gradient)
@@ -643,7 +646,8 @@ class Internal(Cartesian):
         return Point(x_d, x_dd, len(self.numbers))
 
     def _cost_value(self):
-        """Calculate value of cost function as well as its gradient and hessian versus internal coordinates
+        """Calculate value of cost function as well as its gradient and
+        hessian versus internal coordinates
 
         Returns
         -------
@@ -687,7 +691,7 @@ class Internal(Cartesian):
         ..math::
             g_x = B_T g_q
             H_x = B_T H_q B + K, where
-            K = g_q b^\prime
+            K = g_q b^\\prime
 
         Returns
         -------
@@ -742,8 +746,7 @@ class Internal(Cartesian):
         for ic in self.ic:
             if ic_obj.atoms == ic.atoms and type(ic_obj) == type(ic):
                 return False
-        else:
-            return True
+        return True
 
     def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):
         """Add a new ic object to the system and add corresponding
@@ -767,7 +770,8 @@ class Internal(Cartesian):
         self._connectivity[num1, num2] = 1
         self._connectivity[num2, num1] = 1
 
-    def _atoms_sequence_reorder(self, atoms):
+    @staticmethod
+    def _atoms_sequence_reorder(atoms):
         """Change the atoms in each ic object in ascending sequence without
         changing its representative
 
@@ -810,7 +814,7 @@ class Internal(Cartesian):
         if self._cc_to_ic_gradient is None:
             self._cc_to_ic_gradient = np.zeros((0, 3 * len(self.numbers)))
         tmp_vector = np.zeros((1, 3 * len(self.numbers)))
-        for i in range(len(atoms)):
+        for i, _ in enumerate(atoms):
             tmp_vector[0, 3 * atoms[i]:3 * atoms[i] + 3] += deriv[i]
         self._cc_to_ic_gradient = np.vstack(
             (self._cc_to_ic_gradient, tmp_vector))
@@ -830,8 +834,8 @@ class Internal(Cartesian):
                 (0, 3 * len(self.numbers), 3 * len(self.numbers)))
         tmp_vector = np.zeros(
             (1, 3 * len(self.numbers), 3 * len(self.numbers)))
-        for i in range(len(atoms)):
-            for j in range(len(atoms)):
+        for i, _ in enumerate(atoms):
+            for j, _ in enumerate(atoms):
                 tmp_vector[0, 3 * atoms[i]:3 * atoms[i] + 3, 3 * atoms[j]:3 *
                            atoms[j] + 3] += deriv[i, :3, j]
         self._cc_to_ic_hessian = np.vstack(

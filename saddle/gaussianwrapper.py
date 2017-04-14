@@ -1,10 +1,11 @@
+from __future__ import absolute_import, print_function
 import os
 from string import Template
 
 import numpy as np
 
-from saddle.periodic import angstrom, periodic
-from saddle.fchk import FCHKFile
+from .periodic import angstrom, periodic
+from .fchk import FCHKFile
 
 __all__ = ['GaussianWrapper']
 
@@ -38,15 +39,15 @@ class GaussianWrapper(object):
         fchk_file = self._run_gaussian(filename)
         assert isinstance(fchk_file,
                           FCHKFile), "Gaussian calculation didn't run properly"
-        result = []
+        result = [None] * 4
         if coordinates:
-            result.append(fchk_file.get_coordinates())
+            result[0] = fchk_file.get_coordinates()
         if energy:
-            result.append(fchk_file.get_energy())
+            result[1] = fchk_file.get_energy()
         if gradient:
-            result.append(fchk_file.get_gradient())
+            result[2] = fchk_file.get_gradient()
         if hessian:
-            result.append(fchk_file.get_hessian())
+            result[3] = fchk_file.get_hessian()
         return result
 
     def create_input_file(self, charge, multi, freq="freq"):

@@ -1,6 +1,6 @@
 import numpy as np
 
-from saddle.errors import PositiveProductError
+from .errors import PositiveProductError
 
 __all__ = ['ridders_solver', 'diagonalize']
 
@@ -35,7 +35,7 @@ def ridders_solver(func, x1, x2, iteration=30, error=10e-6):
         return x1
     elif np.allclose(f2, 0):
         return x2
-    for i in range(iteration):
+    for _ in range(iteration):
         x3 = 0.5 * (x1 + x2)
         f3 = func(x3)
         s = np.sqrt(f3 * f3 - f1 * f2)
@@ -67,4 +67,3 @@ def diagonalize(matrix):
 
 if __name__ == "__main__":
     result = ridders_solver(lambda x: x**2 - 4, -10, -1)
-    print(result)

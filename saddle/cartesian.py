@@ -1,12 +1,10 @@
 from __future__ import absolute_import, print_function
 
-from copy import deepcopy
-
 import numpy as np
 
-from saddle.errors import AtomsNumberError, NotSetError
-from saddle.fchk import FCHKFile
-from saddle.gaussianwrapper import GaussianWrapper
+from .errors import AtomsNumberError, NotSetError
+from .fchk import FCHKFile
+from .gaussianwrapper import GaussianWrapper
 
 __all__ = ['Cartesian']
 
@@ -198,8 +196,8 @@ class Cartesian(object):
         title = kwargs.pop('title', 'untitled')  # get title arg
         method = kwargs.pop('method', 'g09')  # get calculation method arg
         if method == "g09":
-            ob = GaussianWrapper(self, title)
-            coor, ener, grad, hess = ob.run_gaussian_and_get_result(
+            obj = GaussianWrapper(self, title)
+            coor, ener, grad, hess = obj.run_gaussian_and_get_result(
                 self.charge,
                 self.spin,
                 energy=True,

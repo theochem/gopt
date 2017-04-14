@@ -4,11 +4,11 @@ from copy import deepcopy
 
 import numpy as np
 
-from saddle.newopt.abclass import Point
-from saddle.newopt.hessian_modifier import SaddleHessianModifier
-from saddle.newopt.hessian_update import SR1
-from saddle.newopt.step_scaler import TRIM
-from saddle.newopt.trust_radius import DefaultTrustRadius
+from .abclass import Point
+from .hessian_modifier import SaddleHessianModifier
+from .hessian_update import SR1
+from .step_scaler import TRIM
+from .trust_radius import DefaultTrustRadius
 
 
 class Grape(object):

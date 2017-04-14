@@ -4,8 +4,8 @@ from copy import deepcopy
 
 import numpy as np
 
-from saddle.newopt.saddle_point import SaddlePoint
-from saddle.reduced_internal import ReducedInternal
+from ..reduced_internal import ReducedInternal
+from .saddle_point import SaddlePoint
 
 
 class HessianUpdate(object):

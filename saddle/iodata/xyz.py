@@ -23,8 +23,8 @@
 
 import numpy as np
 
-from saddle.periodic import angstrom
-from saddle.periodic import periodic
+from ..periodic import angstrom
+from ..periodic import periodic
 
 
 __all__ = ['load_xyz', 'dump_xyz']

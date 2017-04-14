@@ -97,7 +97,7 @@ class FCHKFile(object):
                         for word in line.split():
                             try:
                                 value[counter] = datatype(word)
-                            except (ValueError, OverflowError) as e:
+                            except (ValueError, OverflowError):
                                 print('WARNING: could not interpret word while reading %s: %s' % (
                                     word, self.filename))
                                 if self.ignore_errors:

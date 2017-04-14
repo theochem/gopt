@@ -5,10 +5,10 @@ from itertools import combinations
 
 import numpy as np
 
-from saddle.periodic import periodic
-from saddle.errors import AtomsNumberError, InputTypeError, NotSetError
-from saddle.internal import Internal
-from saddle.reduced_internal import ReducedInternal
+from .periodic import periodic
+from .errors import AtomsNumberError, InputTypeError, NotSetError
+from .internal import Internal
+from .reduced_internal import ReducedInternal
 
 __all__ = ['TSConstruct']
 
@@ -34,7 +34,8 @@ class TSConstruct(object):
     Methods
     -------
     __init__(reactant_ic, product_ic)
-        Initializes constructor with the input of two Internal instance, each represent the structure of reactant and product respectively
+        Initializes constructor with the input of two Internal instance,
+        each represent the structure of reactant and product respectively
     add_bond(atom1, atom2)
         Add bond connection for both reactant and product structures
         between atoms1 and atoms2

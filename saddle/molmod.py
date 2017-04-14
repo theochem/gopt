@@ -722,7 +722,7 @@ def _opbend_cos_low(a, b, c, deriv):
     if result.deriv > 1:
         result.dd *= -temp.v
         result.dd /= result.v
-        temp2 = np.array([temp.d]).transpose() * temp.d
+        temp2 = np.array(temp.d).transpose() * temp.d
         temp2 /= result.v**3
         result.dd -= temp2
     return result.results()

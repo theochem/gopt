@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from saddle.solver import ridders_solver
+from .solver import ridders_solver
 
 __all__ = ['Point', 'GeoOptimizer']
 
@@ -15,6 +15,10 @@ class Point(object):
         self.step = None
         self._ele = ele_number
 
+    @property
+    def ele(self):
+        return self._ele
+
 
 class GeoOptimizer(object):
     def __init__(self):
@@ -25,10 +29,7 @@ class GeoOptimizer(object):
 
     def converge(self, index):
         point = self.points[index]
-        if max(point.gradient) <= 3e-4:
-            return True
-        else:
-            return False
+        return max(point.gradient) <= 3e-4
 
     @property
     def newest(self):
@@ -102,5 +103,5 @@ class GeoOptimizer(object):
         else:
             point.trust_radius = pre_point.trust_radius * .5
         point.trust_radius = min(
-            max(point.trust_radius, 0.1 * np.sqrt(point._ele)),
-            2. * np.sqrt(point._ele))
+            max(point.trust_radius, 0.1 * np.sqrt(point.ele)),
+            2. * np.sqrt(point.ele))

@@ -2,9 +2,8 @@ from __future__ import absolute_import, print_function
 
 import numpy as np
 
-from saddle.errors import NotSetError
-from saddle.internal import Internal
-from saddle.solver import diagonalize
+from .internal import Internal
+from .solver import diagonalize
 
 __all__ = ['ReducedInternal']
 
@@ -217,8 +216,7 @@ class ReducedInternal(Internal):  # need tests
         """
         assert isinstance(internal_ob, Internal)
         internal_ob.__class__ = cls
-        internal_ob._k_ic_n = key_ic_number
-        internal_ob._reset_v_space()
+        internal_ob.set_key_ic_number(key_ic_number)
 
     def align_vspace(self, target):
         """Align vspace with a given target ReducedInternal object
@@ -230,14 +228,14 @@ class ReducedInternal(Internal):  # need tests
         """
         assert isinstance(target, ReducedInternal)
         overlap = np.dot(self.vspace.T, target.vspace)
-        u, s, v = np.linalg.svd(overlap)
+        u, _, v = np.linalg.svd(overlap)
         q_min = np.dot(u, v)
         new_v = np.dot(self.vspace, q_min)
         self.set_vspace(new_v)
 
     def delete_ic(self, *indices):
         super(ReducedInternal, self).delete_ic(*indices)
-        self._reset_v_space
+        self._reset_v_space()
 
     def set_vspace(self, new_vspace):
         """Set vspace of system with given values
@@ -249,7 +247,7 @@ class ReducedInternal(Internal):  # need tests
         """
         self._vspace = new_vspace
         self._red_space = new_vspace[:, :self.key_ic_number]
-        self._non_red_space = new_vspace[:, self.key_ic_number:] 
+        self._non_red_space = new_vspace[:, self.key_ic_number:]
         self._vspace_gradient = None
         self._vspace_hessian = None
 
@@ -363,7 +361,7 @@ class ReducedInternal(Internal):  # need tests
         u : np.ndarray(K, 3N - 6)
             3N - 6 non-singular vectors from SVD
         """
-        u, s, v = np.linalg.svd(self._cc_to_ic_gradient, full_matrices=0)
+        u, s, _ = np.linalg.svd(self._cc_to_ic_gradient, full_matrices=0)
         return u[:, np.abs(s) > threshold][:, :self.df]
 
     def _reduced_unit_vectors(self):  # tested

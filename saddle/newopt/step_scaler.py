@@ -2,7 +2,7 @@ from __future__ import absolute_import, print_function
 
 import numpy as np
 
-from saddle.solver import ridders_solver
+from ..solver import ridders_solver
 
 
 class TRIM(object):  # need tests
