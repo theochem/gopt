@@ -3,9 +3,9 @@ from copy import deepcopy
 
 import numpy as np
 
-from saddle.iodata import IOData
-from saddle.internal import Internal
-from saddle.opt import Point
+from ..iodata import IOData
+from ..internal import Internal
+from ..opt import Point
 
 
 class TestInternal(object):

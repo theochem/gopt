@@ -26,7 +26,6 @@
 '''
 
 
-import os
 import numpy as np
 
 
@@ -286,20 +285,14 @@ class IOData(object):
 
         for filename in filenames:
             if filename.endswith('.com'):
-                from .gaussinput import load_com
+                from .gauss import load_com
+                result.update(load_com(filename))
+            elif filename.endswith('.gjf'):
+                from .gauss import load_gjf
                 result.update(load_com(filename))
             elif filename.endswith('.xyz'):
                 from .xyz import load_xyz
                 result.update(load_xyz(filename))
-            elif filename.endswith('.fchk'):
-                from .gaussian import load_fchk
-                result.update(load_fchk(filename, lf))
-            elif filename.endswith('.log'):
-                from .gaussian import load_operators_g09
-                result.update(load_operators_g09(filename, lf))
-            elif 'FCIDUMP' in os.path.basename(filename):
-                from .molpro import load_fcidump
-                result.update(load_fcidump(filename, lf))
             else:
                 raise ValueError('Unknown file format for reading: %s' % filename)
 
@@ -330,33 +323,9 @@ class IOData(object):
            called that does the real work.
         '''
 
-        if isinstance(filename, h5.Group) or filename.endswith('.h5'):
-            data = vars(self).copy()
-            # get rid of leading underscores
-            for key in data.keys():
-                if key[0] == '_':
-                    data[key[1:]] = data[key]
-                    del data[key]
-            from .internal import dump_h5
-            dump_h5(filename, data)
-        elif filename.endswith('.xyz'):
+        if filename.endswith('.xyz'):
             from .xyz import dump_xyz
             dump_xyz(filename, self)
-        elif filename.endswith('.cube'):
-            from .cube import dump_cube
-            dump_cube(filename, self)
-        elif filename.endswith('.cif'):
-            from .cif import dump_cif
-            dump_cif(filename, self)
-        elif filename.endswith('.molden.input') or filename.endswith('.molden'):
-            from .molden import dump_molden
-            dump_molden(filename, self)
-        elif os.path.basename(filename).startswith('POSCAR'):
-            from .vasp import dump_poscar
-            dump_poscar(filename, self)
-        elif 'FCIDUMP' in os.path.basename(filename):
-            from .molpro import dump_fcidump
-            dump_fcidump(filename, self)
         else:
             raise ValueError('Unknown file format for writing: %s' % filename)
 
@@ -369,47 +338,3 @@ class IOData(object):
                 kwargs[key[1:]] = kwargs[key]
                 del kwargs[key]
         return self.__class__(**kwargs)
-
-    def get_dm_full(self):
-        '''Return a spin-summed density matrix using availlable attributes'''
-        if hasattr(self, 'dm_full'):
-            return self.dm_full
-        if hasattr(self, 'dm_full_mp2'):
-            return self.dm_full_mp2
-        elif hasattr(self, 'dm_full_mp3'):
-            return self.dm_full_mp3
-        elif hasattr(self, 'dm_full_ci'):
-            return self.dm_full_ci
-        elif hasattr(self, 'dm_full_cc'):
-            return self.dm_full_cc
-        elif hasattr(self, 'exp_alpha'):
-            # First try to get it from the orbitals as some types of Gaussian
-            # jobs print print the wrong total density in FCHK file.
-            dm_full = self.lf.create_two_index()
-            dm_full = self.exp_alpha.to_dm()
-            if hasattr(self, 'exp_beta'):
-                self.exp_beta.to_dm(dm_full, 1.0, clear=False)
-            else:
-                dm_full.iscale(2)
-            return dm_full
-        elif hasattr(self, 'dm_full_scf'):
-            return self.dm_full_scf
-
-    def get_dm_spin(self):
-        '''Return a spin-difference density matrix using availlable attributes'''
-        if hasattr(self, 'dm_spin'):
-            return self.dm_spin
-        if hasattr(self, 'dm_spin_mp2'):
-            return self.dm_spin_mp2
-        elif hasattr(self, 'dm_spin_mp3'):
-            return self.dm_spin_mp3
-        elif hasattr(self, 'dm_spin_ci'):
-            return self.dm_spin_ci
-        elif hasattr(self, 'dm_spin_cc'):
-            return self.dm_spin_cc
-        elif hasattr(self, 'exp_alpha') and hasattr(self, 'exp_beta'):
-            dm_spin = self.exp_alpha.to_dm()
-            self.exp_beta.to_dm(dm_spin, -1.0, clear=False)
-            return dm_spin
-        elif hasattr(self, 'dm_spin_scf'):
-            return self.dm_spin_scf

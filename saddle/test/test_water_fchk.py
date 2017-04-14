@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from saddle.fchk import FCHKFile
+from ..fchk import FCHKFile
 
 
 def test_water_fchk():

@@ -2,10 +2,10 @@ import os
 
 import numpy as np
 
-from saddle.internal import Internal
-from saddle.iodata import IOData
-from saddle.reduced_internal import ReducedInternal
-from saddle.ts_construct import TSConstruct
+from ..internal import Internal
+from ..iodata import IOData
+from ..reduced_internal import ReducedInternal
+from ..ts_construct import TSConstruct
 
 
 class Test_TS_Construct(object):

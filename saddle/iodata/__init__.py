@@ -30,7 +30,6 @@
 '''
 
 
-from .gaussian import *
 from .iodata import *
-from .molpro import *
 from .xyz import *
+from .gauss import *

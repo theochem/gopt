@@ -1,10 +1,11 @@
-import numpy as np
 import os
-
-from saddle.iodata import IOData
-from saddle.periodic import angstrom
-from saddle.cartesian import Cartesian
 from copy import deepcopy
+
+import numpy as np
+
+from ..cartesian import Cartesian
+from ..iodata import IOData
+from ..periodic import angstrom
 
 
 class TestCartesian(object):

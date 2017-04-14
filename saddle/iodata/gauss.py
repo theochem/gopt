@@ -1,5 +1,3 @@
-import re
-
 import numpy as np
 
 from ..periodic import angstrom, periodic
@@ -42,3 +40,5 @@ def load_com(filename):
         'coordinates': np.array(coordinates),
         'numbers': np.array(numbers),
     }
+
+load_gjf = load_com

@@ -1,5 +1,7 @@
 from __future__ import absolute_import, print_function
 
+from copy import deepcopy
+
 import numpy as np
 
 from .internal import Internal
@@ -215,8 +217,10 @@ class ReducedInternal(Internal):  # need tests
             The value of key internal coordinates
         """
         assert isinstance(internal_ob, Internal)
-        internal_ob.__class__ = cls
-        internal_ob.set_key_ic_number(key_ic_number)
+        new_ob = deepcopy(internal_ob)
+        new_ob.__class__ = cls
+        new_ob.set_key_ic_number(key_ic_number)
+        return new_ob
 
     def align_vspace(self, target):
         """Align vspace with a given target ReducedInternal object

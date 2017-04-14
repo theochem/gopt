@@ -3,11 +3,11 @@ from copy import deepcopy
 
 import numpy as np
 
-from saddle.coordinate_types import (BendAngle, BendCos, BondLength,
+from ..coordinate_types import (BendAngle, BendCos, BondLength,
                                      ConventionDihedral, NewDihedralCross,
                                      NewDihedralDot)
-from saddle.internal import Internal
-from saddle.iodata import IOData
+from ..internal import Internal
+from ..iodata import IOData
 
 
 class Test_Coordinates_Types(object):

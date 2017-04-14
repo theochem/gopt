@@ -221,7 +221,7 @@ class TSConstruct(object):
             1. - ratio) * self.product.ic_values
         ts_internal.set_target_ic(target_ic)
         ts_internal.converge_to_target_ic()
-        ReducedInternal.update_to_reduced_internal(ts_internal)
+        ts_internal = ReducedInternal.update_to_reduced_internal(ts_internal)
         # change the ts_internal to Class ReducedInternal
         self._ts = ts_internal  # set _ts attribute
 

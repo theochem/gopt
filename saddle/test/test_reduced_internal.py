@@ -3,9 +3,9 @@ from copy import deepcopy
 
 import numpy as np
 
-from saddle.internal import Internal
-from saddle.iodata import IOData
-from saddle.reduced_internal import ReducedInternal
+from ..internal import Internal
+from ..iodata import IOData
+from ..reduced_internal import ReducedInternal
 
 
 class TestReduceInternal(object):
@@ -93,7 +93,7 @@ class TestReduceInternal(object):
         vc_ref = np.array(
             [1.81413724, 1.81413724, 2.96247453, -0.33333407, 0.81649681])
         assert np.allclose(ri_mol.ic_values, vc_ref)
-        ReducedInternal.update_to_reduced_internal(ri_mol)
+        ri_mol = ReducedInternal.update_to_reduced_internal(ri_mol)
         assert isinstance(ri_mol, ReducedInternal)
         ri_mol.set_key_ic_number(2)
         ri_mol.select_key_ic(0, 2)
@@ -131,7 +131,7 @@ class TestReduceInternal(object):
         mol_path = path + "/../data/water.xyz"
         mol = IOData.from_file(mol_path)
         ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
-        ReducedInternal.update_to_reduced_internal(ri_mol)
+        ri_mol = ReducedInternal.update_to_reduced_internal(ri_mol)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
         ri_mol.add_bond(0, 2)

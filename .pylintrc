@@ -1,0 +1,6 @@
+[TYPECHECK]
+ignored-classes = numpy, list
+ignored-modules = numpy
+
+[MASTER]
+extension-pkg-whitelist=numpy
