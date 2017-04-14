@@ -1,5 +1,5 @@
 [TYPECHECK]
-ignored-classes = numpy, list
+ignored-classes = numpy, list, Element
 ignored-modules = numpy
 
 [MASTER]

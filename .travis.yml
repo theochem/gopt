@@ -6,10 +6,12 @@ python:
 
 install:
     - pip install -r requirements.txt
+    - pip install pylint
     - python setup.py install
 
 script:
     - nosetests -v saddle/test
+    - pylint saddle --errors-only
 
 notifications:
   email: false

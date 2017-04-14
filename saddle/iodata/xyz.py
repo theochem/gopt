@@ -76,7 +76,7 @@ def dump_xyz(filename, data):
     with open(filename, 'w') as f:
         print >> f, data.natom
         print >> f, getattr(data, 'title', 'Created with HORTON')
-        for i in xrange(data.natom):
+        for i in range(data.natom):
             n = periodic[data.numbers[i]].symbol
             x, y, z = data.coordinates[i]/angstrom
             print >> f, '%2s %15.10f %15.10f %15.10f' % (n, x, y, z)
