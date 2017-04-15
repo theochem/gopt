@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function
 
 from copy import deepcopy
+from itertools import combinations
 
 import numpy as np
 
@@ -443,7 +444,7 @@ class Internal(Cartesian):
         """
         format_func = "{:3}".format
         print("--Connectivity Starts-- \n")
-        for i in range(len(self.numbers)):
+        for i, j in enumerate(self.numbers):
             print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
             print("\n--Connectivity Ends--")
 
@@ -501,57 +502,60 @@ class Internal(Cartesian):
         """A private method for automatically selecting bond
         """
         halidish_atom = set([7, 8, 9, 15, 16, 17])
-        for index_i in range(len(self.numbers)):
-            for index_j in range(index_i + 1, len(self.numbers)):
-                atom_num1 = self.numbers[index_i]
-                atom_num2 = self.numbers[index_j]
-                distance = self.distance(index_i, index_j)
-                radius_sum = periodic[atom_num1].cov_radius + periodic[
-                    atom_num2].cov_radius
-                if distance < 1.3 * radius_sum:
-                    self.add_bond(index_i, index_j)
-                    if (min(atom_num1, atom_num2) == 1 and
-                            max(atom_num1, atom_num2) in halidish_atom):
-                        if atom_num1 == 1:
-                            h_index = index_i
-                            halo_index = index_j
-                        else:
-                            h_index = index_j
-                            halo_index = index_i
-                        for index_k in range(index_j + 1, len(self._numbers)):
-                            atom_num3 = self.numbers[index_k]
-                            if atom_num3 in halidish_atom:
-                                dis = self.distance(h_index, index_k)
-                                angle = self.angle(halo_index, h_index,
-                                                   index_k)
-                                thresh_sum = periodic[self._numbers[
-                                    h_index]].vdw_radius + \
-                                    periodic[self._numbers[index_k]].vdw_radius
-                                if dis <= 0.9 * thresh_sum and angle >= 1.5708:
-                                    self.add_bond(h_index, index_k)
+        all_halo_index = (i for i, j in enumerate(self.numbers)
+                          if j in halidish_atom)
+        for index_i, index_j in combinations(range(len(self.numbers)), 2):
+            atom_num1 = self.numbers[index_i]
+            atom_num2 = self.numbers[index_j]
+            distance = self.distance(index_i, index_j)
+            radius_sum = periodic[atom_num1].cov_radius + periodic[
+                atom_num2].cov_radius
+            if distance < 1.3 * radius_sum:
+                self.add_bond(index_i, index_j)
+                # test hydrogen bond
+                if atom_num1 == 1 and atom_num2 in halidish_atom:
+                    h_index = index_i
+                    halo_index = index_j
+                elif atom_num2 == 1 and atom_num1 in halidish_atom:
+                    h_index = index_j
+                    halo_index = index_i
+                else:
+                    continue
+                potent_halo_index = (i for i in all_halo_index
+                                     if i != halo_index) # all other halo
+                for index_k in potent_halo_index:
+                    atom_num3 = self.numbers[index_k]
+                    dis = self.distance(h_index, index_k)
+                    angle = self.angle(halo_index, h_index, index_k)
+                    thresh_sum = periodic[self.numbers[
+                        h_index]].vdw_radius + periodic[self.numbers[
+                            index_k]].vdw_radius
+                    if dis <= 0.9 * thresh_sum and angle >= 1.5708:
+                        self.add_bond(h_index, index_k) # add H bond
 
     def _auto_select_angle(self):
         """A private method for automatically selecting angle
         """
-        for center_index in range(len(self.numbers)):
+        for center_index, _ in enumerate(self.numbers):
             connected = self.connected_indices(center_index)
             if len(connected) >= 2:
-                for edge_1 in range(len(connected)):
-                    for edge_2 in range(edge_1 + 1, len(connected)):
-                        self.add_angle_cos(connected[edge_1], center_index,
-                                           connected[edge_2])
+                for side_1, side_2 in combinations(connected, 2):
+                    self.add_angle_cos(side_1, center_index, side_2)
 
     def _auto_select_dihed_normal(self):
         """A private method for automatically selecting normal dihedral
         """
-        for center_ind_1 in range(len(self.numbers)):
+        for center_ind_1, _ in enumerate(self.numbers):
+            # find indices connected to center_ind_1
             connected = self.connected_indices(center_ind_1)
             if len(connected) >= 2:
                 for center_ind_2 in connected:
                     sum_cnct = np.sum(self.connectivity, axis=0)
+                    # find total connection for all atoms connected c1
                     sum_select_cnct = sum_cnct[connected]
                     sorted_index = sum_select_cnct.argsort()[::-1]
                     side_1 = connected[sorted_index[0]]
+                    # select the atom with the largest connection
                     if connected[sorted_index[0]] == center_ind_2:
                         side_1 = connected[sorted_index[1]]
                     connected_to_index_2 = self.connected_indices(center_ind_2)
@@ -568,17 +572,15 @@ class Internal(Cartesian):
             if connect_sum[center_ind] >= 3:
                 cnct_atoms = self.connected_indices(center_ind)
                 cnct_total = len(cnct_atoms)
-                for i in range(cnct_total):
-                    for j in range(i + 1, cnct_total):
-                        for k in range(j + 1, cnct_total):
-                            ind_i, ind_j, ind_k = cnct_atoms[[i, j, k]]
-                            ang1_r = self.angle(ind_i, center_ind, ind_j)
-                            ang2_r = self.angle(ind_i, center_ind, ind_k)
-                            ang3_r = self.angle(ind_j, center_ind, ind_k)
-                            sum_r = ang1_r + ang2_r + ang3_r
-                            if sum_r >= 6.02139:
-                                self.add_dihedral(ind_i, center_ind, ind_j,
-                                                  ind_k)
+                for i, j, k in combinations(range(cnct_total), 3):
+                    ind_i, ind_j, ind_k = cnct_atoms[[i, j, k]]
+                    ang1_r = self.angle(ind_i, center_ind, ind_j)
+                    ang2_r = self.angle(ind_i, center_ind, ind_k)
+                    ang3_r = self.angle(ind_j, center_ind, ind_k)
+                    sum_r = ang1_r + ang2_r + ang3_r
+                    if sum_r >= 6.02139:
+                        self.add_dihedral(ind_i, center_ind, ind_j,
+                                          ind_k)
 
     def _energy_hessian_transformation(self):
         """convert gradient, hessian versus cartesian coordinates into
@@ -676,7 +678,7 @@ class Internal(Cartesian):
         value = 0
         deriv = np.zeros(len(self.ic))
         deriv2 = np.zeros((len(self.ic), len(self.ic)), float)
-        for i in range(len(self.ic)):
+        for i, _ in enumerate(self.ic):
             if self.ic[i].__class__.__name__ in ("BondLength", "BendCos",
                                                  "BendAngle"):
                 v, d, dd = direct_square(self.ic_values[i], self.target_ic[i])
