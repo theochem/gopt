@@ -5,9 +5,9 @@ from itertools import combinations
 
 import numpy as np
 
-from .periodic import periodic
 from .errors import AtomsNumberError, InputTypeError, NotSetError
 from .internal import Internal
+from .periodic import periodic
 from .reduced_internal import ReducedInternal
 
 __all__ = ['TSConstruct']
@@ -277,6 +277,7 @@ class TSConstruct(object):
         """Based the internal structure of both reactant and product,
         combine the structure to form a unified structure.
         """
+        # obetain ic for both reactant and product
         union_ic_list = self._get_union_of_ics()
         self._reactant.set_new_ics(union_ic_list)
         self._product.set_new_ics(union_ic_list)
@@ -299,60 +300,56 @@ class TSConstruct(object):
         for both reactant and product
         """
         halidish_atom = set([7, 8, 9, 15, 16, 17])
-        for index_i in range(len(self.numbers)):
-            for index_j in range(index_i + 1, len(self.numbers)):
-                atom_num1 = self.numbers[index_i]
-                atom_num2 = self.numbers[index_j]
-                distance_rct = self._reactant.distance(index_i, index_j)
-                distance_prd = self._product.distance(index_i, index_j)
-                radius_sum = periodic[atom_num1].cov_radius + periodic[
-                    atom_num2].cov_radius
-                if min(distance_prd, distance_rct) < 1.3 * radius_sum:
-                    self.add_bond(index_i, index_j)
-                    if (min(atom_num1, atom_num2) == 1 and
-                            max(atom_num1, atom_num2) in halidish_atom):
-                        if atom_num1 == 1:
-                            h_index = index_i
-                            halo_index = index_j
-                        else:
-                            h_index = index_j
-                            halo_index = index_i
-                        for index_k in range(index_j + 1, len(self._numbers)):
-                            atom_num3 = self.numbers[index_k]
-                            if atom_num3 in halidish_atom:
-                                dis_r = self._reactant.distance(h_index,
-                                                                index_k)
-                                dis_p = self._product.distance(h_index,
-                                                               index_k)
-                                angle_r = self._reactant.angle(
-                                    halo_index, h_index, index_k)
-                                angle_p = self._product.angle(halo_index,
-                                                              h_index, index_k)
-                                thresh_sum = periodic[self._numbers[
-                                    h_index]].vdw_radius + \
-                                    periodic[self._numbers[index_k]].vdw_radius
-                                if (min(dis_r, dis_p) <= 0.9 * thresh_sum and
-                                        max(angle_p, angle_r) >= 1.57079632):
-                                    self.add_bond(h_index, index_k)
-        # did't add aux bond method
+        all_halo_index = (i for i, j in enumerate(self.numbers)
+                          if j in halidish_atom)
+        for index_i, index_j in combinations(range(len(self.numbers)), 2):
+            atom_num1 = self.numbers[index_i]
+            atom_num2 = self.numbers[index_j]
+            distance_rct = self._reactant.distance(index_i, index_j)
+            distance_prd = self._product.distance(index_i, index_j)
+            radius_sum = periodic[atom_num1].cov_radius + periodic[
+                atom_num2].cov_radius
+            if min(distance_prd, distance_rct) < 1.3 * radius_sum:
+                self.add_bond(index_i, index_j)
+                if atom_num1 == 1 and atom_num2 in halidish_atom:
+                    h_index = index_i
+                    halo_index = index_j
+                elif atom_num2 == 1 and atom_num1 in halidish_atom:
+                    h_index = index_j
+                    halo_index = index_i
+                else:
+                    continue
+                potent_halo_index = (i for i in all_halo_index
+                                     if i != halo_index)
+                for index_k in potent_halo_index:
+                    dis_r = self._reactant.distance(h_index, index_k)
+                    dis_p = self._product.distance(h_index, index_k)
+                    angle_r = self._reactant.angle(halo_index, h_index,
+                                                   index_k)
+                    angle_p = self._product.angle(halo_index, h_index, index_k)
+                    thresh_sum = periodic[self._numbers[
+                        h_index]].vdw_radius + periodic[self._numbers[
+                            index_k]].vdw_radius
+                    if (min(dis_r, dis_p) <= 0.9 * thresh_sum and
+                            max(angle_p, angle_r) >= 1.57079632):
+                        self.add_bond(h_index, index_k)
+                # did't add aux bond method
 
     def _auto_select_angle(self):
         """Automatically select angle based on buildin algorithm for both
         reactant and product
         """
-        for center_index in range(len(self.numbers)):
+        for center_index, _ in enumerate(self.numbers):
             connected = self._reactant.connected_indices(center_index)
             if len(connected) >= 2:
-                for edge_1 in range(len(connected)):
-                    for edge_2 in range(edge_1 + 1, len(connected)):
-                        self.add_angle_cos(connected[edge_1], center_index,
-                                           connected[edge_2])
+                for side_1, side_2 in combinations(connected, 2):
+                    self.add_angle_cos(side_1, center_index, side_2)
 
     def _auto_select_dihed_normal(self):
         """Automatically select dihedral based on buildin algorithm for both
         reactant and product
         """
-        for center_ind_1 in range(len(self.numbers)):
+        for center_ind_1, _ in enumerate(self.numbers):
             connected = self._reactant.connected_indices(center_ind_1)
             if len(connected) >= 2:
                 for center_ind_2 in connected:
@@ -374,28 +371,26 @@ class TSConstruct(object):
         reactant and product
         """
         connect_sum = np.sum(self._reactant.connectivity, axis=0)
-        for center_ind in range(len(connect_sum)):
+        for center_ind, _ in enumerate(connect_sum):
             if connect_sum[center_ind] >= 3:
                 cnct_atoms = self._reactant.connected_indices(center_ind)
                 cnct_total = len(cnct_atoms)
-                for i in range(cnct_total):
-                    for j in range(i + 1, cnct_total):
-                        for k in range(j + 1, cnct_total):
-                            ind_i, ind_j, ind_k = cnct_atoms[[i, j, k]]
-                            ang1_r = self._reactant.angle(ind_i, center_ind,
-                                                          ind_j)
-                            ang2_r = self._reactant.angle(ind_i, center_ind,
-                                                          ind_k)
-                            ang3_r = self._reactant.angle(ind_j, center_ind,
-                                                          ind_k)
-                            ang1_p = self._product.angle(ind_i, center_ind,
-                                                         ind_j)
-                            ang2_p = self._product.angle(ind_i, center_ind,
-                                                         ind_k)
-                            ang3_p = self._product.angle(ind_j, center_ind,
-                                                         ind_k)
-                            sum_r = ang1_r + ang2_r + ang3_r
-                            sum_p = ang1_p + ang2_p + ang3_p
-                            if max(sum_p, sum_r) >= 6.02139:
-                                self.add_dihedral(ind_i, center_ind, ind_j,
+                for i, j, k in combinations(range(cnct_total), 3):
+                    ind_i, ind_j, ind_k = cnct_atoms[[i, j, k]]
+                    ang1_r = self._reactant.angle(ind_i, center_ind,
+                                                  ind_j)
+                    ang2_r = self._reactant.angle(ind_i, center_ind,
                                                   ind_k)
+                    ang3_r = self._reactant.angle(ind_j, center_ind,
+                                                  ind_k)
+                    ang1_p = self._product.angle(ind_i, center_ind,
+                                                 ind_j)
+                    ang2_p = self._product.angle(ind_i, center_ind,
+                                                 ind_k)
+                    ang3_p = self._product.angle(ind_j, center_ind,
+                                                 ind_k)
+                    sum_r = ang1_r + ang2_r + ang3_r
+                    sum_p = ang1_p + ang2_p + ang3_p
+                    if max(sum_p, sum_r) >= 6.02139:
+                        self.add_dihedral(ind_i, center_ind, ind_j,
+                                          ind_k)

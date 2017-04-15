@@ -355,6 +355,13 @@ class Internal(Cartesian):
             self._clear_ic_info()
 
     def set_new_ics(self, new_ics):
+        """Set the internal coordinates to the given one
+
+        Arguments
+        ---------
+        new_ics : list
+            The list of coordinates as the template
+        """
         assert all(isinstance(ic, CoordinateTypes) for ic in new_ics)
         self.wipe_ic_info(True)
         self._ic = deepcopy(list(new_ics))
@@ -444,7 +451,7 @@ class Internal(Cartesian):
         """
         format_func = "{:3}".format
         print("--Connectivity Starts-- \n")
-        for i, j in enumerate(self.numbers):
+        for i, _ in enumerate(self.numbers):
             print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
             print("\n--Connectivity Ends--")
 
@@ -524,7 +531,6 @@ class Internal(Cartesian):
                 potent_halo_index = (i for i in all_halo_index
                                      if i != halo_index) # all other halo
                 for index_k in potent_halo_index:
-                    atom_num3 = self.numbers[index_k]
                     dis = self.distance(h_index, index_k)
                     angle = self.angle(halo_index, h_index, index_k)
                     thresh_sum = periodic[self.numbers[
