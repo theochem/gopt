@@ -1,6 +1,7 @@
 # Saddle
 <a href='https://travis-ci.com/tczorro/SpSaddle'><img src='https://travis-ci.com/tczorro/SpSaddle.svg?token=wtCKs521Yw1urAV4F5DM&branch=master'></a>
-
+<a href='https://docs.python.org/2.7/'><img src='https://img.shields.io/badge/python-2.7-blue.svg'></a>
+<a href='https://docs.python.org/3.5/'><img src='https://img.shields.io/badge/python-3.5-blue.svg'></a>
 ## Synopsis
 
 Saddle is a python package for quantum chemistry geometry optimization. It
