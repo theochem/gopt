@@ -10,7 +10,7 @@ from .internal import Internal
 from .periodic import periodic
 from .reduced_internal import ReducedInternal
 
-__all__ = ['TSConstruct']
+__all__ = ('TSConstruct',)
 
 
 class TSConstruct(object):

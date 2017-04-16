@@ -27,7 +27,7 @@ from ..periodic import angstrom
 from ..periodic import periodic
 
 
-__all__ = ['load_xyz', 'dump_xyz']
+__all__ = ('load_xyz', 'dump_xyz')
 
 
 def load_xyz(filename):

@@ -29,7 +29,7 @@
 import numpy as np
 
 
-__all__ = ['IOData']
+__all__ = ('IOData',)
 
 
 class ArrayTypeCheckDescriptor(object):

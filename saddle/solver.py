@@ -2,7 +2,7 @@ import numpy as np
 
 from .errors import PositiveProductError
 
-__all__ = ['ridders_solver', 'diagonalize']
+__all__ = ('ridders_solver', 'diagonalize')
 
 
 def ridders_solver(func, x1, x2, iteration=30, error=10e-6):

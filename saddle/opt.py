@@ -4,7 +4,7 @@ import numpy as np
 
 from .solver import ridders_solver
 
-__all__ = ['Point', 'GeoOptimizer']
+__all__ = ('Point', 'GeoOptimizer')
 
 
 class Point(object):

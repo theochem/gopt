@@ -6,7 +6,7 @@ from .errors import AtomsNumberError, NotSetError
 from .fchk import FCHKFile
 from .gaussianwrapper import GaussianWrapper
 
-__all__ = ['Cartesian']
+__all__ = ('Cartesian',)
 
 
 class Cartesian(object):

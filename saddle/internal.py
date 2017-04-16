@@ -14,7 +14,7 @@ from .errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
 from .opt import GeoOptimizer, Point
 from .periodic import periodic
 
-__all__ = ['Internal']
+__all__ = ('Internal',)
 
 
 class Internal(Cartesian):

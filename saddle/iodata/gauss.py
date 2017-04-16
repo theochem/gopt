@@ -2,7 +2,7 @@ import numpy as np
 
 from ..periodic import angstrom, periodic
 
-__all__ = ['load_com', 'load_gjf']
+__all__ = ('load_com', 'load_gjf')
 
 
 def load_com(filename):

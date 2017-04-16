@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from abc import ABCMeta, abstractproperty
 
-__all__ = ['CoordinateTypes']
+__all__ = ('CoordinateTypes',)
 
 class CoordinateTypes(object):
 

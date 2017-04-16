@@ -4,8 +4,8 @@ from .abclass import CoordinateTypes
 from .molmod import (bend_angle, bend_cos, bond_length, dihed_cos,
                            dihed_new_cross, dihed_new_dot)
 
-__all__ = ['BondLength', 'BendAngle', 'BendCos', 'ConventionDihedral',
-           'NewDihedralDot', 'NewDihedralCross']
+__all__ = ('BondLength', 'BendAngle', 'BendCos', 'ConventionDihedral',
+           'NewDihedralDot', 'NewDihedralCross')
 
 
 class BondLength(CoordinateTypes):

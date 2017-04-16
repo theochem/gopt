@@ -7,7 +7,7 @@ import numpy as np
 from .internal import Internal
 from .solver import diagonalize
 
-__all__ = ['ReducedInternal']
+__all__ = ('ReducedInternal',)
 
 
 class ReducedInternal(Internal):  # need tests

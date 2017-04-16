@@ -7,7 +7,7 @@ import numpy as np
 from .periodic import angstrom, periodic
 from .fchk import FCHKFile
 
-__all__ = ['GaussianWrapper']
+__all__ = ('GaussianWrapper',)
 
 
 class GaussianWrapper(object):

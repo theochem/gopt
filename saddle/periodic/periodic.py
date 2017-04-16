@@ -40,7 +40,7 @@ import os
 from .units import angstrom, amu
 
 
-__all__ = ['periodic', 'Element', 'Periodic']
+__all__ = ('periodic', 'Element', 'Periodic')
 
 
 
