@@ -65,11 +65,7 @@ class TSConstruct(object):
             if np.allclose(reactant_ic.numbers, product_ic.numbers):
                 self._numbers = reactant_ic.numbers
                 self._reactant = deepcopy(reactant_ic)
-                self._reactant.wipe_ic_info(True)
                 self._product = deepcopy(product_ic)
-                self._product.wipe_ic_info(True)
-                self._tmp_rct_ic = reactant_ic.ic  # the ref to reactant_ic
-                self._tmp_prd_ic = product_ic.ic  # the ref to product_ic
             else:
                 raise AtomsNumberError("The number of atoms is not the same")
         else:
@@ -189,8 +185,6 @@ class TSConstruct(object):
             The flag of whether to construct the internal structure of reactant
             and product from scratch. True for start from scrach, otherwise False.
         """
-        self._reactant.wipe_ic_info(True)
-        self._product.wipe_ic_info(True)
         if reconstruct:
             self._auto_select_ic_restart()
         else:
@@ -268,6 +262,8 @@ class TSConstruct(object):
         coordinates from scrach. Do not include any initial structure of
         reactant or product
         """
+        self._reactant.wipe_ic_info(True)
+        self._product.wipe_ic_info(True)
         self._auto_select_bond()
         self._auto_select_angle()
         self._auto_select_dihed_normal()
@@ -279,16 +275,18 @@ class TSConstruct(object):
         """
         # obetain ic for both reactant and product
         union_ic_list = self._get_union_of_ics()
+        self._reactant.wipe_ic_info(True)
         self._reactant.set_new_ics(union_ic_list)
+        self._product.wipe_ic_info(True)
         self._product.set_new_ics(union_ic_list)
 
     def _get_union_of_ics(self):  # need tests
         """Get the combined internal coordinates based on the ic structure of
         both reactant and product
         """
-        basic_ic = deepcopy(self._tmp_rct_ic)
-        for new_ic in self._tmp_prd_ic:
-            for ic in self._tmp_rct_ic:
+        basic_ic = deepcopy(self._reactant.ic)
+        for new_ic in self._product.ic:
+            for ic in self._reactant.ic:
                 if new_ic.atoms == ic.atoms and type(new_ic) == type(ic):
                     break
             else:
