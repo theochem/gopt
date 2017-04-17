@@ -41,10 +41,12 @@ class TSConstruct(object):
     add_angle_cos(atom1, atom2, atom3)
         Add angle cos to both reactant and product between angle atom1,
         atom2, and atom3
-    add_dihedral(atom1, atom2, atom3)
+    add_dihedral(self, atom1, atom2, atom3, atom4):
         Add normal dihedral to both reactant and product between plane
         (atom1, atom2, and atom3) and plane(atom2, atom3, and atom4)
-    auto_select_ic()
+    delete_ic(self, *indices)
+        Delete undesired internal coordinates with indices
+    auto_select_ic(self, reset_ic=False, auto_select=True, mode="mix")
         Auto select internal coordinates of reactant and product with
         specific choices
     create_ts_state(start_with, ratio=0.5)
@@ -53,7 +55,11 @@ class TSConstruct(object):
     select_key_ic(ic_indices)
         Select certain internal coordinates to be the key ic which is
         important to chemical reaction
-    auto_generate_ts(ratio=0.5, start_with="reactant", reconstruct=True)
+    auto_generate_ts(ratio=0.5,
+                     start_with="reactant",
+                     reset_ic=False,
+                     auto_select=True,
+                     mode="mix"):
         Generate transition state structure automatically based on the reactant
         and product structure and corresponding setting parameters
     """
@@ -174,7 +180,34 @@ class TSConstruct(object):
         self._reactant.add_dihedral(atom1, atom2, atom3, atom4)
         self._product.add_dihedral(atom1, atom2, atom3, atom4)
 
+    def delete_ic(self, *indices):
+        """Delete a exsiting internal cooridnates with given indices(index)
+
+        Arguments
+        ---------
+        *indices : int
+            The index of undesired internal coordinates
+        """
+        self._reactant.delete_ic(*indices)
+        self._product.delete_ic(*indices)
+
     def auto_select_ic(self, reset_ic=False, auto_select=True, mode="mix"):
+        """Select internal coordinates for both reactant and product based on
+        given structure and choices
+
+        Arguments
+        ---------
+        reset_ic : bool, default is False
+            Remove the existing internal coordinates for reactant and product
+        auto_select_ic : bool, default is True
+            Use buildin algorithm to auto select proper internal coordinates
+        mode : str, default is "mix"
+            The way to unify reactant and product internal coordinates
+            choices:
+                "mix" : choose the union of reactant and product ic
+                "reactant" : choose the reactant ic as the template
+                "product" : choose the product ic as the template
+        """
         if auto_select:
             self._reactant.auto_select_ic(reset_ic=reset_ic)
             self._product.auto_select_ic(reset_ic=reset_ic)
@@ -190,6 +223,9 @@ class TSConstruct(object):
         ---------
         start_with : string
             The initial structure of transition state to optimize from.
+            choices:
+                "reactant" : optimize ts structure from reactant
+                "product" : optimize ts structure from product
         ratio : float, default is 0.5
             The ratio of linear combination of ic for reactant and product.
             ts = ratio * reactant + (1 - ratio) * product
@@ -199,9 +235,10 @@ class TSConstruct(object):
         elif start_with == "product":
             model = self.product
         else:
-            raise InputTypeError("The input of start_with is not supported")
+            raise InvalidArgumentError(
+                "The input of start_with is not supported")
         if ratio > 1. or ratio < 0:
-            raise InputTypeError("The input of ratio is not supported")
+            raise InvalidArgumentError("The input of ratio is not supported")
         ts_internal = deepcopy(model)
         target_ic = ratio * self.reactant.ic_values + (
             1. - ratio) * self.product.ic_values
@@ -244,9 +281,19 @@ class TSConstruct(object):
             ts = ratio * reactant + (1 - ratio) * product
         start_with : string, default is "reactant"
             The initial structure of transition state to optimize from.
-        reconstruct : bool, default is True
-            The flag of whether to construct the internal structure of reactant
-            and product from scratch. True for start from scrach, otherwise False.
+            choices:
+                "reactant" : optimize ts structure from reactant
+                "product" : optimize ts structure from product
+        reset_ic : bool, default is False
+            Remove the existing internal coordinates for reactant and product
+        auto_select_ic : bool, default is True
+            Use buildin algorithm to auto select proper internal coordinates
+        mode : str, default is "mix"
+            The way to unify reactant and product internal coordinates
+            choices:
+                "mix" : choose the union of reactant and product ic
+                "reactant" : choose the reactant ic as the template
+                "product" : choose the product ic as the template
         """
         self.auto_select_ic(reset_ic, auto_select, mode)
         self.create_ts_state(start_with, ratio)

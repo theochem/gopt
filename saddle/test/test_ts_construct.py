@@ -3,6 +3,7 @@ from copy import deepcopy
 
 import numpy as np
 
+from ..errors import InvalidArgumentError
 from ..internal import Internal
 from ..iodata import IOData
 from ..reduced_internal import ReducedInternal
@@ -81,6 +82,32 @@ class Test_TS_Construct(object):
         ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         union_ic = ts_ins._get_union_of_ics()
         assert len(union_ic) == 5
+
+    def test_ts_union_reactant(self):
+        self.reactant_ic.add_bond(0, 1)
+        self.reactant_ic.add_bond(1, 2)
+        self.reactant_ic.add_angle_cos(0, 1, 2)
+        ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
+        union_ic = ts_ins._get_union_of_ics(mode='reactant')
+        assert len(union_ic) == 3
+        ts_ins.auto_select_ic(auto_select=False, mode='reactant')
+        assert len(ts_ins.product.ic) == 3
+
+    def test_ts_union_product(self):
+        self.product_ic.add_bond(1, 0)
+        self.product_ic.add_bond(0, 2)
+        self.product_ic.add_angle_cos(1, 0, 2)
+        ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
+        union_ic = ts_ins._get_union_of_ics(mode='product')
+        assert len(union_ic) == 3
+        ts_ins.auto_select_ic(auto_select=False, mode='product')
+        assert len(ts_ins.reactant.ic) == 3
+        flag = 1
+        try:
+            ts_ins.auto_select_ic(auto_select=False, mode='wrong')
+        except InvalidArgumentError:
+            flag = 0
+        assert flag == 0
 
     def test_ts_create(self):
         ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
