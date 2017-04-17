@@ -20,3 +20,7 @@ class InputTypeError(Exception):
 
 class PositiveProductError(Exception):
     pass
+
+
+class InvalidArgumentError(Exception):
+    pass

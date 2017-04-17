@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 
 import numpy as np
 
@@ -9,62 +10,47 @@ from ..ts_construct import TSConstruct
 
 
 class Test_TS_Construct(object):
-    @classmethod
-    def setup_class(self):
+    def setUp(self):
         path = os.path.dirname(os.path.realpath(__file__))
         self.rct = IOData.from_file(path + "/../data/ch3_hf.xyz")
         self.prd = IOData.from_file(path + "/../data/ch3f_h.xyz")
+        self.reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0,
+                                    2)
+        self.product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0,
+                                   2)
 
-    def test_create_instance(self):
-        reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
-        product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
-        ts_ins = TSConstruct(reactant_ic, product_ic)
+    def test_auto_internal(self):
+        ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         assert isinstance(ts_ins.reactant, Internal)
         assert isinstance(ts_ins.product, Internal)
-        ts_ins._auto_select_bond()
-        ts_ins._auto_select_angle()
-        ts_ins._auto_select_dihed_normal()
+        ts_ins.auto_select_ic()
         assert len(ts_ins.reactant.ic) == len(ts_ins.product.ic)
-        # print ts_ins.product.ic
-        # print ts_ins.product.ic_values
-        ref_value = [
-            2.0399259678469988, 2.0399141882105529, 2.03976416977833,
-            2.6533652025753693, 5.5244442325320069, -0.33511068208525152,
-            -0.33461558852288653, -0.33183042590229783, -0.33464313367330611,
-            -0.33186033997149444, -0.33193020192434486, -0.99936959502185685,
-            -0.072069934158273591, -0.8278604118789985, 0.89987918554562152
-        ]
-        assert np.allclose(ts_ins.product.ic_values, ref_value)
-        ts_ins._auto_select_dihed_improper()
-        # print ts_ins.product.ic
-        ref_value = [2.0399259678469988, 2.0399141882105529, 2.03976416977833,
-                     2.6533652025753693, 5.5244442325320069,
-                     -0.33511068208525152, -0.33461558852288653,
-                     -0.33183042590229783, -0.33464313367330611,
-                     -0.33186033997149444, -0.33193020192434486,
-                     -0.99936959502185685, -0.072069934158273591,
-                     -0.8278604118789985, 0.89987918554562152, -0.503186754184]
-        assert np.allclose(ts_ins.product.ic_values, ref_value)
+        self.reactant_ic.auto_select_ic()
+        self.reactant_ic.add_bond(0, 4)
+        self.reactant_ic.add_angle_cos(1, 0, 4)
+        self.reactant_ic.add_angle_cos(2, 0, 4)
+        assert len(self.reactant_ic.ic) != len(ts_ins.reactant.ic)
+        self.reactant_ic.add_angle_cos(3, 0, 4)
+        assert np.allclose(self.reactant_ic.ic_values,
+                           ts_ins.reactant.ic_values)
 
     def test_auto_ic_create(self):
-        reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
-        product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
-        ts_ins = TSConstruct(reactant_ic, product_ic)
+        ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         ts_ins.auto_select_ic()
-        ref_ic = [2.0399259678469988, 2.0399141882105529, 2.03976416977833,
-                  2.6533652025753693, 5.5244442325320069, -0.33511068208525152,
-                  -0.33461558852288653, -0.33183042590229783,
-                  -0.33464313367330611, -0.33186033997149444,
-                  -0.33193020192434486, -0.99936959502185685,
-                  -0.072069934158273591, -0.8278604118789985,
-                  0.89987918554562152, -0.503186754184]
-        assert np.allclose(ts_ins.product.ic_values, ref_ic)
+        ref_ic_rct = np.array(
+            [2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
+             -0.49089531, -0.49066505, -0.9635587, 6.0521314, -0.07908926,
+             -0.07896564, -0.0779316])
+        ref_ic_prd = np.array(
+            [2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
+             -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
+             -0.33186034, -0.3319302])
+        print ts_ins.reactant.ic_values
+        assert np.allclose(ts_ins.reactant.ic_values, ref_ic_rct)
+        assert np.allclose(ts_ins.product.ic_values, ref_ic_prd)
 
     def test_ts_construct(self):
-        from copy import deepcopy
-        reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
-        product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
-        ts_ins = TSConstruct(reactant_ic, product_ic)
+        ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         ts_ins.auto_select_ic()
         ts_ins.create_ts_state(start_with="product")
         result = deepcopy(ts_ins.ts)
@@ -76,9 +62,9 @@ class Test_TS_Construct(object):
         assert np.allclose(ref_tar_ic, result.target_ic)
         assert np.allclose(result.target_ic, result_2.target_ic)
         assert np.allclose(
-            result.ic_values[:5], result.target_ic[:5], atol=1e-7)
+            result.ic_values[:4], result.target_ic[:4], atol=1e-6)
         assert np.allclose(
-            result_2.ic_values[:5], result_2.target_ic[:5], atol=1e-7)
+            result_2.ic_values[:4], result_2.target_ic[:4], atol=1e-6)
         ts_ins.select_key_ic(1)
         assert ts_ins.key_ic_counter == 1
         assert np.allclose(ts_ins.ts.ic_values[:2][::-1],
@@ -87,29 +73,25 @@ class Test_TS_Construct(object):
                            result_2._cc_to_ic_gradient[0])
 
     def test_ts_union(self):
-        reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
-        reactant_ic.add_bond(0, 1)
-        reactant_ic.add_bond(1, 2)
-        reactant_ic.add_angle_cos(0, 1, 2)
-        product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
-        product_ic.add_bond(1, 0)
-        product_ic.add_bond(0, 2)
-        product_ic.add_angle_cos(1, 0, 2)
-        ts_ins = TSConstruct(reactant_ic, product_ic)
+        self.reactant_ic.add_bond(0, 1)
+        self.reactant_ic.add_bond(1, 2)
+        self.reactant_ic.add_angle_cos(0, 1, 2)
+        self.product_ic.add_bond(1, 0)
+        self.product_ic.add_bond(0, 2)
+        self.product_ic.add_angle_cos(1, 0, 2)
+        ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         union_ic = ts_ins._get_union_of_ics()
         assert len(union_ic) == 5
 
     def test_ts_create(self):
-        reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
-        product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
-        ts_ins = TSConstruct(reactant_ic, product_ic)
+        ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         ts_ins.auto_select_ic()
         ts_ins.create_ts_state(start_with='reactant')
         ts_ins.select_key_ic(3, 4)
         assert type(ts_ins.ts.ic[0]) is type(ts_ins.product.ic[3])
         assert type(ts_ins.ts.ic[1]) is type(ts_ins.product.ic[4])
         assert ts_ins.ts.key_ic_number == 2
-        new_ins = TSConstruct(reactant_ic, product_ic)
+        new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         assert new_ins is not ts_ins
         new_ins.auto_generate_ts()
         new_ins.select_key_ic(3, 4)
@@ -117,13 +99,42 @@ class Test_TS_Construct(object):
         assert isinstance(new_ins.ts, ReducedInternal)
 
     def test_ts_combine(self):
-        reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
-        product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
-        reactant_ic.auto_select_ic()
-        product_ic.auto_select_ic()
-        new_ins = TSConstruct(reactant_ic, product_ic)
-        new_ins.auto_generate_ts(start_with='product', reconstruct=False)
-        assert np.allclose(new_ins.ts.ic_values, np.array(
-            [2.03377915, 2.03380703, 2.0336914, 3.64975115, -0.42991017,
-             -0.42979586, -0.42970384, 4.35274887, -0.21651925, -0.21648026,
-             -0.21598441]))
+        self.reactant_ic.auto_select_ic()
+        self.product_ic.auto_select_ic()
+        new_ins = TSConstruct(self.reactant_ic, self.product_ic)
+        new_ins.auto_generate_ts(start_with='product', reset_ic=False)
+        ref_ic_rct = np.array(
+            [2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
+             -0.49089531, -0.49066505, -0.9635587, 6.0521314, -0.07908926,
+             -0.07896564, -0.0779316])
+        ref_ic_prd = np.array(
+            [2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
+             -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
+             -0.33186034, -0.3319302])
+        assert np.allclose(new_ins.ts.ic_values[:4], (
+            (ref_ic_rct + ref_ic_prd) / 2)[:4])
+
+    def test_choices_auto_select_ic(self):
+        self.reactant_ic.add_bond(2, 4)
+        new_ins = TSConstruct(self.reactant_ic, self.product_ic)
+        new_ins.auto_generate_ts(auto_select=False)
+        ref_ic = (
+            self.reactant_ic.distance(2, 4) + self.product_ic.distance(2, 4)
+        ) / 2
+        assert np.allclose(new_ins.ts.ic_values, ref_ic)
+        new_ins = TSConstruct(self.reactant_ic, self.product_ic)
+        new_ins.auto_generate_ts(auto_select=True, reset_ic=False)
+        assert len(new_ins.ts.ic) == 18
+        assert np.allclose(new_ins.ts.ic_values[0], ref_ic, atol=1e-3)
+        new_ins = TSConstruct(self.reactant_ic, self.product_ic)
+        new_ins.auto_generate_ts(auto_select=True, reset_ic=True)
+        ref_ic_rct = np.array(
+            [2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
+             -0.49089531, -0.49066505, -0.9635587, 6.0521314, -0.07908926,
+             -0.07896564, -0.0779316])
+        ref_ic_prd = np.array(
+            [2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
+             -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
+             -0.33186034, -0.3319302])
+        assert np.allclose(new_ins.ts.ic_values[:4], (
+            (ref_ic_rct + ref_ic_prd) / 2)[:4])
