@@ -14,7 +14,7 @@ from .errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
 from .opt import GeoOptimizer, Point
 from .periodic import periodic
 
-__all__ = ('Internal',)
+__all__ = ('Internal', )
 
 
 class Internal(Cartesian):
@@ -529,7 +529,7 @@ class Internal(Cartesian):
                 else:
                     continue
                 potent_halo_index = (i for i in all_halo_index
-                                     if i != halo_index) # all other halo
+                                     if i != halo_index)  # all other halo
                 for index_k in potent_halo_index:
                     dis = self.distance(h_index, index_k)
                     angle = self.angle(halo_index, h_index, index_k)
@@ -537,7 +537,7 @@ class Internal(Cartesian):
                         h_index]].vdw_radius + periodic[self.numbers[
                             index_k]].vdw_radius
                     if dis <= 0.9 * thresh_sum and angle >= 1.5708:
-                        self.add_bond(h_index, index_k) # add H bond
+                        self.add_bond(h_index, index_k)  # add H bond
 
     def _auto_select_angle(self):
         """A private method for automatically selecting angle
@@ -573,7 +573,8 @@ class Internal(Cartesian):
     def _auto_select_dihed_improper(self):
         """A private method for automatically selecting improper dihedral
         """
-        connect_sum = np.sum(self.connectivity, axis=0)
+        connect_sum = np.sum(self.connectivity,
+                             axis=0) + 1  # cancel -1 for itself
         for center_ind, _ in enumerate(connect_sum):
             if connect_sum[center_ind] >= 3:
                 cnct_atoms = self.connected_indices(center_ind)
@@ -585,8 +586,7 @@ class Internal(Cartesian):
                     ang3_r = self.angle(ind_j, center_ind, ind_k)
                     sum_r = ang1_r + ang2_r + ang3_r
                     if sum_r >= 6.02139:
-                        self.add_dihedral(ind_i, center_ind, ind_j,
-                                          ind_k)
+                        self.add_dihedral(ind_i, center_ind, ind_j, ind_k)
 
     def _energy_hessian_transformation(self):
         """convert gradient, hessian versus cartesian coordinates into

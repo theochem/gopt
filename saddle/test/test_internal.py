@@ -177,7 +177,8 @@ class TestInternal(object):
         assert new_v == v
         assert np.allclose(xd, np.dot(self.mol._cc_to_ic_gradient.T, d))
         ref_x_hessian = np.dot(
-            np.dot(self.mol._cc_to_ic_gradient.T, dd), self.mol._cc_to_ic_gradient)
+            np.dot(self.mol._cc_to_ic_gradient.T, dd),
+            self.mol._cc_to_ic_gradient)
         K = np.tensordot(d, self.mol._cc_to_ic_hessian, 1)
         ref_x_hessian += K
         assert np.allclose(xdd, ref_x_hessian)
@@ -226,6 +227,17 @@ class TestInternal(object):
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
         assert len(ethane.ic) == 24
+
+    def test_auto_select_improper_ch3_hf(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../data/ch3_hf.xyz"
+        mol = IOData.from_file(mol_path)
+        mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        mol.auto_select_ic()
+        # print mol.ic_values
+        ic_ref = np.array([2.02762919, 2.02769736, 2.02761705, 1.77505755,
+                           -0.49059482, -0.49089531, -0.49066505, -0.9635587])
+        assert np.allclose(mol.ic_values, ic_ref)
 
     def test_auto_ic_select_methanol(self):
         path = os.path.dirname(os.path.realpath(__file__))

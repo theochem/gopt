@@ -45,7 +45,6 @@ class Test_TS_Construct(object):
             [2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
              -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
              -0.33186034, -0.3319302])
-        print ts_ins.reactant.ic_values
         assert np.allclose(ts_ins.reactant.ic_values, ref_ic_rct)
         assert np.allclose(ts_ins.product.ic_values, ref_ic_prd)
 
