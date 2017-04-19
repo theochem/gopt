@@ -60,6 +60,19 @@ def ridders_solver(func, x1, x2, iteration=30, error=10e-6):
 
 
 def diagonalize(matrix):
+    """Orthogonilize a given matrix my Grammian Matrix method
+
+    Arguments
+    ---------
+    matrix : np.ndarray(N, M)
+        Given matrix to be diagonalized
+
+    Returns
+    -------
+    (w, v) : (np.ndarray(N,), np.ndarray(N, N))
+        w is the eigenvalues of the Grammian matrix
+        v is the eigenvectors of the Grammian matrix, each column is one vector
+    """
     product = np.dot(matrix, matrix.T)
     w, v = np.linalg.eigh(product)
     return w, v

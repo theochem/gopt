@@ -8,7 +8,6 @@ import numpy as np
 from .abclass import CoordinateTypes
 from .cartesian import Cartesian
 from .coordinate_types import BendCos, BondLength, ConventionDihedral
-from .cost_functions import direct_square
 from .errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                      NotSetError)
 from .opt import GeoOptimizer, Point
@@ -59,11 +58,6 @@ class Internal(Cartesian):
     -------
     __init__(coordinates, numbers, charge, spin)
         Initializes molecule
-    set_new_coordinates(new_coor)
-        Set molecule with a set of coordinates
-    energy_calculation(**kwargs)
-        Calculate system energy with different methods through
-        software like gaussian
     distance(index1, index2)
         Calculate distance between two atoms with index1 and index2
     angle(index1, index2, index3)
@@ -75,11 +69,24 @@ class Internal(Cartesian):
     add_dihedral(atom1, atom2, atom3, atom4)
         Add a dihedral of plain consists of atom1, atom2, and atom3
         and the other one consist of atom2, atom3, and atom4
+    delete_ic(*indices)
+        delete a exsiting internal coordinates
     set_target_ic(new_ic)
         Set a target internal coordinates to transform into
+    set_new_coordinates(new_coor)
+        Set molecule with a set of coordinates
+    swap_internal_coordinates(index_1, index_2)
+        swap the position of two internal coordiantes
     converge_to_target_ic(iteration=100, copy=True)
         Implement optimization process to transform geometry to
         target internal coordinates
+    connected_indices(index)
+        Return a list of indices that connected to given index
+    energy_from_fchk(abs_path, gradient=True, hessian=True):
+        Obtain energy and corresponding info from fchk file
+    energy_calculation(**kwargs)
+        Calculate system energy with different methods through
+        software like gaussian
     wipe_ic_info(I_am_sure_i_am_going_to_wipe_all_ic_info)
         wipe internal coordinates information in this structure
     set_new_ics(new_ics)
@@ -87,12 +94,6 @@ class Internal(Cartesian):
         coordinates
     print_connectivity()
         print connectivity matrix information on the screen
-    swap_internal_coordinates(index_1, index_2)
-        swap the two internal coordinates sequence
-    connected_indices(index)
-        Return a list of indices that connected to given index
-    energy_from_fchk(abs_path, gradient=True, hessian=True):
-        Obtain energy and corresponding info from fchk file
     auto_select_ic(dihed_special=False)
         automatic internal coordinates depends on buildin algorithm
     """
@@ -479,7 +480,7 @@ class Internal(Cartesian):
                 "This functionality hasn't been implemented")
         bonds = [i for i in self.ic if isinstance(i, BondLength)]
         if reset_ic is True:
-            self._clear_ic_info()
+            self.wipe_ic_info(True)
         if keep_bond is False:
             self._auto_select_bond()
         else:
@@ -687,7 +688,7 @@ class Internal(Cartesian):
         for i, _ in enumerate(self.ic):
             if self.ic[i].__class__.__name__ in ("BondLength", "BendCos",
                                                  "BendAngle"):
-                v, d, dd = direct_square(self.ic_values[i], self.target_ic[i])
+                v, d, dd = self._direct_square(self.ic_values[i], self.target_ic[i])
                 value += v
                 deriv[i] += d
                 deriv2[i, i] += dd
@@ -848,3 +849,23 @@ class Internal(Cartesian):
                            atoms[j] + 3] += deriv[i, :3, j]
         self._cc_to_ic_hessian = np.vstack(
             (self._cc_to_ic_hessian, tmp_vector))
+
+    @staticmethod
+    def _direct_square(origin, target):
+        """Calculate cost function and it's derivatives for geometry transiformation
+
+        Arguments
+        ---------
+        origin : float
+            The value of original internal coordinate
+        target : float
+            The value of the target internal coordinate
+
+        Returns
+        -------
+        (value, deriv, deriv2) : ()
+        """
+        value = (origin - target) ** 2
+        deriv = 2 * (origin - target)
+        deriv2 = 2
+        return value, deriv, deriv2
