@@ -289,7 +289,7 @@ class IOData(object):
                 result.update(load_com(filename))
             elif filename.endswith('.gjf'):
                 from .gauss import load_gjf
-                result.update(load_com(filename))
+                result.update(load_gjf(filename))
             elif filename.endswith('.xyz'):
                 from .xyz import load_xyz
                 result.update(load_xyz(filename))

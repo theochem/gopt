@@ -1,13 +1,14 @@
 from __future__ import absolute_import, print_function
+
 import os
 from string import Template
 
 import numpy as np
 
-from .periodic import angstrom, periodic
 from .fchk import FCHKFile
+from .periodic import angstrom, periodic
 
-__all__ = ('GaussianWrapper',)
+__all__ = ('GaussianWrapper', )
 
 
 class GaussianWrapper(object):
@@ -33,9 +34,9 @@ class GaussianWrapper(object):
             freq = "freq"
         else:
             freq = ""
-        filename = self.create_input_file(charge, multi, freq=freq)
+        filename = self._create_input_file(charge, multi, freq=freq)
         # print "gausian is going to run \n{} \n{} \n{}".format(charge, multi,
-                                                            #   self.molecule.ic)
+        #   self.molecule.ic)
         fchk_file = self._run_gaussian(filename)
         assert isinstance(fchk_file,
                           FCHKFile), "Gaussian calculation didn't run properly"
@@ -50,24 +51,53 @@ class GaussianWrapper(object):
             result[3] = fchk_file.get_hessian()
         return result
 
-    def create_input_file(self, charge, multi, freq="freq"):
+    def create_gauss_input(self, charge, multi, freq='freq', spe_title='',
+                           path='', postfix = '.com'):
+        assert isinstance(path, str)
+        assert isinstance(spe_title, str)
         atoms = ""
         for i in range(len(self.molecule.numbers)):
             x, y, z = self.molecule.coordinates[i] / angstrom
             atoms += ('%2s % 10.5f % 10.5f % 10.5f \n' %
                       (periodic[self.molecule.numbers[i]].symbol, x, y, z))
-        filename = "{0}_{1}".format(self.title, self.counter)
-        postfix = ".com"
-        file_path = "/test/gauss/" + filename + postfix
-        with open(self.pwd + file_path, "w") as f:
+        if spe_title:
+            filename = spe_title
+        else:
+            filename = "{0}_{1}".format(self.title, self.counter)
+        if path:
+            path = path + '/' + filename + postfix
+        else:
+            path = self.pwd + "/test/gauss/" + filename + postfix
+        with open(path, "w") as f:
             f.write(
                 self.template.substitute(
                     charge=charge,
                     freq=freq,
                     multi=multi,
                     atoms=atoms,
-                    title="{}_{}".format(self.title, GaussianWrapper.counter)))
-            GaussianWrapper.counter += 1
+                    title=filename))
+        GaussianWrapper.counter += 1
+
+    def _create_input_file(self, charge, multi, freq="freq"):
+        filename = "{0}_{1}".format(self.title, self.counter)
+        self.create_gauss_input(charge, multi, freq=freq, spe_title=filename)
+        # atoms = ""
+        # for i in range(len(self.molecule.numbers)):
+        #     x, y, z = self.molecule.coordinates[i] / angstrom
+        #     atoms += ('%2s % 10.5f % 10.5f % 10.5f \n' %
+        #               (periodic[self.molecule.numbers[i]].symbol, x, y, z))
+        # filename = "{0}_{1}".format(self.title, self.counter)
+        # postfix = ".com"
+        # file_path = "/test/gauss/" + filename + postfix
+        # with open(self.pwd + file_path, "w") as f:
+        #     f.write(
+        #         self.template.substitute(
+        #             charge=charge,
+        #             freq=freq,
+        #             multi=multi,
+        #             atoms=atoms,
+        #             title="{}_{}".format(self.title, GaussianWrapper.counter)))
+        # GaussianWrapper.counter += 1
         return filename
         # if run_cal:
         #     filename = "{0}_{1}.com".format(self.title, GaussianWrapper.counter)
@@ -85,7 +115,7 @@ class GaussianWrapper(object):
                 os.system("formchk {0}{1}.chk {0}{1}.fchk".format(path,
                                                                   filename))
                 fchk_ob = FCHKFile("{0}{1}.fchk".format(path, filename))
-        os.chdir(self.pwd+'/../')
+        os.chdir(self.pwd + '/../')
         #print("change_back", self.pwd)
         return fchk_ob
 
@@ -104,5 +134,5 @@ if __name__ == '__main__':
     aa = molecule([1, 3], np.array([[0., 0., 0.], [1., 1., 1.]]))
     a = GaussianWrapper(aa, "text_wrapper")
     print(a.template)
-    a.create_input_file(0, 2)
-    a.create_input_file(0, 2, "freq")
+    a._create_input_file(0, 2)
+    a._create_input_file(0, 2, "freq")
