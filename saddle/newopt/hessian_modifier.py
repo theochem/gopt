@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import numpy as np
 
+__all__ = ('SaddleHessianModifier', )
+
 
 class SaddleHessianModifier(object):
 

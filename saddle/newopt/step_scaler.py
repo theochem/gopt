@@ -4,6 +4,8 @@ import numpy as np
 
 from ..solver import ridders_solver
 
+__all__ = ('TRIM', )
+
 
 class TRIM(object):  # need tests
     @staticmethod

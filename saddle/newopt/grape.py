@@ -6,9 +6,11 @@ import numpy as np
 
 from .abclass import Point
 from .hessian_modifier import SaddleHessianModifier
-from .hessian_update import SR1
+from .hessian_update import BFGS, SR1
 from .step_scaler import TRIM
 from .trust_radius import DefaultTrustRadius
+
+__all__ = ('Grape', 'basic_saddle_optimizer', 'basic_minimum_optimizer')
 
 
 class Grape(object):
@@ -58,7 +60,7 @@ class Grape(object):
                     print("Optimization finished")
                     break
                 self.modify_hessian(key_ic_number, negative_eigen)
-                self.update_trust_radius(criterion="gradient")
+                self.update_trust_radius()
                 self.calculate_step(negative_eigen)
                 self.update_to_new_point()
                 self.align_last_point()
@@ -142,11 +144,20 @@ class Grape(object):
         new_point.set_hessian(new_hessian)
 
 
-def basic_optimizer(number_atoms):
+def basic_saddle_optimizer(number_atoms):
     hm = SaddleHessianModifier()
     ss = TRIM()
-    tr = DefaultTrustRadius(number_atoms)
+    tr = DefaultTrustRadius(number_atoms, criterion='gradient')
     hu = SR1()
+    return Grape(
+        trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
+
+
+def basic_minimum_optimizer(number_atoms):
+    hm = SaddleHessianModifier()
+    ss = TRIM()
+    tr = DefaultTrustRadius(number_atoms, criterion='energy')
+    hu = BFGS()
     return Grape(
         trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
     # def finite_diff_hessian(self):

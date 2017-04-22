@@ -51,8 +51,13 @@ class GaussianWrapper(object):
             result[3] = fchk_file.get_hessian()
         return result
 
-    def create_gauss_input(self, charge, multi, freq='freq', spe_title='',
-                           path='', postfix = '.com'):
+    def create_gauss_input(self,
+                           charge,
+                           multi,
+                           freq='freq',
+                           spe_title='',
+                           path='',
+                           postfix='.com'):
         assert isinstance(path, str)
         assert isinstance(spe_title, str)
         atoms = ""
@@ -81,27 +86,7 @@ class GaussianWrapper(object):
     def _create_input_file(self, charge, multi, freq="freq"):
         filename = "{0}_{1}".format(self.title, self.counter)
         self.create_gauss_input(charge, multi, freq=freq, spe_title=filename)
-        # atoms = ""
-        # for i in range(len(self.molecule.numbers)):
-        #     x, y, z = self.molecule.coordinates[i] / angstrom
-        #     atoms += ('%2s % 10.5f % 10.5f % 10.5f \n' %
-        #               (periodic[self.molecule.numbers[i]].symbol, x, y, z))
-        # filename = "{0}_{1}".format(self.title, self.counter)
-        # postfix = ".com"
-        # file_path = "/test/gauss/" + filename + postfix
-        # with open(self.pwd + file_path, "w") as f:
-        #     f.write(
-        #         self.template.substitute(
-        #             charge=charge,
-        #             freq=freq,
-        #             multi=multi,
-        #             atoms=atoms,
-        #             title="{}_{}".format(self.title, GaussianWrapper.counter)))
-        # GaussianWrapper.counter += 1
         return filename
-        # if run_cal:
-        #     filename = "{0}_{1}.com".format(self.title, GaussianWrapper.counter)
-        #     self._run_gaussian(filename)
 
     def _run_gaussian(self, filename, fchk=True, command_bin="g09"):
         fchk_ob = None

@@ -8,6 +8,8 @@ from ..errors import NotSetError
 from ..reduced_internal import ReducedInternal
 from .abclass import Point
 
+__all__ = ('SaddlePoint', )
+
 
 class SaddlePoint(Point):
     def __init__(self, structure):

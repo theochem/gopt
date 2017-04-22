@@ -4,13 +4,16 @@ import numpy as np
 
 from .abclass import Point, TrustRadius
 
+__all__ = ('DefaultTrustRadius', )
+
 
 class DefaultTrustRadius(TrustRadius):  # need to be tested
-    def __init__(self, number_of_atoms):
+    def __init__(self, number_of_atoms, criterion='energy'):
         self._number_of_atoms = number_of_atoms
+        self._criterion = criterion
 
-    def update(self, target_point, pre_point, criterion):
-        if criterion.lower() == "energy":
+    def update(self, target_point, pre_point):
+        if self._criterion == "energy":
             delta_m = np.dot(pre_point.gradient, pre_point.step) + np.dot(
                 np.dot(pre_point.step.T, pre_point.hessian), pre_point.step)
             delta_u = target_point.value - pre_point.value
@@ -25,7 +28,7 @@ class DefaultTrustRadius(TrustRadius):  # need to be tested
                 value = min(1 / 4 * pre_point.trust_radius_stride,
                             self.ceiling)
             target_point.set_trust_radius_stride(value)
-        elif criterion.lower() == 'gradient':
+        elif self._criterion == 'gradient':
 
             def p_10(d):
                 return np.sqrt(1.6424 / d + 1.11 / d**2)
