@@ -4,23 +4,44 @@ from copy import deepcopy
 
 import numpy as np
 
-from .abclass import Point
+from ..errors import InvalidArgumentError
+from ..reduced_internal import ReducedInternal
 from .hessian_modifier import SaddleHessianModifier
 from .hessian_update import BFGS, SR1
+from .saddle_point import SaddlePoint
 from .step_scaler import TRIM
 from .trust_radius import DefaultTrustRadius
 
-__all__ = ('Grape', 'basic_saddle_optimizer', 'basic_minimum_optimizer')
+__all__ = ('Grape', )
 
 
 class Grape(object):
     def __init__(self, trust_radius, hessian_update, step_scale,
-                 hessian_modifier):
-        self._points = []
-        self._t_r = trust_radius
-        self._h_u = hessian_update
-        self._s_s = step_scale
-        self._h_m = hessian_modifier
+                 hessian_modifier, **kwargs):
+        strct = kwargs.get('structure')
+        if isinstance(strct, ReducedInternal):
+            number_atoms = len(strct.numbers)
+            task = kwargs.get('task', 'minimum')
+            if task == 'minimum':  # instantiate optimizer for minimum
+                self._t_r = DefaultTrustRadius(
+                    number_atoms, criterion='energy')
+                self._h_u = BFGS()
+            elif task == 'saddle':  # instantiate optimizer for saddle
+                self._t_r = DefaultTrustRadius(
+                    number_atoms, criterion='gradient')
+                self._h_u = SR1()
+            else:
+                raise InvalidArgumentError("The argument of 'task' is invalid")
+            self._points = []
+            self._s_s = TRIM()
+            self._h_m = SaddleHessianModifier()
+            self.initialize_first_point_with(structure=strct)
+        else:
+            self._points = []
+            self._t_r = trust_radius
+            self._h_u = hessian_update
+            self._s_s = step_scale
+            self._h_m = hessian_modifier
 
     @property
     def total(self):
@@ -31,7 +52,7 @@ class Grape(object):
         try:
             return self._points[-1]
         except IndexError:
-            return None
+            return
 
     def start_optimization(self,
                            iteration=10,
@@ -66,8 +87,13 @@ class Grape(object):
                 self.align_last_point()
                 iteration -= 1
 
+    def initialize_first_point_with(self, structure):
+        assert isinstance(structure, ReducedInternal)
+        new_point = SaddlePoint(structure=structure)
+        self.add_point(new_point)
+
     def add_point(self, new_point):
-        assert isinstance(new_point, Point)
+        assert isinstance(new_point, SaddlePoint)
         copy_n_p = deepcopy(new_point)
         if self.last is None:
             self._t_r.initialize(copy_n_p)
@@ -143,23 +169,45 @@ class Grape(object):
                                                **kwargs)
         new_point.set_hessian(new_hessian)
 
+    @classmethod
+    def saddle_optimizer(cls, number_atoms):
+        hm = SaddleHessianModifier()
+        ss = TRIM()
+        tr = DefaultTrustRadius(number_atoms, criterion='gradient')
+        hu = SR1()
+        return cls(trust_radius=tr,
+                   hessian_update=hu,
+                   step_scale=ss,
+                   hessian_modifier=hm)
 
-def basic_saddle_optimizer(number_atoms):
-    hm = SaddleHessianModifier()
-    ss = TRIM()
-    tr = DefaultTrustRadius(number_atoms, criterion='gradient')
-    hu = SR1()
-    return Grape(
-        trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
+    @classmethod
+    def minimum_optimizer(cls, number_atoms):
+        hm = SaddleHessianModifier()
+        ss = TRIM()
+        tr = DefaultTrustRadius(number_atoms, criterion='energy')
+        hu = BFGS()
+        return cls(trust_radius=tr,
+                   hessian_update=hu,
+                   step_scale=ss,
+                   hessian_modifier=hm)
 
 
-def basic_minimum_optimizer(number_atoms):
-    hm = SaddleHessianModifier()
-    ss = TRIM()
-    tr = DefaultTrustRadius(number_atoms, criterion='energy')
-    hu = BFGS()
-    return Grape(
-        trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
+# def basic_saddle_optimizer(number_atoms):
+#     hm = SaddleHessianModifier()
+#     ss = TRIM()
+#     tr = DefaultTrustRadius(number_atoms, criterion='gradient')
+#     hu = SR1()
+#     return Grape(
+#         trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
+#
+#
+# def basic_minimum_optimizer(number_atoms):
+#     hm = SaddleHessianModifier()
+#     ss = TRIM()
+#     tr = DefaultTrustRadius(number_atoms, criterion='energy')
+#     hu = BFGS()
+#     return Grape(
+#         trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
     # def finite_diff_hessian(self):
     #     self._finite_hessian_verify(self._t_r.number_of_atoms)
 

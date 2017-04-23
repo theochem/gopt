@@ -6,12 +6,6 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 class Point(object):
 
     __metaclass__ = ABCMeta
-    # def __init__(self, gradient, hessian, ele_number):
-    #     self.gradient = gradient
-    #     self.hessian = hessian
-    #     self.trust_radius = np.sqrt(ele_number)
-    #     self.step = None
-    #     self._ele = ele_number
 
     @abstractproperty
     def gradient(self):
@@ -76,4 +70,22 @@ class TrustRadius(object):
 
     @abstractmethod
     def starting(self):
+        pass
+
+
+class HessianModifier(object):
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def modify_hessian(self, *args, **kwargs):
+        pass
+
+
+class StepScaler(object):
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def calculate_step(self, *args, **kwargs):
         pass

@@ -3,11 +3,12 @@ from __future__ import absolute_import, print_function
 import numpy as np
 
 from ..solver import ridders_solver
+from .abc import StepScaler
 
 __all__ = ('TRIM', )
 
 
-class TRIM(object):  # need tests
+class TRIM(StepScaler):  # need tests
     @staticmethod
     def calculate_step(point, negative_eigen=0):
         new_step = TRIM._calculate_step(point.hessian, point.gradient,

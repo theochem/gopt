@@ -2,10 +2,12 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from .abclass import HessianModifier
+
 __all__ = ('SaddleHessianModifier', )
 
 
-class SaddleHessianModifier(object):
+class SaddleHessianModifier(HessianModifier):
 
     positive = 0.005
     negative = -0.005
