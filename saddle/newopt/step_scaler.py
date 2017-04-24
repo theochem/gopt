@@ -3,7 +3,7 @@ from __future__ import absolute_import, print_function
 import numpy as np
 
 from ..solver import ridders_solver
-from .abc import StepScaler
+from .abclass import StepScaler
 
 __all__ = ('TRIM', )
 
