@@ -1,19 +1,22 @@
+import os
+
 import numpy as np
 
-import horton as ht
-from saddle.newopt.grape import Grape
-from saddle.newopt.hessian_modifier import SaddleHessianModifier
-from saddle.newopt.saddle_point import SaddlePoint
-from saddle.newopt.step_scaler import TRIM
-from saddle.newopt.trust_radius import DefaultTrustRadius
-from saddle.reduced_internal import ReducedInternal
+from ...iodata import IOData
+from ...reduced_internal import ReducedInternal
+from ..grape import Grape
+from ..hessian_modifier import SaddleHessianModifier
+from ..hessian_update import BFGS, SR1
+from ..saddle_point import SaddlePoint
+from ..step_scaler import TRIM
+from ..trust_radius import DefaultTrustRadius
 
 
 class TestGrape(object):
-    @classmethod
-    def setup_class(self):
-        fn_xyz = ht.context.get_fn("test/water.xyz")
-        mol = ht.IOData.from_file(fn_xyz)  # create a water molecule
+    def setUp(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = path + "/../../data/water.xyz"
+        mol = IOData.from_file(mol_path)  # create a water molecule
         self.ri = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         self.ri.add_bond(0, 1)
         self.ri.add_bond(1, 2)
@@ -107,21 +110,16 @@ class TestGrape(object):
                 li_grape.last.trust_radius_stride)
         # assert False
 
-    # def test_optimizer_process(self):
-    #     f_p = SaddlePoint(structure=self.ri)
-    #     tr = DefaultTrustRadius(number_of_atoms=3)
-    #     ss = TRIM()
-    #     hm = SaddleHessianModifier()
-    #     li_grape = Grape(
-    #         hessian_update=None,
-    #         trust_radius=tr,
-    #         step_scale=ss,
-    #         hessian_modifier=hm)
-    #     li_grape.add_point(f_p)
-    #     li_grape.modify_hessian(key_ic_number=1, negative_eigen=0)
-    #     li_grape.calculate_step(negative_eigen=0)
-    #     s_p = li_grape.calculate_new_point()
-    #     # print f_p._structure.ic_values
-    #     # print s_p._structure.ic_values
-    #     # print s_p.value
-    #     s_p.energy_calculation()
+    def test_create_optimizer(self):
+        opt = Grape(structure=self.ri)
+        assert isinstance(opt, Grape)
+        assert isinstance(opt._h_u, BFGS)
+        assert opt._t_r.number_of_atoms == 3
+        assert opt._t_r._criterion == 'energy'
+        assert opt.total == 1
+        opt2 = Grape(structure=self.ri, task='saddle')
+        assert isinstance(opt, Grape)
+        assert isinstance(opt2._h_u, SR1)
+        assert opt2._t_r.number_of_atoms == 3
+        assert opt2._t_r._criterion == 'gradient'
+        assert opt2.total == 1

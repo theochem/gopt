@@ -16,8 +16,12 @@ __all__ = ('Grape', )
 
 
 class Grape(object):
-    def __init__(self, trust_radius, hessian_update, step_scale,
-                 hessian_modifier, **kwargs):
+    def __init__(self,
+                 trust_radius=None,
+                 hessian_update=None,
+                 step_scale=None,
+                 hessian_modifier=None,
+                 **kwargs):
         strct = kwargs.get('structure')
         if isinstance(strct, ReducedInternal):
             number_atoms = len(strct.numbers)
@@ -190,29 +194,3 @@ class Grape(object):
                    hessian_update=hu,
                    step_scale=ss,
                    hessian_modifier=hm)
-
-
-# def basic_saddle_optimizer(number_atoms):
-#     hm = SaddleHessianModifier()
-#     ss = TRIM()
-#     tr = DefaultTrustRadius(number_atoms, criterion='gradient')
-#     hu = SR1()
-#     return Grape(
-#         trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
-#
-#
-# def basic_minimum_optimizer(number_atoms):
-#     hm = SaddleHessianModifier()
-#     ss = TRIM()
-#     tr = DefaultTrustRadius(number_atoms, criterion='energy')
-#     hu = BFGS()
-#     return Grape(
-#         trust_radius=tr, hessian_update=hu, step_scale=ss, hessian_modifier=hm)
-    # def finite_diff_hessian(self):
-    #     self._finite_hessian_verify(self._t_r.number_of_atoms)
-
-    # def _finite_hessian_rows(self, number_of_atoms):
-    #     point = self.last
-    #     pre_point = self._points[-2]
-    #     for i in range(point.stu)
-    #     if (np.linalg.norm(point.gradient[:point.structure.key_ic_number]) > np.linalg.norm(point.gradient) / np.sqrt(3 * number_of_atoms - 6)) and
