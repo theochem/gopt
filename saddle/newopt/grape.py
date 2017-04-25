@@ -5,6 +5,7 @@ from copy import deepcopy
 import numpy as np
 
 from ..errors import InvalidArgumentError
+from ..iodata.xyz import dump_xyz
 from ..reduced_internal import ReducedInternal
 from .hessian_modifier import SaddleHessianModifier
 from .hessian_update import BFGS, SR1
@@ -63,7 +64,8 @@ class Grape(object):
                            key_ic_number=0,
                            negative_eigen=0,
                            quasint=True,
-                           init_hessian=True):
+                           init_hessian=True,
+                           output_file=''):
         assert self.total > 0
         assert iteration > 0
         if self.total == 1:
@@ -83,6 +85,8 @@ class Grape(object):
                 conver_flag = self.converge_test()
                 if conver_flag:
                     print("Optimization finished")
+                    if output_file:
+                        self.dump_last_point(output_file)
                     break
                 self.modify_hessian(key_ic_number, negative_eigen)
                 self.update_trust_radius()
@@ -172,6 +176,12 @@ class Grape(object):
         new_hessian = self._h_u.update_hessian(pre_point, new_point, *args,
                                                **kwargs)
         new_point.set_hessian(new_hessian)
+
+    def dump_last_point(self, filename=''):
+        if filename:
+            dump_xyz(filename, self.last.structure)
+        else:
+            raise InvalidArgumentError
 
     @classmethod
     def saddle_optimizer(cls, number_atoms):

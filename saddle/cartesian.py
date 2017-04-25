@@ -160,6 +160,10 @@ class Cartesian(object):
         """
         return self._coordinates
 
+    @property
+    def natom(self):
+        return len(self.numbers)
+
     def energy_from_fchk(self, abs_path, gradient=True, hessian=True):
         """Abtain Energy and relative information from FCHK file.
 

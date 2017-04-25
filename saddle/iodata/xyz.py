@@ -75,7 +75,7 @@ def dump_xyz(filename, data):
     '''
     with open(filename, 'w') as f:
         print >> f, data.natom
-        print >> f, getattr(data, 'title', 'Created with HORTON')
+        print >> f, getattr(data, 'title', 'Created with Saddle')
         for i in range(data.natom):
             n = periodic[data.numbers[i]].symbol
             x, y, z = data.coordinates[i]/angstrom

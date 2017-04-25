@@ -13,9 +13,12 @@ from ..trust_radius import DefaultTrustRadius
 
 
 class TestGrape(object):
+
+    file_list = []
+
     def setUp(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/../../data/water.xyz"
+        self.path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = self.path + "/../../data/water.xyz"
         mol = IOData.from_file(mol_path)  # create a water molecule
         self.ri = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         self.ri.add_bond(0, 1)
@@ -123,3 +126,16 @@ class TestGrape(object):
         assert opt2._t_r.number_of_atoms == 3
         assert opt2._t_r._criterion == 'gradient'
         assert opt2.total == 1
+
+    def test_dump_file(self):
+        opt = Grape(structure=self.ri)
+        filename = self.path + '/../../data/test_output.xyz'
+        opt.dump_last_point(filename)
+        self.file_list.append(filename)
+        oth_mol = IOData.from_file(self.path + '/../../data/test_output.xyz')
+        assert np.allclose(oth_mol.coordinates, self.ri.coordinates)
+
+    @classmethod
+    def tearDownClass(cls):
+        for i in cls.file_list:
+            os.remove(i)

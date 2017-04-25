@@ -43,7 +43,6 @@ class TestHessianModifier(object):
         sym_mt[2, 3] = 17
         sym_mt[3, 2] = 17
         w, v = np.linalg.eigh(sym_mt)
-        print w, v
         anwser = SaddleHessianModifier._modify_hessian(
             sym_mt, negative_eigen=1, key_ic_number=3)
         a_w, a_v = np.linalg.eigh(anwser)
