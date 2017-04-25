@@ -19,7 +19,7 @@ class GaussianWrapper(object):
         self.molecule = molecule
         self.pwd = os.path.dirname(os.path.realpath(__file__))
         #print('psw',self.pwd)
-        with open(self.pwd + "/single_hf_template.com", "r") as f:
+        with open(self.pwd + "/data/single_hf_template.com", "r") as f:
             self.template = Template(f.read())
         self.title = title
 

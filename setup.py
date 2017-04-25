@@ -14,7 +14,7 @@ setup(
     packages=['saddle', 'saddle.test', 'saddle.iodata', 'saddle.periodic',
               'saddle.data', 'saddle.newopt'],
     package_data={
-        'saddle': ['data/*.xyz', 'data/*.fchk'],
+        'saddle': ['data/*.com', 'data/*.xyz', 'data/*.fchk'],
         'saddle.periodic': ['data/*.csv'],
     },
     install_requires=['numpy',], )
