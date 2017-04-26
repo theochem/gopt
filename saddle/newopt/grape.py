@@ -181,7 +181,7 @@ class Grape(object):
         if filename:
             dump_xyz(filename, self.last.structure)
         else:
-            raise InvalidArgumentError
+            raise InvalidArgumentError('Invalid empty filename')
 
     @classmethod
     def saddle_optimizer(cls, number_atoms):

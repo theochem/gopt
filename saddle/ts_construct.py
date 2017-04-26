@@ -7,6 +7,8 @@ import numpy as np
 from .errors import (AtomsNumberError, InputTypeError, InvalidArgumentError,
                      NotSetError)
 from .internal import Internal
+from .iodata import IOData
+from .iodata.xyz import dump_xyz
 from .reduced_internal import ReducedInternal
 
 __all__ = ('TSConstruct', )
@@ -130,6 +132,14 @@ class TSConstruct(object):
         key_ic_counter : int
         """
         return self._key_ic_counter
+
+    @classmethod
+    def from_file(cls, rct_xyz, prd_xyz, charge=0, spin=1):
+        rct = IOData.from_file(rct_xyz)
+        prd = IOData.from_file(prd_xyz)
+        rct_mol = Internal(rct.coordinates, rct.numbers, charge, spin)
+        prd_mol = Internal(prd.coordinates, prd.numbers, charge, spin)
+        return cls(rct_mol, prd_mol)
 
     def add_bond(self, atom1, atom2):
         """Add bond connection between atom1 and atom2 for both reactant
@@ -297,6 +307,12 @@ class TSConstruct(object):
         """
         self.auto_select_ic(reset_ic, auto_select, mode)
         self.create_ts_state(start_with, ratio)
+
+    def ts_to_file(self, filename=''):
+        if filename:
+            dump_xyz(filename, self.ts)
+        else:
+            raise InvalidArgumentError('Invalid empty filename')
 
     def _get_union_of_ics(self, mode='mix'):  # need tests
         """Get the combined internal coordinates based on the ic structure of

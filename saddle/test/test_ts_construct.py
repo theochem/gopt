@@ -11,6 +11,9 @@ from ..ts_construct import TSConstruct
 
 
 class Test_TS_Construct(object):
+
+    file_list = []
+
     def setUp(self):
         path = os.path.dirname(os.path.realpath(__file__))
         self.rct = IOData.from_file(path + "/../data/ch3_hf.xyz")
@@ -164,3 +167,22 @@ class Test_TS_Construct(object):
              -0.33186034, -0.3319302])
         assert np.allclose(new_ins.ts.ic_values[:4], (
             (ref_ic_rct + ref_ic_prd) / 2)[:4])
+
+    def test_from_file_and_to_file(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        rct_p = path + "/../data/ch3_hf.xyz"
+        prd_p = path + "/../data/ch3f_h.xyz"
+        ts = TSConstruct.from_file(rct_p, prd_p)
+        ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
+        ts.auto_generate_ts()
+        ts_ins.auto_generate_ts()
+        filepath = path + "/../data/ts_nose_test_cons.xyz"
+        ts.ts_to_file(filepath)
+        self.file_list.append(filepath)
+        mol = IOData.from_file(filepath)
+        assert np.allclose(mol.coordinates, ts.ts.coordinates)
+
+    @classmethod
+    def tearDownClass(cls):
+        for i in cls.file_list:
+            os.remove(i)
