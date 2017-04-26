@@ -20,12 +20,11 @@
 # --
 '''XYZ file format'''
 
+from __future__ import print_function
 
 import numpy as np
 
-from ..periodic import angstrom
-from ..periodic import periodic
-
+from ..periodic import angstrom, periodic
 
 __all__ = ('load_xyz', 'dump_xyz')
 
@@ -49,15 +48,11 @@ def load_xyz(filename):
         for i in range(size):
             words = next(f).split()
             numbers[i] = periodic[words[0]].number
-            coordinates[i,0] = float(words[1])*angstrom
-            coordinates[i,1] = float(words[2])*angstrom
-            coordinates[i,2] = float(words[3])*angstrom
+            coordinates[i, 0] = float(words[1]) * angstrom
+            coordinates[i, 1] = float(words[2]) * angstrom
+            coordinates[i, 2] = float(words[3]) * angstrom
         f.close()
-    return {
-        'title': title,
-        'coordinates': coordinates,
-        'numbers': numbers
-    }
+    return {'title': title, 'coordinates': coordinates, 'numbers': numbers}
 
 
 def dump_xyz(filename, data):
@@ -74,9 +69,9 @@ def dump_xyz(filename, data):
             May contain ``title``.
     '''
     with open(filename, 'w') as f:
-        print >> f, data.natom
-        print >> f, getattr(data, 'title', 'Created with Saddle')
+        print(data.natom, file=f)
+        print(getattr(data, 'title', 'Created with Saddle'), file=f)
         for i in range(data.natom):
             n = periodic[data.numbers[i]].symbol
-            x, y, z = data.coordinates[i]/angstrom
-            print >> f, '%2s %15.10f %15.10f %15.10f' % (n, x, y, z)
+            x, y, z = data.coordinates[i] / angstrom
+            print('%2s %15.10f %15.10f %15.10f' % (n, x, y, z), file=f)
