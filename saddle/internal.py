@@ -35,6 +35,8 @@ class Internal(Cartesian):
         Hessian of Energy that calculated through cartain method
     coordinates : np.ndarray(N, 3)
         Cartesian information of input molecule
+    natom : int
+        Number of atoms in the system
     cost_value_in_cc : tuple(float, np.ndarray(K), np.ndarray(K, K))
         Return the cost function value, 1st, and 2nd
         derivative verse cartesian coordinates
@@ -53,6 +55,11 @@ class Internal(Cartesian):
         coordinates
     internal_gradient : np.ndarray(K,)
         Gradient of energy versus internal coordinates
+
+    Classmethod
+    -----------
+    from_file(filename, charge=0, spin=1)
+        Create cartesian instance from file
 
     Methods
     -------
@@ -688,7 +695,8 @@ class Internal(Cartesian):
         for i, _ in enumerate(self.ic):
             if self.ic[i].__class__.__name__ in ("BondLength", "BendCos",
                                                  "BendAngle"):
-                v, d, dd = self._direct_square(self.ic_values[i], self.target_ic[i])
+                v, d, dd = self._direct_square(self.ic_values[i],
+                                               self.target_ic[i])
                 value += v
                 deriv[i] += d
                 deriv2[i, i] += dd
@@ -865,7 +873,7 @@ class Internal(Cartesian):
         -------
         (value, deriv, deriv2) : ()
         """
-        value = (origin - target) ** 2
+        value = (origin - target)**2
         deriv = 2 * (origin - target)
         deriv2 = 2
         return value, deriv, deriv2

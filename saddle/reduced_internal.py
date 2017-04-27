@@ -42,6 +42,8 @@ class ReducedInternal(Internal):  # need tests
         Hessian of Energy that calculated through cartain method
     coordinates : np.ndarray(N, 3)
         Cartesian information of input molecule
+    natom : int
+        Number of atoms in the system
     cost_value_in_cc : tuple(float, np.ndarray(K), np.ndarray(K, K))
         Return the cost function value, 1st, and 2nd
         derivative verse cartesian coordinates
@@ -111,6 +113,8 @@ class ReducedInternal(Internal):  # need tests
     -------------
     update_to_reduced_internal(internal_ob, key_ic_number=0)
         update a InternalCoordinates into a ReducedInternalCoordinates object
+    from_file(filename, charge=0, spin=1)
+        Create cartesian instance from file
     """
 
     def __init__(self, coordinates, numbers, charge, spin, key_ic_number=0):

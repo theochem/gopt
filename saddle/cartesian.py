@@ -29,6 +29,13 @@ class Cartesian(object):
         Hessian of Energy that calculated under Cartesian coordinates
     coordinates : np.ndarray(K, 3)
         Cartesian information of input molecule
+    natom : int
+        Number of atoms in the system
+
+    Classmethod
+    -----------
+    from_file(filename, charge=0, spin=1)
+        Create cartesian instance from file
 
     Methods
     -------
@@ -60,6 +67,22 @@ class Cartesian(object):
 
     @classmethod
     def from_file(cls, filename, charge=0, spin=1):
+        """Create an Cartesian instance from file .xyz, .com,
+        .gjf or .fchk
+
+        Arguments
+        ---------
+        filename : str
+            the path of the file
+        charge : int, default is 0
+            the charge of the given molecule(system)
+        spin : int, dufault is 1
+            the multiplicity of the given molecule(system)
+
+        Return
+        ------
+        new Cartesian instance : Cartesian
+        """
         mol = IOData.from_file(filename)
         return cls(mol.coordinates, mol.numbers, charge, spin)
 
