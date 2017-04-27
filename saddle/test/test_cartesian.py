@@ -11,10 +11,21 @@ from ..periodic import angstrom
 class TestCartesian(object):
     @classmethod
     def setup_class(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/../data/water.xyz"
+        self.path = os.path.dirname(os.path.realpath(__file__))
+        mol_path = self.path + "/../data/water.xyz"
         mol = IOData.from_file(mol_path)
         self.cartesian = Cartesian(mol.coordinates, mol.numbers, 0, 1)
+
+    def test_from_file(self):
+        path = self.path + '/../data/water.xyz'
+        mol = Cartesian.from_file(path)
+        ref_coordinates = np.array([
+            [0.783837, -0.492236, -0.000000], [-0.000000, 0.062020, -0.000000],
+            [-0.783837, -0.492236, -0.000000]
+        ])
+        assert np.allclose(mol.coordinates / angstrom, ref_coordinates)
+        assert mol.natom == 3
+        assert isinstance(mol, Cartesian)
 
     def test_coordinates(self):
         ref_coordinates = np.array([

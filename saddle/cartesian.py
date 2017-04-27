@@ -5,8 +5,9 @@ import numpy as np
 from .errors import AtomsNumberError, NotSetError
 from .fchk import FCHKFile
 from .gaussianwrapper import GaussianWrapper
+from .iodata import IOData
 
-__all__ = ('Cartesian',)
+__all__ = ('Cartesian', )
 
 
 class Cartesian(object):
@@ -56,6 +57,11 @@ class Cartesian(object):
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None
+
+    @classmethod
+    def from_file(cls, filename, charge=0, spin=1):
+        mol = IOData.from_file(filename)
+        return cls(mol.coordinates, mol.numbers, charge, spin)
 
     @property
     def energy_gradient(self):
