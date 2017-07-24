@@ -70,7 +70,7 @@
 '''
 
 
-from .constants import avogadro
+from saddle.periodic.constants import avogadro
 
 
 # *** Generic ***

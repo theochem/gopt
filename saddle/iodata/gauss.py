@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..periodic import angstrom, periodic
+from saddle.periodic import angstrom, periodic
 
 __all__ = ('load_com', 'load_gjf')
 

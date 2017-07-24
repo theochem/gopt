@@ -4,14 +4,14 @@ from copy import deepcopy
 
 import numpy as np
 
-from ..errors import InvalidArgumentError
-from ..iodata.xyz import dump_xyz
-from ..reduced_internal import ReducedInternal
-from .hessian_modifier import SaddleHessianModifier
-from .hessian_update import BFGS, SR1
-from .saddle_point import SaddlePoint
-from .step_scaler import TRIM
-from .trust_radius import DefaultTrustRadius
+from saddle.errors import InvalidArgumentError
+from saddle.iodata.xyz import dump_xyz
+from saddle.newopt.hessian_modifier import SaddleHessianModifier
+from saddle.newopt.hessian_update import BFGS, SR1
+from saddle.newopt.saddle_point import SaddlePoint
+from saddle.newopt.step_scaler import TRIM
+from saddle.newopt.trust_radius import DefaultTrustRadius
+from saddle.reduced_internal import ReducedInternal
 
 __all__ = ('Grape', )
 
@@ -69,7 +69,7 @@ class Grape(object):
         assert self.total > 0
         assert iteration > 0
         if self.total == 1:
-            if init_hessian == False:
+            if init_hessian is False:
                 # if init hessian not provide, use identity
                 self.last.set_hessian(np.eye(len(self.last.gradient)))
             self.modify_hessian(key_ic_number, negative_eigen)
@@ -79,7 +79,7 @@ class Grape(object):
             iteration -= 1
         if self.total > 1:
             while iteration > 0:
-                if quasint == True:
+                if quasint is True:
                     self.update_hessian()
                     self.update_hessian_with_finite_diff()
                 conver_flag = self.converge_test()
@@ -159,7 +159,7 @@ class Grape(object):
             return True
         elif np.abs(final_p.value - pre_p.value) < 1e-6:
             return True
-        #elif np.max(np.abs(pre_p.step)) < 3e-4:
+        # elif np.max(np.abs(pre_p.step)) < 3e-4:
         #    return True
         return False
 

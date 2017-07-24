@@ -1,20 +1,17 @@
 import os
-from copy import deepcopy
 
-import numpy as np
-
-from ..coordinate_types import (BendAngle, BendCos, BondLength,
+from saddle.coordinate_types import (BendAngle, BendCos, BondLength,
                                      ConventionDihedral, NewDihedralCross,
                                      NewDihedralDot)
-from ..internal import Internal
-from ..iodata import IOData
+from saddle.iodata import IOData
 
 
 class Test_Coordinates_Types(object):
     @classmethod
     def setup_class(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol = IOData.from_file(path + "/../data/methanol.xyz")
+        file_path = os.path.join(path, "..", "data", "methanol.xyz")
+        mol = IOData.from_file(file_path)
         self.molecule = mol
 
     def test_bond_length(self):
@@ -39,21 +36,22 @@ class Test_Coordinates_Types(object):
         conv_dihed = ConventionDihedral(
             (2, 0, 1, 5), self.molecule.coordinates[[2, 0, 1, 5], ])
         assert conv_dihed.value - 0.5000093782761452 < 1e-8
-        conv_dihed.set_new_coordinates(self.molecule.coordinates[[3, 0, 1, 5],
-                                                                 ])
+        conv_dihed.set_new_coordinates(
+            self.molecule.coordinates[[3, 0, 1, 5], ])
         assert conv_dihed.value - 0.5000015188648903 < 1e-8
 
     def test_new_dihed_dot(self):
         new_dihed_dot = NewDihedralDot(
             (2, 0, 1, 5), self.molecule.coordinates[[2, 0, 1, 5], ])
         assert new_dihed_dot.value - 0.33334848858597832 < 1e-8
-        new_dihed_dot.set_new_coordinates(self.molecule.coordinates[[3, 0, 1, 5
-                                                                     ], ])
+        new_dihed_dot.set_new_coordinates(
+            self.molecule.coordinates[[3, 0, 1, 5], ])
         assert new_dihed_dot.value - 0.33333649967203649 < 1e-8
 
     def test_new_dihed_cross(self):
         new_dihed_cross = NewDihedralCross(
             (2, 0, 1, 5), self.molecule.coordinates[[2, 0, 1, 5], ])
         assert new_dihed_cross.value - 0.76979948283180566 < 1e-8
-        new_dihed_cross.set_new_coordinates(self.molecule.coordinates[[3, 0, 1, 5],])
+        new_dihed_cross.set_new_coordinates(
+            self.molecule.coordinates[[3, 0, 1, 5], ])
         assert new_dihed_cross.value - (-0.76980062801256954) < 1e-8

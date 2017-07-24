@@ -36,12 +36,12 @@
        'B'
 '''
 
+import csv
 import os
-from .units import angstrom, amu
 
+from saddle.periodic.units import amu, angstrom
 
 __all__ = ('periodic', 'Element', 'Periodic')
-
 
 
 class Element(object):
@@ -207,6 +207,7 @@ class Element(object):
 
 class Periodic(object):
     '''A periodic table data structure.'''
+
     def __init__(self, elements):
         '''**Arguments:**
 
@@ -226,7 +227,7 @@ class Periodic(object):
 
            index
                 This can be either an integer atomic number, a string with the
-                elemental symbol (any case), or a string with the atomic number.
+                elemental symbol (any case), or a string with the atomic number
 
            **Returns:** the corresponding :class:`Element` instance
         '''
@@ -240,22 +241,22 @@ class Periodic(object):
                     raise KeyError('Could not find element %s.' % index)
         return result
 
+
 def load_periodic():
-    import csv
 
     convertor_types = {
         'int': (lambda s: int(s)),
-        'float': (lambda s : float(s)),
-        'au': (lambda s : float(s)),    # just for clarity, atomic units
+        'float': (lambda s: float(s)),
+        'au': (lambda s: float(s)),  # just for clarity, atomic units
         'str': (lambda s: s.strip()),
-        'angstrom': (lambda s: float(s)*angstrom),
-        '2angstrom': (lambda s: float(s)*angstrom/2),
-        'angstrom**3': (lambda s: float(s)*angstrom**3),
-        'amu': (lambda s: float(s)*amu),
+        'angstrom': (lambda s: float(s) * angstrom),
+        '2angstrom': (lambda s: float(s) * angstrom / 2),
+        'angstrom**3': (lambda s: float(s) * angstrom**3),
+        'amu': (lambda s: float(s) * amu),
     }
 
     pwd = os.path.dirname(os.path.realpath(__file__))
-    with open(pwd + '/data/elements.csv','r') as f:
+    with open(os.path.join(pwd, "data", "elements.csv"), 'r') as f:
         r = csv.reader(f)
         # go to the actual data
         for row in r:

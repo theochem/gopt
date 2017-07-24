@@ -3,16 +3,16 @@ from copy import deepcopy
 
 import numpy as np
 
-from ..internal import Internal
-from ..iodata import IOData
-from ..reduced_internal import ReducedInternal
+from saddle.internal import Internal
+from saddle.iodata import IOData
+from saddle.reduced_internal import ReducedInternal
 
 
 class TestReduceInternal(object):
     @classmethod
     def setup_class(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/../data/water.xyz"
+        mol_path = os.path.join(path, "..", "data", "water.xyz")
         mol = IOData.from_file(mol_path)
         self.red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         self.red_int.add_bond(1, 0)
@@ -82,7 +82,7 @@ class TestReduceInternal(object):
 
     def test_ic_ric_transform(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/../data/water.xyz"
+        mol_path = os.path.join(path, "..", "data", "water.xyz")
         mol = IOData.from_file(mol_path)
         ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol.add_bond(1, 0)
@@ -128,7 +128,7 @@ class TestReduceInternal(object):
 
     def test_ric_add_ic(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/../data/water.xyz"
+        mol_path = os.path.join(path, "..", "data", "water.xyz")
         mol = IOData.from_file(mol_path)
         ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol = ReducedInternal.update_to_reduced_internal(ri_mol)
@@ -154,7 +154,7 @@ class TestReduceInternal(object):
 
     def test_get_delta_v(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/../data/water.xyz"
+        mol_path = os.path.join(path, "..", "data", "water.xyz")
         mol = IOData.from_file(mol_path)
         ri_mol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol.add_bond(1, 0)
@@ -176,7 +176,7 @@ class TestReduceInternal(object):
 
     def test_set_new_vspace(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/../data/water.xyz"
+        mol_path = os.path.join(path, "..", "data", "water.xyz")
         mol = IOData.from_file(mol_path)
         ri_mol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol.add_bond(1, 0)
@@ -189,7 +189,7 @@ class TestReduceInternal(object):
 
     def test_align_v_space(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/../data/water.xyz"
+        mol_path = os.path.join(path, "..", "data", "water.xyz")
         mol = IOData.from_file(mol_path)
         mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         mol_1.add_bond(1, 0)
@@ -205,21 +205,21 @@ class TestReduceInternal(object):
         copy1.align_vspace(copy2)
         assert np.allclose(copy1.vspace, mol_2.vspace)
         path = os.path.dirname(os.path.realpath(__file__))
-        fchk_path = path + "/../data/water_1.fchk"
-        #print 'cv2',copy2.vspace
+        fchk_path = os.path.join(path, "..", "data", "water_1.fchk")
+        # print 'cv2',copy2.vspace
         copy2.energy_from_fchk(fchk_path)
-        #print 'cv2, new',copy2.vspace, copy2.vspace_gradient
+        # print 'cv2, new',copy2.vspace, copy2.vspace_gradient
         ref_ic_gradient = np.dot(copy2.vspace, copy2.vspace_gradient)
-        #print 'cv2,energy'
+        # print 'cv2,energy'
         copy2.align_vspace(copy1)
-        #print 'cv2', copy2.vspace, copy2.vspace_gradient
+        # print 'cv2', copy2.vspace, copy2.vspace_gradient
         new_ic_gradient = np.dot(copy2.vspace, copy2.vspace_gradient)
         assert np.allclose(ref_ic_gradient, new_ic_gradient)
         assert np.allclose(copy1.vspace, copy2.vspace)
 
     def test_select_key_ic(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = path + "/../data/water.xyz"
+        mol_path = os.path.join(path, "..", "data", "water.xyz")
         mol = IOData.from_file(mol_path)
         mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         mol_1.add_bond(1, 0)

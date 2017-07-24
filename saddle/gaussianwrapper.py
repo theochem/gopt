@@ -5,8 +5,8 @@ from string import Template
 
 import numpy as np
 
-from .fchk import FCHKFile
-from .periodic import angstrom, periodic
+from saddle.fchk import FCHKFile
+from saddle.periodic import angstrom, periodic
 
 __all__ = ('GaussianWrapper', )
 
@@ -18,8 +18,9 @@ class GaussianWrapper(object):
     def __init__(self, molecule, title):
         self.molecule = molecule
         self.pwd = os.path.dirname(os.path.realpath(__file__))
-        #print('psw',self.pwd)
-        with open(self.pwd + "/data/single_hf_template.com", "r") as f:
+        with open(
+                os.path.join(self.pwd, "data", "single_hf_template.com"),
+                "r") as f:
             self.template = Template(f.read())
         self.title = title
 
@@ -70,9 +71,9 @@ class GaussianWrapper(object):
         else:
             filename = "{0}_{1}".format(self.title, self.counter)
         if path:
-            path = path + '/' + filename + postfix
+            path = os.path.join(path, filename + postfix)
         else:
-            path = self.pwd + "/test/gauss/" + filename + postfix
+            path = os.path.join(self.pwd, "test", "gauss", filename + postfix)
         with open(path, "w") as f:
             f.write(
                 self.template.substitute(
@@ -90,18 +91,20 @@ class GaussianWrapper(object):
 
     def _run_gaussian(self, filename, fchk=True, command_bin="g09"):
         fchk_ob = None
-        path = self.pwd + "/test/gauss/"
+        path = os.path.join(self.pwd, "test", "gauss")
         os.chdir(path)
         os.system("{0} {1}.com".format(command_bin, filename))
         if fchk:
             logname = "{0}.log".format(filename)
-            if os.path.isfile(path + logname) and self._log_finish_test(
-                    path + logname):
-                os.system("formchk {0}{1}.chk {0}{1}.fchk".format(path,
-                                                                  filename))
-                fchk_ob = FCHKFile("{0}{1}.fchk".format(path, filename))
-        os.chdir(self.pwd + '/../')
-        #print("change_back", self.pwd)
+            if os.path.isfile(
+                    os.path.join(path, logname)) and self._log_finish_test(
+                        os.path.join(path, logname)):
+                os.system("formchk {0}.chk {0}.fchk".format(
+                    os.path.join(path, filename)))
+                fchk_ob = FCHKFile(
+                    "{0}.fchk".format(os.path.join(path, filename)))
+        os.chdir(os.path.join(self.pwd, '..'))
+        # print("change_back", self.pwd)
         return fchk_ob
 
     def _log_finish_test(self, logname):

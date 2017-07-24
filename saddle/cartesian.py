@@ -2,10 +2,10 @@ from __future__ import absolute_import, print_function
 
 import numpy as np
 
-from .errors import AtomsNumberError, NotSetError
-from .fchk import FCHKFile
-from .gaussianwrapper import GaussianWrapper
-from .iodata import IOData
+from saddle.errors import AtomsNumberError, NotSetError
+from saddle.fchk import FCHKFile
+from saddle.gaussianwrapper import GaussianWrapper
+from saddle.iodata import IOData
 
 __all__ = ('Cartesian', )
 

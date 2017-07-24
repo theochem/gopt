@@ -2,9 +2,8 @@ import os
 
 import numpy as np
 
-from ..cartesian import Cartesian
-from ..gaussianwrapper import GaussianWrapper
-from ..iodata import IOData
+from saddle.gaussianwrapper import GaussianWrapper
+from saddle.iodata import IOData
 
 
 class TestGaussWrap(object):
@@ -13,7 +12,7 @@ class TestGaussWrap(object):
     file_list = []
 
     def setUp(self):
-        mol_path = self.path + "/../data/water.xyz"
+        mol_path = os.path.join(self.path, "..", "data", "water.xyz")
         mol = IOData.from_file(mol_path)
         self.gwob = GaussianWrapper(mol, title='water')
 
@@ -23,7 +22,7 @@ class TestGaussWrap(object):
 
     def test_create_input(self):
         self.gwob.create_gauss_input(0, 1, spe_title='test_gauss')
-        filepath = self.path + '/gauss/test_gauss.com'
+        filepath = os.path.join(self.path, "gauss", "test_gauss.com")
         mol = IOData.from_file(filepath)
         self.file_list.append(filepath)
         assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
@@ -31,7 +30,7 @@ class TestGaussWrap(object):
     def test_create_input_gjf(self):
         self.gwob.create_gauss_input(
             0, 1, spe_title='test_2nd_gauss', path=self.path, postfix='.gjf')
-        filepath = self.path + '/test_2nd_gauss.gjf'
+        filepath = os.path.join(self.path, 'test_2nd_gauss.gjf')
         self.file_list.append(filepath)
         mol = IOData.from_file(filepath)
         assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
@@ -39,7 +38,7 @@ class TestGaussWrap(object):
     def test_create_input_file(self):
         self.gwob.title = 'test_untitled'
         input_file = self.gwob._create_input_file(0, 1)
-        filepath = self.path + '/gauss/' + input_file + '.com'
+        filepath = os.path.join(self.path, "gauss", input_file + ".com")
         mol = IOData.from_file(filepath)
         self.file_list.append(filepath)
         assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)

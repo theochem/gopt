@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function
 
-from .abclass import CoordinateTypes
-from .molmod import (bend_angle, bend_cos, bond_length, dihed_cos,
+from saddle.abclass import CoordinateTypes
+from saddle.molmod import (bend_angle, bend_cos, bond_length, dihed_cos,
                            dihed_new_cross, dihed_new_dot)
 
 __all__ = ('BondLength', 'BendAngle', 'BendCos', 'ConventionDihedral',

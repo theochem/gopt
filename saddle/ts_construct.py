@@ -4,12 +4,12 @@ from copy import deepcopy
 
 import numpy as np
 
-from .errors import (AtomsNumberError, InputTypeError, InvalidArgumentError,
-                     NotSetError)
-from .internal import Internal
-from .iodata import IOData
-from .iodata.xyz import dump_xyz
-from .reduced_internal import ReducedInternal
+from saddle.errors import (AtomsNumberError, InputTypeError,
+                           InvalidArgumentError, NotSetError)
+from saddle.internal import Internal
+from saddle.iodata import IOData
+from saddle.iodata.xyz import dump_xyz
+from saddle.reduced_internal import ReducedInternal
 
 __all__ = ('TSConstruct', )
 
@@ -72,8 +72,8 @@ class TSConstruct(object):
     """
 
     def __init__(self, reactant_ic, product_ic):
-        if isinstance(reactant_ic, Internal) and isinstance(product_ic,
-                                                            Internal):
+        if isinstance(reactant_ic, Internal) and isinstance(
+                product_ic, Internal):
             if np.allclose(reactant_ic.numbers, product_ic.numbers):
                 self._numbers = reactant_ic.numbers
                 self._reactant = deepcopy(reactant_ic)
@@ -357,5 +357,5 @@ class TSConstruct(object):
         elif mode == 'product':
             return deepcopy(self._product.ic)
         else:
-            raise InvalidArgumentError('The argument {} is invalid'.format(
-                mode))
+            raise InvalidArgumentError(
+                'The argument {} is invalid'.format(mode))

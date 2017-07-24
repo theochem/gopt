@@ -4,8 +4,8 @@ from copy import deepcopy
 
 import numpy as np
 
-from ..reduced_internal import ReducedInternal
-from .saddle_point import SaddlePoint
+from saddle.reduced_internal import ReducedInternal
+from saddle.newopt.saddle_point import SaddlePoint
 
 __all__ = ('SR1', 'PSB', 'BFGS')
 
@@ -49,7 +49,7 @@ class HessianUpdate(object):
         delta_v[index] = 1  # create a unit vector that is zero except i
         tmp_red_int.structure.update_to_new_structure_with_delta_v(delta_v *
                                                                    epsilon)
-        tmp_red_int.structure.energy_calculation()  #vspace changes
+        tmp_red_int.structure.energy_calculation()  # vspace changes
         tmp_red_int.structure.align_vspace(new_struct.structure)
         part1 = (tmp_red_int.gradient - new_struct.gradient) / epsilon
         part2 = np.dot(new_struct.structure.vspace.T,
@@ -66,7 +66,7 @@ class HessianUpdate(object):
         hessian[:, index] = h_vector
 
     def _update_index(self, old_struct, new_struct, omega, nu):
-        # update_index = self._finite_reduce(self)  # obtain reduced ic need fd.
+        # update_index = self._finite_reduce(self)  # obtain reduced ic need fd
         update_index = []
         for i in range(new_struct.structure.key_ic_number):
             condition1 = (np.linalg.norm(new_struct.gradient[i])
@@ -114,7 +114,7 @@ class PSB(HessianUpdate):
                  np.dot(old_struct.step.T, old_struct.step))
         term3 = (np.dot(old_struct.step.T, delta_y) /
                  np.dot(old_struct.step.T, old_struct.step)
-                 **2 * np.outer(old_struct.step, old_struct.step.T))
+                 ** 2 * np.outer(old_struct.step, old_struct.step.T))
         return old.vspace_hessian + term2 - term3
 
 
@@ -125,7 +125,6 @@ class BFGS(HessianUpdate):
         old = old_struct.structure
         new = new_struct.structure
         y = self.secant_condition(old=old, new=new)
-        delta_y = y - np.dot(old.vspace_hessian, old_struct.step)
         H_s = np.dot(old.vspace_hessian, old_struct.step)
         term2 = np.outer(y, y.T) / np.dot(y, old_struct.step)
         term3 = np.outer(H_s, H_s.T) / np.dot(old_struct.step, H_s)

@@ -3,11 +3,11 @@ from copy import deepcopy
 
 import numpy as np
 
-from ..errors import InvalidArgumentError
-from ..internal import Internal
-from ..iodata import IOData
-from ..reduced_internal import ReducedInternal
-from ..ts_construct import TSConstruct
+from saddle.errors import InvalidArgumentError
+from saddle.internal import Internal
+from saddle.iodata import IOData
+from saddle.reduced_internal import ReducedInternal
+from saddle.ts_construct import TSConstruct
 
 
 class Test_TS_Construct(object):
@@ -16,8 +16,10 @@ class Test_TS_Construct(object):
 
     def setUp(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        self.rct = IOData.from_file(path + "/../data/ch3_hf.xyz")
-        self.prd = IOData.from_file(path + "/../data/ch3f_h.xyz")
+        self.rct = IOData.from_file(
+            os.path.join(path, "..", "data", "ch3_hf.xyz"))
+        self.prd = IOData.from_file(
+            os.path.join(path, "..", "data", "ch3f_h.xyz"))
         self.reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0,
                                     2)
         self.product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0,
@@ -41,14 +43,16 @@ class Test_TS_Construct(object):
     def test_auto_ic_create(self):
         ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         ts_ins.auto_select_ic()
-        ref_ic_rct = np.array(
-            [2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
-             -0.49089531, -0.49066505, -0.9635587, 6.0521314, -0.07908926,
-             -0.07896564, -0.0779316])
-        ref_ic_prd = np.array(
-            [2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
-             -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
-             -0.33186034, -0.3319302])
+        ref_ic_rct = np.array([
+            2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
+            -0.49089531, -0.49066505, -0.9635587, 6.0521314, -0.07908926,
+            -0.07896564, -0.0779316
+        ])
+        ref_ic_prd = np.array([
+            2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
+            -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
+            -0.33186034, -0.3319302
+        ])
         assert np.allclose(ts_ins.reactant.ic_values, ref_ic_rct)
         assert np.allclose(ts_ins.product.ic_values, ref_ic_prd)
 
@@ -132,16 +136,18 @@ class Test_TS_Construct(object):
         self.product_ic.auto_select_ic()
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(start_with='product', reset_ic=False)
-        ref_ic_rct = np.array(
-            [2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
-             -0.49089531, -0.49066505, -0.9635587, 6.0521314, -0.07908926,
-             -0.07896564, -0.0779316])
-        ref_ic_prd = np.array(
-            [2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
-             -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
-             -0.33186034, -0.3319302])
-        assert np.allclose(new_ins.ts.ic_values[:4], (
-            (ref_ic_rct + ref_ic_prd) / 2)[:4])
+        ref_ic_rct = np.array([
+            2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
+            -0.49089531, -0.49066505, -0.9635587, 6.0521314, -0.07908926,
+            -0.07896564, -0.0779316
+        ])
+        ref_ic_prd = np.array([
+            2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
+            -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
+            -0.33186034, -0.3319302
+        ])
+        assert np.allclose(new_ins.ts.ic_values[:4],
+                           ((ref_ic_rct + ref_ic_prd) / 2)[:4])
 
     def test_choices_auto_select_ic(self):
         self.reactant_ic.add_bond(2, 4)
@@ -157,26 +163,28 @@ class Test_TS_Construct(object):
         assert np.allclose(new_ins.ts.ic_values[0], ref_ic, atol=1e-3)
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(auto_select=True, reset_ic=True)
-        ref_ic_rct = np.array(
-            [2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
-             -0.49089531, -0.49066505, -0.9635587, 6.0521314, -0.07908926,
-             -0.07896564, -0.0779316])
-        ref_ic_prd = np.array(
-            [2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
-             -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
-             -0.33186034, -0.3319302])
-        assert np.allclose(new_ins.ts.ic_values[:4], (
-            (ref_ic_rct + ref_ic_prd) / 2)[:4])
+        ref_ic_rct = np.array([
+            2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
+            -0.49089531, -0.49066505, -0.9635587, 6.0521314, -0.07908926,
+            -0.07896564, -0.0779316
+        ])
+        ref_ic_prd = np.array([
+            2.03992597, 2.03991419, 2.03976417, 5.52444423, -0.33511068,
+            -0.33461559, -0.33464313, -0.50318675, 2.6533652, -0.33183043,
+            -0.33186034, -0.3319302
+        ])
+        assert np.allclose(new_ins.ts.ic_values[:4],
+                           ((ref_ic_rct + ref_ic_prd) / 2)[:4])
 
     def test_from_file_and_to_file(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        rct_p = path + "/../data/ch3_hf.xyz"
-        prd_p = path + "/../data/ch3f_h.xyz"
+        rct_p = os.path.join(path, "..", "data", "ch3_hf.xyz")
+        prd_p = os.path.join(path, "..", "data", "ch3f_h.xyz")
         ts = TSConstruct.from_file(rct_p, prd_p)
         ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         ts.auto_generate_ts()
         ts_ins.auto_generate_ts()
-        filepath = path + "/../data/ts_nose_test_cons.xyz"
+        filepath = os.path.join(path, "..", "data", "ts_nose_test_cons.xyz")
         ts.ts_to_file(filepath)
         self.file_list.append(filepath)
         mol = IOData.from_file(filepath)

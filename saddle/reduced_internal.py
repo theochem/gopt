@@ -4,8 +4,8 @@ from copy import deepcopy
 
 import numpy as np
 
-from .internal import Internal
-from .solver import diagonalize
+from saddle.internal import Internal
+from saddle.solver import diagonalize
 
 __all__ = ('ReducedInternal',)
 

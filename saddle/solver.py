@@ -1,6 +1,6 @@
 import numpy as np
 
-from .errors import PositiveProductError
+from saddle.errors import PositiveProductError
 
 __all__ = ('ridders_solver', 'diagonalize')
 

@@ -2,11 +2,9 @@ from __future__ import absolute_import, print_function
 
 from copy import deepcopy
 
-import numpy as np
-
-from ..errors import NotSetError
-from ..reduced_internal import ReducedInternal
-from .abclass import Point
+from saddle.errors import NotSetError
+from saddle.reduced_internal import ReducedInternal
+from saddle.newopt.abclass import Point
 
 __all__ = ('SaddlePoint', )
 

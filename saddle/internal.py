@@ -5,13 +5,13 @@ from itertools import combinations
 
 import numpy as np
 
-from .abclass import CoordinateTypes
-from .cartesian import Cartesian
-from .coordinate_types import BendCos, BondLength, ConventionDihedral
-from .errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
-                     NotSetError)
-from .opt import GeoOptimizer, Point
-from .periodic import periodic
+from saddle.abclass import CoordinateTypes
+from saddle.cartesian import Cartesian
+from saddle.coordinate_types import BendCos, BondLength, ConventionDihedral
+from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
+                           NotSetError)
+from saddle.opt import GeoOptimizer, Point
+from saddle.periodic import periodic
 
 __all__ = ('Internal', )
 
@@ -523,8 +523,7 @@ class Internal(Cartesian):
             atom_num1 = self.numbers[index_i]
             atom_num2 = self.numbers[index_j]
             distance = self.distance(index_i, index_j)
-            radius_sum = periodic[atom_num1].cov_radius + periodic[
-                atom_num2].cov_radius
+            radius_sum = periodic[atom_num1].cov_radius + periodic[atom_num2].cov_radius
             if distance < 1.3 * radius_sum:
                 self.add_bond(index_i, index_j)
                 # test hydrogen bond
@@ -541,9 +540,9 @@ class Internal(Cartesian):
                 for index_k in potent_halo_index:
                     dis = self.distance(h_index, index_k)
                     angle = self.angle(halo_index, h_index, index_k)
-                    thresh_sum = periodic[self.numbers[
-                        h_index]].vdw_radius + periodic[self.numbers[
-                            index_k]].vdw_radius
+                    thresh_sum = periodic[self.
+                                          numbers[h_index]].vdw_radius + periodic[self.
+                                                                                  numbers[index_k]].vdw_radius
                     if dis <= 0.9 * thresh_sum and angle >= 1.5708:
                         self.add_bond(h_index, index_k)  # add H bond
 
@@ -581,8 +580,8 @@ class Internal(Cartesian):
     def _auto_select_dihed_improper(self):
         """A private method for automatically selecting improper dihedral
         """
-        connect_sum = np.sum(self.connectivity,
-                             axis=0) + 1  # cancel -1 for itself
+        connect_sum = np.sum(
+            self.connectivity, axis=0) + 1  # cancel -1 for itself
         for center_ind, _ in enumerate(connect_sum):
             if connect_sum[center_ind] >= 3:
                 cnct_atoms = self.connected_indices(center_ind)
@@ -833,8 +832,8 @@ class Internal(Cartesian):
         tmp_vector = np.zeros((1, 3 * len(self.numbers)))
         for i, _ in enumerate(atoms):
             tmp_vector[0, 3 * atoms[i]:3 * atoms[i] + 3] += deriv[i]
-        self._cc_to_ic_gradient = np.vstack(
-            (self._cc_to_ic_gradient, tmp_vector))
+        self._cc_to_ic_gradient = np.vstack((self._cc_to_ic_gradient,
+                                             tmp_vector))
 
     def _add_cc_to_ic_hessian(self, deriv, atoms):  # need to be tested
         """Add new entries from a new ic to transformation matrix hessian
@@ -847,16 +846,16 @@ class Internal(Cartesian):
             indices of atoms for those transformation
         """
         if self._cc_to_ic_hessian is None:
-            self._cc_to_ic_hessian = np.zeros(
-                (0, 3 * len(self.numbers), 3 * len(self.numbers)))
-        tmp_vector = np.zeros(
-            (1, 3 * len(self.numbers), 3 * len(self.numbers)))
+            self._cc_to_ic_hessian = np.zeros((0, 3 * len(self.numbers),
+                                               3 * len(self.numbers)))
+        tmp_vector = np.zeros((1, 3 * len(self.numbers),
+                               3 * len(self.numbers)))
         for i, _ in enumerate(atoms):
             for j, _ in enumerate(atoms):
-                tmp_vector[0, 3 * atoms[i]:3 * atoms[i] + 3, 3 * atoms[j]:3 *
-                           atoms[j] + 3] += deriv[i, :3, j]
-        self._cc_to_ic_hessian = np.vstack(
-            (self._cc_to_ic_hessian, tmp_vector))
+                tmp_vector[0, 3 * atoms[i]:3 * atoms[i] + 3, 3 * atoms[j]:
+                           3 * atoms[j] + 3] += deriv[i, :3, j]
+        self._cc_to_ic_hessian = np.vstack((self._cc_to_ic_hessian,
+                                            tmp_vector))
 
     @staticmethod
     def _direct_square(origin, target):

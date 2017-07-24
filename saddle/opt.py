@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from .solver import ridders_solver
+from saddle.solver import ridders_solver
 
 __all__ = ('Point', 'GeoOptimizer')
 

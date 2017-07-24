@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from .abclass import HessianModifier
+from saddle.newopt.abclass import HessianModifier
 
 __all__ = ('SaddleHessianModifier', )
 
@@ -27,7 +27,7 @@ class SaddleHessianModifier(HessianModifier):
         assert key_ic_number <= dimension
         hessian = hessian.copy()
         non_reduce = hessian[key_ic_number:, key_ic_number:]
-        #result = SaddleHessianModifier._change_to_positive_eigen(non_reduce)
+        # result = SaddleHessianModifier._change_to_positive_eigen(non_reduce)
         if non_reduce.size == 0:
             hessian[
                 key_ic_number:,
@@ -60,10 +60,12 @@ class SaddleHessianModifier(HessianModifier):
         pst_e_vl = w[pos_index]  # positive eigenvalues
         ngt_e_vl[
             ngt_e_vl > SaddleHessianModifier.
-            negative] = SaddleHessianModifier.negative  # change the nagetive eigenvalues to <= -threshold
+            negative] = SaddleHessianModifier.negative
+        # change the nagetive eigenvalues to <= -threshold
         pst_e_vl[
             pst_e_vl < SaddleHessianModifier.
-            positive] = SaddleHessianModifier.positive  # change the positive eigenvalues to >= threshold
+            positive] = SaddleHessianModifier.positive
+        # change the positive eigenvalues to >= threshold
         w[neg_index] = ngt_e_vl
         w[pos_index] = pst_e_vl
         new_hessian = np.dot(v, np.dot(np.diag(w), v.T))

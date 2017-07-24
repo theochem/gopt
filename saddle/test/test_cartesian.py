@@ -3,21 +3,21 @@ from copy import deepcopy
 
 import numpy as np
 
-from ..cartesian import Cartesian
-from ..iodata import IOData
-from ..periodic import angstrom
+from saddle.cartesian import Cartesian
+from saddle.iodata import IOData
+from saddle.periodic import angstrom
 
 
 class TestCartesian(object):
     @classmethod
     def setup_class(self):
         self.path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = self.path + "/../data/water.xyz"
+        mol_path = os.path.join(self.path, "..", "data", "water.xyz")
         mol = IOData.from_file(mol_path)
         self.cartesian = Cartesian(mol.coordinates, mol.numbers, 0, 1)
 
     def test_from_file(self):
-        path = self.path + '/../data/water.xyz'
+        path = os.path.join(self.path, "..", "data", "water.xyz")
         mol = Cartesian.from_file(path)
         ref_coordinates = np.array([
             [0.783837, -0.492236, -0.000000], [-0.000000, 0.062020, -0.000000],
@@ -64,7 +64,7 @@ class TestCartesian(object):
 
     def test_get_energy_from_fchk(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        fchk_path = path + "/../data/water_1.fchk"
+        fchk_path = os.path.join(path, "..", "data", "water_1.fchk")
         mole = deepcopy(self.cartesian)
         mole.energy_from_fchk(fchk_path)
         assert np.allclose(mole.energy, -7.599264122862e1)
@@ -77,5 +77,3 @@ class TestCartesian(object):
              3.42113883e-49, 2.09479921e-01, -1.81399942e-16, -1.48124293e+00,
              -8.37919685e-01]).reshape(-1, 3)
         assert np.allclose(mole.coordinates, ref_coor)
-
-        #assert False
