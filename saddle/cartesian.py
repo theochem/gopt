@@ -56,11 +56,12 @@ class Cartesian(object):
         Calculate cosine of angle between atoms with index1, index2, and index3
     """
 
-    def __init__(self, coordinates, numbers, charge, spin):
+    def __init__(self, coordinates, numbers, charge, spin, title="untitled"):
         self._coordinates = coordinates.copy()
         self._numbers = numbers.copy()
         self._charge = charge
         self._spin = spin
+        self._title = title
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None
@@ -220,14 +221,12 @@ class Cartesian(object):
 
         Keywords Arguments
         ------------------
-        title : str, default is 'untitled'
-            title of input and out put name without postfix
         method : str, default is 'g09'
             name of the program(method) used to calculate energy and other
             property
         """
-        title = kwargs.pop('title', 'untitled')  # get title arg
         method = kwargs.pop('method', 'g09')  # get calculation method arg
+        title = self._title
         if method == "g09":
             obj = GaussianWrapper(self, title)
             coor, ener, grad, hess = obj.run_gaussian_and_get_result(
