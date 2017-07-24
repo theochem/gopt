@@ -3,15 +3,15 @@ from copy import deepcopy
 
 import numpy as np
 
-from saddle.iodata import IOData
+from saddle.conf import data_dir
 from saddle.internal import Internal
+from saddle.iodata import IOData
 from saddle.opt import Point
 
 
 class TestInternal(object):
     def setUp(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = os.path.join(path, "..", "data", "water.xyz")
+        mol_path = os.path.join(data_dir, "water.xyz")
         mol = IOData.from_file(mol_path)
         self.mol = Internal(mol.coordinates, mol.numbers, 0, 1)
 
@@ -87,8 +87,7 @@ class TestInternal(object):
         assert np.allclose(self.mol.target_ic, np.array([1.6, 1.7, -0.5]))
 
     def test_dihedral_add(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = os.path.join(path, "..", "data", "2h-azirine.xyz")
+        mol_path = os.path.join(data_dir, "2h-azirine.xyz")
         mol = IOData.from_file(mol_path)  # create a water molecule
         internal = Internal(mol.coordinates, mol.numbers, 0, 1)
         internal.add_bond(0, 1)

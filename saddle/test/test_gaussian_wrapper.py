@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 
+from saddle.conf import data_dir
 from saddle.gaussianwrapper import GaussianWrapper
 from saddle.iodata import IOData
 
@@ -12,7 +13,7 @@ class TestGaussWrap(object):
     file_list = []
 
     def setUp(self):
-        mol_path = os.path.join(self.path, "..", "data", "water.xyz")
+        mol_path = os.path.join(data_dir, "water.xyz")
         mol = IOData.from_file(mol_path)
         self.gwob = GaussianWrapper(mol, title='water')
 

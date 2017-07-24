@@ -3,6 +3,7 @@ from copy import deepcopy
 
 import numpy as np
 
+from saddle.conf import data_dir
 from saddle.errors import InvalidArgumentError
 from saddle.internal import Internal
 from saddle.iodata import IOData
@@ -15,11 +16,8 @@ class Test_TS_Construct(object):
     file_list = []
 
     def setUp(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        self.rct = IOData.from_file(
-            os.path.join(path, "..", "data", "ch3_hf.xyz"))
-        self.prd = IOData.from_file(
-            os.path.join(path, "..", "data", "ch3f_h.xyz"))
+        self.rct = IOData.from_file(os.path.join(data_dir, "ch3_hf.xyz"))
+        self.prd = IOData.from_file(os.path.join(data_dir, "ch3f_h.xyz"))
         self.reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0,
                                     2)
         self.product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0,
@@ -65,7 +63,8 @@ class Test_TS_Construct(object):
         ts_ins.create_ts_state(start_with="reactant")
         result_2 = deepcopy(ts_ins.ts)
         # print result_2.ic_values
-        ref_tar_ic = ts_ins._reactant.ic_values * 0.5 + ts_ins._product.ic_values * 0.5
+        ref_tar_ic = ts_ins._reactant.ic_values * 0.5 + \
+            ts_ins._product.ic_values * 0.5
         assert np.allclose(ref_tar_ic, result.target_ic)
         assert np.allclose(result.target_ic, result_2.target_ic)
         assert np.allclose(
@@ -121,8 +120,10 @@ class Test_TS_Construct(object):
         ts_ins.auto_select_ic()
         ts_ins.create_ts_state(start_with='reactant')
         ts_ins.select_key_ic(3, 4)
-        assert type(ts_ins.ts.ic[0]) is type(ts_ins.product.ic[3])
-        assert type(ts_ins.ts.ic[1]) is type(ts_ins.product.ic[4])
+        assert isinstance(ts_ins.ts.ic[0], type(ts_ins.product.ic[3]))
+        assert isinstance(ts_ins.product.ic[3], type(ts_ins.ts.ic[0]))
+        assert isinstance(ts_ins.ts.ic[1], type(ts_ins.product.ic[4]))
+        assert isinstance(ts_ins.product.ic[4], type(ts_ins.ts.ic[1]))
         assert ts_ins.ts.key_ic_number == 2
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         assert new_ins is not ts_ins
@@ -177,14 +178,13 @@ class Test_TS_Construct(object):
                            ((ref_ic_rct + ref_ic_prd) / 2)[:4])
 
     def test_from_file_and_to_file(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        rct_p = os.path.join(path, "..", "data", "ch3_hf.xyz")
-        prd_p = os.path.join(path, "..", "data", "ch3f_h.xyz")
+        rct_p = os.path.join(data_dir, "ch3_hf.xyz")
+        prd_p = os.path.join(data_dir, "ch3f_h.xyz")
         ts = TSConstruct.from_file(rct_p, prd_p)
         ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         ts.auto_generate_ts()
         ts_ins.auto_generate_ts()
-        filepath = os.path.join(path, "..", "data", "ts_nose_test_cons.xyz")
+        filepath = os.path.join(data_dir, "ts_nose_test_cons.xyz")
         ts.ts_to_file(filepath)
         self.file_list.append(filepath)
         mol = IOData.from_file(filepath)

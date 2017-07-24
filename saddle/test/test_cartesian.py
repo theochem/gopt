@@ -4,6 +4,7 @@ from copy import deepcopy
 import numpy as np
 
 from saddle.cartesian import Cartesian
+from saddle.conf import data_dir
 from saddle.iodata import IOData
 from saddle.periodic import angstrom
 
@@ -11,13 +12,12 @@ from saddle.periodic import angstrom
 class TestCartesian(object):
     @classmethod
     def setup_class(self):
-        self.path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = os.path.join(self.path, "..", "data", "water.xyz")
+        mol_path = os.path.join(data_dir, "water.xyz")
         mol = IOData.from_file(mol_path)
         self.cartesian = Cartesian(mol.coordinates, mol.numbers, 0, 1)
 
     def test_from_file(self):
-        path = os.path.join(self.path, "..", "data", "water.xyz")
+        path = os.path.join(data_dir, "water.xyz")
         mol = Cartesian.from_file(path)
         ref_coordinates = np.array([
             [0.783837, -0.492236, -0.000000], [-0.000000, 0.062020, -0.000000],
@@ -63,8 +63,7 @@ class TestCartesian(object):
             self.cartesian.angle(0, 1, 2), np.arccos(ref_angle_cos))
 
     def test_get_energy_from_fchk(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        fchk_path = os.path.join(path, "..", "data", "water_1.fchk")
+        fchk_path = os.path.join(data_dir, "water_1.fchk")
         mole = deepcopy(self.cartesian)
         mole.energy_from_fchk(fchk_path)
         assert np.allclose(mole.energy, -7.599264122862e1)

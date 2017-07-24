@@ -1,5 +1,6 @@
 import os
 
+from saddle.conf import data_dir
 from saddle.coordinate_types import (BendAngle, BendCos, BondLength,
                                      ConventionDihedral, NewDihedralCross,
                                      NewDihedralDot)
@@ -9,8 +10,7 @@ from saddle.iodata import IOData
 class Test_Coordinates_Types(object):
     @classmethod
     def setup_class(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        file_path = os.path.join(path, "..", "data", "methanol.xyz")
+        file_path = os.path.join(data_dir, "methanol.xyz")
         mol = IOData.from_file(file_path)
         self.molecule = mol
 
