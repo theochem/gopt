@@ -5,6 +5,7 @@ from string import Template
 
 import numpy as np
 
+from saddle.conf import data_dir, work_dir
 from saddle.fchk import FCHKFile
 from saddle.periodic import angstrom, periodic
 
@@ -17,9 +18,8 @@ class GaussianWrapper(object):
 
     def __init__(self, molecule, title):
         self.molecule = molecule
-        self.pwd = os.path.dirname(os.path.realpath(__file__))
         with open(
-                os.path.join(self.pwd, "data", "single_hf_template.com"),
+                os.path.join(data_dir, "single_hf_template.com"),
                 "r") as f:
             self.template = Template(f.read())
         self.title = title
@@ -73,7 +73,7 @@ class GaussianWrapper(object):
         if path:
             path = os.path.join(path, filename + postfix)
         else:
-            path = os.path.join(self.pwd, "test", "gauss", filename + postfix)
+            path = os.path.join(work_dir, filename + postfix)
         with open(path, "w") as f:
             f.write(
                 self.template.substitute(
@@ -91,7 +91,7 @@ class GaussianWrapper(object):
 
     def _run_gaussian(self, filename, fchk=True, command_bin="g09"):
         fchk_ob = None
-        path = os.path.join(self.pwd, "test", "gauss")
+        path = work_dir
         os.chdir(path)
         os.system("{0} {1}.com".format(command_bin, filename))
         if fchk:
@@ -103,7 +103,7 @@ class GaussianWrapper(object):
                     os.path.join(path, filename)))
                 fchk_ob = FCHKFile(
                     "{0}.fchk".format(os.path.join(path, filename)))
-        os.chdir(os.path.join(self.pwd, '..'))
+        # os.chdir(os.path.join(self.pwd, '..'))
         # print("change_back", self.pwd)
         return fchk_ob
 
