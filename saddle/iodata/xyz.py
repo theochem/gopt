@@ -55,7 +55,7 @@ def load_xyz(filename):
     return {'title': title, 'coordinates': coordinates, 'numbers': numbers}
 
 
-def dump_xyz(filename, data):
+def dump_xyz(filename, data, mode='w'):
     '''Write an ``.xyz`` file.
 
        **Arguments:**
@@ -68,7 +68,7 @@ def dump_xyz(filename, data):
             An IOData instance. Must contain ``coordinates`` and ``numbers``.
             May contain ``title``.
     '''
-    with open(filename, 'w') as f:
+    with open(filename, mode) as f:
         print(data.natom, file=f)
         print(getattr(data, 'title', 'Created with Saddle'), file=f)
         for i in range(data.natom):

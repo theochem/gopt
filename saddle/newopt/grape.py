@@ -4,6 +4,7 @@ from copy import deepcopy
 
 import numpy as np
 
+from saddle.conf import get_path, log_dir
 from saddle.errors import InvalidArgumentError
 from saddle.iodata.xyz import dump_xyz
 from saddle.newopt.hessian_modifier import SaddleHessianModifier
@@ -65,7 +66,8 @@ class Grape(object):
                            negative_eigen=0,
                            quasint=True,
                            init_hessian=True,
-                           output_file=''):
+                           output_log=''
+                           ):
         assert self.total > 0
         assert iteration > 0
         if self.total == 1:
@@ -85,8 +87,6 @@ class Grape(object):
                 conver_flag = self.converge_test()
                 if conver_flag:
                     print("Optimization finished")
-                    if output_file:
-                        self.dump_last_point(output_file)
                     break
                 self.modify_hessian(key_ic_number, negative_eigen)
                 self.update_trust_radius()
@@ -94,6 +94,10 @@ class Grape(object):
                 self.update_to_new_point()
                 self.align_last_point()
                 iteration -= 1
+        if output_log:
+            file_path = get_path(output_log, log_dir)
+            for point in self._points:
+                dump_xyz(file_path, point.structure, 'a')
 
     def initialize_first_point_with(self, structure):
         assert isinstance(structure, ReducedInternal)
