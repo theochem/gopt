@@ -73,7 +73,7 @@ class Grape(object):
         if self.total == 1:
             if output_log:
                 file_path = get_path(output_log, log_dir)
-                dump_xyz(file_path, self.last.structure, 'a')
+                dump_xyz(file_path, self.last.structure, 'w')
             if init_hessian is False:
                 # if init hessian not provide, use identity
                 self.last.set_hessian(np.eye(len(self.last.gradient)))
