@@ -71,6 +71,9 @@ class Grape(object):
         assert self.total > 0
         assert iteration > 0
         if self.total == 1:
+            if output_log:
+                file_path = get_path(output_log, log_dir)
+                dump_xyz(file_path, self.last.structure, 'a')
             if init_hessian is False:
                 # if init hessian not provide, use identity
                 self.last.set_hessian(np.eye(len(self.last.gradient)))
@@ -81,6 +84,9 @@ class Grape(object):
             iteration -= 1
         if self.total > 1:
             while iteration > 0:
+                if output_log:
+                    file_path = get_path(output_log, log_dir)
+                    dump_xyz(file_path, self.last.structure, 'a')
                 if quasint is True:
                     self.update_hessian()
                     self.update_hessian_with_finite_diff()
@@ -94,10 +100,6 @@ class Grape(object):
                 self.update_to_new_point()
                 self.align_last_point()
                 iteration -= 1
-        if output_log:
-            file_path = get_path(output_log, log_dir)
-            for point in self._points:
-                dump_xyz(file_path, point.structure, 'a')
 
     def initialize_first_point_with(self, structure):
         assert isinstance(structure, ReducedInternal)
