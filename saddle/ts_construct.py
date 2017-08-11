@@ -293,12 +293,12 @@ class TSConstruct(object):
             the index(indices) of internal coordinates
         """
         for index in ic_indices:
-            if index < self._key_ic_counter:
-                # if the index is smaller then ic counter, it is pointless to swap
-                continue
-            self.ts.swap_internal_coordinates(self._key_ic_counter, index)
-            self._key_ic_counter += 1
-            self.ts.set_key_ic_number(self._key_ic_counter)
+            if index >= self._key_ic_counter:
+                # if the index is smaller then ic counter
+                # it is pointless to swap
+                self.ts.swap_internal_coordinates(self._key_ic_counter, index)
+                self._key_ic_counter += 1
+                self.ts.set_key_ic_number(self._key_ic_counter)
 
     def auto_generate_ts(self,
                          ratio=0.5,
