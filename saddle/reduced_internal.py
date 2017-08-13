@@ -7,7 +7,7 @@ import numpy as np
 from saddle.internal import Internal
 from saddle.solver import diagonalize
 
-__all__ = ('ReducedInternal',)
+__all__ = ('ReducedInternal', )
 
 
 class ReducedInternal(Internal):  # need tests
@@ -121,11 +121,7 @@ class ReducedInternal(Internal):  # need tests
         super(ReducedInternal, self).__init__(coordinates, numbers, charge,
                                               spin)
         self._k_ic_n = key_ic_number
-        self._red_space = None
-        self._non_red_space = None
-        self._vspace_gradient = None
-        self._vspace_hessian = None
-        self._vspace = None
+        self._reset_v_space()
 
     @property
     def df(self):
@@ -195,6 +191,7 @@ class ReducedInternal(Internal):  # need tests
         number : int
             The value of key_ic_number going to be set
         """
+        assert number >= 0
         self._k_ic_n = number
         self._reset_v_space()
 
@@ -310,8 +307,8 @@ class ReducedInternal(Internal):  # need tests
         index_2 : int
             index of the second internal coordinate
         """
-        super(ReducedInternal, self).swap_internal_coordinates(index_1,
-                                                               index_2)
+        super(ReducedInternal, self).swap_internal_coordinates(
+            index_1, index_2)
         self._reset_v_space()
 
     def update_to_new_structure_with_delta_v(self, delta_v):
@@ -349,8 +346,8 @@ class ReducedInternal(Internal):  # need tests
         """Add a new ic object to the system and add corresponding
         transformation matrix parts
         """
-        super(ReducedInternal, self)._add_new_internal_coordinate(new_ic, d,
-                                                                  dd, atoms)
+        super(ReducedInternal, self)._add_new_internal_coordinate(
+            new_ic, d, dd, atoms)
         self._reset_v_space()
 
     def _reset_v_space(self):
@@ -362,14 +359,14 @@ class ReducedInternal(Internal):  # need tests
         self._vspace_hessian = None
         self._vspace = None
 
-    def _svd_of_cc_to_ic_gradient(self, threshold=1e-6):  # tested
+    def _svd_of_b_matrix(self, threshold=1e-6):  # tested
         """Select 3N - 6 non-singular vectors from b_matrix through SVD
 
         Returns:
         u : np.ndarray(K, 3N - 6)
             3N - 6 non-singular vectors from SVD
         """
-        u, s, _ = np.linalg.svd(self._cc_to_ic_gradient, full_matrices=0)
+        u, s, _ = np.linalg.svd(self.b_matrix, full_matrices=0)
         return u[:, np.abs(s) > threshold][:, :self.df]
 
     def _reduced_unit_vectors(self):  # tested
@@ -383,7 +380,8 @@ class ReducedInternal(Internal):  # need tests
             is 0
         """
         unit_mtx = np.zeros((len(self.ic), self.key_ic_number))
-        unit_mtx[:self._k_ic_n, :self._k_ic_n] = np.eye(self._k_ic_n)
+        unit_mtx[:self.key_ic_number, :self.key_ic_number] = np.eye(
+            self.key_ic_number)
         return unit_mtx
 
     def _reduced_perturbation(self):  # tested
@@ -397,8 +395,8 @@ class ReducedInternal(Internal):  # need tests
             vectors
         """
         unit_mtx = self._reduced_unit_vectors()
-        tsfm = np.dot(self._cc_to_ic_gradient,
-                      np.linalg.pinv(self._cc_to_ic_gradient))
+        tsfm = np.dot(self.b_matrix,
+                      np.linalg.pinv(self.b_matrix))
         return np.dot(tsfm, unit_mtx)
 
     def _generate_reduce_space(self, threshold=1e-6):  # tested
@@ -423,7 +421,7 @@ class ReducedInternal(Internal):  # need tests
         non_reduce_vectors : np.ndarray(K, 3N - 6 - J)
             the nonspace of reduced internal coordinates space
         """
-        a_mtx = self._svd_of_cc_to_ic_gradient()
+        a_mtx = self._svd_of_b_matrix()
         rd_space = self._red_space
         prj_rd_space = np.dot(rd_space, rd_space.T)  # prj = \ket{\v} \bra{\v}
         non_reduce_vectors = a_mtx - np.dot(prj_rd_space, a_mtx)
@@ -434,5 +432,5 @@ class ReducedInternal(Internal):  # need tests
         """
         d_mtx = self._nonreduce_vectors()
         w, v = diagonalize(d_mtx)
-        self._non_red_space = v[:, abs(w) > threshold][:, :self.df - len(
-            self._red_space[0])]
+        self._non_red_space = v[:, abs(
+            w) > threshold][:, :self.df - len(self._red_space[0])]

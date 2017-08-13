@@ -35,7 +35,7 @@ class TestReduceInternal(object):
         mole.select_key_ic(0, 2)
         assert np.allclose(mole.ic_values, [1.81413724, 2.96247453, 1.81413724,
                                             -0.33333407, 0.81649681])
-        svd = mole._svd_of_cc_to_ic_gradient()
+        svd = mole._svd_of_b_matrix()
         ref_vectors = np.array(
             [[-4.62909977e-01, 6.15617488e-01, -4.67707997e-01],
              [-7.55929035e-01, 7.65628443e-02, 3.66106995e-01],
