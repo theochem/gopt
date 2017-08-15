@@ -163,7 +163,7 @@ class Grape(object):
         pre_p = self._points[-2]
         if np.max(np.abs(final_p.structure.energy_gradient)) < g_cutoff:
             return True
-        elif np.abs(final_p.value - pre_p.value) < 1e-6:
+        if np.abs(final_p.value - pre_p.value) < 1e-6:
             return True
         # elif np.max(np.abs(pre_p.step)) < 3e-4:
         #    return True

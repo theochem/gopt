@@ -8,7 +8,7 @@ from saddle.internal import Internal
 from saddle.reduced_internal import ReducedInternal
 
 
-class Path_RI(ReducedInternal):
+class PathRI(ReducedInternal):
 
     def set_path_vector(self, vector):
         assert isinstance(vector, np.ndarray)

@@ -10,7 +10,7 @@ from saddle.internal import Internal
 from saddle.iodata import IOData
 from saddle.iodata.xyz import dump_xyz
 from saddle.reduced_internal import ReducedInternal
-from saddle.path_ri import Path_RI
+from saddle.path_ri import PathRI
 
 __all__ = ('TSConstruct', )
 
@@ -289,7 +289,7 @@ class TSConstruct(object):
                 ts_internal)
         elif task == 'path':
             path_vector = self.product.ic_values - self.reactant.ic_values
-            ts_internal = Path_RI.update_to_path_ri(ts_internal, path_vector)
+            ts_internal = PathRI.update_to_path_ri(ts_internal, path_vector)
         # change the ts_internal to Class ReducedInternal
         self._ts = ts_internal  # set _ts attribute
 
