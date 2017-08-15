@@ -24,14 +24,24 @@ class Path_RI(ReducedInternal):
     def _reduced_unit_vectors(self):  # tested
         raise NotImplementedError
 
-    def _reduced_perturbation(self):  # tested
-        b = self.b_matrix
-        b_inv = np.linalg.pinv(b)
-        return np.dot(b, np.dot(b_inv, self._path_vector))
+    @classmethod
+    def update_to_reduced_internal(cls, internal_ob, key_ic_number=0):
+        raise NotImplementedError
+
+    def _reduced_perturbation(self):
+        tsfm = np.dot(self.b_matrix,
+                      np.linalg.pinv(self.b_matrix))
+        result = np.dot(tsfm, self._path_vector.T)
+        assert len(result.shape) == 1
+        return result[:, None]
 
     @property
     def key_ic_number(self):
         return 1
+
+    @property
+    def path_vector(self):
+        return self._path_vector
 
     @property
     def vspace(self):
@@ -65,7 +75,8 @@ class Path_RI(ReducedInternal):
     #     vspace : np.ndarray(K, 3N - 6)
     #     """
     #     if self._vspace is None:
-    #         real_vector = self._realizable_change_in_vspace(self._path_vector)
+    #         real_vector = self._realizable_change_in_vspace(
+    #             self._path_vector)
     #         real_uni_vector = real_vector / np.linalg.norm(real_vector)
     #         sub_vspace = self.pre_vspace - np.dot(
     #             np.dot(self.pre_vspace, real_uni_vector), real_uni_vector.T)

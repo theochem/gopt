@@ -7,6 +7,7 @@ from saddle.conf import data_dir
 from saddle.errors import InvalidArgumentError
 from saddle.internal import Internal
 from saddle.iodata import IOData
+from saddle.path_ri import Path_RI
 from saddle.reduced_internal import ReducedInternal
 from saddle.ts_construct import TSConstruct
 
@@ -189,6 +190,13 @@ class Test_TS_Construct(object):
         self.file_list.append(filepath)
         mol = IOData.from_file(filepath)
         assert np.allclose(mol.coordinates, ts.ts.coordinates)
+
+    def test_from_file_to_path(self):
+        rct_path = os.path.join(data_dir, "rct.xyz")
+        prd_path = os.path.join(data_dir, "prd.xyz")
+        ts_mol = TSConstruct.from_file(rct_path, prd_path)
+        ts_mol.auto_generate_ts(task='path')
+        assert isinstance(ts_mol.ts, Path_RI)
 
     @classmethod
     def tearDownClass(cls):

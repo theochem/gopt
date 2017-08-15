@@ -10,6 +10,7 @@ from saddle.internal import Internal
 from saddle.iodata import IOData
 from saddle.iodata.xyz import dump_xyz
 from saddle.reduced_internal import ReducedInternal
+from saddle.path_ri import Path_RI
 
 __all__ = ('TSConstruct', )
 
@@ -95,6 +96,8 @@ class TSConstruct(object):
         """
         return self._reactant
 
+    rct = reactant
+
     @property
     def product(self):
         """Internal coordinates instance of product structure
@@ -104,6 +107,8 @@ class TSConstruct(object):
         product : Internal
         """
         return self._product
+
+    prd = product
 
     @property
     def ts(self):
@@ -250,7 +255,7 @@ class TSConstruct(object):
         self._reactant.set_new_ics(target_ic_list)
         self._product.set_new_ics(target_ic_list)
 
-    def create_ts_state(self, start_with, ratio=0.5):
+    def create_ts_state(self, start_with, ratio=0.5, task='ts'):
         """Create transition state structure based on the linear combination of
         internal structure of both reactant and product.
 
@@ -279,7 +284,12 @@ class TSConstruct(object):
             1. - ratio) * self.product.ic_values
         ts_internal.set_target_ic(target_ic)
         ts_internal.converge_to_target_ic()
-        ts_internal = ReducedInternal.update_to_reduced_internal(ts_internal)
+        if task == 'ts':
+            ts_internal = ReducedInternal.update_to_reduced_internal(
+                ts_internal)
+        elif task == 'path':
+            path_vector = self.product.ic_values - self.reactant.ic_values
+            ts_internal = Path_RI.update_to_path_ri(ts_internal, path_vector)
         # change the ts_internal to Class ReducedInternal
         self._ts = ts_internal  # set _ts attribute
 
@@ -305,7 +315,8 @@ class TSConstruct(object):
                          start_with="reactant",
                          reset_ic=False,
                          auto_select=True,
-                         mode="mix"):
+                         mode="mix",
+                         task='ts'):
         """Complete auto generate transition state structure based on some
         default parameters
 
@@ -330,8 +341,8 @@ class TSConstruct(object):
                 "reactant" : choose the reactant ic as the template
                 "product" : choose the product ic as the template
         """
-        self.auto_select_ic(reset_ic, auto_select, mode)
-        self.create_ts_state(start_with, ratio)
+        self.auto_select_ic(reset_ic, auto_select, mode=mode)
+        self.create_ts_state(start_with, ratio, task=task)
 
     def ts_to_file(self, filename=''):
         if filename:
