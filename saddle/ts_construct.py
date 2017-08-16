@@ -350,6 +350,11 @@ class TSConstruct(object):
         else:
             raise InvalidArgumentError('Invalid empty filename')
 
+    def update_rct_and_prd_with_ts(self):
+        target_ic = self.ts.ic
+        self._reactant.set_new_ics(target_ic)
+        self._product.set_new_ics(target_ic)
+
     def _get_union_of_ics(self, mode='mix'):  # need tests
         """Get the combined internal coordinates based on the ic structure of
         both reactant and product

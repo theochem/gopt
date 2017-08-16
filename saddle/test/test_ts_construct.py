@@ -198,6 +198,20 @@ class Test_TS_Construct(object):
         ts_mol.auto_generate_ts(task='path')
         assert isinstance(ts_mol.ts, PathRI)
 
+    def test_update_rct_prd_structure(self):
+        rct_path = os.path.join(data_dir, "rct.xyz")
+        prd_path = os.path.join(data_dir, "prd.xyz")
+        ts_mol = TSConstruct.from_file(rct_path, prd_path)
+        ts_mol.auto_generate_ts(task='path')
+        assert len(ts_mol.ts.ic) == 9
+        ts_mol.ts.auto_select_ic(keep_bond=True)
+        assert len(ts_mol.ts.ic) == 12
+        ts_mol.update_rct_and_prd_with_ts()
+        assert len(ts_mol.rct.ic) == 12
+        assert len(ts_mol.prd.ic) == 12
+        for i in range(12):
+            assert ts_mol.rct.ic[i].atoms == ts_mol.prd.ic[i].atoms
+
     @classmethod
     def tearDownClass(cls):
         for i in cls.file_list:
