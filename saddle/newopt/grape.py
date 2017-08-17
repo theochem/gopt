@@ -134,7 +134,7 @@ class Grape(object):
         self.last.reset_hessian()
 
     def _verify_new_point(self, new_point, *args, **kwargs):
-        if np.linalg.norm(new_point.structure.energ_gradient) < np.linalg.norm(
+        if np.linalg.norm(new_point.structure.energy_gradient) < np.linalg.norm(
                 self.last.structure.energy_gradient):
             return 1
         else:
