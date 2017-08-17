@@ -66,8 +66,7 @@ class Grape(object):
                            negative_eigen=0,
                            quasint=True,
                            init_hessian=True,
-                           output_log=''
-                           ):
+                           output_log=''):
         assert self.total > 0
         assert iteration > 0
         if self.total == 1:
@@ -135,8 +134,8 @@ class Grape(object):
         self.last.reset_hessian()
 
     def _verify_new_point(self, new_point, *args, **kwargs):
-        if np.linalg.norm(new_point.gradient) < np.linalg.norm(
-                self.last.gradient):
+        if np.linalg.norm(new_point.structure.energ_gradient) < np.linalg.norm(
+                self.last.structure.energy_gradient):
             return 1
         else:
             self.last.set_trust_radius_scale(0.25)
@@ -195,10 +194,11 @@ class Grape(object):
         ss = TRIM()
         tr = DefaultTrustRadius(number_atoms, criterion='gradient')
         hu = SR1()
-        return cls(trust_radius=tr,
-                   hessian_update=hu,
-                   step_scale=ss,
-                   hessian_modifier=hm)
+        return cls(
+            trust_radius=tr,
+            hessian_update=hu,
+            step_scale=ss,
+            hessian_modifier=hm)
 
     @classmethod
     def minimum_optimizer(cls, number_atoms):
@@ -206,7 +206,8 @@ class Grape(object):
         ss = TRIM()
         tr = DefaultTrustRadius(number_atoms, criterion='energy')
         hu = BFGS()
-        return cls(trust_radius=tr,
-                   hessian_update=hu,
-                   step_scale=ss,
-                   hessian_modifier=hm)
+        return cls(
+            trust_radius=tr,
+            hessian_update=hu,
+            step_scale=ss,
+            hessian_modifier=hm)

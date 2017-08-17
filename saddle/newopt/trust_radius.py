@@ -28,6 +28,7 @@ class DefaultTrustRadius(TrustRadius):  # need to be tested
                 value = min(1 / 4 * pre_point.trust_radius_stride,
                             self.ceiling)
             target_point.set_trust_radius_stride(value)
+
         elif self._criterion == 'gradient':
 
             def p_10(d):
@@ -48,16 +49,16 @@ class DefaultTrustRadius(TrustRadius):  # need to be tested
                     norm(target_point.gradient - pre_point.gradient))
             if (0.8 < rho < 1.25 and
                     p_10(3 * self._number_of_atoms - 6) < cos_theta):
-                print('trust 1')
+                # print('trust 1')
                 value = min(
                     max(self.floor, 2 * pre_point.trust_radius_stride),
                     self.ceiling)
             elif (0.2 < rho < 6 and
                   p_40(3 * self._number_of_atoms - 6) < cos_theta):
-                print('trust 2')
+                # print('trust 2')
                 value = max(pre_point.trust_radius_stride, self.floor)
             else:
-                print('trust 3')
+                # print('trust 3')
                 value = min(0.5 * pre_point.trust_radius_stride, self.floor)
             target_point.set_trust_radius_stride(value)
 
