@@ -138,9 +138,7 @@ class Grape(object):
         self.last.reset_hessian()
 
     def _verify_new_point(self, new_point, *args, **kwargs):
-        if np.linalg.norm(
-                new_point.structure.energy_gradient) < np.linalg.norm(
-                    self.last.structure.energy_gradient):
+        if self._points_accept_criterion(new_point, self.last):
             return 1
         else:
             self.last.set_trust_radius_scale(0.25)
@@ -149,6 +147,13 @@ class Grape(object):
                 return 0
             else:
                 return -1
+
+    @staticmethod
+    def _points_accept_criterion(new_p, old_p):
+        norm = np.linalg.norm
+        result = (norm(new_p.structure.energy_gradient) < norm(
+                old_p.structure.energy_gradient))
+        return result
 
     def update_to_new_point(self, *args, **kwargs):
         new_point = self.calculate_new_point()
@@ -162,12 +167,12 @@ class Grape(object):
         # print("add a point with higher energy")
         self.add_point(new_point)
 
-    def converge_test(self, g_cutoff=1e-4, *args, **kwargs):
+    def converge_test(self, g_cutoff=1e-4, e_cutoff=1e-6):
         final_p = self.last
         pre_p = self._points[-2]
         if np.max(np.abs(final_p.structure.energy_gradient)) < g_cutoff:
             return True
-        if np.abs(final_p.value - pre_p.value) < 1e-5:
+        if np.abs(final_p.value - pre_p.value) < e_cutoff:
             return True
         # elif np.max(np.abs(pre_p.step)) < 3e-4:
         #    return True
