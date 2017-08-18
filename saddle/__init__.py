@@ -23,8 +23,9 @@
 __version__ = '0.1.0'
 __author__ = 'Derrick Yang'
 
-from .cartesian import *
-from .internal import *
-from .reduced_internal import *
-from .ts_construct import *
-from .iodata import *
+from saddle.cartesian import *
+from saddle.internal import *
+from saddle.reduced_internal import *
+from saddle.ts_construct import *
+from saddle.iodata import *
+from saddle.path_ri import *
