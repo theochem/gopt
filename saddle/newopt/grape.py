@@ -66,7 +66,9 @@ class Grape(object):
                            negative_eigen=0,
                            quasint=True,
                            init_hessian=True,
-                           output_log=''):
+                           output_log='',
+                           output_file=''):
+
         assert self.total > 0
         assert iteration > 0
         if self.total == 1:
@@ -92,6 +94,8 @@ class Grape(object):
                 conver_flag = self.converge_test()
                 if conver_flag:
                     print("Optimization finished")
+                    if output_file:
+                        self.dump_last_point(output_file)
                     break
                 self.modify_hessian(key_ic_number, negative_eigen)
                 self.update_trust_radius()
