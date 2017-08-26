@@ -36,6 +36,10 @@ class Grape(object):
                 self._t_r = DefaultTrustRadius(
                     number_atoms, criterion='gradient')
                 self._h_u = SR1()
+            elif task == 'path':  # instantiate optimizer for saddle
+                self._t_r = DefaultTrustRadius(
+                    number_atoms, criterion='gradient')
+                self._h_u = BFGS()
             else:
                 raise InvalidArgumentError("The argument of 'task' is invalid")
             self._points = []
