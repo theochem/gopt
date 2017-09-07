@@ -2,8 +2,8 @@ import os
 from copy import deepcopy
 
 import numpy as np
+from pkg_resources import Requirement, resource_filename
 
-from saddle.conf import data_dir
 from saddle.errors import InvalidArgumentError
 from saddle.internal import Internal
 from saddle.iodata import IOData
@@ -17,8 +17,13 @@ class Test_TS_Construct(object):
     file_list = []
 
     def setUp(self):
-        self.rct = IOData.from_file(os.path.join(data_dir, "ch3_hf.xyz"))
-        self.prd = IOData.from_file(os.path.join(data_dir, "ch3f_h.xyz"))
+        rct_path = resource_filename(
+            Requirement.parse("saddle"), "data/ch3_hf.xyz")
+        prd_path = resource_filename(
+            Requirement.parse("saddle"), "data/ch3f_h.xyz")
+        self.rct = IOData.from_file(rct_path)
+        self.prd = IOData.from_file(prd_path)
+
         self.reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0,
                                     2)
         self.product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0,
@@ -179,28 +184,36 @@ class Test_TS_Construct(object):
                            ((ref_ic_rct + ref_ic_prd) / 2)[:4])
 
     def test_from_file_and_to_file(self):
-        rct_p = os.path.join(data_dir, "ch3_hf.xyz")
-        prd_p = os.path.join(data_dir, "ch3f_h.xyz")
+        rct_p = resource_filename(
+            Requirement.parse("saddle"), "data/ch3_hf.xyz")
+        prd_p = resource_filename(
+            Requirement.parse("saddle"), "data/ch3f_h.xyz")
         ts = TSConstruct.from_file(rct_p, prd_p)
         ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         ts.auto_generate_ts()
         ts_ins.auto_generate_ts()
-        filepath = os.path.join(data_dir, "ts_nose_test_cons.xyz")
+        filepath = resource_filename(
+            Requirement.parse("saddle"), "data/ts_nose_test_cons.xyz")
         ts.ts_to_file(filepath)
         self.file_list.append(filepath)
         mol = IOData.from_file(filepath)
         assert np.allclose(mol.coordinates, ts.ts.coordinates)
 
     def test_from_file_to_path(self):
-        rct_path = os.path.join(data_dir, "rct.xyz")
-        prd_path = os.path.join(data_dir, "prd.xyz")
+        rct_path = resource_filename(
+            Requirement.parse("saddle"), "data/rct.xyz")
+        prd_path = resource_filename(
+            Requirement.parse("saddle"), "data/prd.xyz")
+
         ts_mol = TSConstruct.from_file(rct_path, prd_path)
         ts_mol.auto_generate_ts(task='path')
         assert isinstance(ts_mol.ts, PathRI)
 
     def test_update_rct_prd_structure(self):
-        rct_path = os.path.join(data_dir, "rct.xyz")
-        prd_path = os.path.join(data_dir, "prd.xyz")
+        rct_path = resource_filename(
+            Requirement.parse("saddle"), "data/rct.xyz")
+        prd_path = resource_filename(
+            Requirement.parse("saddle"), "data/prd.xyz")
         ts_mol = TSConstruct.from_file(rct_path, prd_path)
         ts_mol.auto_generate_ts(task='path')
         assert len(ts_mol.ts.ic) == 9

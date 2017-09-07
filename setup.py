@@ -5,16 +5,22 @@ from setuptools import setup
 setup(
     name="saddle",
     version="0.1",
-    description="Geometry reformative advanced platform for education",
+    description="Geometry optimization program for chemical reaction",
+    license='GPLv3',
     author='Derrick Yang',
     author_email='yxt1991@gmail.com',
-    package_dir={
-        'saddle': 'saddle'
-    },
-    packages=['saddle', 'saddle.test', 'saddle.iodata', 'saddle.periodic',
-              'saddle.data', 'saddle.newopt'],
+    package_dir={'saddle': 'saddle'},
+    packages=[
+        'saddle', 'saddle.test', 'saddle.iodata', 'saddle.periodic',
+        'saddle.procrustes', 'saddle.newopt'
+    ],
     package_data={
-        'saddle': ['data/*.com', 'data/*.xyz', 'data/*.fchk'],
+        'saddle': [
+            'data/*.json', 'data/*.com', 'data/*.xyz', 'data/*.fchk',
+            'work/log/.gitkeep'
+        ],
         'saddle.periodic': ['data/*.csv'],
     },
-    install_requires=['numpy',], )
+    install_requires=[
+        'numpy',
+    ], )

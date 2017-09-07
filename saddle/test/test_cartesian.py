@@ -1,10 +1,9 @@
-import os
 from copy import deepcopy
 
 import numpy as np
+from pkg_resources import Requirement, resource_filename
 
 from saddle.cartesian import Cartesian
-from saddle.conf import data_dir
 from saddle.iodata import IOData
 from saddle.periodic import angstrom
 
@@ -12,26 +11,25 @@ from saddle.periodic import angstrom
 class TestCartesian(object):
     @classmethod
     def setup_class(self):
-        mol_path = os.path.join(data_dir, "water.xyz")
+        mol_path = resource_filename(
+            Requirement.parse("saddle"), "data/water.xyz")
         mol = IOData.from_file(mol_path)
         self.cartesian = Cartesian(mol.coordinates, mol.numbers, 0, 1)
 
     def test_from_file(self):
-        path = os.path.join(data_dir, "water.xyz")
+        path = resource_filename(Requirement.parse("saddle"), "data/water.xyz")
         mol = Cartesian.from_file(path)
-        ref_coordinates = np.array([
-            [0.783837, -0.492236, -0.000000], [-0.000000, 0.062020, -0.000000],
-            [-0.783837, -0.492236, -0.000000]
-        ])
+        ref_coordinates = np.array([[0.783837, -0.492236, -0.000000],
+                                    [-0.000000, 0.062020, -0.000000],
+                                    [-0.783837, -0.492236, -0.000000]])
         assert np.allclose(mol.coordinates / angstrom, ref_coordinates)
         assert mol.natom == 3
         assert isinstance(mol, Cartesian)
 
     def test_coordinates(self):
-        ref_coordinates = np.array([
-            [0.783837, -0.492236, -0.000000], [-0.000000, 0.062020, -0.000000],
-            [-0.783837, -0.492236, -0.000000]
-        ])
+        ref_coordinates = np.array([[0.783837, -0.492236, -0.000000],
+                                    [-0.000000, 0.062020, -0.000000],
+                                    [-0.783837, -0.492236, -0.000000]])
         assert np.allclose(self.cartesian.coordinates / angstrom,
                            ref_coordinates)
 
@@ -63,16 +61,20 @@ class TestCartesian(object):
             self.cartesian.angle(0, 1, 2), np.arccos(ref_angle_cos))
 
     def test_get_energy_from_fchk(self):
-        fchk_path = os.path.join(data_dir, "water_1.fchk")
+        fchk_path = resource_filename(
+            Requirement.parse("saddle"), "data/water_1.fchk")
         mole = deepcopy(self.cartesian)
         mole.energy_from_fchk(fchk_path)
         assert np.allclose(mole.energy, -7.599264122862e1)
-        ref_gradient = [2.44329621e-17, 4.95449892e-03, -9.09914286e-03,
-                        7.79137241e-16, -3.60443012e-16, 1.81982857e-02,
-                        -8.03570203e-16, -4.95449892e-03, -9.09914286e-03]
+        ref_gradient = [
+            2.44329621e-17, 4.95449892e-03, -9.09914286e-03, 7.79137241e-16,
+            -3.60443012e-16, 1.81982857e-02, -8.03570203e-16, -4.95449892e-03,
+            -9.09914286e-03
+        ]
         assert np.allclose(mole.energy_gradient, ref_gradient)
-        ref_coor = np.array(
-            [0.00000000e+00, 1.48124293e+00, -8.37919685e-01, 0.00000000e+00,
-             3.42113883e-49, 2.09479921e-01, -1.81399942e-16, -1.48124293e+00,
-             -8.37919685e-01]).reshape(-1, 3)
+        ref_coor = np.array([
+            0.00000000e+00, 1.48124293e+00, -8.37919685e-01, 0.00000000e+00,
+            3.42113883e-49, 2.09479921e-01, -1.81399942e-16, -1.48124293e+00,
+            -8.37919685e-01
+        ]).reshape(-1, 3)
         assert np.allclose(mole.coordinates, ref_coor)

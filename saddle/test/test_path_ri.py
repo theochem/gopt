@@ -1,16 +1,16 @@
-import os
-
 import numpy as np
-from saddle.conf import data_dir
+from pkg_resources import Requirement, resource_filename
+
 from saddle.ts_construct import TSConstruct
 
 
 class TestPathRI(object):
-
     @classmethod
     def setup_class(self):
-        rct_path = os.path.join(data_dir, "rct.xyz")
-        prd_path = os.path.join(data_dir, "prd.xyz")
+        rct_path = resource_filename(
+            Requirement.parse('saddle'), 'data/rct.xyz')
+        prd_path = resource_filename(
+            Requirement.parse('saddle'), 'data/prd.xyz')
         self.ts_mol = TSConstruct.from_file(rct_path, prd_path)
         self.ts_mol.auto_generate_ts(task='path')
         self.path_mol = self.ts_mol.ts

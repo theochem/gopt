@@ -1,13 +1,13 @@
-import os
-
 import numpy as np
+from pkg_resources import Requirement, resource_filename
 
-from saddle.conf import data_dir
 from saddle.fchk import FCHKFile
 
 
 def test_water_fchk():
-    f = FCHKFile(os.path.join(data_dir, "water_0.fchk"))
+    fchk_path = resource_filename(
+        Requirement.parse("saddle"), "data/water_0.fchk")
+    f = FCHKFile(fchk_path)
     hessian = f.get_hessian()
     gradient = f.get_gradient()
     energy = f.get_energy()

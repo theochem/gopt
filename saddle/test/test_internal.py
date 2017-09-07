@@ -1,9 +1,8 @@
-import os
 from copy import deepcopy
 
 import numpy as np
 
-from saddle.conf import data_dir
+from pkg_resources import Requirement, resource_filename
 from saddle.internal import Internal
 from saddle.iodata import IOData
 from saddle.opt import Point
@@ -11,7 +10,8 @@ from saddle.opt import Point
 
 class TestInternal(object):
     def setUp(self):
-        mol_path = os.path.join(data_dir, "water.xyz")
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/water.xyz')
         mol = IOData.from_file(mol_path)
         self.mol = Internal(mol.coordinates, mol.numbers, 0, 1)
 
@@ -87,7 +87,8 @@ class TestInternal(object):
         assert np.allclose(self.mol.target_ic, np.array([1.6, 1.7, -0.5]))
 
     def test_dihedral_add(self):
-        mol_path = os.path.join(data_dir, "2h-azirine.xyz")
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/2h-azirine.xyz')
         mol = IOData.from_file(mol_path)  # create a water molecule
         internal = Internal(mol.coordinates, mol.numbers, 0, 1)
         internal.add_bond(0, 1)
@@ -220,16 +221,16 @@ class TestInternal(object):
                             -0.33333406792305265])
 
     def test_auto_ic_select_ethane(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = os.path.join(path, "..", "data", "ethane.xyz")
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/ethane.xyz')
         mol = IOData.from_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
         assert len(ethane.ic) == 24
 
     def test_auto_select_improper_ch3_hf(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = os.path.join(path, "..", "data", "ch3_hf.xyz")
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/ch3_hf.xyz')
         mol = IOData.from_file(mol_path)
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         mol.auto_select_ic()
@@ -239,8 +240,8 @@ class TestInternal(object):
         assert np.allclose(mol.ic_values, ic_ref)
 
     def test_auto_ic_select_methanol(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = os.path.join(path, "..", "data", "methanol.xyz")
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/methanol.xyz')
         mol = IOData.from_file(mol_path)
         methanol = Internal(mol.coordinates, mol.numbers, 0, 1)
         methanol.auto_select_ic()
@@ -272,8 +273,8 @@ class TestInternal(object):
         assert np.allclose(mol1.connectivity, mol2.connectivity)
 
     def test_get_energy_from_fchk(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        fchk_path = os.path.join(path, "..", "data", "water_1.fchk")
+        fchk_path = resource_filename(
+            Requirement.parse('saddle'), 'data/water_1.fchk')
         self.mol.add_bond(0, 1)
         self.mol.add_bond(1, 2)
         self.mol.add_angle_cos(0, 1, 2)
@@ -290,8 +291,8 @@ class TestInternal(object):
         assert np.allclose(self.mol.internal_gradient[0], ref_g[2])
 
     def test_delete_ic(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        mol_path = os.path.join(path, "..", "data", "ethane.xyz")
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/ethane.xyz')
         mol = IOData.from_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
