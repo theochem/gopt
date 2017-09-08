@@ -141,32 +141,6 @@ class Internal(Cartesian):
             # after adding a bond, change the connectivity of atoms pair to 1
             self._add_connectivity(atoms)
 
-    # def add_angle(self, atom1, atom2, atom3):  # tested
-    #     """Add angle connection between atom1, atom2 and atom3. The angle
-    #     is consist of vector(atom1 - atom2) and vector(atom3 - atom2)
-    #
-    #     Arguments
-    #     ---------
-    #     atom1 : int
-    #         the index of the first atom
-    #     atom2 : int
-    #         the index of the second(central) atom
-    #     atom3 : int
-    #         the index of the third atom
-    #     """
-    #     if atom1 == atom3:
-    #         raise AtomsIndexError("The two indece are the same")
-    #     atoms = (atom1, atom2, atom3)
-    #     atoms = self._atoms_sequence_reorder(atoms)
-    #     rs = self.coordinates[np.array(atoms)]
-    #     new_ic_obj = BendAngle(atoms, rs)
-    #     d, dd = new_ic_obj.get_gradient_hessian()
-    #     # check if the angle is formed by two connected bonds
-    #     if self._check_connectivity(atom1, atom2) and self._check_connectivity(
-    #             atom2, atom3):
-    #         if self._repeat_check(new_ic_obj):
-    #             self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
-
     def add_angle_cos(self, atom1, atom2, atom3):  # tested
         """Add cos angle connection between atom1, atom2 and atom3. The angle
         is consist of vector(atom1 - atom2) and vector(atom3 - atom2)
@@ -523,7 +497,8 @@ class Internal(Cartesian):
             atom_num1 = self.numbers[index_i]
             atom_num2 = self.numbers[index_j]
             distance = self.distance(index_i, index_j)
-            radius_sum = periodic[atom_num1].cov_radius + periodic[atom_num2].cov_radius
+            radius_sum = (periodic[atom_num1].cov_radius +
+                          periodic[atom_num2].cov_radius)
             if distance < 1.3 * radius_sum:
                 self.add_bond(index_i, index_j)
                 # test hydrogen bond
@@ -540,9 +515,8 @@ class Internal(Cartesian):
                 for index_k in potent_halo_index:
                     dis = self.distance(h_index, index_k)
                     angle = self.angle(halo_index, h_index, index_k)
-                    thresh_sum = periodic[self.
-                                          numbers[h_index]].vdw_radius + periodic[self.
-                                                                                  numbers[index_k]].vdw_radius
+                    thresh_sum = (periodic[self.numbers[h_index]].vdw_radius +
+                                  periodic[self.numbers[index_k]].vdw_radius)
                     if dis <= 0.9 * thresh_sum and angle >= 1.5708:
                         self.add_bond(h_index, index_k)  # add H bond
 
