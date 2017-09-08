@@ -1,0 +1,3 @@
+include saddle/periodic/data/*.csv
+include requirement.txt
+recursive-include saddle/data *.conf *.com

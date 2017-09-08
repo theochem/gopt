@@ -3,12 +3,12 @@ import os
 
 from pkg_resources import Requirement, resource_filename
 
-conf_path = resource_filename(Requirement.parse("saddle"), "data/conf.json")
+conf_path = resource_filename(__name__, "data/conf.json")
 
 with open(conf_path) as json_data_f:
     json_data = json.load(json_data_f)
 
-base_path = resource_filename(Requirement.parse("saddle"), "")
+base_path = resource_filename(Requirement('saddle'), '')
 
 
 def get_path(given_path, base_path=base_path):

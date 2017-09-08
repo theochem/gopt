@@ -4,7 +4,7 @@ import os
 from string import Template
 
 import numpy as np
-from pkg_resources import Requirement, resource_filename
+from pkg_resources import resource_filename
 
 from saddle.conf import work_dir
 from saddle.fchk import FCHKFile
@@ -20,9 +20,8 @@ class GaussianWrapper(object):
     def __init__(self, molecule, title):
         self.molecule = molecule
         with open(
-                resource_filename(
-                    Requirement.parse("saddle"),
-                    "data/single_hf_template.com"), "r") as f:
+                resource_filename(__name__, "data/single_hf_template.com"),
+                "r") as f:
             self.template = Template(f.read())
         self.title = title
 

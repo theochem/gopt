@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup
+from glob import glob
 
 setup(
     name="saddle",
@@ -14,13 +15,24 @@ setup(
         'saddle', 'saddle.test', 'saddle.iodata', 'saddle.periodic',
         'saddle.procrustes', 'saddle.newopt'
     ],
+
+    include_package_data=True,
+
     package_data={
         'saddle': [
-            'data/*.json', 'data/*.com', 'data/*.xyz', 'data/*.fchk',
-            'work/log/.gitkeep'
+            'data/*.json', 'data/*.com',
         ],
         'saddle.periodic': ['data/*.csv'],
     },
+    # package_data is only useful for bdist
+    # add to MANIFEST.in works for both bdist and sdist
+
+    data_files=[
+        ('data', glob('data/*.*')),
+        ('work', glob('work/*.*')),
+        ('work/log', glob('work/log/.*')),
+    ],
+
     install_requires=[
         'numpy',
     ], )
