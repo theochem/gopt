@@ -3,9 +3,9 @@ import os
 import numpy as np
 
 import horton as ht
+from saddle.reduced_internal import ReducedInternal
 from saddle.newopt.grape import Grape
 from saddle.newopt.hessian_modifier import SaddleHessianModifier
-from saddle.newopt.hessian_update import *
 from saddle.newopt.hessian_update import BFGS, PSB, SR1
 from saddle.newopt.saddle_point import SaddlePoint
 from saddle.newopt.step_scaler import TRIM

@@ -1,14 +1,13 @@
-import os
+from collections import Iterable
+from copy import deepcopy
 
 import numpy as np
+from pkg_resources import Requirement, resource_filename
 
+from saddle.iodata import IOData
 from saddle.periodic import periodic
 from saddle.periodic.units import amu
 from saddle.procrustes.procrustes import Procrustes
-from saddle.conf import data_dir
-from saddle.iodata import IOData
-from copy import deepcopy
-from collections import Iterable
 
 
 class test_procrustes(object):
@@ -74,7 +73,8 @@ class test_procrustes(object):
         assert np.allclose(center_1, center_2)
 
     def test_main_function(self):
-        file_path = os.path.join(data_dir, "water.xyz")
+        file_path = resource_filename(
+            Requirement.parse('saddle'), 'data/water.xyz')
         water = IOData.from_file(file_path)
         water.coordinates = np.array([[0, 1, 0], [1, 0, 0], [-1, -1, 1]])
         water_2 = deepcopy(water)

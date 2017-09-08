@@ -37,9 +37,9 @@
 '''
 
 import csv
-import os
 
 from saddle.periodic.units import amu, angstrom
+from pkg_resources import resource_filename
 
 __all__ = ('periodic', 'Element', 'Periodic')
 
@@ -99,8 +99,8 @@ class Element(object):
             (2001), URL http://dx.doi.org/10.1023/a%3a1011625728803
 
        vdw_radius_dreiding
-            van der Waals radius. Stephen L. Mayo, Barry D. Olafson, and William
-            A. Goddard III J. Phys. Chem. 94 8897 (1990), URL
+            van der Waals radius. Stephen L. Mayo, Barry D. Olafson, and
+            William A. Goddard III J. Phys. Chem. 94 8897 (1990), URL
             http://dx.doi.org/10.1021/j100389a010
 
        vdw_radius_uff
@@ -125,8 +125,9 @@ class Element(object):
 
        pold_crc
             Isolated atom dipole polarizability. CRC Handbook of Chemistry and
-            Physics (CRC, Boca Raton, FL, 2003). If multiple values were present
-            in the CRC book, the value used in Erin's postg code is taken.
+            Physics (CRC, Boca Raton, FL, 2003). If multiple values were
+            present in the CRC book, the value used in Erin's postg code is
+            taken.
 
        pold_chu
             Isolated atom dipole polarizability. X. Chu & A. Dalgarno, J. Chem.
@@ -137,8 +138,8 @@ class Element(object):
             http://dx.doi.org/10.1016/0009-2614(78)85517-1
 
        c6_chu
-            Isolated atom C_6 dispersion coefficient. X. Chu & A. Dalgarno, J. Chem.
-            Phys., 121(9), 4083--4088 (2004), URL
+            Isolated atom C_6 dispersion coefficient. X. Chu & A. Dalgarno, J.
+            Chem. Phys., 121(9), 4083--4088 (2004), URL
             http://dx.doi.org/10.1063/1.1779576 Theoretical value for hydrogen
             from this paper: K. T. Tang, J. M. Norbeck and P. R. Certain; J.
             Chem. Phys. 64, 3063 (1976), URL #
@@ -255,8 +256,8 @@ def load_periodic():
         'amu': (lambda s: float(s) * amu),
     }
 
-    pwd = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(pwd, "data", "elements.csv"), 'r') as f:
+    csv_path = resource_filename(__name__, "data/elements.csv")
+    with open(csv_path, 'r') as f:
         r = csv.reader(f)
         # go to the actual data
         for row in r:

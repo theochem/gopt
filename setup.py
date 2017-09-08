@@ -13,26 +13,23 @@ setup(
     package_dir={'saddle': 'saddle'},
     packages=[
         'saddle', 'saddle.test', 'saddle.iodata', 'saddle.periodic',
-        'saddle.procrustes', 'saddle.newopt'
+        'saddle.procrustes', 'saddle.procrustes.test', 'saddle.newopt'
     ],
-
     include_package_data=True,
-
     package_data={
         'saddle': [
-            'data/*.json', 'data/*.com',
+            'data/*.json',
+            'data/*.com',
         ],
         'saddle.periodic': ['data/*.csv'],
     },
     # package_data is only useful for bdist
     # add to MANIFEST.in works for both bdist and sdist
-
     data_files=[
         ('data', glob('data/*.*')),
         ('work', glob('work/*.*')),
         ('work/log', glob('work/log/.*')),
     ],
-
     install_requires=[
         'numpy',
     ], )

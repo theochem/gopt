@@ -41,4 +41,5 @@ def load_com(filename):
         'numbers': np.array(numbers),
     }
 
+
 load_gjf = load_com
