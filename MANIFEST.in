@@ -1,3 +1,4 @@
-include saddle/periodic/data/*.csv
-include requirement.txt
-recursive-include saddle/data *.conf *.com
+include requirements.txt
+include README.md
+recursive-include saddle/data *.json *.com
+recursive-include saddle/periodic/data *.csv

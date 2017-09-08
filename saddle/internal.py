@@ -612,9 +612,9 @@ class Internal(Cartesian):
             np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_K),
             np.linalg.pinv(self._cc_to_ic_gradient))
         # self._tilt_internal_hessian = np.dot(
-        #     np.dot(
-        #         np.linalg.pinv(self._cc_to_ic_gradient.T),
-        #         self._energy_hessian), np.linalg.pinv(self._cc_to_ic_gradient))
+        #   np.dot(
+        #     np.linalg.pinv(self._cc_to_ic_gradient.T),
+        #     self._energy_hessian), np.linalg.pinv(self._cc_to_ic_gradient))
 
     def _regenerate_ic(self):
         """reset internal coordinates system, reset gradient, hessian versus
