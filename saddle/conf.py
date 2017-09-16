@@ -18,6 +18,14 @@ def get_path(given_path, base_path=base_path):
         return os.path.join(base_path, given_path)
 
 
+def set_work_dir(given):
+    pass
+
+
+def set_log_dir(given):
+    pass
+
+
 work_dir = get_path(json_data['work_dir'])
 
 log_dir = get_path(json_data['log_dir'])

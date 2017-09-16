@@ -24,3 +24,7 @@ class PositiveProductError(Exception):
 
 class InvalidArgumentError(Exception):
     pass
+
+
+class OverIterLimitError(Exception):
+    pass
