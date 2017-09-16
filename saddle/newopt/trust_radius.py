@@ -25,7 +25,7 @@ class DefaultTrustRadius(TrustRadius):  # need to be tested
             elif 1 / 3 < ratio < 3:
                 value = max(pre_point.trust_radius_stride, self.ceiling)
             else:
-                value = min(1 / 4 * pre_point.trust_radius_stride,
+                value = max(1 / 4 * pre_point.trust_radius_stride,
                             self.ceiling)
             target_point.set_trust_radius_stride(value)
 
