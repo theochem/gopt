@@ -1,13 +1,11 @@
 from __future__ import absolute_import
 
-from abc import ABCMeta, abstractproperty
+from abc import ABC, abstractproperty
 
-__all__ = ('CoordinateTypes',)
+__all__ = ('CoordinateTypes', )
 
-class CoordinateTypes(object):
 
-    __metaclass__ = ABCMeta
-
+class CoordinateTypes(ABC):
     @abstractproperty
     def value(self):
         pass

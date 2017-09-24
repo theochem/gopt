@@ -10,12 +10,11 @@ with open(conf_path) as json_data_f:
 
 base_path = resource_filename(Requirement.parse('saddle'), '')
 
-
-def get_path(given_path, base_path=base_path):
+def get_path(given_path):
     if given_path.startswith('/' or '~'):  # abs path
         return given_path
     else:
-        return os.path.join(base_path, given_path)
+        return resource_filename(Requirement.parse('saddle'), given_path)
 
 
 def set_work_dir(given):

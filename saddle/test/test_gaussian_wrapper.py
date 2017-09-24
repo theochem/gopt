@@ -31,6 +31,7 @@ class TestGaussWrap(object):
         assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
 
     def test_create_input_gjf(self):
+        path = resource_filename(Requirement.parse('saddle'), 'work')
         self.gwob.create_gauss_input(
             0, 1, spe_title='test_2nd_gauss', path=self.path, postfix='.gjf')
         filepath = os.path.join(self.path, 'test_2nd_gauss.gjf')
