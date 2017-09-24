@@ -3,8 +3,10 @@ from pkg_resources import Requirement, resource_filename
 
 from saddle.ts_construct import TSConstruct
 
+import unittest
 
-class TestPathRI(object):
+
+class TestPathRI(unittest.TestCase):
     @classmethod
     def setup_class(self):
         rct_path = resource_filename(

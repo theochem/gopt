@@ -1,6 +1,8 @@
 from copy import deepcopy
 
 import numpy as np
+import unittest
+
 from pkg_resources import Requirement, resource_filename
 
 from saddle.cartesian import Cartesian
@@ -8,7 +10,7 @@ from saddle.iodata import IOData
 from saddle.periodic import angstrom
 
 
-class TestCartesian(object):
+class TestCartesian(unittest.TestCase):
     @classmethod
     def setup_class(self):
         mol_path = resource_filename(

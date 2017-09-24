@@ -7,8 +7,9 @@ from saddle.conf import work_dir
 from saddle.gaussianwrapper import GaussianWrapper
 from saddle.iodata import IOData
 
+import unittest
 
-class TestGaussWrap(object):
+class TestGaussWrap(unittest.TestCase):
 
     path = os.path.dirname(os.path.realpath(__file__))
     file_list = []

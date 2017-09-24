@@ -31,5 +31,5 @@ setup(
         ('work/log', glob('work/log/.*')),
     ],
     install_requires=[
-        'numpy',
+        'numpy', 'pytest'
     ], )

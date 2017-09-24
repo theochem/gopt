@@ -1,6 +1,8 @@
 from copy import deepcopy
 
 import numpy as np
+import unittest
+
 from pkg_resources import Requirement, resource_filename
 
 from saddle.internal import Internal
@@ -8,7 +10,7 @@ from saddle.iodata import IOData
 from saddle.reduced_internal import ReducedInternal
 
 
-class TestReduceInternal(object):
+class TestReduceInternal(unittest.TestCase):
     @classmethod
     def setup_class(self):
         mol_path = resource_filename(
@@ -45,8 +47,8 @@ class TestReduceInternal(object):
              [-1.15470541e-16, -1.60808621e-01, -7.68952115e-01],
              [-6.78941967e-17, 2.01841790e-01, 1.97460125e-01]])
         for i in range(svd.shape[1]):
-            assert (np.allclose(svd[:, i], ref_vectors[:, i]) or
-                    np.allclose(svd[:, i], -1 * ref_vectors[:, i]))
+            assert (np.allclose(svd[:, i], ref_vectors[:, i])
+                    or np.allclose(svd[:, i], -1 * ref_vectors[:, i]))
 
         ref_unit = np.array([[1., 0.], [0., 1.], [0., 0.], [0., 0.], [0., 0.]])
         assert np.allclose(mole._reduced_unit_vectors(), ref_unit)
@@ -73,8 +75,8 @@ class TestReduceInternal(object):
             [-2.62459020e-01]
         ])
         mole._generate_nonreduce_space()
-        assert (np.allclose(non_red_vec_ref, mole._non_red_space) or
-                np.allclose(non_red_vec_ref, -1 * mole._non_red_space))
+        assert (np.allclose(non_red_vec_ref, mole._non_red_space)
+                or np.allclose(non_red_vec_ref, -1 * mole._non_red_space))
         vp_ref = np.array(
             [[4.55468597e-01, -7.77540781e-01, -5.28668553e-17], [
                 -5.68196853e-01, -6.23279427e-01, 2.22044605e-16
@@ -83,8 +85,8 @@ class TestReduceInternal(object):
              [-6.66140496e-02, -8.00527323e-02, -2.62459020e-01]])
         mole._reset_v_space()
         for i in range(vp_ref.shape[1]):
-            assert (np.allclose(mole.vspace[:, i], vp_ref[:, i]) or
-                    np.allclose(mole.vspace[:, i], -1 * vp_ref[:, i]))
+            assert (np.allclose(mole.vspace[:, i], vp_ref[:, i])
+                    or np.allclose(mole.vspace[:, i], -1 * vp_ref[:, i]))
 
     def test_ic_ric_transform(self):
         mol_path = resource_filename(
@@ -110,15 +112,15 @@ class TestReduceInternal(object):
              [5.38697428e-01, -1.96628811e-02, 5.71458853e-01],
              [-6.66140496e-02, -8.00527323e-02, -2.62459020e-01]])
         for i in range(vp_ref.shape[1]):
-            assert (np.allclose(ri_mol.vspace[:, i], vp_ref[:, i]) or
-                    np.allclose(ri_mol.vspace[:, i], -1 * vp_ref[:, i]))
+            assert (np.allclose(ri_mol.vspace[:, i], vp_ref[:, i])
+                    or np.allclose(ri_mol.vspace[:, i], -1 * vp_ref[:, i]))
         ri_mol.set_key_ic_number(1)
         assert ri_mol._red_space is None
         assert ri_mol._non_red_space is None
         ri_mol.set_key_ic_number(2)
         for i in range(vp_ref.shape[1]):
-            assert (np.allclose(ri_mol.vspace[:, i], vp_ref[:, i]) or
-                    np.allclose(ri_mol.vspace[:, i], -1 * vp_ref[:, i]))
+            assert (np.allclose(ri_mol.vspace[:, i], vp_ref[:, i])
+                    or np.allclose(ri_mol.vspace[:, i], -1 * vp_ref[:, i]))
         new_coor = np.array([[1.40, -0.93019123, -0.], [-0., 0.11720081, -0.],
                              [-1.40, -0.93019123, -0.]])
         ri_mol.set_new_coordinates(new_coor)
@@ -154,8 +156,8 @@ class TestReduceInternal(object):
              [5.38697428e-01, -1.96628811e-02, 5.71458853e-01],
              [-6.66140496e-02, -8.00527323e-02, -2.62459020e-01]])
         for i in range(vp_ref.shape[1]):
-            assert (np.allclose(ri_mol.vspace[:, i], vp_ref[:, i]) or
-                    np.allclose(ri_mol.vspace[:, i], -1 * vp_ref[:, i]))
+            assert (np.allclose(ri_mol.vspace[:, i], vp_ref[:, i])
+                    or np.allclose(ri_mol.vspace[:, i], -1 * vp_ref[:, i]))
         ri_mol.set_key_ic_number(1)
         assert ri_mol._red_space is None
         assert ri_mol._non_red_space is None

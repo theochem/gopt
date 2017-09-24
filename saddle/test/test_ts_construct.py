@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 
 import numpy as np
+import unittest
 from pkg_resources import Requirement, resource_filename
 
 from saddle.errors import InvalidArgumentError
@@ -12,7 +13,7 @@ from saddle.reduced_internal import ReducedInternal
 from saddle.ts_construct import TSConstruct
 
 
-class Test_TS_Construct(object):
+class Test_TS_Construct(unittest.TestCase):
 
     file_list = []
 

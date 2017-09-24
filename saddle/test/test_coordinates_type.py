@@ -5,8 +5,10 @@ from saddle.coordinate_types import (BendAngle, BendCos, BondLength,
                                      NewDihedralDot)
 from saddle.iodata import IOData
 
+import unittest
 
-class Test_Coordinates_Types(object):
+
+class Test_Coordinates_Types(unittest.TestCase):
     @classmethod
     def setup_class(self):
         file_path = resource_filename(

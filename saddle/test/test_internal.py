@@ -7,8 +7,10 @@ from saddle.internal import Internal
 from saddle.iodata import IOData
 from saddle.opt import Point
 
+import unittest
 
-class TestInternal(object):
+
+class TestInternal(unittest.TestCase):
     def setUp(self):
         mol_path = resource_filename(
             Requirement.parse('saddle'), 'data/water.xyz')
