@@ -1,4 +1,24 @@
-from __future__ import absolute_import, print_function
+# -*- coding: utf-8 -*-
+# PyGopt: Python Geometry Optimization.
+# Copyright (C) 2011-2018 The HORTON/PyGopt Development Team
+#
+# This file is part of PyGopt.
+#
+# PyGopt is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# PyGopt is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+"wrap over Gaussian to run gaussian calculation"
 
 import os
 from string import Template
@@ -8,7 +28,7 @@ from pkg_resources import resource_filename
 
 from saddle.conf import work_dir
 from saddle.fchk import FCHKFile
-from saddle.periodic import angstrom, periodic
+from saddle.periodic.periodic import angstrom, periodic
 
 __all__ = ('GaussianWrapper', )
 

@@ -1,6 +1,27 @@
-from __future__ import absolute_import, print_function
+# -*- coding: utf-8 -*-
+# PyGopt: Python Geometry Optimization.
+# Copyright (C) 2011-2018 The HORTON/PyGopt Development Team
+#
+# This file is part of PyGopt.
+#
+# PyGopt is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# PyGopt is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+"Cartesian coordinates implementation"
 
 import numpy as np
+import numpy.linalg as npl
 
 from saddle.errors import AtomsNumberError, NotSetError
 from saddle.fchk import FCHKFile
@@ -10,7 +31,7 @@ from saddle.iodata import IOData
 __all__ = ('Cartesian', )
 
 
-class Cartesian(object):
+class Cartesian:
     """ Cartesian Coordinate.
 
     Properties
@@ -56,7 +77,12 @@ class Cartesian(object):
         Calculate cosine of angle between atoms with index1, index2, and index3
     """
 
-    def __init__(self, coordinates, numbers, charge, spin, title="untitled"):
+    def __init__(self,
+                 coordinates: 'np.ndarray[float]',
+                 numbers: 'np.ndarray[int]',
+                 charge: int,
+                 spin: int,
+                 title: str = "untitled") -> None:
         self._coordinates = coordinates.copy()
         self._numbers = numbers.copy()
         self._charge = charge
@@ -65,9 +91,11 @@ class Cartesian(object):
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None
+        return None
 
     @classmethod
-    def from_file(cls, filename, charge=0, spin=1):
+    def from_file(cls, filename: str, charge: int = 0,
+                  spin: int = 1) -> 'Cartesian':
         """Create an Cartesian instance from file .xyz, .com,
         .gjf or .fchk
 
@@ -88,7 +116,7 @@ class Cartesian(object):
         return cls(mol.coordinates, mol.numbers, charge, spin)
 
     @property
-    def energy_gradient(self):
+    def energy_gradient(self) -> 'np.ndarray[float]':
         """Gradient of energy versus cartesian coordinates
 
         Returns
@@ -102,7 +130,7 @@ class Cartesian(object):
             return self._energy_gradient
 
     @property
-    def energy_hessian(self):
+    def energy_hessian(self) -> 'np.ndarray[float]':
         """Hessian of energy versus internal coordinates
 
         Returns
@@ -116,7 +144,7 @@ class Cartesian(object):
             return self._energy_hessian
 
     @property
-    def energy(self):
+    def energy(self) -> float:
         """Energy of the system
 
         Returns
@@ -129,7 +157,7 @@ class Cartesian(object):
         else:
             return self._energy
 
-    def set_new_coordinates(self, new_coor):
+    def set_new_coordinates(self, new_coor: 'np.ndarray[float]') -> None:
         """Assign new cartesian coordinates to this molecule
 
         Arguments
@@ -142,26 +170,28 @@ class Cartesian(object):
                 "the dimentsion of coordinates are not the same")
         self._coordinates = new_coor.copy()
         self._reset_cartesian()
+        return None
 
-    def _reset_cartesian(self):
+    def _reset_cartesian(self) -> None:
         """Reset the energy data including energy, gradient and hessian.
         """
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None
+        return None
 
     @property
-    def numbers(self):
+    def numbers(self) -> 'np.ndarray[int]':
         """Atomic number of all the atoms in the system
 
         Returns
         -------
-        numbers : list of int, len(numbers) = N
+        numbers : an np.ndarray of atomic numbers, len(numbers) = N
         """
         return self._numbers
 
     @property
-    def charge(self):
+    def charge(self) -> int:
         """The charge of the system
 
         Returns
@@ -171,7 +201,7 @@ class Cartesian(object):
         return self._charge
 
     @property
-    def spin(self):
+    def spin(self) -> int:
         """The spin multiplicity of the system
 
         Returns
@@ -181,7 +211,7 @@ class Cartesian(object):
         return self._spin
 
     @property
-    def coordinates(self):
+    def coordinates(self) -> 'np.ndarray[float]':
         """Cartesian coordinates of every atoms
 
         Returns
@@ -191,10 +221,20 @@ class Cartesian(object):
         return self._coordinates
 
     @property
-    def natom(self):
+    def natom(self) -> int:
+        """number of atoms of given molecule
+
+        Returns
+        -------
+        natom : int
+        """
         return len(self.numbers)
 
-    def energy_from_fchk(self, abs_path, gradient=True, hessian=True):
+    def energy_from_fchk(self,
+                         abs_path: str,
+                         *_,
+                         gradient: bool = True,
+                         hessian: bool = True) -> None:
         """Abtain Energy and relative information from FCHK file.
 
         Arguments
@@ -215,8 +255,10 @@ class Cartesian(object):
             self._energy_gradient = fchk_file.get_gradient()
         if hessian:
             self._energy_hessian = fchk_file.get_hessian()
+        return None
 
-    def energy_calculation(self, **kwargs):  # need test
+    def energy_calculation(self, *_, method: str = 'g09',
+                           title: str) -> None:  # need test
         """Conduct calculation with designated method.
 
         Keywords Arguments
@@ -225,7 +267,7 @@ class Cartesian(object):
             name of the program(method) used to calculate energy and other
             property
         """
-        method = kwargs.pop('method', 'g09')  # get calculation method arg
+        # method = kwargs.pop('method', 'g09')  # get calculation method arg
         title = self._title
         if method == "g09":
             obj = GaussianWrapper(self, title)
@@ -239,13 +281,14 @@ class Cartesian(object):
             self._energy = ener
             self._energy_gradient = grad
             self._energy_hessian = hess
+        return None
 
         # set new coordinates after rotation
         # set self._energy
         # set self._energy_gradient
         # sel self._energy_hessian
 
-    def distance(self, index1, index2):
+    def distance(self, index1: int, index2: int) -> float:
         """Calculate the distance between two atoms
 
         Arguments
@@ -263,10 +306,10 @@ class Cartesian(object):
         coord1 = self.coordinates[index1]
         coord2 = self.coordinates[index2]
         diff = coord1 - coord2
-        distance = np.linalg.norm(diff)
+        distance = npl.norm(diff)
         return distance
 
-    def angle_cos(self, index1, index2, index3):
+    def angle_cos(self, index1: int, index2: int, index3: int) -> float:
         """Calculate cosine of the angle consist of vector (index1 - index2)
         and vector (index3 - index2)
 
@@ -290,10 +333,10 @@ class Cartesian(object):
         diff_1 = coord2 - coord1
         diff_2 = coord2 - coord3
         cos_angle = np.dot(diff_1, diff_2) / \
-            (np.linalg.norm(diff_1) * np.linalg.norm(diff_2))
+            (npl.norm(diff_1) * npl.norm(diff_2))
         return cos_angle
 
-    def angle(self, index1, index2, index3):
+    def angle(self, index1: int, index2: int, index3: int) -> float:
         """Calculate radian of the angle consist of vector (index1 - index2)
         and vector (index3 - index2)
 
