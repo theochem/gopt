@@ -18,5 +18,5 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-from .periodic import *
-from .units import *
+# from .periodic import *
+# from .units import *

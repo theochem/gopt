@@ -1,11 +1,17 @@
+from typing import Callable, Tuple
+
 import numpy as np
 
-from saddle.errors import PositiveProductError, OverIterLimitError
+from saddle.errors import OverIterLimitError, PositiveProductError
 
 __all__ = ('ridders_solver', 'diagonalize')
 
 
-def ridders_solver(func, x1, x2, iteration=100, error=1e-6):
+def ridders_solver(func: Callable[[float], float],
+                   x1: float,
+                   x2: float,
+                   iteration: int = 100,
+                   error: float = 1e-6) -> float:
     """The ridders solver to solver nonlinear equation to find a mathematical
     root for a continuous function. the value of the two end should be of
     different sign.
@@ -30,7 +36,7 @@ def ridders_solver(func, x1, x2, iteration=100, error=1e-6):
     f2 = func(x2)
     if f1 * f2 > 0:
         raise PositiveProductError("The two end point are of same sign")
-    answer = 0
+    answer: float = 0
     if np.allclose(f1, 0):
         return x1
     elif np.allclose(f2, 0):
@@ -60,7 +66,8 @@ def ridders_solver(func, x1, x2, iteration=100, error=1e-6):
     raise OverIterLimitError
 
 
-def diagonalize(matrix):
+def diagonalize(matrix: 'np.ndarray[Scalar]'
+                ) -> Tuple['np.ndarray[Scalar]', 'np.ndarray[Scalar]']:
     """Orthogonilize a given matrix my Grammian Matrix method
 
     Arguments
@@ -77,7 +84,3 @@ def diagonalize(matrix):
     product = np.dot(matrix, matrix.T)
     w, v = np.linalg.eigh(product)
     return w, v
-
-
-if __name__ == "__main__":
-    result = ridders_solver(lambda x: x**2 - 4, -10, -1)

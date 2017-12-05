@@ -24,7 +24,7 @@ from __future__ import print_function
 
 import numpy as np
 
-from saddle.periodic import angstrom, periodic
+from saddle.periodic.periodic import angstrom, periodic
 
 __all__ = ('load_xyz', 'dump_xyz')
 

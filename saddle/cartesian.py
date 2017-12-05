@@ -235,7 +235,7 @@ class Cartesian:
                          *_,
                          gradient: bool = True,
                          hessian: bool = True) -> None:
-        """Abtain Energy and relative information from FCHK file.
+        """Obtain energy and relative information from FCHK file.
 
         Arguments
         ---------

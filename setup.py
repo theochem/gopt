@@ -1,7 +1,9 @@
+'''setup.py for Saddle package
+'''
 #!/usr/bin/env python3
 
-from setuptools import setup
 from glob import glob
+from setuptools import setup
 
 setup(
     name="saddle",
@@ -31,5 +33,5 @@ setup(
         ('work/log', glob('work/log/.*')),
     ],
     install_requires=[
-        'numpy', 'pytest'
+        'numpy', 'pytest',
     ], )

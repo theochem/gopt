@@ -20,15 +20,44 @@
 # --
 "Coordinates types for represent internal coordinates."
 
-from __future__ import absolute_import, print_function
-
 from typing import Tuple
-from saddle.abclass import CoordinateTypes
 from saddle.molmod import (bend_angle, bend_cos, bond_length, dihed_cos,
                            dihed_new_cross, dihed_new_dot)
 
 __all__ = ('BondLength', 'BendAngle', 'BendCos', 'ConventionDihedral',
            'NewDihedralDot', 'NewDihedralCross')
+
+
+class CoordinateTypes:
+    """General internal coordinates class"""
+
+    def __init__(self, atoms: "np.ndarray[int]",
+                 coordinates: "np.ndarray[float]") -> None:
+        self._coordinates = coordinates
+        self._atoms = atoms
+        self._value, self._d, self._dd = self._get_all()
+        return None
+
+    @property
+    def value(self) -> float:
+        return self._value
+
+    def get_gradient_hessian(
+            self) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
+        return self._d, self._dd
+
+    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
+        self._coordinates = new_coor
+        self._value, self._d, self._dd = self._get_all()
+        return None
+
+    @property
+    def atoms(self) -> "np.ndarray[int]":
+        return self._atoms
+
+    def _get_all(self):
+        raise NotImplementedError(
+            "This method should be implemented in subclass")
 
 
 class BondLength(CoordinateTypes):
@@ -52,29 +81,8 @@ class BondLength(CoordinateTypes):
         Set the cartesian coordinates of this internal coodinates
     """
 
-    def __init__(self, atoms: "np.ndarray[int]",
-                 coordinates: "np.ndarray[float]") -> None:
-        self._coordinates = coordinates
-        self._atoms = atoms
-        self._value, self._d, self._dd = bond_length(self._coordinates, 2)
-        return None
-
-    @property
-    def value(self) -> float:
-        return self._value
-
-    def get_gradient_hessian(
-            self) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
-        return self._d, self._dd
-
-    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
-        self._coordinates = new_coor
-        self._value, self._d, self._dd = bond_length(self._coordinates, 2)
-        return None
-
-    @property
-    def atoms(self) -> "np.ndarray[int]":
-        return self._atoms
+    def _get_all(self):
+        return bond_length(self._coordinates, 2)
 
     @property
     def info(self) -> None:
@@ -105,28 +113,8 @@ class BendAngle(CoordinateTypes):
         Set the cartesian coordinates of this internal coodinates
     """
 
-    def __init__(self, atoms: "np.ndarray[int]",
-                 coordinates: "np.ndarray[float]") -> None:
-        self._coordinates = coordinates
-        self._atoms = atoms
-        self._value, self._d, self._dd = bend_angle(self._coordinates, 2)
-
-    @property
-    def value(self) -> float:
-        return self._value
-
-    def get_gradient_hessian(
-            self) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
-        return self._d, self._dd
-
-    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
-        self._coordinates = new_coor
-        self._value, self._d, self._dd = bend_angle(self._coordinates, 2)
-        return None
-
-    @property
-    def atoms(self) -> "np.ndarray[int]":
-        return self._atoms
+    def _get_all(self):
+        return bend_angle(self._coordinates, 2)
 
     @property
     def info(self) -> None:
@@ -157,27 +145,8 @@ class BendCos(CoordinateTypes):
         Set the cartesian coordinates of this internal coodinates
     """
 
-    def __init__(self, atoms: "np.ndarray[int]",
-                 coordinates: "np.ndarray[float]") -> None:
-        self._coordinates = coordinates
-        self._atoms = atoms
-        self._value, self._d, self._dd = bend_cos(self._coordinates, 2)
-
-    @property
-    def value(self) -> float:
-        return self._value
-
-    def get_gradient_hessian(
-            self) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
-        return self._d, self._dd
-
-    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
-        self._coordinates = new_coor
-        self._value, self._d, self._dd = bend_cos(self._coordinates, 2)
-
-    @property
-    def atoms(self) -> "np.ndarray[int]":
-        return self._atoms
+    def _get_all(self):
+        return bend_cos(self._coordinates, 2)
 
     @property
     def info(self) -> None:
@@ -208,27 +177,8 @@ class ConventionDihedral(CoordinateTypes):
         Set the cartesian coordinates of this internal coodinates
     """
 
-    def __init__(self, atoms: "np.ndarray[int]",
-                 coordinates: "np.ndarray[float]") -> None:
-        self._coordinates = coordinates
-        self._atoms = atoms
-        self._value, self._d, self._dd = dihed_cos(self._coordinates, 2)
-
-    @property
-    def value(self) -> float:
-        return self._value
-
-    def get_gradient_hessian(
-            self) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
-        return self._d, self._dd
-
-    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
-        self._coordinates = new_coor
-        self._value, self._d, self._dd = dihed_cos(self._coordinates, 2)
-
-    @property
-    def atoms(self) -> "np.ndarray[int]":
-        return self._atoms
+    def _get_all(self):
+        return dihed_cos(self._coordinates, 2)
 
     @property
     def info(self) -> None:
@@ -259,27 +209,8 @@ class NewDihedralDot(CoordinateTypes):  # need tests
         Set the cartesian coordinates of this internal coodinates
     """
 
-    def __init__(self, atoms: "np.ndarray[int]",
-                 coordinates: "np.ndarray[float]") -> None:
-        self._coordinates = coordinates
-        self._atoms = atoms
-        self._value, self._d, self._dd = dihed_new_dot(self._coordinates, 2)
-
-    def get_gradient_hessian(
-            self) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
-        return self._d, self._dd
-
-    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
-        self._coordinates = new_coor
-        self._value, self._d, self._dd = dihed_new_dot(self._coordinates, 2)
-
-    @property
-    def value(self) -> float:
-        return self._value
-
-    @property
-    def atoms(self) -> "np.ndarray[int]":
-        return self._atoms
+    def _get_all(self):
+        return dihed_new_dot(self._coordinates, 2)
 
     @property
     def info(self) -> None:
@@ -307,27 +238,8 @@ class NewDihedralCross(CoordinateTypes):  # need tests
         Set the cartesian coordinates of this internal coodinates
     """
 
-    def __init__(self, atoms: "np.ndarray[int]",
-                 coordinates: "np.ndarray[float]") -> None:
-        self._coordinates = coordinates
-        self._atoms = atoms
-        self._value, self._d, self._dd = dihed_new_cross(self._coordinates, 2)
-
-    def get_gradient_hessian(
-            self) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
-        return self._d, self._dd
-
-    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
-        self._coordinates = new_coor
-        self._value, self._d, self._dd = dihed_new_cross(self._coordinates, 2)
-
-    @property
-    def value(self) -> float:
-        return self._value
-
-    @property
-    def atoms(self) -> "np.ndarray[int]":
-        return self._atoms
+    def _get_all(self):
+        return dihed_new_cross(self._coordinates, 2)
 
     @property
     def info(self) -> None:

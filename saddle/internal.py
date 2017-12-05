@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+    # -*- coding: utf-8 -*-
 # PyGopt: Python Geometry Optimization.
 # Copyright (C) 2011-2018 The HORTON/PyGopt Development Team
 #
@@ -22,13 +22,13 @@
 
 from copy import deepcopy
 from itertools import combinations
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 import numpy as np
 
-from saddle.abclass import CoordinateTypes
 from saddle.cartesian import Cartesian
-from saddle.coordinate_types import BendCos, BondLength, ConventionDihedral
+from saddle.coordinate_types import (BendCos, BondLength, ConventionDihedral,
+                                     CoordinateTypes)
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
 from saddle.opt import GeoOptimizer, Point
@@ -60,7 +60,7 @@ class Internal(Cartesian):
         Number of atoms in the system
     cost_value_in_cc : tuple(float, np.ndarray(K), np.ndarray(K, K))
         Return the cost function value, 1st, and 2nd
-        derivative verse cartesian coordinates
+        derivative versus cartesian coordinates
     ic : list[CoordinateTypes], len(ic) = K
         A list of CoordinateTypes instance to represent
         internal coordinates information
@@ -72,7 +72,7 @@ class Internal(Cartesian):
         A square matrix represents the connectivity of molecule
         internal coordinates
     b_matrix : np.ndarray(K, 3N)
-        Jacobian matrix for transfomr from cartesian coordinates to internal
+        Jacobian matrix for transforming from cartesian coordinates to internal
         coordinates
     internal_gradient : np.ndarray(K,)
         Gradient of energy versus internal coordinates
@@ -151,10 +151,11 @@ class Internal(Cartesian):
             the index of the second atom
         """
         if atom1 == atom2:
-            raise AtomsIndexError("The two indece are the same")
+            raise AtomsIndexError("The two indices are the same")
         atoms = (atom1, atom2)
-        # reorder the sequence of atoms indice
+        # reorder the sequence of atoms indices
         atoms = self._atoms_sequence_reorder(atoms)
+        # just sorting, no sequence changes
         rs = self.coordinates[np.array(atoms)]
         new_ic_obj = BondLength(atoms, rs)
         d, dd = new_ic_obj.get_gradient_hessian()

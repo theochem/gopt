@@ -7,7 +7,7 @@ from pkg_resources import Requirement, resource_filename
 
 from saddle.cartesian import Cartesian
 from saddle.iodata import IOData
-from saddle.periodic import angstrom
+from saddle.periodic.periodic import angstrom
 
 
 class TestCartesian(unittest.TestCase):
