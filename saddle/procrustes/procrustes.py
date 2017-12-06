@@ -1,8 +1,6 @@
-from __future__ import absolute_import, print_function
-
 import numpy as np
 
-from saddle.periodic import periodic
+from saddle.periodic.periodic import periodic
 from saddle.periodic.units import amu
 
 
@@ -44,7 +42,7 @@ class Procrustes(object):
             op = np.outer(co1, co2)
         else:
             op = np.dot(co1.T, co2)
-        u, s, v = np.linalg.svd(op)
+        u, _, v = np.linalg.svd(op)
         # return np.dot(np.dot(u, v), co2.T).T
         return np.dot(co2, np.dot(u, v).T)
 

@@ -2,15 +2,17 @@ from collections import Iterable
 from copy import deepcopy
 
 import numpy as np
+import unittest
+
 from pkg_resources import Requirement, resource_filename
 
 from saddle.iodata import IOData
-from saddle.periodic import periodic
+from saddle.periodic.periodic import periodic
 from saddle.periodic.units import amu
 from saddle.procrustes.procrustes import Procrustes
 
 
-class test_procrustes(object):
+class test_procrustes(unittest.TestCase):
     def test_barycenter(self):
         ori_numbers = np.array([1, 2])
         m1 = periodic[1].mass / amu

@@ -10,7 +10,7 @@ __all__ = ('ridders_solver', 'diagonalize')
 def ridders_solver(func: Callable[[float], float],
                    x1: float,
                    x2: float,
-                   iteration: int = 100,
+                   iteration: int = 500,
                    error: float = 1e-6) -> float:
     """The ridders solver to solver nonlinear equation to find a mathematical
     root for a continuous function. the value of the two end should be of
@@ -66,8 +66,8 @@ def ridders_solver(func: Callable[[float], float],
     raise OverIterLimitError
 
 
-def diagonalize(matrix: 'np.ndarray[Scalar]'
-                ) -> Tuple['np.ndarray[Scalar]', 'np.ndarray[Scalar]']:
+def diagonalize(matrix: 'np.ndarray[Float]'
+                ) -> Tuple['np.ndarray[Float]', 'np.ndarray[Float]']:
     """Orthogonilize a given matrix my Grammian Matrix method
 
     Arguments
