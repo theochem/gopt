@@ -250,36 +250,6 @@ class ReducedInternal(Internal):  # need tests
         self._vspace_gradient = None
         self._vspace_hessian = None
 
-    def energy_from_fchk(self, abs_path, gradient=True, hessian=True):
-        """Abtain Energy and relative information from FCHK file.
-
-        Arguments
-        ---------
-        abs_path : str
-            Absolute path of fchk file in filesystem
-        gradient : bool
-            True if want to obtain gradient information, otherwise False.
-            Default value is True
-        hessian : bool
-            True if want to obtain hessian information, otherwise False.
-            Default value is True
-        """
-        super(ReducedInternal, self).energy_from_fchk(abs_path, gradient,
-                                                      hessian)
-
-    def energy_calculation(self, **kwargs):
-        """Conduct calculation with designated method.
-
-        Keywords Arguments
-        ------------------
-        title : str, default is 'untitled'
-            title of input and out put name without postfix
-        method : str, default is 'g09'
-            name of the program(method) used to calculate energy and other
-            property
-        """
-        super(ReducedInternal, self).energy_calculation(**kwargs)
-
     def update_to_new_structure_with_delta_v(self, delta_v):
         """Update system to a new internal coordinates structure given a
         change in vspace delta_v
