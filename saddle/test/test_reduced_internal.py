@@ -1,7 +1,7 @@
 from copy import deepcopy
 
-import numpy as np
 import unittest
+import numpy as np
 
 from pkg_resources import Requirement, resource_filename
 
@@ -32,6 +32,33 @@ class TestReduceInternal(unittest.TestCase):
         assert self.red_int.vspace.shape == (6, 3)
         self.red_int.auto_select_ic()
         assert self.red_int.vspace.shape == (3, 3)
+        self.red_int.wipe_ic_info(
+            I_am_sure_i_am_going_to_wipe_all_ic_info=True)
+        assert self.red_int._vspace is None
+        assert self.red_int._red_space is None
+        assert self.red_int._non_red_space is None
+        self.red_int.add_bond(0, 1)
+        assert len(self.red_int.ic) == 1
+        self.red_int.add_bond(2, 1)
+        self.red_int.add_angle_cos(0, 1, 2)
+        assert self.red_int.vspace.shape == (3, 3)
+        assert len(self.red_int.ic) == 3
+        self.red_int.add_angle_cos(0, 2, 1)
+        self.red_int.add_angle_cos(1, 0, 2)
+        assert self.red_int.vspace.shape == (3, 3)
+        self.red_int.add_bond(0, 2)
+        self.red_int.delete_ic(0)
+        assert self.red_int.vspace.shape == (3, 3)
+        cache_v = self.red_int.vspace.copy()
+        self.red_int.set_new_coordinates(
+            np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+        assert not np.allclose(cache_v, self.red_int.vspace)
+        cache_v = self.red_int.vspace
+        cache_ic = self.red_int.ic_values.copy()
+        self.red_int.swap_internal_coordinates(0, 1)
+        assert not np.allclose(cache_v, self.red_int.vspace)
+        assert cache_ic[0] == self.red_int.ic_values[1]
+        assert cache_ic[1] == self.red_int.ic_values[0]
 
     def test_property(self):
         assert self.red_int.key_ic_number == 2

@@ -27,6 +27,8 @@ class NotSetError(Exception):
 class AtomsNumberError(Exception):
     pass
 
+class ICNumberError(Exception):
+    pass
 
 class AtomsIndexError(Exception):
     pass

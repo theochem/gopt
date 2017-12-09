@@ -4,6 +4,7 @@ import numpy as np
 
 from saddle.internal import Internal
 from saddle.solver import diagonalize
+from saddle.errors import ICNumberError
 
 __all__ = ('ReducedInternal', )
 
@@ -149,6 +150,11 @@ class ReducedInternal(Internal):  # need tests
         -------
         vspace : np.ndarray(K, 3N - 6)
         """
+        if self.df > len(self.ic):
+            raise ICNumberError(
+                f'''Internal coordinates number {len(self.ic)} is less
+                than the degree freedom of the system {self.df}'''
+            )
         if self._red_space is None or self._non_red_space is None:
             self._generate_reduce_space()
             self._generate_nonreduce_space()
@@ -281,8 +287,12 @@ class ReducedInternal(Internal):  # need tests
         """
         return np.dot(self.vspace, delta_v)
 
-    def _recal_g_and_h(self):
+    def _recal_g_and_h(self) -> None:
         super(ReducedInternal, self)._recal_g_and_h()
+        self._reset_v_space()
+
+    def _clear_ic_info(self) -> None:
+        super(ReducedInternal, self)._clear_ic_info()
         self._reset_v_space()
 
     def _reset_v_space(self):
