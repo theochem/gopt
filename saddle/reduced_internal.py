@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function
-
 from copy import deepcopy
 
 import numpy as np
@@ -238,10 +236,6 @@ class ReducedInternal(Internal):  # need tests
         new_v = np.dot(self.vspace, q_min)
         self.set_vspace(new_v)
 
-    def delete_ic(self, *indices):
-        super(ReducedInternal, self).delete_ic(*indices)
-        self._reset_v_space()
-
     def set_vspace(self, new_vspace):
         """Set vspace of system with given values
 
@@ -255,17 +249,6 @@ class ReducedInternal(Internal):  # need tests
         self._non_red_space = new_vspace[:, self.key_ic_number:]
         self._vspace_gradient = None
         self._vspace_hessian = None
-
-    def set_new_coordinates(self, new_coor):
-        """Assign new cartesian coordinates to this molecule
-
-        Arguments
-        ---------
-        new_coor : np.ndarray(N, 3)
-            New cartesian coordinates of the system
-        """
-        super(ReducedInternal, self).set_new_coordinates(new_coor)
-        self._reset_v_space()
 
     def energy_from_fchk(self, abs_path, gradient=True, hessian=True):
         """Abtain Energy and relative information from FCHK file.
@@ -296,20 +279,6 @@ class ReducedInternal(Internal):  # need tests
             property
         """
         super(ReducedInternal, self).energy_calculation(**kwargs)
-
-    def swap_internal_coordinates(self, index_1, index_2):
-        """Swap two internal coordinates sequence
-
-        Arguments
-        ---------
-        index_1 : int
-            index of the first internal coordinate
-        index_2 : int
-            index of the second internal coordinate
-        """
-        super(ReducedInternal, self).swap_internal_coordinates(
-            index_1, index_2)
-        self._reset_v_space()
 
     def update_to_new_structure_with_delta_v(self, delta_v):
         """Update system to a new internal coordinates structure given a
@@ -342,12 +311,8 @@ class ReducedInternal(Internal):  # need tests
         """
         return np.dot(self.vspace, delta_v)
 
-    def _add_new_internal_coordinate(self, new_ic, d, dd, atoms):  # add reset
-        """Add a new ic object to the system and add corresponding
-        transformation matrix parts
-        """
-        super(ReducedInternal, self)._add_new_internal_coordinate(
-            new_ic, d, dd, atoms)
+    def _recal_g_and_h(self):
+        super(ReducedInternal, self)._recal_g_and_h()
         self._reset_v_space()
 
     def _reset_v_space(self):

@@ -11,8 +11,7 @@ from saddle.reduced_internal import ReducedInternal
 
 
 class TestReduceInternal(unittest.TestCase):
-    @classmethod
-    def setup_class(self):
+    def setUp(self):
         mol_path = resource_filename(
             Requirement.parse('saddle'), 'data/water.xyz')
         mol = IOData.from_file(mol_path)
@@ -24,6 +23,16 @@ class TestReduceInternal(unittest.TestCase):
         self.red_int.add_angle_cos(1, 0, 2)
         self.red_int.set_key_ic_number(2)
 
+    def test_internal_reset_property(self):
+        sample_mol = deepcopy(self.red_int)
+        sample_mol.add_angle_cos(0, 2, 1)
+        assert len(sample_mol.ic) == 6
+        assert self.red_int.vspace.shape == (5, 3)
+        self.red_int.set_new_ics(sample_mol.ic)
+        assert self.red_int.vspace.shape == (6, 3)
+        self.red_int.auto_select_ic()
+        assert self.red_int.vspace.shape == (3, 3)
+
     def test_property(self):
         assert self.red_int.key_ic_number == 2
         assert len(self.red_int.ic) == 5
@@ -31,7 +40,7 @@ class TestReduceInternal(unittest.TestCase):
         assert self.red_int.df == 3
 
     def test_reduce_coordinates(self):
-        mole = deepcopy(self.red_int)
+        mole = self.red_int
         assert np.allclose(mole.ic_values, [
             1.81413724, 1.81413724, 2.96247453, -0.33333407, 0.81649681
         ])

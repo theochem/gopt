@@ -1,4 +1,4 @@
-    # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # PyGopt: Python Geometry Optimization.
 # Copyright (C) 2011-2018 The HORTON/PyGopt Development Team
 #
@@ -631,10 +631,10 @@ class Internal(Cartesian):
         self._internal_gradient = np.dot(
             np.linalg.pinv(self._cc_to_ic_gradient.T), self._energy_gradient)
         # g_q = (B^T)^+ \cdot g_x
-        hes_K = self._energy_hessian - np.tensordot(
+        hes_k = self._energy_hessian - np.tensordot(
             self._internal_gradient, self._cc_to_ic_hessian, axes=1)
         self._internal_hessian = np.dot(
-            np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_K),
+            np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_k),
             np.linalg.pinv(self._cc_to_ic_gradient))
         # self._tilt_internal_hessian = np.dot(
         #   np.dot(
