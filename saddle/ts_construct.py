@@ -9,8 +9,8 @@ from saddle.errors import (AtomsNumberError, InputTypeError,
 from saddle.internal import Internal
 from saddle.iodata import IOData
 from saddle.iodata.xyz import dump_xyz
-from saddle.reduced_internal import ReducedInternal
 from saddle.path_ri import PathRI
+from saddle.reduced_internal import ReducedInternal
 
 __all__ = ('TSConstruct', )
 

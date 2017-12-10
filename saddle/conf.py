@@ -20,8 +20,8 @@
 # --
 "Config file to configure file directory"
 
-import os
 import json
+import os
 
 from pkg_resources import Requirement, resource_filename
 

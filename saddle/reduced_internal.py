@@ -2,9 +2,9 @@ from copy import deepcopy
 
 import numpy as np
 
+from saddle.errors import ICNumberError
 from saddle.internal import Internal
 from saddle.solver import diagonalize
-from saddle.errors import ICNumberError
 
 __all__ = ('ReducedInternal', )
 
@@ -116,14 +116,19 @@ class ReducedInternal(Internal):  # need tests
         Create cartesian instance from file
     """
 
-    def __init__(self, coordinates, numbers, charge, spin, key_ic_number=0):
+    def __init__(self,
+                 coordinates: 'np.ndarray',
+                 numbers: 'np.ndarray',
+                 charge: int,
+                 spin: int,
+                 key_ic_number: int = 0) -> None:
         super(ReducedInternal, self).__init__(coordinates, numbers, charge,
                                               spin)
         self._k_ic_n = key_ic_number
         self._reset_v_space()
 
     @property
-    def df(self):
+    def df(self) -> int:
         """The degree of the system
 
         Returns
@@ -133,7 +138,7 @@ class ReducedInternal(Internal):  # need tests
         return len(self.numbers) * 3 - 6
 
     @property
-    def key_ic_number(self):
+    def key_ic_number(self) -> int:
         """The number of key internal coordinates
 
         Returns
@@ -143,7 +148,7 @@ class ReducedInternal(Internal):  # need tests
         return self._k_ic_n
 
     @property
-    def vspace(self):
+    def vspace(self) -> 'np.ndarray':
         """Vspace transformation matrix from internal to reduced internal
 
         Returns
@@ -153,8 +158,7 @@ class ReducedInternal(Internal):  # need tests
         if self.df > len(self.ic):
             raise ICNumberError(
                 f'''Internal coordinates number {len(self.ic)} is less
-                than the degree freedom of the system {self.df}'''
-            )
+                than the degree freedom of the system {self.df}''')
         if self._red_space is None or self._non_red_space is None:
             self._generate_reduce_space()
             self._generate_nonreduce_space()
@@ -162,7 +166,7 @@ class ReducedInternal(Internal):  # need tests
         return self._vspace
 
     @property
-    def vspace_gradient(self):
+    def vspace_gradient(self) -> 'np.ndarray':
         """Gradient of energy versus reduced internal coordinates
 
         Returns
@@ -175,7 +179,7 @@ class ReducedInternal(Internal):  # need tests
         return self._vspace_gradient
 
     @property
-    def vspace_hessian(self):
+    def vspace_hessian(self) -> 'np.ndarray':
         """Hessian of energy versus reduced internal coordinates
 
         Returns
@@ -187,7 +191,7 @@ class ReducedInternal(Internal):  # need tests
                 np.dot(self.vspace.T, self._internal_hessian), self.vspace)
         return self._vspace_hessian
 
-    def set_key_ic_number(self, number):
+    def set_key_ic_number(self, number: int) -> None:
         """Set the value of key_ic_number of the system
 
         Arguments
@@ -198,8 +202,9 @@ class ReducedInternal(Internal):  # need tests
         assert number >= 0
         self._k_ic_n = number
         self._reset_v_space()
+        return None
 
-    def select_key_ic(self, *indices):
+    def select_key_ic(self, *indices: int) -> None:
         self._k_ic_n = 0
         indices = np.sort(np.array(indices))
         assert len(indices) <= len(self.ic)
@@ -208,6 +213,7 @@ class ReducedInternal(Internal):  # need tests
             self.swap_internal_coordinates(self._k_ic_n, index)
             self._k_ic_n += 1
         self._reset_v_space()
+        return None
 
     @classmethod
     def update_to_reduced_internal(cls, internal_ob, key_ic_number=0):

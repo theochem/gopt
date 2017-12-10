@@ -38,8 +38,9 @@
 
 import csv
 
-from saddle.periodic.units import amu, angstrom
 from pkg_resources import resource_filename
+
+from saddle.periodic.units import amu, angstrom
 
 __all__ = ('periodic', 'Element', 'Periodic')
 

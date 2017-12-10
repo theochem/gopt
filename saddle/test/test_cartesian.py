@@ -1,8 +1,7 @@
+import unittest
 from copy import deepcopy
 
 import numpy as np
-import unittest
-
 from pkg_resources import Requirement, resource_filename
 
 from saddle.cartesian import Cartesian

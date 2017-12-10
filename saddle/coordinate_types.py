@@ -21,6 +21,7 @@
 "Coordinates types for represent internal coordinates."
 
 from typing import Tuple
+
 from saddle.molmod import (bend_angle, bend_cos, bond_length, dihed_cos,
                            dihed_new_cross, dihed_new_dot)
 

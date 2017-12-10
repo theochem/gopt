@@ -72,7 +72,6 @@
 
 from saddle.periodic.constants import avogadro
 
-
 # *** Generic ***
 au = 1.0
 
