@@ -345,7 +345,7 @@ class Internal(Cartesian):
         super(Internal, self).energy_from_fchk(abs_path, gradient, hessian)
         self._energy_hessian_transformation()
 
-    def energy_calculation(self, *_, title: str, method: str) -> None:
+    def energy_calculation(self, *_, method: str = 'g09') -> None:
         """Conduct calculation with designated method.
 
         Keywords Arguments
@@ -356,7 +356,7 @@ class Internal(Cartesian):
             name of the program(method) used to calculate energy and other
             property
         """
-        super(Internal, self).energy_calculation(title=title, method=method)
+        super(Internal, self).energy_calculation(method=method)
         self._energy_hessian_transformation()
         return None
         # h_q = (B^T)^+ \cdot (H_x - K) \cdot B^+

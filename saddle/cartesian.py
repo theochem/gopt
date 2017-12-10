@@ -20,6 +20,8 @@
 # --
 "Cartesian coordinates implementation"
 
+from secrets import token_hex
+
 import numpy as np
 import numpy.linalg as npl
 
@@ -82,12 +84,15 @@ class Cartesian:
                  numbers: 'np.ndarray[int]',
                  charge: int,
                  spin: int,
-                 title: str = "untitled") -> None:
+                 title: str = "") -> None:
         self._coordinates = coordinates.copy()
         self._numbers = numbers.copy()
         self._charge = charge
         self._spin = spin
-        self._title = title
+        if title:
+            self._title = title
+        else:
+            self._title = f'untitled_{token_hex(3)}'
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None
@@ -257,8 +262,7 @@ class Cartesian:
             self._energy_hessian = fchk_file.get_hessian()
         return None
 
-    def energy_calculation(self, *_, method: str = 'g09',
-                           title: str) -> None:  # need test
+    def energy_calculation(self, *_, method: str = 'g09') -> None:  # need test
         """Conduct calculation with designated method.
 
         Keywords Arguments

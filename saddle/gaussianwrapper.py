@@ -50,12 +50,11 @@ class GaussianWrapper(object):
         energy = kwargs.pop('energy', True)
         gradient = kwargs.pop('gradient', False)
         hessian = kwargs.pop('hessian', False)
+        freq = ""
         if kwargs:
             raise TypeError('Unexpected **kwargs: %r' % kwargs)
         if gradient or hessian:
             freq = "freq"
-        else:
-            freq = ""
         filename = self._create_input_file(charge, multi, freq=freq)
         # print "gausian is going to run \n{} \n{} \n{}".format(charge, multi,
         #   self.molecule.ic)

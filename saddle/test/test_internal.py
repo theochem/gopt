@@ -20,6 +20,10 @@ class TestInternal(unittest.TestCase):
     def test_connectivity(self):
         assert np.allclose(self.mol.connectivity, np.eye(3) * -1)
 
+    def test_file_title(self):
+        new_mol = Internal(self.mol.coordinates, self.mol.numbers, 0, 1)
+        assert len(new_mol._title) == 15
+
     def test_add_bond(self):
         init_con = np.eye(3) * -1
         assert np.allclose(self.mol.connectivity, init_con)
