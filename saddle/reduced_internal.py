@@ -284,7 +284,8 @@ class ReducedInternal(Internal):  # need tests
         self._reset_v_space()
         return None
 
-    def _get_delta_ic_from_delta_v(self, delta_v: 'np.ndarray') -> 'np.ndarray':
+    def _get_delta_ic_from_delta_v(self,
+                                   delta_v: 'np.ndarray') -> 'np.ndarray':
         """Calculate corresponding change in internal coordinates given a
         change in vspace coordinates
 
