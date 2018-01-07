@@ -471,6 +471,8 @@ class Internal(Cartesian):
         """
         return self._internal_gradient
 
+    q_gradient = internal_gradient
+
     def print_connectivity(self) -> None:
         """Print the connectivity matrix on screen
         """
