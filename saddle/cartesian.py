@@ -134,8 +134,6 @@ class Cartesian:
         else:
             return self._energy_gradient
 
-    x_gradient = energy_gradient
-
     @property
     def energy_hessian(self) -> 'np.ndarray[float]':
         """Hessian of energy versus internal coordinates
@@ -149,8 +147,6 @@ class Cartesian:
                 "The value 'energy_hessian' is None, do the calculation first")
         else:
             return self._energy_hessian
-
-    x_hessian = energy_hessian
 
     @property
     def energy(self) -> float:

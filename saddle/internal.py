@@ -630,18 +630,25 @@ class Internal(Cartesian):
             H_q = B_T^+ (H_x - K) B^+ + K, where
             K = g_q b^\\prime
         """
+        self._gradient_transform()
+        self._hessian_transform()
+        # self._tilt_internal_hessian = np.dot(
+        #   np.dot(
+        #     np.linalg.pinv(self._cc_to_ic_gradient.T),
+        #     self._energy_hessian), np.linalg.pinv(self._cc_to_ic_gradient))
+        return None
+
+    def _gradient_transform(self) -> None:
         self._internal_gradient = np.dot(
             np.linalg.pinv(self._cc_to_ic_gradient.T), self._energy_gradient)
-        # g_q = (B^T)^+ \cdot g_x
+        return None
+
+    def _hessian_transform(self) -> None:
         hes_k = self._energy_hessian - np.tensordot(
             self._internal_gradient, self._cc_to_ic_hessian, axes=1)
         self._internal_hessian = np.dot(
             np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_k),
             np.linalg.pinv(self._cc_to_ic_gradient))
-        # self._tilt_internal_hessian = np.dot(
-        #   np.dot(
-        #     np.linalg.pinv(self._cc_to_ic_gradient.T),
-        #     self._energy_hessian), np.linalg.pinv(self._cc_to_ic_gradient))
         return None
 
     def _regenerate_ic(self) -> None:

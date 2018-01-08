@@ -4,18 +4,19 @@ from numpy import dot, outer, cross
 from saddle.optimizer.errors import UpdateError
 
 
-
 def simple_rank_one(hes, *_, sec_y, step):
     _verify_type(hes, sec_y, step)
     p1 = sec_y - dot(hes, step)
     numer = dot(p1, step)**2
     denor = norm(p1)**2 * norm(step)**2
-    if denor == 0 or numer / denor <= 1e-18: # in case zero division
+    if denor == 0 or numer / denor <= 1e-18:  # in case zero division
         return hes.copy()
     update_h = hes + outer(p1, p1) / dot(p1, step)
     return update_h
 
+
 sr1 = simple_rank_one
+
 
 def powell_symmetric_broyden(hes, *_, sec_y, step):
     if np.allclose(norm(step), 0):
@@ -26,7 +27,9 @@ def powell_symmetric_broyden(hes, *_, sec_y, step):
     p3 = (dot(step, p_x) / dot(step, step)**2) * outer(step, step)
     return hes + p2 - p3
 
+
 psb = powell_symmetric_broyden
+
 
 def broyden_fletcher(hes, *_, sec_y, step):
     bind = dot(hes, step)
@@ -34,7 +37,9 @@ def broyden_fletcher(hes, *_, sec_y, step):
     p3 = outer(bind, bind) / dot(step, bind)
     return hes + p2 - p3
 
+
 bfgs = broyden_fletcher
+
 
 def bofill(hes, *_, sec_y, step):
     p_x = sec_y - dot(hes, step)
@@ -43,7 +48,7 @@ def bofill(hes, *_, sec_y, step):
     ratio = numer / denor
     sr1_r = sr1(hes, sec_y=sec_y, step=step)
     psb_r = psb(hes, sec_y=sec_y, step=step)
-    return (1-ratio) * sr1_r + ratio * psb_r
+    return (1 - ratio) * sr1_r + ratio * psb_r
 
 
 def _verify_type(old_hessian, secant, step) -> None:
