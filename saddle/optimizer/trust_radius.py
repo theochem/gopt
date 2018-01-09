@@ -1,0 +1,41 @@
+import numpy as np
+
+from saddle.solver import ridders_solver
+
+
+def trust_region_image_potential(hessian, gradient, stepsize, *_, negative, start=1):
+    assert stepsize > 0
+    val, vectors = np.linalg.eigh(hessian)
+
+    def value_func(lamd):
+        values = val.copy()
+        values[:negative] -= lamd
+        values[negative:] += lamd
+        assert all(values != 0)
+        n_v = 1. / values
+        new_h = np.dot(vectors, np.dot(np.diag(n_v), vectors.T))
+        return -np.dot(new_h, gradient)
+
+    def value_compare(lamd):
+        step = value_func(lamd)
+        return stepsize - np.linalg.norm(step)
+
+    if value_compare(0) >= 0: # inital case
+        return value_func(0)
+    start_value = start
+    if value_compare(start_value) >= 0: # initial iteration case
+        answer = ridders_solver(value_compare, 0, start_value)
+        # print(answer)
+        return value_func(answer)
+    while value_compare(start_value) < 0:
+        # print(start_value, value_compare(start_value))
+        start_value *= 2
+        if value_compare(start_value) >= 0:
+            answer = ridders_solver(value_compare, start_value / 2, start_value)
+            # print(answer)
+            return value_func(answer)
+
+trim = trust_region_image_potential
+
+def rational_functional_optimization(hessian, gradient, stepsize, *_, negative):
+    pass
