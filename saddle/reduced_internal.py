@@ -178,6 +178,8 @@ class ReducedInternal(Internal):  # need tests
                                            self._internal_gradient)
         return self._vspace_gradient
 
+    v_gradient = vspace_gradient
+
     @property
     def vspace_hessian(self) -> 'np.ndarray':
         """Hessian of energy versus reduced internal coordinates

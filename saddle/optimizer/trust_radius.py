@@ -3,15 +3,16 @@ import numpy as np
 from saddle.solver import ridders_solver
 
 
-def trust_region_image_potential(hessian, gradient, stepsize, *_, negative, start=1):
+def trust_region_image_potential(hessian, gradient, stepsize, *_, start=1.):
     assert stepsize > 0
     val, vectors = np.linalg.eigh(hessian)
+    negative = np.sum([val < 0])
 
     def value_func(lamd):
         values = val.copy()
         values[:negative] -= lamd
         values[negative:] += lamd
-        assert all(values != 0)
+        assert np.all(values != 0)
         n_v = 1. / values
         new_h = np.dot(vectors, np.dot(np.diag(n_v), vectors.T))
         return -np.dot(new_h, gradient)
@@ -37,5 +38,5 @@ def trust_region_image_potential(hessian, gradient, stepsize, *_, negative, star
 
 trim = trust_region_image_potential
 
-def rational_functional_optimization(hessian, gradient, stepsize, *_, negative):
+def rational_functional_optimization(hessian, gradient, stepsize):
     pass

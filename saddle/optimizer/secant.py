@@ -2,7 +2,7 @@ import numpy as np
 
 
 def secant(new_ob, old_ob):  # need tests
-    delta_g = new_ob.vspace_gradient - old_ob.vspace_gradient
+    delta_g = new_ob.v_gradient - old_ob.v_gradient
     delta_v = new_ob.vspace - old_ob.vspace
     delta_b = new_ob.b_matrix - old_ob.b_matrix
     part1 = np.dot(np.dot(new_ob.b_matrix.T, delta_v),
