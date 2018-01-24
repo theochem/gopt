@@ -31,6 +31,12 @@ class TestHessianModify(TestCase):
         values = np.linalg.eigh(modified_m)[0]
         assert np.allclose(values, [0.1, 0.3, 0.5, 0.7, 0.9])
 
+        values = np.arange(-0.1, 0.8, 0.2)
+        new_matrix = np.dot(np.dot(vectors, np.diag(values)), vectors.T)
+        modified_m = modify_hessian(new_matrix, neg_num=0, key_ic=5)
+        values = np.linalg.eigh(modified_m)[0]
+        assert np.allclose(values, [0.05, 0.1, 0.3, 0.5, 0.7])
+
         values = np.arange(0.01, 0.1, 0.02)
         new_matrix = np.dot(np.dot(vectors, np.diag(values)), vectors.T)
         modified_m = modify_hessian(new_matrix, neg_num=0, key_ic=0)
@@ -81,6 +87,12 @@ class TestHessianModify(TestCase):
                            ])**2)
         assert np.allclose(values, [-0.05, 2, 3, 4, 5])
 
+        values = np.arange(1, 6)
+        new_matrix = np.dot(np.dot(vectors, np.diag(values)), vectors.T)
+        modified_m = modify_hessian(new_matrix, neg_num=1, key_ic=5)
+        values, _ = np.linalg.eigh(modified_m)
+        assert np.allclose(values, [-0.05, 2, 3, 4, 5])
+
     def test_multi_neg(self):
         _, vectors = np.linalg.eigh(self.herm)
         values = np.array([-1, -2, -3, -4, -5])
@@ -129,7 +141,7 @@ class TestHessianModify(TestCase):
         result_mat = modify_hessian_with_pos_defi(init_matrix, 2, 2)
         values = np.linalg.eigh(result_mat)[0]
         assert np.allclose(values, [
-            -1.72157269, -0.45498585, 0.05726128, 1.11660122, 1.55024927
+            -1.72157269, -0.58111273, 0.05608666, 1.08553661, 1.5250358
         ])
 
         np.random.seed(133)
