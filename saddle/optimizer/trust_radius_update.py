@@ -41,4 +41,4 @@ def gradient_based_update(o_gradient, o_hessian, n_gradient, step, dof, *_,
         print(2)
         return max(step_size, min_s)
     print(3)
-    return min(1 / 2 * step_size, min_s)
+    return min(0.25 * step_size, min_s)

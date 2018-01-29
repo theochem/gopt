@@ -29,7 +29,8 @@ class test_update_trust_radius(TestCase):
         ratio = est_diff / diff
         assert ratio - 0.6666666666 < 1e-7
         stepsize = np.linalg.norm(step)
-        new_stepsize = energy_based_update(o_g, o_h, step, diff, min_s=1, max_s=5)
+        new_stepsize = energy_based_update(
+            o_g, o_h, step, diff, min_s=1, max_s=5)
         assert new_stepsize == stepsize  # condition 2
 
         # assert new_stepsize == 5
@@ -43,15 +44,16 @@ class test_update_trust_radius(TestCase):
         assert np.allclose(o_g, np.array([420, 398]))
         assert np.allclose(o_h, np.array([[72, 38], [38, 72]]))
         stepsize = np.linalg.norm(step)
-        new_stepsize = energy_based_update(o_g, o_h, step, diff, min_s=2, max_s=5)
+        new_stepsize = energy_based_update(
+            o_g, o_h, step, diff, min_s=2, max_s=5)
         assert new_stepsize == 2 * stepsize
 
         step = np.array((-6, -6))
         stepsize = np.linalg.norm(step)
         diff = self.func(*(init + step)) - self.func(*init)
-        new_stepsize = energy_based_update(o_g, o_h, step, diff, min_s=2, max_s=10)
+        new_stepsize = energy_based_update(
+            o_g, o_h, step, diff, min_s=2, max_s=10)
         assert new_stepsize == stepsize
-
 
     def test_gradient_update(self):
         init = np.array((8, 6))
@@ -63,8 +65,24 @@ class test_update_trust_radius(TestCase):
         diff = n_g - o_g
         assert np.allclose(o_g, np.array([420, 398]))
         assert np.allclose(n_g, np.array([258, 264]))
+        assert np.allclose(o_h, np.array([[72, 38], [38, 72]]))
         assert np.allclose(diff, [-162, -134])
         pre_g = o_g + np.dot(o_h, step)
         assert np.allclose(pre_g, [238, 250])
-        new_stepsize = gradient_based_update(o_g, o_h, n_g, step, dof=3, min_s=1, max_s=5)
+        new_stepsize = gradient_based_update(
+            o_g, o_h, n_g, step, dof=3, min_s=1, max_s=5)
         assert new_stepsize == 2 * stepsize
+
+        step = list(map(int, (-np.dot(np.linalg.pinv(o_h), o_g))))
+        stepsize = np.linalg.norm(step)
+        assert np.allclose(step, [-4, -3])
+        assert stepsize == 5  # step == [-4, -3]
+        n_g = self.gradient(*(init + step))
+        assert np.allclose(n_g, [114, 116])
+        diff = n_g - o_g
+        assert np.allclose(diff, [-306, -282])
+        pre_g = o_g + np.dot(o_h, step)
+        assert np.allclose(pre_g, [18, 30])
+        new_stepsize = gradient_based_update(
+            o_g, o_h, n_g, step, dof=3, min_s=1, max_s=5)
+        assert new_stepsize == 5
