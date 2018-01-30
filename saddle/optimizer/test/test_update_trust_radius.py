@@ -1,8 +1,11 @@
 import numpy as np
 
 from unittest import TestCase
-from saddle.optimizer.trust_radius_update import (energy_based_update,
-                                                  gradient_based_update)
+from saddle.optimizer.update_trust_radius import UpdateStep
+
+# function alias
+energy_based_update = UpdateStep.energy_based_update
+gradient_based_update = UpdateStep.gradient_based_update
 
 
 class test_update_trust_radius(TestCase):
@@ -70,7 +73,7 @@ class test_update_trust_radius(TestCase):
         pre_g = o_g + np.dot(o_h, step)
         assert np.allclose(pre_g, [238, 250])
         new_stepsize = gradient_based_update(
-            o_g, o_h, n_g, step, dof=3, min_s=1, max_s=5)
+            o_g, o_h, n_g, step, df=3, min_s=1, max_s=5)
         assert new_stepsize == 2 * stepsize
 
         step = list(map(int, (-np.dot(np.linalg.pinv(o_h), o_g))))
@@ -84,5 +87,5 @@ class test_update_trust_radius(TestCase):
         pre_g = o_g + np.dot(o_h, step)
         assert np.allclose(pre_g, [18, 30])
         new_stepsize = gradient_based_update(
-            o_g, o_h, n_g, step, dof=3, min_s=1, max_s=5)
+            o_g, o_h, n_g, step, df=3, min_s=1, max_s=5)
         assert new_stepsize == 5

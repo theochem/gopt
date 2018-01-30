@@ -39,4 +39,10 @@ def trust_region_image_potential(hessian, gradient, stepsize, *_, start=1.):
 trim = trust_region_image_potential
 
 def rational_functional_optimization(hessian, gradient, stepsize):
-    pass
+    raise NotImplementedError
+
+
+trust_radius_methods = {
+    "trim": trim,
+    "rfo": rational_functional_optimization,
+}

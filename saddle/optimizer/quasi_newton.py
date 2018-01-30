@@ -55,3 +55,10 @@ def _verify_type(old_hessian, secant, step) -> None:
     assert old_hessian.ndim == 2
     assert secant.ndim == 1
     assert step.ndim == 1
+
+quasi_newton_methods = {
+    'sr1': sr1,
+    'psb': psb,
+    'bfgs': bfgs,
+    'bofill': bofill,
+}

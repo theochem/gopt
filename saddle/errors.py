@@ -20,6 +20,7 @@
 # --
 "Custom Exception types"
 
+
 class NotSetError(Exception):
     pass
 
@@ -27,8 +28,10 @@ class NotSetError(Exception):
 class AtomsNumberError(Exception):
     pass
 
+
 class ICNumberError(Exception):
     pass
+
 
 class AtomsIndexError(Exception):
     pass
@@ -51,4 +54,8 @@ class InvalidArgumentError(Exception):
 
 
 class OverIterLimitError(Exception):
+    pass
+
+
+class InvalidInputError(Exception):
     pass
