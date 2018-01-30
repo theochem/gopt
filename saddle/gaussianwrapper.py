@@ -116,13 +116,13 @@ class GaussianWrapper(object):
         os.system("{0} {1}.com".format(command_bin, filename))
         if fchk:
             logname = "{0}.log".format(filename)
-            if os.path.isfile(
-                    os.path.join(path, logname)) and self._log_finish_test(
-                        os.path.join(path, logname)):
+            if os.path.isfile(os.path.join(path,
+                                           logname)) and self._log_finish_test(
+                                               os.path.join(path, logname)):
                 os.system("formchk {0}.chk {0}.fchk".format(
                     os.path.join(path, filename)))
-                fchk_ob = FCHKFile(
-                    "{0}.fchk".format(os.path.join(path, filename)))
+                fchk_ob = FCHKFile("{0}.fchk".format(
+                    os.path.join(path, filename)))
         # os.chdir(os.path.join(self.pwd, '..'))
         # print("change_back", self.pwd)
         return fchk_ob

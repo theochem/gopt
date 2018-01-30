@@ -327,6 +327,7 @@ class Internal(Cartesian):
 
     def energy_from_fchk(self,
                          abs_path: str,
+                         *_,
                          gradient: bool = True,
                          hessian: bool = True):
         """Abtain Energy and relative information from FCHK file.

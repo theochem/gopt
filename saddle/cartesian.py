@@ -235,6 +235,20 @@ class Cartesian:
         """
         return len(self.numbers)
 
+    @property
+    def df(self) -> int:
+        """The degree of the system
+
+        Returns
+        -------
+        df : int
+        """
+        if self.natom <= 1:
+            raise AtomsNumberError
+        elif self.natom == 2:
+            return 1
+        return self.natom * 3 - 6
+
     def energy_from_fchk(self,
                          abs_path: str,
                          *_,

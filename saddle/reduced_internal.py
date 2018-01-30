@@ -128,16 +128,6 @@ class ReducedInternal(Internal):  # need tests
         self._reset_v_space()
 
     @property
-    def df(self) -> int:
-        """The degree of the system
-
-        Returns
-        -------
-        df : int
-        """
-        return len(self.numbers) * 3 - 6
-
-    @property
     def key_ic_number(self) -> int:
         """The number of key internal coordinates
 
