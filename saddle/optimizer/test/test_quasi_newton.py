@@ -1,7 +1,12 @@
 import numpy as np
 import unittest
 
-from saddle.optimizer.quasi_newton import bfgs, psb, sr1, bofill
+from saddle.optimizer.quasi_newton import QuasiNT
+bfgs = QuasiNT.bfgs
+psb = QuasiNT.psb
+sr1 = QuasiNT.sr1
+bofill = QuasiNT.bofill
+# , psb, sr1, bofill
 
 
 class TestInternal(unittest.TestCase):
