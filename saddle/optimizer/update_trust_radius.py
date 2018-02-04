@@ -1,6 +1,5 @@
 import numpy as np
 
-from saddle.errors import InvalidInputError
 from saddle.optimizer.path_point import PathPoint
 
 norm = np.linalg.norm
@@ -10,12 +9,12 @@ class UpdateStep:
     def __init__(self, method_name):
         if method_name in UpdateStep._methods_dict.keys():
             self._name = method_name
-        raise InvalidInputError(f'{method_name} is not a valid name')
+        raise ValueError(f'{method_name} is not a valid name')
         self._update_fcn = UpdateStep._methods_dict[method_name]
 
     def update_step(self, old, new):
-        assert isinstance(old, PathPoint)
-        assert isinstance(new, PathPoint)
+        if not isinstance(old, PathPoint) or not isinstance(new, PathPoint):
+            raise TypeError("Improper input type for {old} or {new}")
         number_atoms = (old.df + 6) / 3
         max_s = np.sqrt(number_atoms)
         min_s = 0.1 * np.sqrt(number_atoms)
@@ -50,7 +49,6 @@ class UpdateStep:
                               min_s, max_s, **kwargs):
         step_size = np.linalg.norm(step)
         g_predict = o_gradient + np.dot(o_hessian, step)
-        print(g_predict)
         rho = (norm(g_predict) - norm(o_gradient)) / (
             norm(n_gradient) - norm(o_gradient))
         diff_pred = g_predict - o_gradient
@@ -63,7 +61,6 @@ class UpdateStep:
             new_step = 2 * step_size
             return min(max(new_step, min_s), max_s)
         if 0.2 < rho < 6 and p40 < cosine:
-            print(2)
             return max(step_size, min_s)
         return min(0.25 * step_size, min_s)
 

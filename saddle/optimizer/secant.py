@@ -1,5 +1,7 @@
 import numpy as np
 
+from saddle.optimizer.path_point import PathPoint
+
 
 def secant(new_ob, old_ob):  # need tests
     delta_g = new_ob.v_gradient - old_ob.v_gradient

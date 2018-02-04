@@ -1,3 +1,5 @@
+import numpy as np
+
 from saddle.errors import NotSetError
 
 class PathPoint:
@@ -45,6 +47,14 @@ class PathPoint:
         if self._mod_hessian:
             return self._mod_hessian
         return self.raw_hessian
+
+    @v_hessian.setter
+    def v_hessian(self, value):
+        if self._mod_hessian.shape != value.shape:
+            raise ValueError("The shape of input is not valid")
+        if np.allclose(value, value.T):
+            raise ValueError("The input Hessian is not hermitian")
+        self._mod_hessian = value
 
     @property
     def df(self):

@@ -2,9 +2,22 @@ import numpy as np
 from numpy.linalg import norm
 from numpy import dot, outer, cross
 from saddle.optimizer.errors import UpdateError
-
+from saddle.optimizer.secant import secant
+from saddle.optimizer.path_point import PathPoint
 
 class QuasiNT:
+
+    def __init__(self, method_name):
+        if method_name in QuasiNT._methods_dict:
+            self._name = method_name
+        raise ValueError(f'{method_name} is not a valid name')
+        self._update_fcn = QuasiNT._methods_dict[method_name]
+
+    def update_hessian(self, old, new):
+        if not isinstance(old, PathPoint) or not isinstance(new, PathPoint):
+            raise TypeError("Improper input type for {old} or {new}")
+        sec = secant(old, new)
+        return self._update_fcn(old.v_hessian, sec_y=sec, step=old.step)
 
     @staticmethod
     def simple_rank_one(hes, *_, sec_y, step):

@@ -59,3 +59,6 @@ class OverIterLimitError(Exception):
 
 class InvalidInputError(Exception):
     pass
+
+class OptError(Exception):
+    pass
