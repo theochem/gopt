@@ -44,7 +44,7 @@ class PathPoint:
 
     @property
     def v_hessian(self):
-        if self._mod_hessian:
+        if self._mod_hessian is not None:
             return self._mod_hessian
         return self.raw_hessian
 
@@ -66,18 +66,17 @@ class PathPoint:
 
     @property
     def step(self):
-        if self._step:
+        if self._step is not None:
             return self._step
         raise NotSetError
 
     @step.setter
     def step(self, value):
-        assert value > 0
         self._step = value
 
     @property
     def stepsize(self):
-        if self._stepsize:
+        if self._stepsize is not None:
             return self._stepsize
         raise NotSetError
 

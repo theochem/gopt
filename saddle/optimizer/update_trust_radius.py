@@ -7,9 +7,9 @@ norm = np.linalg.norm
 
 class UpdateStep:
     def __init__(self, method_name):
-        if method_name in UpdateStep._methods_dict.keys():
-            self._name = method_name
-        raise ValueError(f'{method_name} is not a valid name')
+        if method_name not in UpdateStep._methods_dict.keys():
+            raise ValueError(f'{method_name} is not a valid name')
+        self._name = method_name
         self._update_fcn = UpdateStep._methods_dict[method_name]
 
     def update_step(self, old, new):

@@ -4,6 +4,8 @@ from saddle.optimizer.path_point import PathPoint
 
 
 def secant(new_ob, old_ob):  # need tests
+    assert isinstance(new_ob, PathPoint)
+    assert isinstance(old_ob, PathPoint)
     delta_g = new_ob.v_gradient - old_ob.v_gradient
     delta_v = new_ob.vspace - old_ob.vspace
     delta_b = new_ob.b_matrix - old_ob.b_matrix

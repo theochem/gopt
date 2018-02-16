@@ -3,6 +3,7 @@ import unittest
 
 from saddle.reduced_internal import ReducedInternal
 from saddle.optimizer.secant import secant
+from saddle.optimizer.path_point import PathPoint
 from pkg_resources import Requirement, resource_filename
 from saddle.iodata import IOData
 
@@ -31,18 +32,21 @@ class TestSecant(unittest.TestCase):
         self.old_ob._gradient_transform()
         self.new_ob._energy_gradient = np.random.rand(9)
         self.new_ob._gradient_transform()
+        self.oldp = PathPoint(self.old_ob)
+        self.newp = PathPoint(self.new_ob)
+
 
     def test_secant_condition(self):
-        result = secant(self.new_ob, self.old_ob)
+        result = secant(self.newp, self.oldp)
 
         # separate calculation
-        part1 = self.new_ob.vspace_gradient - self.old_ob.vspace_gradient
-        part2 = np.dot(self.new_ob.vspace.T,
-                       np.linalg.pinv(self.new_ob.b_matrix.T))
-        part3 = np.dot(self.new_ob.b_matrix.T,
-                       np.dot((self.new_ob.vspace - self.old_ob.vspace),
-                              self.new_ob.vspace_gradient))
-        part4 = np.dot((self.new_ob.b_matrix - self.old_ob.b_matrix).T,
-                       self.new_ob.q_gradient)
+        part1 = self.newp.v_gradient - self.oldp.v_gradient
+        part2 = np.dot(self.newp.vspace.T,
+                       np.linalg.pinv(self.newp.b_matrix.T))
+        part3 = np.dot(self.newp.b_matrix.T,
+                       np.dot((self.newp.vspace - self.oldp.vspace),
+                              self.newp.v_gradient))
+        part4 = np.dot((self.newp.b_matrix - self.oldp.b_matrix).T,
+                       self.newp.q_gradient)
         final = part1 - np.dot(part2, (part3 + part4))
         assert np.allclose(result, final)
