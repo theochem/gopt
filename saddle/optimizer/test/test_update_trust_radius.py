@@ -1,7 +1,9 @@
 import numpy as np
 
 from unittest import TestCase
+from numpy.testing import assert_raises
 from saddle.optimizer.update_trust_radius import UpdateStep
+from saddle.optimizer.path_point import PathPoint
 
 # function alias
 energy_based_update = UpdateStep.energy_based_update
@@ -89,3 +91,53 @@ class test_update_trust_radius(TestCase):
         new_stepsize = gradient_based_update(
             o_g, o_h, n_g, step, df=3, min_s=1, max_s=5)
         assert new_stepsize == 5
+
+    def _set_path_points(self):
+        class Other(PathPoint):
+            def __init__(self):
+                pass
+
+            @property
+            def df(self):
+                return 1
+
+
+        class Attr:
+            pass
+
+        self.p1 = Other()
+        self.p2 = Other()
+        start_point = np.array([2, 1])
+        self.p1._instance = Attr()
+        self.p2._instance = Attr()
+
+        self.p1._instance.energy = self.func(*start_point)
+        print(self.p1.energy)
+        self.p1._instance.b_matrix = np.eye(2)
+        self.p1._instance.vspace = np.eye(2)
+        self.p1._instance.v_gradient = self.gradient(*start_point)
+        self.p1._instance.q_gradient = self.p1._instance.v_gradient
+        self.p1._instance.x_gradient = self.p1._instance.v_gradient
+        self.p1._instance._df = self.p1
+        self.p1._mod_hessian = self.hessian(*start_point)
+        self.p1._step = np.array([-1, 1])
+
+        new_point = np.array([1, 2])
+        self.p2._instance.energy = self.func(*new_point)
+        self.p2._instance.b_matrix = np.eye(2)
+        self.p2._instance.vspace = np.eye(2)
+        self.p2._instance.v_gradient = self.gradient(*new_point)
+        self.p2._instance.q_gradient = self.p2._instance.v_gradient
+        self.p2._instance.x_gradient = self.p2._instance.v_gradient
+
+    def test_update_object(self):
+        self._set_path_points()
+        with assert_raises(ValueError):
+            energy_ob = UpdateStep('gibberish')
+        energy_ob = UpdateStep('energy')
+        new_step = energy_ob.update_step(old=self.p1, new=self.p2)
+        stepsize = np.linalg.norm(np.sqrt(2))
+        assert np.allclose(new_step, stepsize)
+        gradient_ob = UpdateStep('gradient')
+        new_step = gradient_ob.update_step(old=self.p1, new=self.p2)
+        assert np.allclose(new_step, 0.25 * stepsize)

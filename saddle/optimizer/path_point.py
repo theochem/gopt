@@ -58,7 +58,7 @@ class PathPoint:
 
     @property
     def df(self):
-        return self.df
+        return self._instance.df
 
     @property
     def raw_hessian(self):

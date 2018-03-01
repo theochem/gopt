@@ -1,5 +1,6 @@
 import numpy as np
-import unittest
+
+from unittest import TestCase
 from numpy.testing import assert_raises
 
 from saddle.optimizer.quasi_newton import QuasiNT
@@ -8,10 +9,10 @@ bfgs = QuasiNT.bfgs
 psb = QuasiNT.psb
 sr1 = QuasiNT.sr1
 bofill = QuasiNT.bofill
+
 # , psb, sr1, bofill
 
-
-class TestInternal(unittest.TestCase):
+class TestInternal(TestCase):
 
     # def setUp(self):
     #     self.sample_fcn = lambda x, y: x**2 + x*y + 2*y**2
@@ -49,8 +50,10 @@ class TestInternal(unittest.TestCase):
         class Other(PathPoint):
             def __init__(self):
                 pass
+
         class Attr:
             pass
+
         self.p1 = Other()
         self.p2 = Other()
         start_point = np.array([2, 1])

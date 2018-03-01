@@ -22,7 +22,7 @@ class UpdateStep:
             'o_gradient': old.v_gradient,
             'o_hessian': old.v_hessian,
             'step': old.step,
-            'diff_energy': new.energe - old.energy,
+            'diff_energy': new.energy - old.energy,
             'n_gradient': new.v_gradient,
             'df': old.df,
             'max_s': max_s,
@@ -42,7 +42,7 @@ class UpdateStep:
             return min(max(new_step_size, min_s), max_s)
         if 0.3333 < ratio < 3:
             return max(step_size, min_s)
-        return min(0.25 * step_size, min_s)
+        return max(0.25 * step_size, min_s)
 
     @staticmethod
     def gradient_based_update(o_gradient, o_hessian, n_gradient, step, df, *_,
@@ -62,9 +62,9 @@ class UpdateStep:
             return min(max(new_step, min_s), max_s)
         if 0.2 < rho < 6 and p40 < cosine:
             return max(step_size, min_s)
-        return min(0.25 * step_size, min_s)
+        return max(0.25 * step_size, min_s)
 
     _methods_dict = {
-        'energy': energy_based_update,
-        'gradient': gradient_based_update,
+        'energy': energy_based_update.__func__,
+        'gradient': gradient_based_update.__func__,
     }
