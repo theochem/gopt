@@ -82,3 +82,9 @@ class PathPoint:
 
     def __repr__(self):
         return f"PathPoint object"
+
+    def run_calculation(self, *_, method):
+        self._instance.energy_calculation(method)
+
+    def update_coordinates_with_delta_v(self, step_v):
+        self._instance.update_coordinates_with_delta_v(step_v)

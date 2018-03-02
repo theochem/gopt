@@ -285,20 +285,23 @@ class Cartesian:
             name of the program(method) used to calculate energy and other
             property
         """
+        if method == 'g09':
+            self._gaussian_calculation()
+        else:
+            raise ValueError('input method is not support')
+        return None
+
+    def _gaussian_calculation(self, **kwargs):
+        "low level function for run gaussian and obtain energy"
         # method = kwargs.pop('method', 'g09')  # get calculation method arg
         title = self._title
-        if method == "g09":
-            obj = GaussianWrapper(self, title)
-            coor, ener, grad, hess = obj.run_gaussian_and_get_result(
-                self.charge,
-                self.spin,
-                energy=True,
-                gradient=True,
-                hessian=True)
-            self.set_new_coordinates(coor.reshape(-1, 3))
-            self._energy = ener
-            self._energy_gradient = grad
-            self._energy_hessian = hess
+        obj = GaussianWrapper(self, title)
+        coor, ener, grad, hess = obj.run_gaussian_and_get_result(
+            self.charge, self.spin, energy=True, gradient=True, hessian=True)
+        self.set_new_coordinates(coor.reshape(-1, 3))
+        self._energy = ener
+        self._energy_gradient = grad
+        self._energy_hessian = hess
         return None
 
         # set new coordinates after rotation

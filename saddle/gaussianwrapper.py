@@ -45,14 +45,8 @@ class GaussianWrapper(object):
             self.template = Template(f.read())
         self.title = title
 
-    def run_gaussian_and_get_result(self, charge, multi, **kwargs):
-        coordinates = kwargs.pop('coordinates', True)
-        energy = kwargs.pop('energy', True)
-        gradient = kwargs.pop('gradient', False)
-        hessian = kwargs.pop('hessian', False)
+    def run_gaussian_and_get_result(self, charge, multi, *_, coordinates=True, energy=True, gradient=False, hessian=False):
         freq = ""
-        if kwargs:
-            raise TypeError('Unexpected **kwargs: %r' % kwargs)
         if gradient or hessian:
             freq = "freq"
         filename = self._create_input_file(charge, multi, freq=freq)
@@ -89,7 +83,7 @@ class GaussianWrapper(object):
         if spe_title:
             filename = spe_title
         else:
-            filename = "{0}_{1}".format(self.title, self.counter)
+            raise ValueError('file name is not specified')
         if path:
             path = os.path.join(path, filename + postfix)
         else:
