@@ -1,9 +1,21 @@
 import numpy as np
 
 from saddle.solver import ridders_solver
+from saddle.optimizer.path_point import PathPoint
 
 
 class TrustRegion:
+    def __init__(self, method_name):
+        if method_name not in TrustRegion._trust_radius_methods:
+            raise ValueError(f'{method_name} is not a valid name')
+        self._name = method_name
+        self._update_tr = TrustRegion._trust_radius_methods[method_name]
+
+    def calculate_trust_region(self, point):
+        if not isinstance(point, PathPoint):
+            raise TypeError(f'Improper input type for {point}')
+        return self._update_tr(point.v_hessian, point.v_gradient, point.stepsize)
+
     @staticmethod
     def trust_region_image_potential(hessian, gradient, stepsize):
         assert stepsize > 0
