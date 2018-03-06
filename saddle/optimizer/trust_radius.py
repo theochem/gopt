@@ -11,7 +11,7 @@ class TrustRegion:
         self._name = method_name
         self._update_tr = TrustRegion._trust_radius_methods[method_name]
 
-    def calculate_trust_region(self, point):
+    def calculate_trust_step(self, point):
         if not isinstance(point, PathPoint):
             raise TypeError(f'Improper input type for {point}')
         return self._update_tr(point.v_hessian, point.v_gradient, point.stepsize)

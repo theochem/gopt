@@ -73,18 +73,18 @@ class TestTrustRadius(TestCase):
         trim_ob = TrustRegion('trim')
         assert np.allclose(self.p1.v_gradient, np.array([9, 14]))
         assert np.allclose(self.p1.v_hessian, np.array([[2, 3], [3, 4]]))
-        step = trim_ob.calculate_trust_region(self.p1)
+        step = trim_ob.calculate_trust_step(self.p1)
         assert np.linalg.norm(step) - 1 < 1e-6
         self.p1._stepsize = 1.8353865
-        step = trim_ob.calculate_trust_region(self.p1)
+        step = trim_ob.calculate_trust_step(self.p1)
         assert np.allclose(step, np.array([-1.28760195, -1.30794685]))
 
         self.p1._instance.v_gradient = self.gradient(0, -1)
         self.p1._mod_hessian = self.hessian(0, -1)
         self.p1._stepsize = 6
-        step = trim_ob.calculate_trust_region(self.p1)
+        step = trim_ob.calculate_trust_step(self.p1)
         assert np.allclose(self.p1.v_gradient, np.array([-1, 0]))
         assert np.linalg.norm(step) - 5 < 1e-5
         self.p1._stepsize = 0.2643558
-        step = trim_ob.calculate_trust_region(self.p1)
+        step = trim_ob.calculate_trust_step(self.p1)
         assert np.allclose(step, np.array([-0.17079935, 0.20177115]))

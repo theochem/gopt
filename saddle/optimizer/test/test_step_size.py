@@ -2,12 +2,12 @@ import numpy as np
 
 from unittest import TestCase
 from numpy.testing import assert_raises
-from saddle.optimizer.update_trust_radius import UpdateStep
+from saddle.optimizer.step_size import Stepsize
 from saddle.optimizer.path_point import PathPoint
 
 # function alias
-energy_based_update = UpdateStep.energy_based_update
-gradient_based_update = UpdateStep.gradient_based_update
+energy_based_update = Stepsize.energy_based_update
+gradient_based_update = Stepsize.gradient_based_update
 
 
 class test_update_trust_radius(TestCase):
@@ -133,11 +133,11 @@ class test_update_trust_radius(TestCase):
     def test_update_object(self):
         self._set_path_points()
         with assert_raises(ValueError):
-            energy_ob = UpdateStep('gibberish')
-        energy_ob = UpdateStep('energy')
+            energy_ob = Stepsize('gibberish')
+        energy_ob = Stepsize('energy')
         new_step = energy_ob.update_step(old=self.p1, new=self.p2)
         stepsize = np.linalg.norm(np.sqrt(2))
         assert np.allclose(new_step, stepsize)
-        gradient_ob = UpdateStep('gradient')
+        gradient_ob = Stepsize('gradient')
         new_step = gradient_ob.update_step(old=self.p1, new=self.p2)
         assert np.allclose(new_step, 0.25 * stepsize)

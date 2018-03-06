@@ -5,19 +5,31 @@ from saddle.optimizer.path_point import PathPoint
 norm = np.linalg.norm
 
 
-class UpdateStep:
+class Stepsize:
     def __init__(self, method_name):
-        if method_name not in UpdateStep._methods_dict.keys():
+        if method_name not in Stepsize._methods_dict.keys():
             raise ValueError(f'{method_name} is not a valid name')
         self._name = method_name
-        self._update_fcn = UpdateStep._methods_dict[method_name]
+        self._update_fcn = Stepsize._methods_dict[method_name]
+        self._max_s = None
+        self._min_s = None
+        self._init_s = None
+        self._init_flag = False
+
+    def initialize(self, init_point, ratio=0.35):
+        assert init_point.df > 0
+        number_of_atoms = (init_point.df + 6) // 3
+        self._max_s = np.sqrt(number_of_atoms)
+        self._min_s = 0.1 * self._max_s
+        self._init_s = ratio * self._max_s
+        init_point.stepsize = self._init_s
+        self._init_flag = True
 
     def update_step(self, old, new):
         if not isinstance(old, PathPoint) or not isinstance(new, PathPoint):
             raise TypeError("Improper input type for {old} or {new}")
-        number_atoms = (old.df + 6) / 3
-        max_s = np.sqrt(number_atoms)
-        min_s = 0.1 * np.sqrt(number_atoms)
+        if self._init_flag is False:
+            self.initialize(old)
         update_args = {
             'o_gradient': old.v_gradient,
             'o_hessian': old.v_hessian,
@@ -25,8 +37,8 @@ class UpdateStep:
             'diff_energy': new.energy - old.energy,
             'n_gradient': new.v_gradient,
             'df': old.df,
-            'max_s': max_s,
-            'min_s': min_s,
+            'max_s': self._max_s,
+            'min_s': self._min_s,
         }
         return self._update_fcn(**update_args)
 

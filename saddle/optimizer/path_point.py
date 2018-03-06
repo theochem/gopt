@@ -80,6 +80,11 @@ class PathPoint:
             return self._stepsize
         raise NotSetError
 
+    @stepsize.setter
+    def stepsize(self, value):
+        assert value > 0
+        self._stepsize = value
+
     def __repr__(self):
         return f"PathPoint object"
 

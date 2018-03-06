@@ -1,11 +1,13 @@
 import numpy as np
 
+from copy import deepcopy
+
 from saddle.optimizer.path_point import PathPoint
 from saddle.reduced_internal import ReducedInternal
-from saddle.optimizer.trust_radius import trust_radius_methods
+from saddle.optimizer.trust_radius import TrustRegion
 from saddle.optimizer.quasi_newton import QuasiNT
 from saddle.optimizer.hessian_modify import modify_hessian_with_pos_defi
-from saddle.optimizer.update_trust_radius import UpdateStep
+from saddle.optimizer.step_size import Stepsize
 from saddle.errors import OptError
 
 
@@ -17,14 +19,19 @@ class OptLoop:
             )
         self._point = [PathPoint(init_structure)]
         self._quasi_nt = QuasiNT(quasi_nt)
-        self._trust_rad = trust_radius_methods[trust_rad]
-        self._upd_base = UpdateStep(upd_base)
+        self._trust_rad = TrustRegion(trust_rad)
+        self._upd_base = Stepsize(upd_base)
+        # initialize step_size
+        self._upd_base.initialize(self.new)
 
     def __len__(self):
         return len(self._point)
 
     def __getitem__(self, key):
         return self._point[key]
+
+    def run_calculation(self, *_, method='g09'):
+        self.new.run_calculation(method=method)
 
     @property
     def new(self):
@@ -38,14 +45,32 @@ class OptLoop:
             raise OptError('Not enough points in OptLoop')
         return self[-2]
 
-    def update_trust_radius(self, index=-1):
-        target_p = self[index]
+    def update_trust_radius(self):
+        target_p = self.new
         if target_p.step:
-            print(f'overwritten step for {target_p} {len(self) + index}')
-        target_p.step = self._upd_base.update_step(
-            old=self[index - 1], new=self[index])
+            print(f'overwritten step for {target_p}')
+        target_p.step = self._upd_base.update_step(old=self.old, new=self.new)
 
-    def update_hessian(self, index=-1):
-        target_p = self[index]
+    def update_hessian(self):
+        target_p = self.new
         target_p.v_hessian = self._quasi_nt.update_hessian(
-            old=self[index - 1], new=self[index])
+            old=self.old, new=self.new)
+
+    def converge_test(self):
+        if np.max(np.abs(self.new.x_gradient)) < 3e-4:
+            return True
+        return False
+
+    def calculate_trust_step(self):
+        target_p = self.new
+        target_p.step = self._trust_rad.calculate_trust_step(target_p)
+        # target_p.step = self._trust_rad()
+
+    def next_step_structure(self, *_, inplace=False):
+        pt = self.new
+        if not inplace:
+            new_pt = deepcopy(pt)  # deepcopy PathPoint object
+        # calculate newton step
+        v_step = -np.dot(np.linalg.pinv(pt.v_hessian), pt.v_gradient)
+
+        new_pt.update_coordinates_with_delta_v(v_step)
