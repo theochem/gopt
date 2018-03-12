@@ -101,7 +101,6 @@ class test_update_trust_radius(TestCase):
             def df(self):
                 return 1
 
-
         class Attr:
             pass
 

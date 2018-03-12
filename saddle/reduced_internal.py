@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import numpy as np
 
-from saddle.errors import ICNumberError
+from saddle.errors import ICNumberError, NotSetError
 from saddle.internal import Internal
 from saddle.solver import diagonalize
 
@@ -179,9 +179,13 @@ class ReducedInternal(Internal):  # need tests
         vspace_hessian : np.ndarray(3N - 6, 3N - 6)
         """
         if self._vspace_hessian is None:
+            if self._internal_hessian is None:
+                raise NotSetError
             self._vspace_hessian = np.dot(
                 np.dot(self.vspace.T, self._internal_hessian), self.vspace)
         return self._vspace_hessian
+
+    v_hessian = vspace_hessian
 
     def set_key_ic_number(self, number: int) -> None:
         """Set the value of key_ic_number of the system

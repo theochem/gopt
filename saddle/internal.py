@@ -645,6 +645,8 @@ class Internal(Cartesian):
         return None
 
     def _hessian_transform(self) -> None:
+        if self._energy_hessian is None:
+            return None
         hes_k = self._energy_hessian - np.tensordot(
             self._internal_gradient, self._cc_to_ic_hessian, axes=1)
         self._internal_hessian = np.dot(
@@ -683,8 +685,7 @@ class Internal(Cartesian):
         """
         self._internal_gradient = None
         self._internal_hessian = None
-        if (self._energy_gradient is not None
-                and self._energy_hessian is not None):
+        if (self._energy_gradient is not None):
             self._energy_hessian_transformation()
         return None
 

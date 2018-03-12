@@ -1,9 +1,10 @@
 import numpy as np
+from copy import deepcopy
 
 from saddle.errors import NotSetError
 
-class PathPoint:
 
+class PathPoint:
     def __init__(self, red_int):
         self._instance = red_int
         self._step = None
@@ -57,6 +58,10 @@ class PathPoint:
         self._mod_hessian = value
 
     @property
+    def key_ic_number(self):
+        return self._instance.key_ic_number
+
+    @property
     def df(self):
         return self._instance.df
 
@@ -72,6 +77,8 @@ class PathPoint:
 
     @step.setter
     def step(self, value):
+        if np.linalg.norm(value) > self.stepsize:
+            raise ValueError
         self._step = value
 
     @property
@@ -92,4 +99,16 @@ class PathPoint:
         self._instance.energy_calculation(method)
 
     def update_coordinates_with_delta_v(self, step_v):
+        # this function will change the coordinates of instance
         self._instance.update_coordinates_with_delta_v(step_v)
+        # initialize all the private variables
+        self._step = None
+        self._mod_hessian = None
+        self._stepsize = None
+
+    def copy(self):
+        new_p = PathPoint(deepcopy(self._instance))
+        return new_p
+
+    def _measure_fd_hessian(self, omega=1.0, nu=1.0):
+        pass

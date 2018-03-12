@@ -1,7 +1,5 @@
 import numpy as np
 
-from copy import deepcopy
-
 from saddle.optimizer.path_point import PathPoint
 from saddle.reduced_internal import ReducedInternal
 from saddle.optimizer.trust_radius import TrustRegion
@@ -17,6 +15,7 @@ class OptLoop:
             raise TypeError(
                 f'Improper input type {type(init_structure)} for {init_structure}'
             )
+        # TODO: possible momery saving mode
         self._point = [PathPoint(init_structure)]
         self._quasi_nt = QuasiNT(quasi_nt)
         self._trust_rad = TrustRegion(trust_rad)
@@ -66,11 +65,17 @@ class OptLoop:
         target_p.step = self._trust_rad.calculate_trust_step(target_p)
         # target_p.step = self._trust_rad()
 
-    def next_step_structure(self, *_, inplace=False):
-        pt = self.new
-        if not inplace:
-            new_pt = deepcopy(pt)  # deepcopy PathPoint object
+    def next_step_structure(self):  # TODO: memory saving can be made later
+        new_pt = self.new.copy()  # deepcopy PathPoint object
+        assert isinstance(new_pt, PathPoint)
         # calculate newton step
-        v_step = -np.dot(np.linalg.pinv(pt.v_hessian), pt.v_gradient)
-
+        v_step = -np.dot(
+            np.linalg.pinv(self.new.v_hessian), self.new.v_gradient)
         new_pt.update_coordinates_with_delta_v(v_step)
+        return new_pt
+
+    def finite_diff_hessian(self):
+        pass
+
+    def judge_finite_diff(self):
+        pass

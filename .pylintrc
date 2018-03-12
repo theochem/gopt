@@ -4,3 +4,6 @@ ignored-modules = numpy
 
 [MASTER]
 extension-pkg-whitelist=numpy
+
+[MESSAGES CONTROL]
+disable=W0511
