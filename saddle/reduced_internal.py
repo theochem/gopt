@@ -164,6 +164,8 @@ class ReducedInternal(Internal):  # need tests
         vspace_gradient : np.ndarray(3N - 6,)
         """
         if self._vspace_gradient is None:
+            if self._internal_gradient is None:
+                raise NotSetError
             self._vspace_gradient = np.dot(self.vspace.T,
                                            self._internal_gradient)
         return self._vspace_gradient

@@ -6,7 +6,7 @@ from saddle.optimizer.trust_radius import TrustRegion
 from saddle.optimizer.quasi_newton import QuasiNT
 from saddle.optimizer.hessian_modify import modify_hessian_with_pos_defi
 from saddle.optimizer.step_size import Stepsize
-from saddle.errors import OptError
+from saddle.errors import OptError, NotSetError
 
 
 class OptLoop:
@@ -22,6 +22,12 @@ class OptLoop:
         self._upd_base = Stepsize(upd_base)
         # initialize step_size
         self._upd_base.initialize(self.new)
+        # initialize init hessian
+        try:
+            self.new.v_hessian
+        except NotSetError:
+            # set to identity
+            self.new.v_hessian = np.eye(self.new.df)
 
     def __len__(self):
         return len(self._point)
