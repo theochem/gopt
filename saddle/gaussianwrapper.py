@@ -37,18 +37,26 @@ class GaussianWrapper(object):
 
     counter = 0
 
+    with open(resource_filename(__name__, "data/single_hf_template.com"),
+              "r") as f:
+        template = Template(f.read())
+
     def __init__(self, molecule, title):
         self.molecule = molecule
-        with open(
-                resource_filename(__name__, "data/single_hf_template.com"),
-                "r") as f:
-            self.template = Template(f.read())
         self.title = title
 
-    def run_gaussian_and_get_result(self, charge, multi, *_, coordinates=True, energy=True, gradient=False, hessian=False):
+    def run_gaussian_and_get_result(self,
+                                    charge,
+                                    multi,
+                                    *_,
+                                    coordinates=True,
+                                    energy=True,
+                                    gradient=False,
+                                    hessian=False):
         freq = ""
         if gradient or hessian:
             freq = "freq"
+        # TODO: if gradient, use Force, if hessian, use FREQ
         filename = self._create_input_file(charge, multi, freq=freq)
         # print "gausian is going to run \n{} \n{} \n{}".format(charge, multi,
         #   self.molecule.ic)
@@ -82,6 +90,8 @@ class GaussianWrapper(object):
                       (periodic[self.molecule.numbers[i]].symbol, x, y, z))
         if spe_title:
             filename = spe_title
+        elif self.title:
+            filename = self.title
         else:
             raise ValueError('file name is not specified')
         if path:

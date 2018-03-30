@@ -275,6 +275,7 @@ class ReducedInternal(Internal):  # need tests
         delta_v : np.ndarray(3N - 6,)
             coordinates changes in vspace
         """
+        delta_v = np.array(delta_v)
         delta_ic = self._get_delta_ic_from_delta_v(delta_v)
         new_ic = delta_ic + self.ic_values
         self.set_target_ic(new_ic)

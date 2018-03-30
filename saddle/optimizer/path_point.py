@@ -51,10 +51,11 @@ class PathPoint:
 
     @v_hessian.setter
     def v_hessian(self, value):
-        if self._mod_hessian.shape != value.shape:
-            raise ValueError("The shape of input is not valid")
-        if np.allclose(value, value.T):
-            raise ValueError("The input Hessian is not hermitian")
+        if self._mod_hessian is not None:
+            if self._mod_hessian.shape != value.shape:
+                raise ValueError("The shape of input is not valid")
+            if np.allclose(value, value.T):
+                raise ValueError("The input Hessian is not hermitian")
         self._mod_hessian = value
 
     @property
@@ -100,7 +101,7 @@ class PathPoint:
 
     def update_coordinates_with_delta_v(self, step_v):
         # this function will change the coordinates of instance
-        self._instance.update_coordinates_with_delta_v(step_v)
+        self._instance.update_to_new_structure_with_delta_v(step_v)
         # initialize all the private variables
         self._step = None
         self._mod_hessian = None
@@ -110,5 +111,36 @@ class PathPoint:
         new_p = PathPoint(deepcopy(self._instance))
         return new_p
 
-    def _measure_fd_hessian(self, omega=1.0, nu=1.0):
-        pass
+    # TODO: rewrap the lower level function and test
+    def measure_fd_hessian(self,
+                           coord,
+                           *_,
+                           omega=1.0,
+                           nu=1.0,
+                           eps=0.001,
+                           method='g09'):
+        if coord >= self.key_ic_number:
+            raise ValueError
+        unit_vec = np.zeros(self.df)
+        unit_vec[coord] = 1
+        unit_step = eps * unit_vec
+        new_pp = self.copy()
+        new_pp.update_coordinates_with_delta_v(unit_step)
+        new_pp.run_calculation(method=method)
+        # calculate the finite hessian
+        result = self._calculate_finite_diff_h(self, new_pp)
+        self._mod_hessian[:, coord] = result
+        self._mod_hessian[coord, :] = result
+
+    @staticmethod  # TODO: need test
+    def _calculate_finite_diff_h(origin, new_point, eps=0.001):
+        # calculate
+        d_gv = (new_point.v_gradient - origin.v_gradient) / eps
+        d_v = (new_point.vspace - origin.vspace) / eps
+        d_b = (new_point.b_matrix - origin.b_matrix) / eps
+        part1 = d_gv
+        part2 = np.dot(np.dot(origin.b_matrix.T, d_v), origin.v_gradient)
+        part3 = np.dot(d_b.T, origin.q_gradient)
+        multiply = np.dot(origin.vspace.T, np.linalg.pinv(origin.b_matrix.T))
+        result = part1 - np.dot(multiply, (part2 + part3))
+        return result

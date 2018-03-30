@@ -29,6 +29,7 @@ from saddle.errors import AtomsNumberError, NotSetError
 from saddle.fchk import FCHKFile
 from saddle.gaussianwrapper import GaussianWrapper
 from saddle.iodata import IOData
+from saddle.gaussianwrapper import GaussianWrapper
 
 __all__ = ('Cartesian', )
 
@@ -377,3 +378,9 @@ class Cartesian:
         """
         cos_value = self.angle_cos(index1, index2, index3)
         return np.arccos(cos_value)
+
+    def create_gauss_input(self, freq='freq', title=''):
+        if not title:
+            title = self._title
+        gw = GaussianWrapper(self, title)
+        gw.create_gauss_input(self.charge, self.spin, freq=freq)
