@@ -112,15 +112,11 @@ class PathPoint:
         return new_p
 
     # TODO: rewrap the lower level function and test
-    def measure_fd_hessian(self,
-                           coord,
-                           *_,
-                           omega=1.0,
-                           nu=1.0,
-                           eps=0.001,
-                           method='g09'):
+    def measure_fd_hessian(self, coord, *_, eps=0.001, method='g09'):
         if coord >= self.key_ic_number:
-            raise ValueError
+            raise ValueError(
+                'given coordinates index is not a key internal coordinates')
+        # create a perturbation
         unit_vec = np.zeros(self.df)
         unit_vec[coord] = 1
         unit_step = eps * unit_vec
@@ -129,6 +125,7 @@ class PathPoint:
         new_pp.run_calculation(method=method)
         # calculate the finite hessian
         result = self._calculate_finite_diff_h(self, new_pp)
+        # assgin result to the column and row
         self._mod_hessian[:, coord] = result
         self._mod_hessian[coord, :] = result
 

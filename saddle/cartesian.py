@@ -29,7 +29,6 @@ from saddle.errors import AtomsNumberError, NotSetError
 from saddle.fchk import FCHKFile
 from saddle.gaussianwrapper import GaussianWrapper
 from saddle.iodata import IOData
-from saddle.gaussianwrapper import GaussianWrapper
 
 __all__ = ('Cartesian', )
 
@@ -380,6 +379,15 @@ class Cartesian:
         return np.arccos(cos_value)
 
     def create_gauss_input(self, freq='freq', title=''):
+        """Create gaussian input file for this molecule
+
+        Arguments
+        ---------
+        freq : str
+            key forward for freq or force calculation in gaussian
+        title : str
+            name of the file create
+        """
         if not title:
             title = self._title
         gw = GaussianWrapper(self, title)
