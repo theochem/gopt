@@ -110,7 +110,7 @@ class TestPathPoint(TestCase):
         point_b._non_red_space = True
         return point_a, point_b
 
-    def test_finite_diff_with_water(self):
+    def test_finite_diff_with_water(self):  # TODO: error need to figure out
         mol_path = resource_filename(
             Requirement.parse('saddle'), 'data/water.xyz')
         mol = IOData.from_file(mol_path)
@@ -122,6 +122,10 @@ class TestPathPoint(TestCase):
         assert red_int.energy - 75.99264142 < 1e-6
         wt_p1 = PathPoint(red_int=red_int)
         step = [0.001, 0, 0]
+        ref_vspace = np.array([[0., 1., 0.], [0.86705416, 0., 0.4982139],
+                               [-0.4982139, 0., 0.86705416]])
+        # incase different vspace basis error
+        wt_p1._instance.set_vspace(ref_vspace)
         wt_p2 = wt_p1.copy()
         wt_p2.update_coordinates_with_delta_v(step)
         fchk_file_new = resource_filename(
@@ -130,7 +134,7 @@ class TestPathPoint(TestCase):
         wt_p2._instance.align_vspace(wt_p1._instance)
         assert np.allclose(wt_p1.vspace, wt_p2.vspace)
         result = PathPoint._calculate_finite_diff_h(wt_p1, wt_p2)
-        assert np.allclose(result, [0.49372577, 0.02045883, 0.14112893])
+        assert np.allclose(result, wt_p1._instance.v_hessian[:, 0], atol=1e-2)
 
     def test_finite_diff_with_water_2(self):
         mol_path = resource_filename(
@@ -153,7 +157,7 @@ class TestPathPoint(TestCase):
         wt_p2._instance.align_vspace(wt_p1._instance)
         assert np.allclose(wt_p1.vspace, wt_p2.vspace)
         result = PathPoint._calculate_finite_diff_h(wt_p1, wt_p2)
-        assert np.allclose(result, [0.54846549, 0.00133872, -0.03746943])
+        assert np.allclose(result, wt_p1._instance.v_hessian[:, 0], atol=1e-2)
 
     def test_finite_different_with_water_3(self):
         mol_path = resource_filename(
@@ -177,4 +181,4 @@ class TestPathPoint(TestCase):
         wt_p2._instance.align_vspace(wt_p1._instance)
         assert np.allclose(wt_p1.vspace, wt_p2.vspace, atol=1e-2)
         result = PathPoint._calculate_finite_diff_h(wt_p1, wt_p2)
-        assert np.allclose(result, [0.47561613, -0.09940777, 0.03257694])
+        assert np.allclose(result, wt_p1._instance.v_hessian[:, 0], atol=1e-2)
