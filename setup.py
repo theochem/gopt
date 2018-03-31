@@ -16,7 +16,8 @@ setup(
     package_dir={'saddle': 'saddle'},
     packages=[
         'saddle', 'saddle.test', 'saddle.iodata', 'saddle.periodic',
-        'saddle.procrustes', 'saddle.procrustes.test', 'saddle.newopt'
+        'saddle.procrustes', 'saddle.procrustes.test', 'saddle.optimizer',
+        'saddle.optimizer.test',
     ],
     include_package_data=True,
     package_data={

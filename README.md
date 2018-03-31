@@ -9,7 +9,7 @@ search.
 
 ## License
 
-Saddle is distributed under the conditions of the GPL License version 3 (GPLv3
+Saddle is distributed under the conditions of the GPL License version 3 (GPLv3)
 
 You are free to use `saddle` for any purpose. However, `saddle`, or any derived
 version, can only be (re)distributed under the same license conditions.
@@ -25,5 +25,5 @@ python ./setup.py install
 
 ## Tests
 ```python
-nosetests -v saddle
+pytest
 ```
