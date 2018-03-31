@@ -61,8 +61,8 @@ class OptLoop:
         target_p.v_hessian = self._quasi_nt.update_hessian(
             old=self.old, new=self.new)
 
-    def converge_test(self):
-        if np.max(np.abs(self.new.x_gradient)) < 3e-4:
+    def converge_test(self, cutoff=3e-4):
+        if np.max(np.abs(self.new.x_gradient)) < cutoff:
             return True
         return False
 
@@ -80,8 +80,20 @@ class OptLoop:
         new_pt.update_coordinates_with_delta_v(v_step)
         return new_pt
 
-    def finite_diff_hessian(self):
-        pass
+    def finite_diff_hessian(self, omega=1.0, nu=1.0):
+        update_index = self.judge_finite_diff(omega, nu)
+        for i in update_index:
+            self.new.fd_hessian(self, i)
 
-    def judge_finite_diff(self):
-        pass
+    def judge_finite_diff(self, *_, omega=1.0, nu=1.0):
+        index_need_fd = []
+        new = self.new
+        old = self.old
+        norm = np.linalg.norm
+        rms = omega * norm(new.v_gradient) / np.sqrt(new.df)
+        for i in range(new.key_ic_number):
+            if norm(new.v_gradient[i]) > rms:
+                change = new.v_hessian[:, i] - old.v_hessian[:, i]
+                if norm(change) > nu * norm(old.v_hessian[:, i]):
+                    index_need_fd.append(i)
+        return index_need_fd
