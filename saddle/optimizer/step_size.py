@@ -16,6 +16,14 @@ class Stepsize:
         self._init_s = None
         self._init_flag = False
 
+    @property
+    def min_s(self):
+        return self._min_s
+
+    @property
+    def max_s(self):
+        return self.max_s
+
     def initialize(self, init_point, ratio=0.35):
         assert init_point.df > 0
         number_of_atoms = (init_point.df + 6) // 3
@@ -54,7 +62,7 @@ class Stepsize:
             return min(max(new_step_size, min_s), max_s)
         if 0.3333 < ratio < 3:
             return max(step_size, min_s)
-        return max(0.25 * step_size, min_s)
+        return min(0.25 * step_size, min_s)
 
     @staticmethod
     def gradient_based_update(o_gradient, o_hessian, n_gradient, step, df, *_,
@@ -74,7 +82,7 @@ class Stepsize:
             return min(max(new_step, min_s), max_s)
         if 0.2 < rho < 6 and p40 < cosine:
             return max(step_size, min_s)
-        return max(0.25 * step_size, min_s)
+        return min(0.5 * step_size, min_s)
 
     _methods_dict = {
         'energy': energy_based_update.__func__,

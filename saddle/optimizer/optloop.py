@@ -10,7 +10,15 @@ from saddle.errors import OptError, NotSetError
 
 
 class OptLoop:
-    def __init__(self, init_structure, *_, quasi_nt, trust_rad, upd_base):
+    def __init__(self,
+                 init_structure,
+                 *_,
+                 quasi_nt,
+                 trust_rad,
+                 upd_base,
+                 neg_num=0,
+                 method='g09',
+                 max_pt=0):
         if not isinstance(init_structure, ReducedInternal):
             raise TypeError(
                 f'Improper input type {type(init_structure)} for {init_structure}'
@@ -20,8 +28,21 @@ class OptLoop:
         self._quasi_nt = QuasiNT(quasi_nt)
         self._trust_rad = TrustRegion(trust_rad)
         self._upd_base = Stepsize(upd_base)
+
+        # memory setting
+        if max_pt == 0 or max_pt >= 2:
+            self._max_pt = max_pt
+        else:
+            raise ValueError('max number of points is too small')
+
         # initialize step_size
         self._upd_base.initialize(self.new)
+        if neg_num < 0 or neg_num > self.new.key_ic_number:
+            raise ValueError('# of negative eigenvalues is not valid')
+        self._neg = neg_num
+        self._method = method
+        self._flag = False
+
         # initialize init hessian
         try:
             self.new.v_hessian
@@ -50,6 +71,11 @@ class OptLoop:
             raise OptError('Not enough points in OptLoop')
         return self[-2]
 
+    def modify_hessian(self):
+        moded_hessian = modify_hessian_with_pos_defi(
+            self.new.v_hessian, self._neg, key_ic=self.new.key_ic_number)
+        self.new.v_hessian = moded_hessian
+
     def update_trust_radius(self):
         target_p = self.new
         if target_p.step:
@@ -67,18 +93,44 @@ class OptLoop:
         return False
 
     def calculate_trust_step(self):
-        target_p = self.new
-        target_p.step = self._trust_rad.calculate_trust_step(target_p)
+        step = self._trust_rad.calculate_trust_step(self.new)
+        self.new.step = step
         # target_p.step = self._trust_rad()
 
     def next_step_structure(self):  # TODO: memory saving can be made later
         new_pt = self.new.copy()  # deepcopy PathPoint object
         assert isinstance(new_pt, PathPoint)
         # calculate newton step
-        v_step = -np.dot(
-            np.linalg.pinv(self.new.v_hessian), self.new.v_gradient)
-        new_pt.update_coordinates_with_delta_v(v_step)
+        new_pt.update_coordinates_with_delta_v(new_pt.step)
         return new_pt
+
+    def new_point_test(self, new_point):
+        assert isinstance(new_point, PathPoint)
+        new_point.run_calculation(method=self._method)
+        if self._flag is True:
+            self._flag = False
+            return True
+        if np.linalg.norm(new_point.x_gradient) > np.linalg.norm(
+                self.new.x_gradient):
+            self.new.stepsize *= 0.25
+            if self.new.stepsize <= 0.1 * self._upd_base.min_s:
+                self.new.stepsize = self._upd_base.min_s
+                self._flag = True
+            return False
+        else:
+            return True
+
+    def add_new_point(self, new_point):
+        assert isinstance(new_point, PathPoint)
+        self._point.append(new_point)
+
+        # 0 means unlimited store
+        if self._max_pt == 0:
+            return
+        # delete extra points
+        elif len(self) > self._max_pt:
+            head = self._point.pop(0)
+            del head
 
     def finite_diff_hessian(self, omega=1.0, nu=1.0):
         update_index = self.judge_finite_diff(omega, nu)

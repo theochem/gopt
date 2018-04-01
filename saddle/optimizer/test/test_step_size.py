@@ -12,6 +12,7 @@ gradient_based_update = Stepsize.gradient_based_update
 
 class test_update_trust_radius(TestCase):
     def setUp(self):
+        'set up test function gradient and hessian'
         self.func = lambda x, y: x**3 + 2 * x**2 * y + 6 * x * y + 2 * y**3 + 6 * y + 10
         self.gradient = lambda x, y: np.array([3 * x**2 + 4 * x * y + 6 * y, 2*x**2 + 6 * x + 6 * y **2 + 6])
         self.hessian = lambda x, y: np.array([[6*x + 4*y, 4*x + 6], [4*x+6, 12 * y]])
@@ -93,6 +94,7 @@ class test_update_trust_radius(TestCase):
         assert new_stepsize == 5
 
     def _set_path_points(self):
+        "create a class for testing points"
         class Other(PathPoint):
             def __init__(self):
                 pass
@@ -111,7 +113,6 @@ class test_update_trust_radius(TestCase):
         self.p2._instance = Attr()
 
         self.p1._instance.energy = self.func(*start_point)
-        print(self.p1.energy)
         self.p1._instance.b_matrix = np.eye(2)
         self.p1._instance.vspace = np.eye(2)
         self.p1._instance.v_gradient = self.gradient(*start_point)
@@ -133,10 +134,12 @@ class test_update_trust_radius(TestCase):
         self._set_path_points()
         with assert_raises(ValueError):
             energy_ob = Stepsize('gibberish')
+        assert np.allclose(self.p1.v_gradient, [26, 32])
+        assert np.allclose(self.p2.v_gradient, [23, 38])
         energy_ob = Stepsize('energy')
         new_step = energy_ob.update_step(old=self.p1, new=self.p2)
         stepsize = np.linalg.norm(np.sqrt(2))
         assert np.allclose(new_step, stepsize)
         gradient_ob = Stepsize('gradient')
         new_step = gradient_ob.update_step(old=self.p1, new=self.p2)
-        assert np.allclose(new_step, 0.25 * stepsize)
+        assert np.allclose(new_step, energy_ob.min_s)

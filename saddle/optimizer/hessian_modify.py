@@ -39,6 +39,7 @@ def modify_hessian_with_pos_defi(matrix,
                                  key_ic,
                                  pos_value=0.05,
                                  neg_value=-0.05):
+    assert neg_num <= key_ic
     matrix = matrix.copy()
     assert len(matrix[:, 0]) == len(matrix[0])  # make sure it is square
     out_mat = matrix[key_ic:, key_ic:]
