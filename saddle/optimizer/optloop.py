@@ -1,3 +1,5 @@
+from functools import partialmethod
+
 import numpy as np
 
 from saddle.optimizer.path_point import PathPoint
@@ -87,7 +89,7 @@ class OptLoop:
         target_p.v_hessian = self._quasi_nt.update_hessian(
             old=self.old, new=self.new)
 
-    def converge_test(self, cutoff=3e-4):
+    def check_converge(self, cutoff=3e-4):
         if np.max(np.abs(self.new.x_gradient)) < cutoff:
             return True
         return False
@@ -104,7 +106,7 @@ class OptLoop:
         new_pt.update_coordinates_with_delta_v(new_pt.step)
         return new_pt
 
-    def new_point_test(self, new_point):
+    def verify_new_point(self, new_point):
         assert isinstance(new_point, PathPoint)
         new_point.run_calculation(method=self._method)
         if self._flag is True:
@@ -132,12 +134,12 @@ class OptLoop:
             head = self._point.pop(0)
             del head
 
-    def finite_diff_hessian(self, omega=1.0, nu=1.0):
-        update_index = self.judge_finite_diff(omega, nu)
+    def finite_diff_hessian(self, *_, omega=1.0, nu=1.0):
+        update_index = self._judge_finite_diff(omega, nu)
         for i in update_index:
             self.new.fd_hessian(self, i)
 
-    def judge_finite_diff(self, *_, omega=1.0, nu=1.0):
+    def _judge_finite_diff(self, omega=1.0, nu=1.0):
         index_need_fd = []
         new = self.new
         old = self.old
@@ -149,3 +151,60 @@ class OptLoop:
                 if norm(change) > nu * norm(old.v_hessian[:, i]):
                     index_need_fd.append(i)
         return index_need_fd
+
+    @classmethod
+    def opt_solver(cls,
+                   init_structure,
+                   *_,
+                   quasi_nt,
+                   trust_rad,
+                   upd_base,
+                   neg_num=0,
+                   method='g09',
+                   max_pt=0,
+                   iterations=50):
+        opt = cls(
+            init_structure,
+            quasi_nt=quasi_nt,
+            trust_rad=trust_rad,
+            upd_base=upd_base,
+            neg_num=neg_num,
+            method=method,
+            max_pt=max_pt)
+
+        # initiate counter
+        counter = 1
+
+        # setup optimization loop
+        while opt.check_converge() is False:
+            if counter > 1:
+                # update trust region
+                opt.update_trust_radius()
+                # quasi newton method for updating hessian
+                opt.update_hessian()
+                # regulate hessian
+                opt.modify_hessian()
+                # finite diff for hessian if need
+                opt.finite_diff_hessian()
+                # calculate new step
+            opt.calculate_trust_step()
+            # calculate new point
+            new_point = opt.next_step_structure()
+            while opt.verify_new_point(new_point) is False:
+                new_point = opt.calculate_trust_step()
+            # add new point to optimizer
+            opt.add_new_point(new_point)
+
+            counter += 1
+            if counter > iterations:
+                break
+
+    min_solver = partialmethod(
+        opt_solver, quasi_nt='bfgs', trust_rad='trim', upd_base='energy')
+
+    ts_solver = partialmethod(
+        opt_solver,
+        quasi_nt='bofill',
+        trust_rad='trim',
+        upd_base='gradient',
+        neg_num=1)
