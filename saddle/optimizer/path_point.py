@@ -108,8 +108,7 @@ class PathPoint:
         self._stepsize = None
 
     def copy(self):
-        new_p = PathPoint(deepcopy(self._instance))
-        return new_p
+        return deepcopy(self)
 
     # TODO: rewrap the lower level function and test
     def fd_hessian(self, coord, *_, eps=0.001, method='g09'):

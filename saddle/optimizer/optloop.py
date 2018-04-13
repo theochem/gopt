@@ -17,7 +17,7 @@ class OptLoop:
                  *_,
                  quasi_nt,
                  trust_rad,
-                 upd_base,
+                 upd_size,
                  neg_num=0,
                  method='g09',
                  max_pt=0):
@@ -29,7 +29,7 @@ class OptLoop:
         self._point = [PathPoint(init_structure)]
         self._quasi_nt = QuasiNT(quasi_nt)
         self._trust_rad = TrustRegion(trust_rad)
-        self._upd_base = Stepsize(upd_base)
+        self._upd_size = Stepsize(upd_size)
 
         # memory setting
         if max_pt == 0 or max_pt >= 2:
@@ -38,7 +38,7 @@ class OptLoop:
             raise ValueError('max number of points is too small')
 
         # initialize step_size
-        self._upd_base.initialize(self.new)
+        self._upd_size.initialize(self.new)
         if neg_num < 0 or neg_num > self.new.key_ic_number:
             raise ValueError('# of negative eigenvalues is not valid')
         self._neg = neg_num
@@ -82,7 +82,7 @@ class OptLoop:
         target_p = self.new
         if target_p.step:
             print(f'overwritten step for {target_p}')
-        target_p.step = self._upd_base.update_step(old=self.old, new=self.new)
+        target_p.step = self._upd_size.update_step(old=self.old, new=self.new)
 
     def update_hessian(self):
         target_p = self.new
@@ -106,17 +106,21 @@ class OptLoop:
         new_pt.update_coordinates_with_delta_v(new_pt.step)
         return new_pt
 
-    def verify_new_point(self, new_point):
+    def verify_new_point(self, new_point, *_, debug_fchk=None):
         assert isinstance(new_point, PathPoint)
-        new_point.run_calculation(method=self._method)
+        if debug_fchk:
+            # debug choices
+            new_point._instance.energy_from_fchk(debug_fchk)
+        else:
+            new_point.run_calculation(method=self._method)
         if self._flag is True:
             self._flag = False
             return True
         if np.linalg.norm(new_point.x_gradient) > np.linalg.norm(
                 self.new.x_gradient):
             self.new.stepsize *= 0.25
-            if self.new.stepsize <= 0.1 * self._upd_base.min_s:
-                self.new.stepsize = self._upd_base.min_s
+            if self.new.stepsize <= 0.1 * self._upd_size.min_s:
+                self.new.stepsize = self._upd_size.min_s
                 self._flag = True
             return False
         else:
@@ -158,7 +162,7 @@ class OptLoop:
                    *_,
                    quasi_nt,
                    trust_rad,
-                   upd_base,
+                   upd_size,
                    neg_num=0,
                    method='g09',
                    max_pt=0,
@@ -167,7 +171,7 @@ class OptLoop:
             init_structure,
             quasi_nt=quasi_nt,
             trust_rad=trust_rad,
-            upd_base=upd_base,
+            upd_size=upd_size,
             neg_num=neg_num,
             method=method,
             max_pt=max_pt)
@@ -200,11 +204,11 @@ class OptLoop:
                 break
 
     min_solver = partialmethod(
-        opt_solver, quasi_nt='bfgs', trust_rad='trim', upd_base='energy')
+        opt_solver, quasi_nt='bfgs', trust_rad='trim', upd_size='energy')
 
     ts_solver = partialmethod(
         opt_solver,
         quasi_nt='bofill',
         trust_rad='trim',
-        upd_base='gradient',
+        upd_size='gradient',
         neg_num=1)
