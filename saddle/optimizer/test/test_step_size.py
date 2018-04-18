@@ -36,7 +36,7 @@ class test_update_trust_radius(TestCase):
         assert ratio - 0.6666666666 < 1e-7
         stepsize = np.linalg.norm(step)
         new_stepsize = energy_based_update(
-            o_g, o_h, step, diff, min_s=1, max_s=5)
+            o_g, o_h, step, diff, stepsize, min_s=1, max_s=5)
         assert new_stepsize == stepsize  # condition 2
 
         # assert new_stepsize == 5
@@ -51,14 +51,14 @@ class test_update_trust_radius(TestCase):
         assert np.allclose(o_h, np.array([[72, 38], [38, 72]]))
         stepsize = np.linalg.norm(step)
         new_stepsize = energy_based_update(
-            o_g, o_h, step, diff, min_s=2, max_s=5)
+            o_g, o_h, step, diff, stepsize, min_s=2, max_s=5)
         assert new_stepsize == 2 * stepsize
 
         step = np.array((-6, -6))
         stepsize = np.linalg.norm(step)
         diff = self.func(*(init + step)) - self.func(*init)
         new_stepsize = energy_based_update(
-            o_g, o_h, step, diff, min_s=2, max_s=10)
+            o_g, o_h, step, diff, stepsize, min_s=2, max_s=10)
         assert new_stepsize == stepsize
 
     def test_gradient_update(self):
@@ -76,7 +76,7 @@ class test_update_trust_radius(TestCase):
         pre_g = o_g + np.dot(o_h, step)
         assert np.allclose(pre_g, [238, 250])
         new_stepsize = gradient_based_update(
-            o_g, o_h, n_g, step, df=3, min_s=1, max_s=5)
+            o_g, o_h, n_g, step, df=3, step_size=stepsize, min_s=1, max_s=5)
         assert new_stepsize == 2 * stepsize
 
         step = list(map(int, (-np.dot(np.linalg.pinv(o_h), o_g))))
@@ -90,11 +90,12 @@ class test_update_trust_radius(TestCase):
         pre_g = o_g + np.dot(o_h, step)
         assert np.allclose(pre_g, [18, 30])
         new_stepsize = gradient_based_update(
-            o_g, o_h, n_g, step, df=3, min_s=1, max_s=5)
+            o_g, o_h, n_g, step, df=3, step_size=stepsize, min_s=1, max_s=5)
         assert new_stepsize == 5
 
     def _set_path_points(self):
         "create a class for testing points"
+
         class Other(PathPoint):
             def __init__(self):
                 pass
@@ -138,8 +139,7 @@ class test_update_trust_radius(TestCase):
         assert np.allclose(self.p2.v_gradient, [23, 38])
         energy_ob = Stepsize('energy')
         new_step = energy_ob.update_step(old=self.p1, new=self.p2)
-        stepsize = np.linalg.norm(np.sqrt(2))
-        assert np.allclose(new_step, stepsize)
+        assert np.allclose(new_step, self.p1.stepsize)
         gradient_ob = Stepsize('gradient')
         new_step = gradient_ob.update_step(old=self.p1, new=self.p2)
         assert np.allclose(new_step, energy_ob.min_s)

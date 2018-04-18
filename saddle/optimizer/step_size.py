@@ -47,16 +47,16 @@ class Stepsize:
             'df': old.df,
             'max_s': self._max_s,
             'min_s': self._min_s,
+            'step_size': old.stepsize
         }
         return self._update_fcn(**update_args)
 
     @staticmethod
-    def energy_based_update(o_gradient, o_hessian, step, diff_energy, *_,
-                            min_s, max_s, **kwargs):
+    def energy_based_update(o_gradient, o_hessian, step, diff_energy,
+                            step_size, *_, min_s, max_s, **kwargs):
         delta_m = np.dot(o_gradient,
                          step) + 0.5 * np.dot(step, np.dot(o_hessian, step))
         ratio = delta_m / diff_energy
-        step_size = norm(step)
         if 0.6667 < ratio < 1.5:
             new_step_size = 2 * step_size
             return min(max(new_step_size, min_s), max_s)
@@ -65,9 +65,8 @@ class Stepsize:
         return min(0.25 * step_size, min_s)
 
     @staticmethod
-    def gradient_based_update(o_gradient, o_hessian, n_gradient, step, df, *_,
-                              min_s, max_s, **kwargs):
-        step_size = np.linalg.norm(step)
+    def gradient_based_update(o_gradient, o_hessian, n_gradient, step, df,
+                              step_size, *_, min_s, max_s, **kwargs):
         g_predict = o_gradient + np.dot(o_hessian, step)
         rho = (norm(g_predict) - norm(o_gradient)) / (
             norm(n_gradient) - norm(o_gradient))

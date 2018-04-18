@@ -12,6 +12,10 @@ class PathPoint:
         self._mod_hessian = None
 
     @property
+    def instance(self):
+        return self._instance
+
+    @property
     def energy(self):
         return self._instance.energy
 

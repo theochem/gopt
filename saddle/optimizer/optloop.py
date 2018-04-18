@@ -80,9 +80,8 @@ class OptLoop:
 
     def update_trust_radius(self):
         target_p = self.new
-        if target_p.step:
-            print(f'overwritten step for {target_p}')
-        target_p.step = self._upd_size.update_step(old=self.old, new=self.new)
+        target_p.stepsize = self._upd_size.update_step(
+            old=self.old, new=self.new)
 
     def update_hessian(self):
         target_p = self.new
@@ -128,6 +127,11 @@ class OptLoop:
 
     def add_new_point(self, new_point):
         assert isinstance(new_point, PathPoint)
+
+        # set new point vspace to align with old one
+        new_point.instance.align_vspace(self.new.instance)
+
+        # self.align_vspace()
         self._point.append(new_point)
 
         # 0 means unlimited store
