@@ -29,7 +29,7 @@ class GeoOptimizer(object):
 
     def converge(self, index):
         point = self.points[index]
-        return max(point.gradient) <= 3e-4
+        return max(np.abs(point.gradient)) <= 3e-4
 
     @property
     def newest(self):

@@ -8,11 +8,9 @@ from pkg_resources import Requirement, resource_filename
 
 from saddle.optimizer.optloop import OptLoop
 from saddle.reduced_internal import ReducedInternal
-from saddle.optimizer.path_point import PathPoint
 from saddle.optimizer.trust_radius import TrustRegion
 from saddle.optimizer.quasi_newton import QuasiNT
-from saddle.optimizer.hessian_modify import modify_hessian_with_pos_defi
-from saddle.optimizer.step_size import Stepsize
+from saddle.optimizer.secant import secant
 from saddle.iodata import IOData
 
 
@@ -70,7 +68,7 @@ class TestOptLoop(TestCase):
         assert np.allclose(opt.new.vspace, opt.old.vspace)
         assert np.allclose(opt.new.key_ic_number, opt.new.key_ic_number)
 
-    def test_new_opt_loop(self):
+    def test_next_loop(self):
         # bfgs update
         opt = self.setup_opt()
         opt.calculate_trust_step()
@@ -90,6 +88,30 @@ class TestOptLoop(TestCase):
         real_e_diff = opt.new.energy - opt.old.energy
         assert np.allclose((pred_e_diff / real_e_diff), 1.01485, atol=1e-4)
         assert opt.new.stepsize == 2 * opt.old.stepsize
+
+    def test_loop_hessian_update(self):
+        opt = self.setup_opt()
+        opt.calculate_trust_step()
+
+        new_p = opt.next_step_structure()
+        fchk_file = resource_filename(
+            Requirement.parse('saddle'), 'data/new_step_water.fchk')
+        result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
+        assert result is True
+        opt.add_new_point(new_p)
+        opt.update_trust_radius()
+        # hessian update and modify
+        opt.update_hessian()
+        sec_y = secant(opt.new, opt.old)
+        ref_hes = QuasiNT.bfgs(
+            opt.old.v_hessian, sec_y=sec_y, step=opt.old.step)
+        assert np.allclose(ref_hes, opt.new.v_hessian)
+        opt.modify_hessian()
+        assert np.allclose(ref_hes, opt.new.v_hessian)
+        # set non positive hessian
+        opt.new.v_hessian = np.diag([-1, 1, 2])
+        opt.modify_hessian()
+        assert np.allclose(np.diag([0.05, 1, 2]), opt.new.v_hessian)
 
     def test_opt_initialize(self):
         opt = OptLoop(

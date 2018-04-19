@@ -58,9 +58,9 @@ class PathPoint:
         if self._mod_hessian is not None:
             if self._mod_hessian.shape != value.shape:
                 raise ValueError("The shape of input is not valid")
-            if np.allclose(value, value.T):
+            if not np.allclose(value, value.T):
                 raise ValueError("The input Hessian is not hermitian")
-        self._mod_hessian = value
+        self._mod_hessian = value.copy()
 
     @property
     def key_ic_number(self):
@@ -84,7 +84,7 @@ class PathPoint:
     def step(self, value):
         if np.linalg.norm(value) > self.stepsize:
             raise ValueError
-        self._step = value
+        self._step = value.copy()
 
     @property
     def stepsize(self):
