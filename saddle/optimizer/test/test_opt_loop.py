@@ -67,6 +67,8 @@ class TestOptLoop(TestCase):
         assert len(opt) == 2
         assert np.allclose(opt.new.vspace, opt.old.vspace)
         assert np.allclose(opt.new.key_ic_number, opt.new.key_ic_number)
+        result = opt.check_converge()
+        assert result is False
 
     def test_next_loop(self):
         # bfgs update
@@ -112,6 +114,54 @@ class TestOptLoop(TestCase):
         opt.new.v_hessian = np.diag([-1, 1, 2])
         opt.modify_hessian()
         assert np.allclose(np.diag([0.05, 1, 2]), opt.new.v_hessian)
+
+    def test_finite_diff(self):
+        opt = self.setup_opt()
+        opt.calculate_trust_step()
+
+        new_p = opt.next_step_structure()
+        fchk_file = resource_filename(
+            Requirement.parse('saddle'), 'data/new_step_water.fchk')
+        result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
+        assert result is True
+        opt.add_new_point(new_p)
+        opt.update_trust_radius()
+        # hessian update and modify
+        opt.update_hessian()
+        opt.modify_hessian()
+        answer = opt._judge_finite_diff()
+        assert answer == []
+        opt.new.v_hessian = np.diag([-1, 1, 1])
+        answer = opt._judge_finite_diff()
+        assert np.allclose(answer, [0])
+        opt.new.v_hessian = np.diag([1, -1, 1])
+        answer = opt._judge_finite_diff()
+        assert answer == []
+
+    def test_one_complete_opt_loop(self):
+        opt = self.setup_opt()
+        opt.calculate_trust_step()
+
+        new_p = opt.next_step_structure()
+        fchk_file = resource_filename(
+            Requirement.parse('saddle'), 'data/new_step_water.fchk')
+        result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
+        assert result is True
+        opt.add_new_point(new_p)
+        opt.update_trust_radius()
+        # hessian update and modify
+        opt.update_hessian()
+        opt.modify_hessian()
+        opt.calculate_trust_step()
+        ref_step = -np.dot(np.linalg.pinv(opt.new.v_hessian), opt.new.v_gradient)
+        assert np.allclose(ref_step, opt.new.step)
+        opt.calculate_trust_step()
+        new_point = opt.next_step_structure()
+        fchk_file = resource_filename(
+            Requirement.parse('saddle'), 'data/final_water.fchk')
+        opt.verify_new_point(new_point, debug_fchk=fchk_file)
+        opt.add_new_point(new_point)
+        assert opt.check_converge() is True
 
     def test_opt_initialize(self):
         opt = OptLoop(

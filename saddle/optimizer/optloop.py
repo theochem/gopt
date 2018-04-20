@@ -147,7 +147,7 @@ class OptLoop:
         for i in update_index:
             self.new.fd_hessian(self, i)
 
-    def _judge_finite_diff(self, omega=1.0, nu=1.0):
+    def _judge_finite_diff(self, omega=1.0, nu=1.0):  # not fully tested
         index_need_fd = []
         new = self.new
         old = self.old
