@@ -205,7 +205,9 @@ class OptLoop:
 
             counter += 1
             if counter > iterations:
+                print('Geomotry optimization failed to converge')
                 break
+        print("Geometryu optimization finished")
 
     min_solver = partialmethod(
         opt_solver, quasi_nt='bfgs', trust_rad='trim', upd_size='energy')

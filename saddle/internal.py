@@ -303,10 +303,10 @@ class Internal(Cartesian):
             new_point = self._create_geo_point()
             optimizer.add_new(new_point)
             if optimizer.converge(optimizer.newest):
-                print("finished")
+                # print("finished")
                 return None
             optimizer.update_trust_radius(optimizer.newest)
-        raise NotConvergeError("The optimization failed to converge")
+        raise NotConvergeError("The coordinates transformation optimization failed to converge")
 
     def connected_indices(self, index: int) -> 'np.ndarray[int]':
         """Return the indices of atoms connected to given index atom
