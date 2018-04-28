@@ -1,7 +1,6 @@
 import numpy as np
 
 from unittest import TestCase
-from numpy.testing import assert_raises
 
 from saddle.optimizer.quasi_newton import QuasiNT
 from saddle.optimizer.path_point import PathPoint
@@ -129,10 +128,10 @@ class TestInternal(TestCase):
 
     def test_quasi_object(self):
         self._set_quadratic()
-        with assert_raises(ValueError):
+        with self.assertRaises(ValueError):
             qnt = QuasiNT('gibberish')
         qnt = QuasiNT('sr1')
-        with assert_raises(TypeError):
+        with self.assertRaises(TypeError):
             qnt.update_hessian(1, 2)
         # setup test points
         self._set_path_points()

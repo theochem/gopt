@@ -1,7 +1,6 @@
 import numpy as np
 
 from unittest import TestCase
-from numpy.testing import assert_raises
 from saddle.optimizer.step_size import Stepsize
 from saddle.optimizer.path_point import PathPoint
 
@@ -133,7 +132,7 @@ class test_update_trust_radius(TestCase):
 
     def test_update_object(self):
         self._set_path_points()
-        with assert_raises(ValueError):
+        with self.assertRaises(ValueError):
             energy_ob = Stepsize('gibberish')
         assert np.allclose(self.p1.v_gradient, [26, 32])
         assert np.allclose(self.p2.v_gradient, [23, 38])

@@ -1,6 +1,5 @@
 import numpy as np
 
-from numpy.testing import assert_raises
 from unittest import TestCase
 from copy import deepcopy
 
@@ -153,7 +152,8 @@ class TestOptLoop(TestCase):
         opt.update_hessian()
         opt.modify_hessian()
         opt.calculate_trust_step()
-        ref_step = -np.dot(np.linalg.pinv(opt.new.v_hessian), opt.new.v_gradient)
+        ref_step = -np.dot(
+            np.linalg.pinv(opt.new.v_hessian), opt.new.v_gradient)
         assert np.allclose(ref_step, opt.new.step)
         opt.calculate_trust_step()
         new_point = opt.next_step_structure()
@@ -181,7 +181,7 @@ class TestOptLoop(TestCase):
             max_pt=2)
         assert opt._max_pt == 2
 
-        with assert_raises(ValueError):
+        with self.assertRaises(ValueError):
             opt = OptLoop(
                 self.mol,
                 quasi_nt='bfgs',
@@ -189,7 +189,7 @@ class TestOptLoop(TestCase):
                 upd_size='energy',
                 max_pt=1)
 
-        with assert_raises(ValueError):
+        with self.assertRaises(ValueError):
             opt = OptLoop(
                 self.mol,
                 quasi_nt='bfgs',

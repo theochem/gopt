@@ -82,7 +82,7 @@ class PathPoint:
 
     @step.setter
     def step(self, value):
-        if np.linalg.norm(value) > self.stepsize:
+        if np.linalg.norm(value) - self.stepsize > 1e-5:
             raise ValueError
         self._step = value.copy()
 

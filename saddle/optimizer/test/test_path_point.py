@@ -1,7 +1,6 @@
 import numpy as np
 
 from unittest import TestCase
-from numpy.testing import assert_raises
 
 from pkg_resources import Requirement, resource_filename
 from saddle.optimizer.path_point import PathPoint
@@ -28,13 +27,13 @@ class TestPathPoint(TestCase):
         np.random.seed(10)
         self.ri._energy_gradient = np.random.rand(9)
         self.ri._energy_hessian_transformation()
-        with assert_raises(NotSetError):
+        with self.assertRaises(NotSetError):
             self.ri.energy_hessian
         assert np.allclose(self.pp.q_gradient,
                            np.dot(
                                np.linalg.pinv(self.ri.b_matrix.T),
                                self.pp.x_gradient))
-        with assert_raises(NotSetError):
+        with self.assertRaises(NotSetError):
             self.pp.v_hessian
         self.pp._mod_hessian = np.eye(3)
 
@@ -42,9 +41,9 @@ class TestPathPoint(TestCase):
         assert np.allclose(self.pp.v_hessian, np.eye(3))
         step = -np.dot(np.linalg.pinv(self.pp.v_hessian), self.pp.v_gradient)
         assert np.allclose(self.pp.v_gradient, -step)
-        with assert_raises(NotSetError):
+        with self.assertRaises(NotSetError):
             self.pp.step = step
-        with assert_raises(NotSetError):
+        with self.assertRaises(NotSetError):
             self.pp.raw_hessian
 
     def test_copy_ob_property(self):
@@ -55,9 +54,9 @@ class TestPathPoint(TestCase):
         assert new_pp._step is None
         assert new_pp._stepsize is None
         assert new_pp._mod_hessian is None
-        with assert_raises(NotSetError):
+        with self.assertRaises(NotSetError):
             new_pp.energy
-        with assert_raises(NotSetError):
+        with self.assertRaises(NotSetError):
             new_pp.v_gradient
         assert not np.allclose(new_pp._instance.coordinates,
                                self.pp._instance.coordinates)

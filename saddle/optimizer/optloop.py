@@ -185,6 +185,7 @@ class OptLoop:
 
         # setup optimization loop
         while opt.check_converge() is False:
+            print(counter)
             if counter > 1:
                 # update trust region
                 opt.update_trust_radius()
@@ -199,7 +200,8 @@ class OptLoop:
             # calculate new point
             new_point = opt.next_step_structure()
             while opt.verify_new_point(new_point) is False:
-                new_point = opt.calculate_trust_step()
+                opt.calculate_trust_step()
+                new_point = opt.next_step_structure()
             # add new point to optimizer
             opt.add_new_point(new_point)
 
