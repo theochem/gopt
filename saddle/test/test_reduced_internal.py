@@ -15,7 +15,8 @@ class TestReduceInternal(unittest.TestCase):
         mol_path = resource_filename(
             Requirement.parse('saddle'), 'data/water.xyz')
         mol = IOData.from_file(mol_path)
-        self.red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        self.red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1,
+                                       'water')
         self.red_int.add_bond(1, 0)
         self.red_int.add_bond(1, 2)
         self.red_int.add_bond(0, 2)
@@ -59,6 +60,8 @@ class TestReduceInternal(unittest.TestCase):
         assert not np.allclose(cache_v, self.red_int.vspace)
         assert cache_ic[0] == self.red_int.ic_values[1]
         assert cache_ic[1] == self.red_int.ic_values[0]
+        # test title
+        assert self.red_int._title == 'water'
 
     def test_property(self):
         assert self.red_int.key_ic_number == 2

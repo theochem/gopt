@@ -44,7 +44,7 @@ class Internal(Cartesian):
     ----------
     numbers : np.ndarray(N)
         A numpy array of atomic number for input coordinates
-    spin : int
+    multi : int
         Spin multiplicity of the molecule
     charge : int
         Charge of the input molecule
@@ -79,12 +79,12 @@ class Internal(Cartesian):
 
     Classmethod
     -----------
-    from_file(filename, charge=0, spin=1)
+    from_file(filename, charge=0, multi=1)
         Create cartesian instance from file
 
     Methods
     -------
-    __init__(coordinates, numbers, charge, spin)
+    __init__(coordinates, numbers, charge, multi)
         Initializes molecule
     distance(index1, index2)
         Calculate distance between two atoms with index1 and index2
@@ -126,9 +126,14 @@ class Internal(Cartesian):
         automatic internal coordinates depends on buildin algorithm
     """
 
-    def __init__(self, coordinates: 'np.ndarray[float]',
-                 numbers: 'np.ndarray[int]', charge: int, spin: int) -> None:
-        super(Internal, self).__init__(coordinates, numbers, charge, spin)
+    def __init__(self,
+                 coordinates: 'np.ndarray[float]',
+                 numbers: 'np.ndarray[int]',
+                 charge: int,
+                 multi: int,
+                 title: str = "") -> None:
+        super(Internal, self).__init__(coordinates, numbers, charge, multi,
+                                       title)
         self._ic = []
         # 1 is connected, 0 is not, -1 is itself
         self._connectivity = np.diag([-1] * len(self.numbers))
@@ -306,7 +311,8 @@ class Internal(Cartesian):
                 # print("finished")
                 return None
             optimizer.update_trust_radius(optimizer.newest)
-        raise NotConvergeError("The coordinates transformation optimization failed to converge")
+        raise NotConvergeError(
+            "The coordinates transformation optimization failed to converge")
 
     def connected_indices(self, index: int) -> 'np.ndarray[int]':
         """Return the indices of atoms connected to given index atom

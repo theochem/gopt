@@ -38,10 +38,10 @@ class TestCartesian(unittest.TestCase):
         ref_numbers = np.array([1, 8, 1])
         assert np.allclose(self.cartesian.numbers, ref_numbers)
 
-    def test_charge_and_spin(self):
-        ref_spin = 1
+    def test_charge_and_multi(self):
+        ref_multi = 1
         ref_charge = 0
-        assert (self.cartesian.spin == ref_spin)
+        assert (self.cartesian.multi == ref_multi)
         assert (self.cartesian.charge == ref_charge)
 
     def test_distance(self):

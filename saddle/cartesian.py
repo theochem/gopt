@@ -40,7 +40,7 @@ class Cartesian:
     ----------
     numbers : np.ndarray(N)
         A list of atomic number for input coordinates
-    spin : int
+    multi : int
         Spin multiplicity of the molecule
     charge : int
         Charge of the input molecule
@@ -57,12 +57,12 @@ class Cartesian:
 
     Classmethod
     -----------
-    from_file(filename, charge=0, spin=1)
+    from_file(filename, charge=0, multi=1)
         Create cartesian instance from file
 
     Methods
     -------
-    __init__(self, coordinates, numbers, charge, spin)
+    __init__(self, coordinates, numbers, charge, multi)
         Initializes molecule
     set_new_coordinates(new_coor)
         Set molecule with a set of coordinates
@@ -83,12 +83,12 @@ class Cartesian:
                  coordinates: 'np.ndarray[float]',
                  numbers: 'np.ndarray[int]',
                  charge: int,
-                 spin: int,
+                 multi: int,
                  title: str = "") -> None:
         self._coordinates = coordinates.copy()
         self._numbers = numbers.copy()
         self._charge = charge
-        self._spin = spin
+        self._multi = multi
         if title:
             self._title = title
         else:
@@ -100,7 +100,7 @@ class Cartesian:
 
     @classmethod
     def from_file(cls, filename: str, charge: int = 0,
-                  spin: int = 1) -> 'Cartesian':
+                  multi: int = 1) -> 'Cartesian':
         """Create an Cartesian instance from file .xyz, .com,
         .gjf or .fchk
 
@@ -110,7 +110,7 @@ class Cartesian:
             the path of the file
         charge : int, default is 0
             the charge of the given molecule(system)
-        spin : int, dufault is 1
+        multi : int, dufault is 1
             the multiplicity of the given molecule(system)
 
         Return
@@ -118,7 +118,7 @@ class Cartesian:
         new Cartesian instance : Cartesian
         """
         mol = IOData.from_file(filename)
-        return cls(mol.coordinates, mol.numbers, charge, spin)
+        return cls(mol.coordinates, mol.numbers, charge, multi)
 
     @property
     def energy_gradient(self) -> 'np.ndarray[float]':
@@ -206,14 +206,14 @@ class Cartesian:
         return self._charge
 
     @property
-    def spin(self) -> int:
+    def multi(self) -> int:
         """The spin multiplicity of the system
 
         Returns
         -------
-        spin : int
+        multi : int
         """
-        return self._spin
+        return self._multi
 
     @property
     def coordinates(self) -> 'np.ndarray[float]':
@@ -297,7 +297,7 @@ class Cartesian:
         title = self._title
         obj = GaussianWrapper(self, title)
         coor, ener, grad, hess = obj.run_gaussian_and_get_result(
-            self.charge, self.spin, energy=True, gradient=True, hessian=True)
+            self.charge, self.multi, energy=True, gradient=True, hessian=True)
         self.set_new_coordinates(coor.reshape(-1, 3))
         self._energy = ener
         self._energy_gradient = grad
@@ -391,4 +391,4 @@ class Cartesian:
         if not title:
             title = self._title
         gw = GaussianWrapper(self, title)
-        gw.create_gauss_input(self.charge, self.spin, freq=freq)
+        gw.create_gauss_input(self.charge, self.multi, freq=freq)

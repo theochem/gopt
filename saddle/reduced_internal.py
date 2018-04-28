@@ -29,7 +29,7 @@ class ReducedInternal(Internal):  # need tests
         Energy Hessian of system versus reduced internal coordinates
     numbers : np.ndarray(N,)
         A numpy array of atomic number for input coordinates
-    spin : int
+    multi : int
         Spin multiplicity of the molecule
     charge : int
         Charge of the input molecule
@@ -64,7 +64,7 @@ class ReducedInternal(Internal):  # need tests
 
     Methods
     -------
-    __init__(coordinates, numbers, charge, spin)
+    __init__(coordinates, numbers, charge, multi)
         Initializes molecule
     set_new_coordinates(new_coor)
         Set molecule with a set of coordinates
@@ -112,7 +112,7 @@ class ReducedInternal(Internal):  # need tests
     -------------
     update_to_reduced_internal(internal_ob, key_ic_number=0)
         update a InternalCoordinates into a ReducedInternalCoordinates object
-    from_file(filename, charge=0, spin=1)
+    from_file(filename, charge=0, multi=1)
         Create cartesian instance from file
     """
 
@@ -120,10 +120,11 @@ class ReducedInternal(Internal):  # need tests
                  coordinates: 'np.ndarray',
                  numbers: 'np.ndarray',
                  charge: int,
-                 spin: int,
+                 multi: int,
+                 title: str = "",
                  key_ic_number: int = 0) -> None:
         super(ReducedInternal, self).__init__(coordinates, numbers, charge,
-                                              spin)
+                                              multi, title)
         self._k_ic_n = key_ic_number
         self._reset_v_space()
 
