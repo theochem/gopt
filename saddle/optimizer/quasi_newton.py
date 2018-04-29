@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.linalg import norm
-from numpy import dot, outer, cross
+from numpy import dot, outer
 from saddle.optimizer.errors import UpdateError
 from saddle.optimizer.secant import secant
 from saddle.optimizer.path_point import PathPoint
@@ -56,9 +56,9 @@ class QuasiNT:
     @staticmethod
     def bofill(hes, *_, sec_y, step):
         p_x = sec_y - dot(hes, step)
-        numer = norm(cross(step, p_x))**2
+        numer = norm(dot(step, p_x))**2
         denor = norm(step)**2 * norm(p_x)**2
-        ratio = numer / denor
+        ratio = 1 - numer / denor
         sr1_r = QuasiNT.sr1(hes, sec_y=sec_y, step=step)
         psb_r = QuasiNT.psb(hes, sec_y=sec_y, step=step)
         return (1 - ratio) * sr1_r + ratio * psb_r
