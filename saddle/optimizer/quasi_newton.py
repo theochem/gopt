@@ -64,9 +64,9 @@ class QuasiNT:
         return (1 - ratio) * sr1_r + ratio * psb_r
 
     @staticmethod
-    def _verify_type(old_hessian, secant, step) -> None:
+    def _verify_type(old_hessian, secant_y, step) -> None:
         assert old_hessian.ndim == 2
-        assert secant.ndim == 1
+        assert secant_y.ndim == 1
         assert step.ndim == 1
 
     # bound raw staticmethod to dict key words

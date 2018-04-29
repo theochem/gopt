@@ -35,7 +35,7 @@ class TSConstruct(object):
 
     Classmethod
     -----------
-    from_file(rct_file, prd_file, charge=0, spin=1):
+    from_file(rct_file, prd_file, charge=0, multi=1):
         Create an instance from given file of reactant and product
 
     Methods
@@ -144,7 +144,7 @@ class TSConstruct(object):
         return self._key_ic_counter
 
     @classmethod
-    def from_file(cls, rct_file, prd_file, charge=0, spin=1):
+    def from_file(cls, rct_file, prd_file, charge=0, multi=1):
         """Create a TSConstruct instance from files contains info for reactant
         and product
 
@@ -156,7 +156,7 @@ class TSConstruct(object):
             path to product file
         charge : int
             charge of the given system or molecules as a whole
-        spin : int
+        multi : int
             multiplicity of the given system or molecules as a whole
 
         Return
@@ -167,8 +167,8 @@ class TSConstruct(object):
         """
         rct = IOData.from_file(rct_file)
         prd = IOData.from_file(prd_file)
-        rct_mol = Internal(rct.coordinates, rct.numbers, charge, spin)
-        prd_mol = Internal(prd.coordinates, prd.numbers, charge, spin)
+        rct_mol = Internal(rct.coordinates, rct.numbers, charge, multi)
+        prd_mol = Internal(prd.coordinates, prd.numbers, charge, multi)
         return cls(rct_mol, prd_mol)
 
     def add_bond(self, atom1, atom2):
