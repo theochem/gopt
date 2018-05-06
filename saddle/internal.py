@@ -23,6 +23,7 @@
 from copy import deepcopy
 from itertools import combinations
 from typing import List, Tuple
+from heapq import heappush, heappop
 
 import numpy as np
 
@@ -529,6 +530,8 @@ class Internal(Cartesian):
             self.wipe_ic_info(True)
         if keep_bond is False:
             self._auto_select_bond()
+            # self._auto_select_fragment_bond()
+            # TODO: fix auto bond function
         else:
             self.set_new_ics(bonds)
         self._auto_select_angle()
@@ -602,26 +605,44 @@ class Internal(Cartesian):
         # print(frags.keys())
         for group1, group2 in combinations(frags.keys(), 2):
             atoms_set = []
-            for atom_1 in frags[group1]:
+            # atom indices for each fragments
+            g1_atoms = frags[group1] # np.array
+            g2_atoms = frags[group2] # np.array
+
+            # atomic number for each fragments
+            g1_numbers = self.numbers[g1_atoms]
+            g2_numbers = self.numbers[g2_atoms]
+
+            # min atoms for each fragments
+            min_atom = min(len(g1_atoms), len(g2_atoms))
+            # most non h atoms
+            max_f_bond = max(np.sum([g1_numbers != 1]), np.sum([g2_numbers != 1]))
+            for atom_1 in g1_atoms:
                 # print('a1', atom_1)
-                for atom_2 in frags[group2]:
+                for atom_2 in g2_atoms:
                     # print('a2', atom_2)
                     new_distance = self.distance(atom_1, atom_2)
-                    if len(atoms_set) < 1:
-                        atoms_set.append((new_distance, atom_1, atom_2))
-                    elif len(atoms_set) < 2:
-                        if new_distance < atoms_set[0][0]:
-                            atoms_set.insert(0, (new_distance, atom_1, atom_2))
-                        else:
-                            atoms_set.append((new_distance, atom_1, atom_2))
-                    elif new_distance < atoms_set[0][0]:
-                        atoms_set.pop()
-                        atoms_set.insert(0, (new_distance, atom_1, atom_2))
-                    elif new_distance < atoms_set[1][0]:
-                        atoms_set.pop()
-                        atoms_set.append((new_distance, atom_1, atom_2))
-            for _, atom1, atom2 in atoms_set:
+                    if len(atoms_set) > 1 and new_distance > 2 * atoms_set[0][0]:
+                        continue
+                    heappush(atoms_set, (new_distance, atom_1, atom_2))
+
+            counter = 0
+            least_length = atoms_set[0][0]
+            while atoms_set:
+                bond_dis, atom1, atom2 = heappop(atoms_set)
+                if counter < 2:
+                    self.add_bond(atom1, atom2, frag_bond=True)
+                    counter += 1
+                    continue
+                if bond_dis > max(3.7794520, 2 * least_length):
+                    print('yep')
+                    break
+                if counter >= max(2, max_f_bond):
+                    print('more')
+                    break
                 self.add_bond(atom1, atom2, frag_bond=True)
+                counter += 1
+
 
     def _auto_select_angle(self) -> None:
         """A private method for automatically selecting angle

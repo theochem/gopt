@@ -386,6 +386,7 @@ class TestInternal(unittest.TestCase):
         mol.add_bond(0, 3)
         mol.add_bond(4, 2)
         mol._auto_select_fragment_bond()
+        print(mol.ic)
         assert len(mol.ic) == 6
 
         mol.wipe_ic_info(True)
@@ -394,7 +395,7 @@ class TestInternal(unittest.TestCase):
         mol.add_bond(4, 5)
         mol._auto_select_fragment_bond()
         assert len(mol.ic) == 9
-
+        #
         mol.wipe_ic_info(True)
         mol.add_bond(0, 1)
         mol.add_bond(0, 2)
@@ -405,3 +406,4 @@ class TestInternal(unittest.TestCase):
         assert mol.ic[4].atoms == (0, 3)
         assert np.allclose(mol.ic_values[5], 3.501060110109399)
         assert mol.ic[5].atoms == (2, 3)
+        assert len(mol.ic) == 6
