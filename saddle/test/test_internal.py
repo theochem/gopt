@@ -181,18 +181,18 @@ class TestInternal(unittest.TestCase):
         self.mol.add_bond(0, 1)
         self.mol.add_bond(1, 2)
         self.mol.add_angle_cos(0, 1, 2)
-        assert np.allclose(self.mol.ic_values, [
-            1.8141372422079882, 1.8141372422079882, -0.33333406792305265
-        ])
+        assert np.allclose(
+            self.mol.ic_values,
+            [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
         self.mol.set_target_ic([1.7, 1.7, -0.4])
         self.mol.swap_internal_coordinates(0, 2)
-        assert np.allclose(self.mol.ic_values, [
-            -0.33333406792305265, 1.8141372422079882, 1.8141372422079882
-        ])
+        assert np.allclose(
+            self.mol.ic_values,
+            [-0.33333406792305265, 1.8141372422079882, 1.8141372422079882])
         self.mol.swap_internal_coordinates(0, 2)
-        assert np.allclose(self.mol.ic_values, [
-            1.8141372422079882, 1.8141372422079882, -0.33333406792305265
-        ])
+        assert np.allclose(
+            self.mol.ic_values,
+            [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
         assert np.allclose(self.mol.target_ic, [1.7, 1.7, -0.4])
         v, d, dd = self.mol._cost_value()
         assert np.allclose(0.030498966617378116, v)
@@ -226,9 +226,9 @@ class TestInternal(unittest.TestCase):
         new_coor = np.array([[1.40, -0.93019123, -0.], [-0., 0.11720081, -0.],
                              [-1.40, -0.93019123, -0.]])
         self.mol.set_new_coordinates(new_coor)
-        assert np.allclose(self.mol.ic_values, [
-            1.7484364736491811, 1.7484364736491811, -0.28229028459335431
-        ])
+        assert np.allclose(
+            self.mol.ic_values,
+            [1.7484364736491811, 1.7484364736491811, -0.28229028459335431])
         assert np.allclose(
             self.mol._cc_to_ic_gradient[0, :6],
             np.array(
@@ -256,9 +256,9 @@ class TestInternal(unittest.TestCase):
 
     def test_auto_ic_select_water(self):
         self.mol.auto_select_ic()
-        assert np.allclose(self.mol.ic_values, [
-            1.8141372422079882, 1.8141372422079882, -0.33333406792305265
-        ])
+        assert np.allclose(
+            self.mol.ic_values,
+            [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
 
     def test_auto_ic_select_ethane(self):
         mol_path = resource_filename(
@@ -342,8 +342,66 @@ class TestInternal(unittest.TestCase):
         assert len(ethane.ic) == 23
         ethane.auto_select_ic(keep_bond=True)
         assert len(ethane.ic) == 12
-        print(ethane.ic)
+        # print(ethane.ic)
         ethane.delete_ic(1, 2, 3)
         assert len(ethane.ic) == 9
-        print(ethane.ic)
+        # print(ethane.ic)
         # assert False
+
+    def test_fragments_in_mole(self):
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/ch3_hf.xyz')
+        mol = IOData.from_file(mol_path)
+        mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        assert len(mol.fragments) == mol.natom
+        mol.add_bond(0, 1)
+        mol.add_bond(2, 3)
+        # print(mol.fragments)
+        assert len(mol.fragments) == mol.natom - 2
+        mol.add_bond(0, 2)
+        assert len(mol.fragments) == mol.natom - 3
+        mol.add_bond(0, 3)
+        assert len(mol.fragments) == mol.natom - 3
+        mol.add_bond(4, 5)
+        assert len(mol.fragments) == mol.natom - 4
+        mol.add_bond(0, 5, frag_bond=True)
+        assert len(mol.fragments) == 2
+
+    def test_fragments_bond_add(self):
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/ch3_hf.xyz')
+        mol = IOData.from_file(mol_path)
+        mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        mol._auto_select_fragment_bond()
+        assert len(mol.ic) == 15
+
+        mol.wipe_ic_info(True)
+        mol.add_bond(0, 1)
+        mol._auto_select_fragment_bond()
+        assert len(mol.ic) == 15
+
+        mol.wipe_ic_info(True)
+        mol.add_bond(0, 1)
+        mol.add_bond(0, 5)
+        mol.add_bond(0, 3)
+        mol.add_bond(4, 2)
+        mol._auto_select_fragment_bond()
+        assert len(mol.ic) == 6
+
+        mol.wipe_ic_info(True)
+        mol.add_bond(0, 1)
+        mol.add_bond(2, 3)
+        mol.add_bond(4, 5)
+        mol._auto_select_fragment_bond()
+        assert len(mol.ic) == 9
+
+        mol.wipe_ic_info(True)
+        mol.add_bond(0, 1)
+        mol.add_bond(0, 2)
+        mol.add_bond(3, 4)
+        mol.add_bond(4, 5)
+        mol._auto_select_fragment_bond()
+        assert np.allclose(mol.ic_values[4], 2.02761704779693)
+        assert mol.ic[4].atoms == (0, 3)
+        assert np.allclose(mol.ic_values[5], 3.501060110109399)
+        assert mol.ic[5].atoms == (2, 3)

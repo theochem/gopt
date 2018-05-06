@@ -142,10 +142,12 @@ class Internal(Cartesian):
         self._cc_to_ic_hessian = None
         self._internal_gradient = None
         self._internal_hessian = None
-        # self._tilt_internal_hessian = None
+        # to indicate fragment groups in system
+        self._fragment = np.arange(self.natom)
         return None
 
-    def add_bond(self, atom1: int, atom2: int) -> None:  # tested
+    def add_bond(self, atom1: int, atom2: int,
+                 frag_bond=False) -> None:  # tested
         """Add bond connection between atom1 and atom2
 
         Arguments
@@ -169,6 +171,8 @@ class Internal(Cartesian):
             self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
             # after adding a bond, change the connectivity of atoms pair to 1
             self._add_connectivity(atoms)
+            if frag_bond is False:
+                self._allocate_fragment_group(atom1, atom2)
         return None
 
     def add_angle_cos(self, atom1: int, atom2: int,
@@ -480,6 +484,14 @@ class Internal(Cartesian):
 
     q_gradient = internal_gradient
 
+    @property
+    def fragments(self):
+        unique_groups = np.unique(self._fragment)
+        groups = {}
+        for i in unique_groups:
+            groups[i] = np.arange(self.natom)[self._fragment == i]
+        return groups
+
     def print_connectivity(self) -> None:
         """Print the connectivity matrix on screen
         """
@@ -531,10 +543,17 @@ class Internal(Cartesian):
         self._regenerate_connectivity()
         return None
 
+    def _allocate_fragment_group(self, atom1, atom2):
+        num1 = self._fragment[atom1]
+        num2 = self._fragment[atom2]
+        if num1 != num2:
+            self._fragment[self._fragment == num2] = num1
+
     def _clear_ic_info(self) -> None:  # tested
         """Wipe all the internal information in this structure
         """
         self._ic = []
+        self._fragment = np.arange(self.natom)
         self._connectivity = np.diag([-1] * len(self.numbers))
         self._target_ic = None
         self._cc_to_ic_gradient = None
@@ -576,6 +595,33 @@ class Internal(Cartesian):
                     if dis <= 0.9 * thresh_sum and angle >= 1.5708:
                         self.add_bond(h_index, index_k)  # add H bond
         return None
+
+    def _auto_select_fragment_bond(self):
+        """automatically select fragmental bonds"""
+        frags = self.fragments
+        # print(frags.keys())
+        for group1, group2 in combinations(frags.keys(), 2):
+            atoms_set = []
+            for atom_1 in frags[group1]:
+                # print('a1', atom_1)
+                for atom_2 in frags[group2]:
+                    # print('a2', atom_2)
+                    new_distance = self.distance(atom_1, atom_2)
+                    if len(atoms_set) < 1:
+                        atoms_set.append((new_distance, atom_1, atom_2))
+                    elif len(atoms_set) < 2:
+                        if new_distance < atoms_set[0][0]:
+                            atoms_set.insert(0, (new_distance, atom_1, atom_2))
+                        else:
+                            atoms_set.append((new_distance, atom_1, atom_2))
+                    elif new_distance < atoms_set[0][0]:
+                        atoms_set.pop()
+                        atoms_set.insert(0, (new_distance, atom_1, atom_2))
+                    elif new_distance < atoms_set[1][0]:
+                        atoms_set.pop()
+                        atoms_set.append((new_distance, atom_1, atom_2))
+            for _, atom1, atom2 in atoms_set:
+                self.add_bond(atom1, atom2, frag_bond=True)
 
     def _auto_select_angle(self) -> None:
         """A private method for automatically selecting angle
