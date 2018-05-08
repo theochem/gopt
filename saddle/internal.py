@@ -530,7 +530,7 @@ class Internal(Cartesian):
             self.wipe_ic_info(True)
         if keep_bond is False:
             self._auto_select_bond()
-            # self._auto_select_fragment_bond()
+            self._auto_select_fragment_bond()
             # TODO: fix auto bond function
         else:
             self.set_new_ics(bonds)
@@ -606,8 +606,8 @@ class Internal(Cartesian):
         for group1, group2 in combinations(frags.keys(), 2):
             atoms_set = []
             # atom indices for each fragments
-            g1_atoms = frags[group1] # np.array
-            g2_atoms = frags[group2] # np.array
+            g1_atoms = frags[group1]  # np.array
+            g2_atoms = frags[group2]  # np.array
 
             # atomic number for each fragments
             g1_numbers = self.numbers[g1_atoms]
@@ -616,13 +616,15 @@ class Internal(Cartesian):
             # min atoms for each fragments
             min_atom = min(len(g1_atoms), len(g2_atoms))
             # most non h atoms
-            max_f_bond = max(np.sum([g1_numbers != 1]), np.sum([g2_numbers != 1]))
+            max_f_bond = max(
+                np.sum([g1_numbers != 1]), np.sum([g2_numbers != 1]))
             for atom_1 in g1_atoms:
                 # print('a1', atom_1)
                 for atom_2 in g2_atoms:
                     # print('a2', atom_2)
                     new_distance = self.distance(atom_1, atom_2)
-                    if len(atoms_set) > 1 and new_distance > 2 * atoms_set[0][0]:
+                    if (len(atoms_set) > 1
+                            and new_distance > 2 * atoms_set[0][0]):
                         continue
                     heappush(atoms_set, (new_distance, atom_1, atom_2))
 
@@ -635,14 +637,11 @@ class Internal(Cartesian):
                     counter += 1
                     continue
                 if bond_dis > max(3.7794520, 2 * least_length):
-                    print('yep')
                     break
                 if counter >= max(2, max_f_bond):
-                    print('more')
                     break
                 self.add_bond(atom1, atom2, frag_bond=True)
                 counter += 1
-
 
     def _auto_select_angle(self) -> None:
         """A private method for automatically selecting angle
@@ -785,6 +784,7 @@ class Internal(Cartesian):
             deriv, the gradient vs internal coordinates
             deriv2, the hessian vs internal coordinates
         """
+        # TODO: add dihedral
         if self.target_ic is None:
             raise NotSetError("The value of target_ic is not set")
         # initialize function value, gradient and hessian
@@ -799,6 +799,8 @@ class Internal(Cartesian):
                 value += v
                 deriv[i] += d
                 deriv2[i, i] += dd
+            elif self.ic[i].__class__.__name__ in ("ConventionDihedral"):
+                pass
         return value, deriv, deriv2
 
     def _ic_gradient_hessian_transform_to_cc(
@@ -987,3 +989,6 @@ class Internal(Cartesian):
         deriv = 2 * (origin - target)
         deriv2 = 2
         return value, deriv, deriv2
+
+    def _dihedral_square(origin, targe):
+        """Calculate cost function and it's derivatives for dihedral"""

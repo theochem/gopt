@@ -194,6 +194,7 @@ class TestInternal(unittest.TestCase):
             self.mol.ic_values,
             [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
         assert np.allclose(self.mol.target_ic, [1.7, 1.7, -0.4])
+        # test cost function
         v, d, dd = self.mol._cost_value()
         assert np.allclose(0.030498966617378116, v)
         ref_gradient = np.array(
@@ -250,6 +251,7 @@ class TestInternal(unittest.TestCase):
         n_p = self.mol._create_geo_point()
         assert isinstance(n_p, Point)
         assert n_p.trust_radius == 1.7320508075688772
+
         self.mol.converge_to_target_ic(iteration=100)
         g_array = self.mol.cost_value_in_cc[1]
         assert len(g_array[abs(g_array) > 3e-6]) == 0
@@ -275,9 +277,13 @@ class TestInternal(unittest.TestCase):
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         mol.auto_select_ic()
         # print mol.ic_values
+        print(mol.ic_values)
         ic_ref = np.array([
-            2.02762919, 2.02769736, 2.02761705, 1.77505755, -0.49059482,
-            -0.49089531, -0.49066505, -0.9635587
+            2.02762919, 2.02769736, 2.02761705, 1.77505755, 4.27707385,
+            4.87406146, -0.49059482, -0.49089531, -0.07907699, -0.49066505,
+            -0.07896661, -0.07794291, 0.48439779, 0.90994179, -1., -0.90992575,
+            0.82823038, -0.13509451, -0.13492668, -1., -0.50014174,
+            -0.49989701, -0.9635587
         ])
         assert np.allclose(mol.ic_values, ic_ref)
 
