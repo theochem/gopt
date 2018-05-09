@@ -100,7 +100,7 @@ class BondLength(CoordinateTypes):
         return "Bond-{}-({})".format(self.atoms, self.value)
 
     def get_cost(self, target):
-        cost_v = (self.value - target) ** 2
+        cost_v = (self.value - target)**2
         cost_d = 2 * (self.value - target)
         cost_dd = 2
         return cost_v, cost_d, cost_dd
@@ -140,6 +140,7 @@ class BendAngle(CoordinateTypes):
     def get_cost(self, target):
         raise NotImplementedError('Not implemented yet')
 
+
 class BendCos(CoordinateTypes):
     """BendCos type internal coordinates class
 
@@ -172,10 +173,11 @@ class BendCos(CoordinateTypes):
         return "Angle-{}-({})".format(self.atoms, self.value)
 
     def get_cost(self, target):
-        cost_v = (self.value - target) ** 2
+        cost_v = (self.value - target)**2
         cost_d = 2 * (self.value - target)
         cost_dd = 2
         return cost_v, cost_d, cost_dd
+
 
 class ConventionDihedral(CoordinateTypes):
     """ConventionDihedral type internal coordinates class
@@ -208,6 +210,19 @@ class ConventionDihedral(CoordinateTypes):
     def __repr__(self) -> str:
         return "Dihed-{}-({})".format(self.atoms, self.value)
 
+    def get_cost(self, target):  # TODO: need to test
+        sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))**2
+        sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))**2
+        sin_target = (1 - target**2)**0.5
+        sin_value = (1 - self.value**2)**0.5
+        cost_v = -2 * sin_ang1 * sin_ang2 * (
+            self.value * target + sin_value * sin_target)
+        cost_d = -2 * sin_ang1 * sin_ang2 * (
+            target - (1 - self.value)**-0.5 * self.value * sin_target)
+        cost_dd = 2 * sin_ang1 * sin_ang2 * sin_target * (
+            (1 - self.value**2)**-0.5 +
+            (1 - self.value**2)**-1.5 * self.value**2)
+        return cost_v, cost_d, cost_dd
 
 
 class NewDihedralDot(CoordinateTypes):  # need tests
@@ -266,15 +281,3 @@ class NewDihedralCross(CoordinateTypes):  # need tests
     @property
     def info(self) -> None:
         pass
-
-    def get_cost(self, target): # TODO: need to test
-        sin_ang1 = np.sin(bend_angle(self._coordinates[:3])) ** 2
-        sin_ang2 = np.sin(bend_angle(self._coordinates[1:])) ** 2
-        sin_target = (1 - target**2) ** 0.5
-        def cost_dihed(x):
-            return sin_ang1 * sin_ang2 * ((x - target)**2 + ((1 - x**2)**0.5 - sin_target)**2)
-        cost_v = cost_dihed(self.value)
-        cost_d = derivative(cost_dihed, self.value, dx=1e-6, n=1)
-        cost_dd = derivative(cost_dihed, self.value, dx=1e-6, n=2)
-        return cost_v, cost_d, cost_dd
-        # cost_dd =
