@@ -28,7 +28,7 @@ from heapq import heappush, heappop
 import numpy as np
 
 from saddle.cartesian import Cartesian
-from saddle.coordinate_types import (BendCos, BondLength, ConventionDihedral,
+from saddle.coordinate_types import (BendCos, BondLength, DihedralAngle,
                                      CoordinateTypes)
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
@@ -93,7 +93,7 @@ class Internal(Cartesian):
         Calculate angle between atoms with index1, index2, and index3
     add_bond(atom1, atom2)
         Add a bond between atom1 and atom2
-    add_angle_cos(atom1, atom2, atom3)
+    add_angle(atom1, atom2, atom3)
         Add a cos of a angle consist of atom1, atom2, and atom3
     add_dihedral(atom1, atom2, atom3, atom4)
         Add a dihedral of plain consists of atom1, atom2, and atom3
@@ -138,7 +138,6 @@ class Internal(Cartesian):
         self._ic = []
         # 1 is connected, 0 is not, -1 is itself
         self._connectivity = np.diag([-1] * len(self.numbers))
-        self._target_ic = None
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
         self._internal_gradient = None
@@ -176,8 +175,7 @@ class Internal(Cartesian):
                 self._allocate_fragment_group(atom1, atom2)
         return None
 
-    def add_angle_cos(self, atom1: int, atom2: int,
-                      atom3: int) -> None:  # tested
+    def add_angle(self, atom1: int, atom2: int, atom3: int) -> None:  # tested
         """Add cos angle connection between atom1, atom2 and atom3. The angle
         is consist of vector(atom1 - atom2) and vector(atom3 - atom2)
 
@@ -226,7 +224,7 @@ class Internal(Cartesian):
         atoms = (atom1, atom2, atom3, atom4)
         atoms = self._atoms_sequence_reorder(atoms)
         rs = self.coordinates[np.array(atoms)]
-        new_ic_obj = ConventionDihedral(atoms, rs)
+        new_ic_obj = DihedralAngle(atoms, rs)
         d, dd = new_ic_obj.get_gradient_hessian()
         if (self._check_connectivity(atom2, atom3)
                 and (self._check_connectivity(atom1, atom2)
@@ -261,7 +259,8 @@ class Internal(Cartesian):
         """
         if len(new_ic) != len(self.ic):
             raise AtomsNumberError("The ic is not in the same shape")
-        self._target_ic = np.array(new_ic).copy()
+        for i in self.ic:
+            i.target = new_ic[i]
         return None
 
     def set_new_coordinates(self,
@@ -303,14 +302,22 @@ class Internal(Cartesian):
             number of iteration for optimization process
         """
         optimizer = GeoOptimizer()
-        init_point = self._create_geo_point()
+        init_guess = deepcopy(self)
+        init_coor = np.dot(
+            np.linalg.pinv(init_guess.b_matrix),
+            init_guess.target_ic - self.ic_values)
+        init_guess.set_new_coordinates(init_coor)
+        init_point = init_guess._create_geo_point()
         optimizer.add_new(init_point)
         for _ in range(iteration):
             optimizer.tweak_hessian(optimizer.newest)
             step = optimizer.trust_radius_step(optimizer.newest)
             new_coor = self.coordinates + step.reshape(-1, 3)
+            new_coor = init_guess.coordinates + step.reshape(-1, 3)
             self.set_new_coordinates(new_coor)
+            init_guess.et_new_coordinates(new_coor)
             new_point = self._create_geo_point()
+            new_point = init_guess._create_geo_point()
             optimizer.add_new(new_point)
             if optimizer.converge(optimizer.newest):
                 # print("finished")
@@ -318,6 +325,7 @@ class Internal(Cartesian):
             optimizer.update_trust_radius(optimizer.newest)
         raise NotConvergeError(
             "The coordinates transformation optimization failed to converge")
+        return init_guess
 
     def connected_indices(self, index: int) -> 'np.ndarray[int]':
         """Return the indices of atoms connected to given index atom
@@ -332,6 +340,7 @@ class Internal(Cartesian):
         connected_index : np.ndarray(M)
             indices of atoms connected to given index
         """
+        connection = self.connectivity[index]
         connection = self.connectivity[index]
         connected_index = np.where(connection > 0)[0]
         return connected_index
@@ -442,6 +451,11 @@ class Internal(Cartesian):
         return np.array(value)
 
     @property
+    def ic_weights(self):
+        weights = [i.weight for i in self._ic]
+        return np.array(weights)
+
+    @property
     def target_ic(self) -> 'np.ndarray[float]':
         """target internal coordinates values
 
@@ -449,7 +463,10 @@ class Internal(Cartesian):
         -------
         target_ic : np.ndarray(K,)
         """
-        return self._target_ic
+        target_ic = [i.target for i in self.ic]
+        if any(target_ic):
+            raise NotSetError('Not all target ic are set')
+        return np.array(target_ic)
 
     @property
     def connectivity(self) -> 'np.ndarray[float]':
@@ -558,7 +575,6 @@ class Internal(Cartesian):
         self._ic = []
         self._fragment = np.arange(self.natom)
         self._connectivity = np.diag([-1] * len(self.numbers))
-        self._target_ic = None
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
         self._internal_gradient = None
@@ -650,7 +666,7 @@ class Internal(Cartesian):
             connected = self.connected_indices(center_index)
             if len(connected) >= 2:
                 for side_1, side_2 in combinations(connected, 2):
-                    self.add_angle_cos(side_1, center_index, side_2)
+                    self.add_angle(side_1, center_index, side_2)
         return None
 
     def _auto_select_dihed_normal(self) -> None:
@@ -784,23 +800,16 @@ class Internal(Cartesian):
             deriv, the gradient vs internal coordinates
             deriv2, the hessian vs internal coordinates
         """
-        # TODO: add dihedral
-        if self.target_ic is None:
+        if any(self.target_ic):
             raise NotSetError("The value of target_ic is not set")
-        # initialize function value, gradient and hessian
         value = 0
         deriv = np.zeros(len(self.ic))
         deriv2 = np.zeros((len(self.ic), len(self.ic)), float)
-        for i, _ in enumerate(self.ic):
-            if self.ic[i].__class__.__name__ in ("BondLength", "BendCos",
-                                                 "BendAngle"):
-                v, d, dd = self._direct_square(self.ic_values[i],
-                                               self.target_ic[i])
-                value += v
-                deriv[i] += d
-                deriv2[i, i] += dd
-            elif self.ic[i].__class__.__name__ in ("ConventionDihedral"):
-                pass
+        for i, inter_c in enumerate(self.ic):
+            v, d, dd = inter_c.get_cost(self.target_ic[i])
+            value += v
+            deriv[i] += d
+            deriv2[i, i] += dd
         return value, deriv, deriv2
 
     def _ic_gradient_hessian_transform_to_cc(
@@ -828,6 +837,10 @@ class Internal(Cartesian):
                                                 self._cc_to_ic_hessian, 1)
         cartesian_hessian = cartesian_hessian_part_1 + cartesian_hessian_part_2
         return cartesian_gradient, cartesian_hessian
+
+    def _change_weight(self, index, value):
+        """change weight of given index internal coordinates to given value"""
+        self.ic[index].weight = value
 
     def _check_connectivity(self, atom1: int, atom2: int) -> bool:
         """Check whether two atoms are connected or not
@@ -989,6 +1002,3 @@ class Internal(Cartesian):
         deriv = 2 * (origin - target)
         deriv2 = 2
         return value, deriv, deriv2
-
-    def _dihedral_square(origin, targe):
-        """Calculate cost function and it's derivatives for dihedral"""
