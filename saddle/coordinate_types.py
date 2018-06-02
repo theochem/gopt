@@ -22,8 +22,8 @@
 
 import numpy as np
 
-from scipy.misc import derivative
 from typing import Tuple
+from saddle.errors import NotSetError
 
 from saddle.molmod import (bend_angle, bend_cos, bond_length, dihed_cos,
                            dihed_angle, dihed_new_cross, dihed_new_dot)
@@ -40,13 +40,31 @@ class CoordinateTypes:
         self._coordinates = coordinates
         self._atoms = atoms
         self._value, self._d, self._dd = self._get_all()
-        self.weight = 1
-        self.target = None
+        self._weight = 1
+        self._target = None
         return None
+
+    @property
+    def target(self):
+        if self._target:
+            return self._target
+        raise NotSetError('target ic is not set')
+
+    @target.setter
+    def target(self, value):
+        self._target = value
 
     @property
     def value(self) -> float:
         return self._value
+
+    @property
+    def weight(self):
+        return self._weight
+
+    @weight.setter
+    def weight(self, value):
+        self._weight = value
 
     def get_gradient_hessian(
             self) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
@@ -65,7 +83,21 @@ class CoordinateTypes:
         raise NotImplementedError(
             "This method should be implemented in subclass")
 
-    def get_cost(self):
+    # def get_cost(self):
+    #     raise NotImplementedError(
+    #         "This method should be implemented in subclass")
+    @property
+    def cost_v(self):
+        raise NotImplementedError(
+            "This method should be implemented in subclass")
+
+    @property
+    def cost_d(self):
+        raise NotImplementedError(
+            "This method should be implemented in subclass")
+
+    @property
+    def cost_dd(self):
         raise NotImplementedError(
             "This method should be implemented in subclass")
 
@@ -101,12 +133,17 @@ class BondLength(CoordinateTypes):
     def __repr__(self) -> str:
         return "Bond-{}-({})".format(self.atoms, self.value)
 
-    def get_cost(self):
-        target = self.target
-        cost_v = (self.value - target)**2
-        cost_d = 2 * (self.value - target)
-        cost_dd = 2
-        return cost_v * self.weight, cost_d * self.weight, cost_dd * self.weight
+    @property
+    def cost_v(self):
+        return (self.value - self.target)**2 * self.weight
+
+    @property
+    def cost_d(self):
+        return 2 * (self.value - self.target) * self.weight
+
+    @property
+    def cost_dd(self):
+        return 2 * self.weight
 
 
 class BendAngle(CoordinateTypes):
@@ -140,14 +177,19 @@ class BendAngle(CoordinateTypes):
     def __repr__(self) -> str:
         return "Angle-{}-({})".format(self.atoms, self.value)
 
-    def get_cost(self, target):
-        target = self.target
-        cost_v = (np.cos(self.value) - np.cos(target))**2
-        cost_d = -2 * (
-            np.cos(self.value) - np.cos(target)) * np.sin(self.value)
-        cost_dd = 2 * (np.sin(self.value)**2 - np.cos(self.value)**2 +
-                       np.cos(target) * np.cos(self.value))
-        return cost_v * self.weight, cost_d * self.weight, cost_dd * self.weight
+    @property
+    def cost_v(self):
+        return (np.cos(self.value) - np.cos(self.target))**2 * self.weight
+
+    @property
+    def cost_d(self):
+        return -2 * (np.cos(self.value) - np.cos(self.target)) * np.sin(
+            self.value) * self.weight
+
+    @property
+    def cost_dd(self):
+        return 2 * (np.sin(self.value)**2 - np.cos(self.value)**2 +
+                    np.cos(self.target) * np.cos(self.value)) * self.weight
 
 
 class BendCos(CoordinateTypes):
@@ -181,7 +223,7 @@ class BendCos(CoordinateTypes):
     def __repr__(self) -> str:
         return "Angle-{}-({})".format(self.atoms, self.value)
 
-    def get_cost(self, target):
+    def get_cost(self):
         target = self.target
         cost_v = (self.value - target)**2
         cost_d = 2 * (self.value - target)
@@ -220,14 +262,26 @@ class DihedralAngle(CoordinateTypes):
     def __repr__(self) -> str:
         return "Dihed-{}-({})".format(self.atoms, self.value)
 
-    def get_cost(self, target):
-        target = self.target
+    @property
+    def cost_v(self):
         sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))**2
         sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))**2
-        cost_v = sin_ang1 * sin_ang2 * (2 - 2 * np.cos(self.value - target))
-        cost_d = sin_ang1 * sin_ang2 * 2 * np.sin(self.value - target)
-        cost_dd = sin_ang1 * sin_ang2 * 2 * np.cos(self.value - target)
-        return cost_v * self.weight, cost_d * self.weight, cost_dd * self.weight
+        return sin_ang1 * sin_ang2 * (
+            2 - 2 * np.cos(self.value - self.target)) * self.weight
+
+    @property
+    def cost_d(self):
+        sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))**2
+        sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))**2
+        return sin_ang1 * sin_ang2 * 2 * np.sin(
+            self.value - self.target) * self.weight
+
+    @property
+    def cost_dd(self):
+        sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))**2
+        sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))**2
+        return sin_ang1 * sin_ang2 * 2 * np.cos(
+            self.value - self.target) * self.weight
 
 
 class ConventionDihedral(CoordinateTypes):
@@ -261,7 +315,7 @@ class ConventionDihedral(CoordinateTypes):
     def __repr__(self) -> str:
         return "Dihed-{}-({})".format(self.atoms, self.value)
 
-    def get_cost(self, target):  # TODO: need to test
+    def get_cost(self):  # TODO: need to test
         raise NotImplementedError
         # sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))**2
         # sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))**2
