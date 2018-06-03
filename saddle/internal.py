@@ -28,7 +28,7 @@ from heapq import heappush, heappop
 import numpy as np
 
 from saddle.cartesian import Cartesian
-from saddle.coordinate_types import (BendCos, BondLength, DihedralAngle,
+from saddle.coordinate_types import (BendAngle, BondLength, DihedralAngle,
                                      CoordinateTypes)
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
@@ -193,7 +193,7 @@ class Internal(Cartesian):
         atoms = (atom1, atom2, atom3)
         atoms = self._atoms_sequence_reorder(atoms)
         rs = self.coordinates[np.array(atoms)]
-        new_ic_obj = BendCos(atoms, rs)
+        new_ic_obj = BendAngle(atoms, rs)
         d, dd = new_ic_obj.get_gradient_hessian()
         # check if the angle is formed by two connected bonds
         if self._check_connectivity(atom1, atom2) and self._check_connectivity(
@@ -258,9 +258,10 @@ class Internal(Cartesian):
         new_ic : np.ndarray(K,) or list of int, len(new_ic) = K
         """
         if len(new_ic) != len(self.ic):
+            print(len(new_ic), len(self.ic))
             raise AtomsNumberError("The ic is not in the same shape")
-        for i in self.ic:
-            i.target = new_ic[i]
+        for index, ic in enumerate(self.ic):
+            ic.target = new_ic[index]
         return None
 
     def set_new_coordinates(self,
@@ -270,7 +271,7 @@ class Internal(Cartesian):
         Arguments
         ---------
         new_coor : np.ndarray(N, 3)
-            New cartesian coordinates of the system
+            New cartesian coordinates of the system483G
         """
         super(Internal, self).set_new_coordinates(new_coor)
         self._regenerate_ic()
@@ -292,7 +293,8 @@ class Internal(Cartesian):
         return None
 
     def converge_to_target_ic(self,
-                              iteration: int = 100) -> None:  # to be test
+                              iteration: int = 100,
+                              inplace: bool = True) -> None:  # to be test
         """Using buildin optimization process to optimize geometry to target
         internal coordinates as close as possible
 
@@ -302,22 +304,23 @@ class Internal(Cartesian):
             number of iteration for optimization process
         """
         optimizer = GeoOptimizer()
-        init_guess = deepcopy(self)
+        if inplace:
+            init_guess = self
+        else:
+            init_guess = deepcopy(self)
+        # calculate the init structure
         init_coor = np.dot(
             np.linalg.pinv(init_guess.b_matrix),
-            init_guess.target_ic - self.ic_values)
+            init_guess.target_ic - self.ic_values).reshape(-1, 3) + init_guess.coordinates
         init_guess.set_new_coordinates(init_coor)
-        init_point = init_guess._create_geo_point()
+        init_point = init_guess.create_geo_point()
         optimizer.add_new(init_point)
         for _ in range(iteration):
             optimizer.tweak_hessian(optimizer.newest)
             step = optimizer.trust_radius_step(optimizer.newest)
-            new_coor = self.coordinates + step.reshape(-1, 3)
             new_coor = init_guess.coordinates + step.reshape(-1, 3)
-            self.set_new_coordinates(new_coor)
-            init_guess.et_new_coordinates(new_coor)
-            new_point = self._create_geo_point()
-            new_point = init_guess._create_geo_point()
+            init_guess.set_new_coordinates(new_coor)
+            new_point = init_guess.create_geo_point()
             optimizer.add_new(new_point)
             if optimizer.converge(optimizer.newest):
                 # print("finished")
@@ -425,9 +428,21 @@ class Internal(Cartesian):
             x_d, the gradient vs cartesian coordinates
             x_dd, the hessian vs cartesian coordinates
         """
-        v, d, dd = self._cost_value()
-        x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(d, dd)
-        return v, x_d, x_dd
+        q_d, q_dd = self._cost_q_d, self._cost_q_dd
+        x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(q_d, q_dd)
+        return self._cost_v, x_d, x_dd
+
+    @property
+    def _cost_v(self):
+        return sum([i.cost_v for i in self.ic])
+
+    @property
+    def _cost_q_d(self):
+        return np.array([i.cost_d for i in self.ic])
+
+    @property
+    def _cost_q_dd(self):
+        return np.diag([i.cost_dd for i in self.ic])
 
     @property
     def ic(self) -> List[CoordinateTypes]:
@@ -464,7 +479,7 @@ class Internal(Cartesian):
         target_ic : np.ndarray(K,)
         """
         target_ic = [i.target for i in self.ic]
-        if any(target_ic):
+        if None in target_ic:
             raise NotSetError('Not all target ic are set')
         return np.array(target_ic)
 
@@ -773,11 +788,11 @@ class Internal(Cartesian):
         """
         self._internal_gradient = None
         self._internal_hessian = None
-        if (self._energy_gradient is not None):
+        if self._energy_gradient is not None:
             self._energy_hessian_transformation()
         return None
 
-    def _create_geo_point(self) -> Point:
+    def create_geo_point(self) -> Point:
         """create a Point object based on self internal coordinates to undergo
         a optimizatino process in order to converge to target_ic
 
@@ -787,30 +802,6 @@ class Internal(Cartesian):
         """
         _, x_d, x_dd = self.cost_value_in_cc
         return Point(x_d, x_dd, len(self.numbers))
-
-    def _cost_value(
-            self) -> Tuple[float, 'np.ndarray[float]', 'np.ndarray[float]']:
-        """Calculate value of cost function as well as its gradient and
-        hessian versus internal coordinates
-
-        Returns
-        -------
-        value, deriv, deriv2 : tuple(float, np.ndarray(K,), np.ndarray(K, K))
-            value, the value of cost function
-            deriv, the gradient vs internal coordinates
-            deriv2, the hessian vs internal coordinates
-        """
-        if any(self.target_ic):
-            raise NotSetError("The value of target_ic is not set")
-        value = 0
-        deriv = np.zeros(len(self.ic))
-        deriv2 = np.zeros((len(self.ic), len(self.ic)), float)
-        for i, inter_c in enumerate(self.ic):
-            v, d, dd = inter_c.get_cost(self.target_ic[i])
-            value += v
-            deriv[i] += d
-            deriv2[i, i] += dd
-        return value, deriv, deriv2
 
     def _ic_gradient_hessian_transform_to_cc(
             self, gradient: 'np.ndarray[float]', hessian: 'np.ndarray[float]'

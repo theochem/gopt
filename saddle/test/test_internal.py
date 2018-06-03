@@ -76,41 +76,51 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(connected_index, np.array([0, 2]))
         self.mol.add_angle(0, 1, 2)
         assert len(self.mol.ic) == 3
-        assert np.allclose(self.mol.ic[2].value, -0.33333406792305265)
-        assert np.allclose(self.mol._cc_to_ic_gradient[2],
+        assert np.allclose(self.mol.ic[2].value, 1.9106340153991836)
+        assert np.allclose(self.mol.b_matrix[2],
                            np.array([
-                               -0.3000493, -0.42433414, 0., 0., 0.84866827,
-                               -0., 0.3000493, -0.42433414, 0.
+                               0.31825043, 0.45007444, 0., 0., -0.90014888,
+                               -0., -0.31825043, 0.45007444, 0.
                            ]))
-        # print self.mol._cc_to_ic_hessian[2]
         assert np.allclose(
             self.mol._cc_to_ic_hessian[2],
             np.array([[
-                0.30385023, 0.1432367, 0., -0.27008904, -0.19098226, -0.,
-                -0.03376119, 0.04774557, 0.
+                -2.86472766e-01, -1.01283669e-01, 0.00000000e+00,
+                2.86472766e-01, 1.01283669e-01, 0.00000000e+00, 2.08166817e-17,
+                -6.93889390e-18, 0.00000000e+00
             ], [
-                0.1432367, -0.20256656, 0., -0.09549113, 0.13504407, -0.,
-                -0.04774557, 0.06752248, 0.
-            ], [0., 0., 0.10128367, -0., -0., -0.40513401, 0., 0.,
-                0.30385034], [
-                    -0.27008904, -0.09549113, -0., 0.54017808, 0., 0.,
-                    -0.27008904, 0.09549113, -0.
-                ], [
-                    -0.19098226, 0.13504407, -0., 0., -0.27008815, 0.,
-                    0.19098226, 0.13504407, -0.
-                ], [
-                    -0., -0., -0.40513401, 0., 0., 0.81026801, -0., -0.,
-                    -0.40513401
-                ], [
-                    -0.03376119, -0.04774557, 0., -0.27008904, 0.19098226, -0.,
-                    0.30385023, -0.1432367, 0.
-                ], [
-                    0.04774557, 0.06752248, 0., 0.09549113, 0.13504407, -0.,
-                    -0.1432367, -0.20256656, 0.
-                ], [
-                    0., 0., 0.30385034, -0., -0., -0.40513401, 0., 0.,
-                    0.10128367
-                ]]))
+                -1.01283669e-01, 2.86472766e-01, 0.00000000e+00,
+                1.01283669e-01, -2.86472766e-01, 0.00000000e+00,
+                6.93889390e-18, 4.16333634e-17, 0.00000000e+00
+            ], [
+                0.00000000e+00, 0.00000000e+00, -1.07427583e-01,
+                0.00000000e+00, 0.00000000e+00, 4.29709622e-01, 0.00000000e+00,
+                0.00000000e+00, -3.22282039e-01
+            ], [
+                2.86472766e-01, 1.01283669e-01, 0.00000000e+00,
+                -5.72945532e-01, 0.00000000e+00, 0.00000000e+00,
+                2.86472766e-01, -1.01283669e-01, 0.00000000e+00
+            ], [
+                1.01283669e-01, -2.86472766e-01, 0.00000000e+00,
+                0.00000000e+00, 5.72945532e-01, 0.00000000e+00,
+                -1.01283669e-01, -2.86472766e-01, 0.00000000e+00
+            ], [
+                0.00000000e+00, 0.00000000e+00, 4.29709622e-01, 0.00000000e+00,
+                0.00000000e+00, -8.59419245e-01, 0.00000000e+00,
+                0.00000000e+00, 4.29709622e-01
+            ], [
+                2.08166817e-17, 6.93889390e-18, 0.00000000e+00, 2.86472766e-01,
+                -1.01283669e-01, 0.00000000e+00, -2.86472766e-01,
+                1.01283669e-01, 0.00000000e+00
+            ], [
+                -6.93889390e-18, 4.16333634e-17, 0.00000000e+00,
+                -1.01283669e-01, -2.86472766e-01, 0.00000000e+00,
+                1.01283669e-01, 2.86472766e-01, 0.00000000e+00
+            ], [
+                0.00000000e+00, 0.00000000e+00, -3.22282039e-01,
+                0.00000000e+00, 0.00000000e+00, 4.29709622e-01, 0.00000000e+00,
+                0.00000000e+00, -1.07427583e-01
+            ]]))
         self.mol.set_target_ic((1.6, 1.7, -0.5))
         assert np.allclose(self.mol.target_ic, np.array([1.6, 1.7, -0.5]))
 
@@ -137,22 +147,29 @@ class TestInternal(unittest.TestCase):
         self.mol.add_angle(0, 1, 2)
         assert np.allclose(
             self.mol.ic_values,
-            [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
-        self.mol.set_target_ic([1.7, 1.7, -0.4])
+            [1.8141372422079882, 1.8141372422079882, 1.9106340153991836])
+        self.mol.set_target_ic([1.7, 1.7, 1.5])
         self.mol.swap_internal_coordinates(0, 2)
         assert np.allclose(
             self.mol.ic_values,
-            [-0.33333406792305265, 1.8141372422079882, 1.8141372422079882])
+            [1.9106340153991836, 1.8141372422079882, 1.8141372422079882])
+        assert np.allclose(self.mol.target_ic, [1.5, 1.7, 1.7])
         self.mol.swap_internal_coordinates(0, 2)
         assert np.allclose(
             self.mol.ic_values,
-            [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
-        assert np.allclose(self.mol.target_ic, [1.7, 1.7, -0.4])
-        # test cost function
-        v, d, dd = self.mol._cost_value()
-        assert np.allclose(0.030498966617378116, v)
+            [1.8141372422079882, 1.8141372422079882, 1.9106340153991836])
+        assert np.allclose(self.mol.target_ic, [1.7, 1.7, 1.5])
+        # test cost function in ic
+        v = self.mol._cost_v
+        d = self.mol._cost_q_d
+        dd = self.mol._cost_q_dd
+
+        # calculate ref cost value
+        ref_cost = (self.mol.ic_values[0] - 1.7)**2 * 2 + (
+            np.cos(self.mol.ic_values[-1]) - np.cos(1.5))**2
+        assert np.allclose(ref_cost, v)
         ref_gradient = np.array(
-            [0.22827448441597653, 0.22827448441597653, 0.13333186415389475])
+            [0.22827448441597653, 0.22827448441597653, 0.76192388])
         assert np.allclose(d, ref_gradient)
         ref_hessian = np.array([[
             2.,
@@ -165,7 +182,7 @@ class TestInternal(unittest.TestCase):
         ], [
             0.,
             0.,
-            2.,
+            1.5083953582,
         ]])
         assert np.allclose(dd, ref_hessian)
         # assert False
@@ -183,7 +200,7 @@ class TestInternal(unittest.TestCase):
         self.mol.set_new_coordinates(new_coor)
         assert np.allclose(
             self.mol.ic_values,
-            [1.7484364736491811, 1.7484364736491811, -0.28229028459335431])
+            [1.7484364736491811, 1.7484364736491811, 1.85697699])
         assert np.allclose(
             self.mol._cc_to_ic_gradient[0, :6],
             np.array(
@@ -202,19 +219,19 @@ class TestInternal(unittest.TestCase):
         self.mol.add_bond(1, 2)
         self.mol.add_angle(0, 1, 2)
         self.mol.set_target_ic([1.7, 1.7, -0.4])
-        n_p = self.mol._create_geo_point()
+        n_p = self.mol.create_geo_point()
         assert isinstance(n_p, Point)
         assert n_p.trust_radius == 1.7320508075688772
 
         self.mol.converge_to_target_ic(iteration=100)
         g_array = self.mol.cost_value_in_cc[1]
-        assert len(g_array[abs(g_array) > 3e-6]) == 0
+        assert len(g_array[abs(g_array) > 3e-4]) == 0
 
     def test_auto_ic_select_water(self):
         self.mol.auto_select_ic()
         assert np.allclose(
             self.mol.ic_values,
-            [1.8141372422079882, 1.8141372422079882, -0.33333406792305265])
+            [1.8141372422079882, 1.8141372422079882, 1.9106340153991836])
 
     def test_auto_ic_select_ethane(self):
         mol_path = resource_filename(
@@ -234,10 +251,10 @@ class TestInternal(unittest.TestCase):
         print(mol.ic_values)
         ic_ref = np.array([
             2.02762919, 2.02769736, 2.02761705, 1.77505755, 4.27707385,
-            4.87406146, -0.49059482, -0.49089531, -0.07907699, -0.49066505,
-            -0.07896661, -0.07794291, 0.48439779, 0.90994179, -1., -0.90992575,
-            0.82823038, -0.13509451, -0.13492668, -1., -0.50014174,
-            -0.49989701, -0.9635587
+            4.87406146, 2.08356856, 2.08391343, 1.64995596, 2.08364916,
+            1.64984524, 1.64881837, 1.06512165, 0.42765264, 3.14154596,
+            2.71390135, 0.59485389, -1.70630517, 1.7061358, -3.14152957,
+            2.09455878, -2.09427619, -2.87079827
         ])
         assert np.allclose(mol.ic_values, ic_ref)
 
