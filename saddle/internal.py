@@ -293,8 +293,7 @@ class Internal(Cartesian):
         return None
 
     def converge_to_target_ic(self,
-                              iteration: int = 100,
-                              inplace: bool = True) -> None:  # to be test
+                              iteration: int = 100) -> None:  # to be test
         """Using buildin optimization process to optimize geometry to target
         internal coordinates as close as possible
 
@@ -304,23 +303,19 @@ class Internal(Cartesian):
             number of iteration for optimization process
         """
         optimizer = GeoOptimizer()
-        if inplace:
-            init_guess = self
-        else:
-            init_guess = deepcopy(self)
         # calculate the init structure
         init_coor = np.dot(
-            np.linalg.pinv(init_guess.b_matrix),
-            init_guess.target_ic - self.ic_values).reshape(-1, 3) + init_guess.coordinates
-        init_guess.set_new_coordinates(init_coor)
-        init_point = init_guess.create_geo_point()
+            np.linalg.pinv(self.b_matrix),
+            self.target_ic - self.ic_values).reshape(-1, 3) + self.coordinates
+        self.set_new_coordinates(init_coor)
+        init_point = self.create_geo_point()
         optimizer.add_new(init_point)
         for _ in range(iteration):
             optimizer.tweak_hessian(optimizer.newest)
             step = optimizer.trust_radius_step(optimizer.newest)
-            new_coor = init_guess.coordinates + step.reshape(-1, 3)
-            init_guess.set_new_coordinates(new_coor)
-            new_point = init_guess.create_geo_point()
+            new_coor = self.coordinates + step.reshape(-1, 3)
+            self.set_new_coordinates(new_coor)
+            new_point = self.create_geo_point()
             optimizer.add_new(new_point)
             if optimizer.converge(optimizer.newest):
                 # print("finished")
@@ -328,7 +323,6 @@ class Internal(Cartesian):
             optimizer.update_trust_radius(optimizer.newest)
         raise NotConvergeError(
             "The coordinates transformation optimization failed to converge")
-        return init_guess
 
     def connected_indices(self, index: int) -> 'np.ndarray[int]':
         """Return the indices of atoms connected to given index atom

@@ -201,11 +201,11 @@ class FileFormatError(Exception):
     pass
 
 
-if __name__ == '__main__':
-    a = FCHKFile("./test/water_0.fchk")
-    hessian = a.get_hessian()
-    gradient = a.get_gradient()
-    energy = a.get_energy()
-    # print hessian
-    print(gradient)
-    print(energy)
+# if __name__ == '__main__':
+#     a = FCHKFile("./test/water_0.fchk")
+#     hessian = a.get_hessian()
+#     gradient = a.get_gradient()
+#     energy = a.get_energy()
+#     # print hessian
+#     print(gradient)
+#     print(energy)

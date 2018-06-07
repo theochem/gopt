@@ -258,7 +258,7 @@ def load_periodic():
     }
 
     csv_path = resource_filename(__name__, "data/elements.csv")
-    with open(csv_path, 'r') as f:
+    with open(csv_path, encoding='utf-8', mode='r') as f:
         r = csv.reader(f)
         # go to the actual data
         for row in r:

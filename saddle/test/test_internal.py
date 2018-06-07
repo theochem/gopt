@@ -1,14 +1,12 @@
+import unittest
 from copy import deepcopy
 
 import numpy as np
-
 from pkg_resources import Requirement, resource_filename
 from saddle.internal import Internal
 from saddle.iodata import IOData
-from saddle.opt import Point
 from saddle.molmod import dihed_angle
-
-import unittest
+from saddle.opt import Point
 
 
 class TestInternal(unittest.TestCase):
@@ -247,8 +245,6 @@ class TestInternal(unittest.TestCase):
         mol = IOData.from_file(mol_path)
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         mol.auto_select_ic()
-        # print mol.ic_values
-        print(mol.ic_values)
         ic_ref = np.array([
             2.02762919, 2.02769736, 2.02761705, 1.77505755, 4.27707385,
             4.87406146, 2.08356856, 2.08391343, 1.64995596, 2.08364916,
@@ -363,7 +359,6 @@ class TestInternal(unittest.TestCase):
         mol.add_bond(0, 3)
         mol.add_bond(4, 2)
         mol._auto_select_fragment_bond()
-        print(mol.ic)
         assert len(mol.ic) == 6
 
         mol.wipe_ic_info(True)
@@ -384,3 +379,29 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(mol.ic_values[5], 3.501060110109399)
         assert mol.ic[5].atoms == (2, 3)
         assert len(mol.ic) == 6
+
+    def test_dihedral_rotation(self):
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/h2o2.xyz')
+        mol = IOData.from_file(mol_path)
+        h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h2o2.auto_select_ic()
+        ref_ic = np.array([
+            2.47617635, 1.85058569, 1.85070922, 1.81937566, 1.81930967,
+            1.43966113
+        ])
+        assert np.allclose(h2o2.ic_values, ref_ic)
+        target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 1.57]
+        h2o2.set_target_ic(target_ic)
+        h2o2.converge_to_target_ic()
+        assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
+
+        target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 3.14]
+        h2o2.set_target_ic(target_ic)
+        h2o2.converge_to_target_ic()
+        assert np.allclose(h2o2.ic_values, target_ic, atol=1e-4)
+
+        target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, -1.57]
+        h2o2.set_target_ic(target_ic)
+        h2o2.converge_to_target_ic()
+        assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
