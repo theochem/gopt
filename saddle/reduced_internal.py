@@ -323,13 +323,21 @@ class ReducedInternal(Internal):  # need tests
 
     def _svd_of_b_matrix(self, threshold=1e-6) -> 'np.ndarray':  # tested
         """Select 3N - 6 non-singular vectors from b_matrix through SVD
+        (eigenvalue) decomposition
 
         Returns:
         u : np.ndarray(K, 3N - 6)
             3N - 6 non-singular vectors from SVD
         """
-        u, s, _ = np.linalg.svd(self.b_matrix, full_matrices=0)
-        return u[:, np.abs(s) > threshold][:, :self.df]
+        b_space = np.dot(self.b_matrix, self.b_matrix.T)
+        values, vectors = np.linalg.eigh(b_space)
+        # b_matrix shape is n * 3N
+        # b_space is n * n
+        basis = vectors[:, np.abs(values) > threshold]
+        # for nonlinear molecules
+        # TODO: need change for nonlinear molecules
+        assert len(basis[0]) == self.df
+        return basis
 
     def _reduced_unit_vectors(self) -> 'np.ndarray':  # tested
         """Generate unit vectors where every position is 0 except the
@@ -372,7 +380,7 @@ class ReducedInternal(Internal):  # need tests
         """
         b_mtx = self._reduced_perturbation()
         w, v = diagonalize(b_mtx)
-        self._red_space = v[:, abs(w) > threshold]
+        self._red_space = v[:, np.abs(w) > threshold]
         return None
 
     def _nonreduce_vectors(self) -> 'np.ndarray':
