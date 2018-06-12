@@ -21,19 +21,18 @@
 "internal coordinates implementation"
 
 from copy import deepcopy
+from heapq import heappop, heappush
 from itertools import combinations
-from typing import List, Tuple
-from heapq import heappush, heappop
 
 import numpy as np
-
 from saddle.cartesian import Cartesian
-from saddle.coordinate_types import (BendAngle, BondLength, DihedralAngle,
-                                     CoordinateTypes)
+from saddle.coordinate_types import (BendAngle, BondLength, CoordinateTypes,
+                                     DihedralAngle)
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
 from saddle.opt import GeoOptimizer, Point
 from saddle.periodic.periodic import periodic
+from typing import List, Tuple
 
 __all__ = ('Internal', )
 
@@ -987,3 +986,4 @@ class Internal(Cartesian):
         deriv = 2 * (origin - target)
         deriv2 = 2
         return value, deriv, deriv2
+

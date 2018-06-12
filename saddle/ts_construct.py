@@ -3,7 +3,6 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 import numpy as np
-
 from saddle.errors import (AtomsNumberError, InputTypeError,
                            InvalidArgumentError, NotSetError)
 from saddle.internal import Internal
@@ -200,6 +199,22 @@ class TSConstruct(object):
         """
         self._reactant.add_angle_cos(atom1, atom2, atom3)
         self._product.add_angle_cos(atom1, atom2, atom3)
+
+    def add_angle(self, atom1, atom2, atom3):
+        """Add cos angle connection between atom1, atom2, and atom3 for
+        both reactant and product structure
+
+        Arguments
+        ---------
+        atom1 : int
+            The index of the first atom of the angle
+        atom2 : int
+            The index of the second atom of the angle
+        atom3 : int
+            The index of the third atom of the angle
+        """
+        self._reactant.add_angle(atom1, atom2, atom3)
+        self._product.add_angle(atom1, atom2, atom3)
 
     def add_dihedral(self, atom1, atom2, atom3, atom4):
         """Add dihedral angle between plane1(atom1, atom2, and atom3)

@@ -1,7 +1,6 @@
 from copy import deepcopy
 
 import numpy as np
-
 from saddle.errors import ICNumberError, NotSetError
 from saddle.internal import Internal
 from saddle.solver import diagonalize
@@ -15,7 +14,7 @@ class ReducedInternal(Internal):  # need tests
     Properties
     ----------
     df : int
-        Degree of freedom of a system, 3N - 5 for linear and 3N -5 for the
+        Degree of freedom of a system, 3N - 5 for linear and 3N - 6 for the
         rest
     key_ic_number : int
         Number of key internal coordinates which correspond to important
