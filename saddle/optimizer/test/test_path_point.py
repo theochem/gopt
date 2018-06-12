@@ -18,8 +18,8 @@ class TestPathPoint(TestCase):
         red_int.add_bond(1, 0)
         red_int.add_bond(1, 2)
         red_int.add_bond(0, 2)
-        red_int.add_angle_cos(0, 1, 2)
-        red_int.add_angle_cos(1, 0, 2)
+        red_int.add_angle(0, 1, 2)
+        red_int.add_angle(1, 0, 2)
         red_int.set_key_ic_number(2)
         self.ri = red_int
         self.pp = PathPoint(red_int)
@@ -121,12 +121,13 @@ class TestPathPoint(TestCase):
         assert red_int.energy - 75.99264142 < 1e-6
         wt_p1 = PathPoint(red_int=red_int)
         step = [0.001, 0, 0]
-        ref_vspace = np.array([[0., 1., 0.], [0.86705416, 0., 0.4982139],
-                               [-0.4982139, 0., 0.86705416]])
+        # ref_vspace = np.array([[0., 1., 0.], [0.86705416, 0., 0.4982139],
+        #                        [-0.4982139, 0., 0.86705416]])
         # incase different vspace basis error
-        wt_p1._instance.set_vspace(ref_vspace)
+        # wt_p1._instance.set_vspace(ref_vspace)
         wt_p2 = wt_p1.copy()
         wt_p2.update_coordinates_with_delta_v(step)
+        # wt_p2._instance.create_gauss_input(title='water_new')
         fchk_file_new = resource_filename(
             Requirement.parse('saddle'), 'data/water_new.fchk')
         wt_p2._instance.energy_from_fchk(fchk_file_new)
