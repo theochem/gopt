@@ -21,7 +21,7 @@ class TestOptLoop(TestCase):
         red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         red_int.add_bond(0, 1)
         red_int.add_bond(1, 2)
-        red_int.add_angle_cos(0, 1, 2)
+        red_int.add_angle(0, 1, 2)
         self.mol = red_int
 
     def setup_opt(self):
@@ -75,6 +75,7 @@ class TestOptLoop(TestCase):
         opt.calculate_trust_step()
 
         new_p = opt.next_step_structure()
+        # new_p._instance.create_gauss_input(title='new_step_water.com')
         fchk_file = resource_filename(
             Requirement.parse('saddle'), 'data/new_step_water.fchk')
         result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
@@ -87,7 +88,7 @@ class TestOptLoop(TestCase):
         h = opt.old.v_hessian
         pred_e_diff = np.dot(g, s) + 0.5 * np.dot(np.dot(s.T, h), s)
         real_e_diff = opt.new.energy - opt.old.energy
-        assert np.allclose((pred_e_diff / real_e_diff), 1.01485, atol=1e-4)
+        assert np.allclose((pred_e_diff / real_e_diff), 1.004, atol=1e-3)
         assert opt.new.stepsize == 2 * opt.old.stepsize
 
     def test_loop_hessian_update(self):

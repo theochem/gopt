@@ -121,10 +121,12 @@ class TestPathPoint(TestCase):
         assert red_int.energy - 75.99264142 < 1e-6
         wt_p1 = PathPoint(red_int=red_int)
         step = [0.001, 0, 0]
-        # ref_vspace = np.array([[0., 1., 0.], [0.86705416, 0., 0.4982139],
-        #                        [-0.4982139, 0., 0.86705416]])
+        print(wt_p1._instance.vspace)
+        ref_vspace = np.array([[0.25801783, -0.66522226, 0.70064694],
+                               [-0.49526649, -0.71373819, -0.49526649],
+                               [-0.82954078, 0.21921937, 0.51361947]])
         # incase different vspace basis error
-        # wt_p1._instance.set_vspace(ref_vspace)
+        wt_p1._instance.set_vspace(ref_vspace)
         wt_p2 = wt_p1.copy()
         wt_p2.update_coordinates_with_delta_v(step)
         # wt_p2._instance.create_gauss_input(title='water_new')
