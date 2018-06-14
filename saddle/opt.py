@@ -59,7 +59,8 @@ class GeoOptimizer(object):
             point.step = c_step
             return c_step
         w, v = np.linalg.eigh(point.hessian)
-        max_w = max(w)
+        # incase different step calculated from tests
+        max_w = round(max(w), 7)
 
         def func_step(value):
             x = w.copy()
@@ -75,6 +76,7 @@ class GeoOptimizer(object):
         while func_value(max_w) >= 0:
             max_w *= 2
         result = ridders_solver(func_value, 0, max_w)
+        result = round(result, 7) # incase different test result
         # print ("result", result)
         step = func_step(result)
         point.step = step

@@ -37,7 +37,7 @@ class TrustRegion:
 
         if value_compare(0) >= 0:  # inital case
             return value_func(0)
-        start_value = 1  # need to optimized in the future
+        start_value = round(np.max(np.abs(val)), 7)  # need to optimized in the future
         if value_compare(start_value) >= 0:  # initial iteration case
             answer = ridders_solver(value_compare, 0, start_value)
             # print(answer)

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def modify_hessian(matrix, neg_num, key_ic=0, pos_value=0.05, neg_value=-0.05):
+def modify_hessian(matrix, neg_num, key_ic=0, pos_value=0.005, neg_value=-0.005):
     val, vec = np.linalg.eigh(matrix)
     value = val.copy()
     total = len(value)
@@ -29,16 +29,16 @@ def modify_hessian(matrix, neg_num, key_ic=0, pos_value=0.05, neg_value=-0.05):
             neg_sum = np.sum((neg_vec**2)[:key_ic, :], axis=0)
             seq_ind = np.argsort(neg_sum)
             value[seq_ind[:diff]] = pos_value
-    value[(value > 0) & (value < 0.05)] = 0.05
-    value[(value > -0.05) & (value < 0)] = -0.05
+    value[(value > 0) & (value < pos_value)] = pos_value
+    value[(value > neg_value) & (value < 0)] = neg_value
     return np.dot(np.dot(vec, np.diag(value)), vec.T)
 
 
 def modify_hessian_with_pos_defi(matrix,
                                  neg_num,
                                  key_ic,
-                                 pos_value=0.05,
-                                 neg_value=-0.05):
+                                 pos_value=0.005,
+                                 neg_value=-0.005):
     assert neg_num <= key_ic
     matrix = matrix.copy()
     assert len(matrix[:, 0]) == len(matrix[0])  # make sure it is square

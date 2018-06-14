@@ -113,7 +113,7 @@ class TestOptLoop(TestCase):
         # set non positive hessian
         opt.new.v_hessian = np.diag([-1, 1, 2])
         opt.modify_hessian()
-        assert np.allclose(np.diag([0.05, 1, 2]), opt.new.v_hessian)
+        assert np.allclose(np.diag([0.005, 1, 2]), opt.new.v_hessian)
 
     def test_finite_diff(self):
         opt = self.setup_opt()
