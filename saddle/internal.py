@@ -357,7 +357,6 @@ class Internal(Cartesian):
             indices of atoms connected to given index
         """
         connection = self.connectivity[index]
-        connection = self.connectivity[index]
         connected_index = np.where(connection > 0)[0]
         return connected_index
 
@@ -739,7 +738,7 @@ class Internal(Cartesian):
         """A private method for automatically selecting improper dihedral
         """
         connect_sum = np.sum(
-            self.connectivity, axis=0) + 1  # cancel -1 for itself
+            self.connectivity > 0, axis=0)
         for center_ind, _ in enumerate(connect_sum):
             if connect_sum[center_ind] >= 3:
                 cnct_atoms = self.connected_indices(center_ind)

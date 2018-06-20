@@ -7,6 +7,7 @@ from saddle.internal import Internal
 from saddle.iodata import IOData
 from saddle.molmod import dihed_angle
 from saddle.opt import Point
+from saddle.coordinate_types import DihedralAngle
 
 
 class TestInternal(unittest.TestCase):
@@ -239,6 +240,18 @@ class TestInternal(unittest.TestCase):
         ethane.auto_select_ic()
         assert len(ethane.ic) == 24
 
+    def test_auto_dihed_number_ethane(self):
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/ethane.xyz')
+        mol = IOData.from_file(mol_path)
+        ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
+        ethane.auto_select_ic()
+        counter = 0
+        for ic in ethane.ic:
+            if isinstance(ic, DihedralAngle):
+                counter += 1
+        assert counter == 5
+
     def test_auto_select_improper_ch3_hf(self):
         mol_path = resource_filename(
             Requirement.parse('saddle'), 'data/ch3_hf.xyz')
@@ -439,4 +452,21 @@ class TestInternal(unittest.TestCase):
         assert len(h2o2.ic) == 5
         h2o2.add_dihedral(3, 2, 1, 0, special=True)
         assert len(h2o2.ic) == 5
+        ref_b = h2o2.b_matrix.copy()
+        h2o2._regenerate_ic()
+        assert np.allclose(h2o2.b_matrix, ref_b)
 
+    def test_new_dihed_converge(self):
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/h2o2.xyz')
+        mol = IOData.from_file(mol_path)
+        h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h2o2.auto_select_ic(dihed_special=True)
+        assert len(h2o2.ic) == 7
+        print(h2o2.ic_values)
+        target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 0.8, 0.6]
+        h2o2.set_target_ic(target_ic)
+        h2o2.converge_to_target_ic()
+        print(h2o2.ic_values)
+        assert np.allclose(h2o2.ic_values, target_ic, atol=1e-2)
+        # print(h2o2.ic_values)
