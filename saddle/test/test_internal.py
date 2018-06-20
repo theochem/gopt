@@ -405,3 +405,38 @@ class TestInternal(unittest.TestCase):
         h2o2.set_target_ic(target_ic)
         h2o2.converge_to_target_ic()
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
+
+    def test_dihedral_repeak(self):
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/h2o2.xyz')
+        mol = IOData.from_file(mol_path)
+        h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h2o2.add_bond(0, 1)
+        h2o2.add_bond(1, 2)
+        h2o2.add_bond(2, 3)
+        h2o2.add_bond(3, 2)
+        h2o2.add_bond(0, 2)
+        h2o2.add_bond(1, 3)
+        assert len(h2o2.ic) == 5
+        h2o2.add_dihedral(0, 1, 2, 3)
+        assert len(h2o2.ic) == 6
+        h2o2.add_dihedral(0, 2, 1, 3)
+        assert len(h2o2.ic) == 6
+
+    def test_new_dihed(self):
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/h2o2.xyz')
+        mol = IOData.from_file(mol_path)
+        h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h2o2.add_bond(0, 1)
+        h2o2.add_bond(1, 2)
+        h2o2.add_bond(2, 3)
+        assert len(h2o2.ic) == 3
+        h2o2.add_dihedral(0, 1, 2, 3, special=True)
+        assert len(h2o2.ic) == 5
+        assert h2o2.b_matrix.shape == (5, 12)
+        h2o2.add_dihedral(3, 1, 2, 0)
+        assert len(h2o2.ic) == 5
+        h2o2.add_dihedral(3, 2, 1, 0, special=True)
+        assert len(h2o2.ic) == 5
+

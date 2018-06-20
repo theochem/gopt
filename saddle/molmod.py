@@ -631,9 +631,10 @@ def _dihed_new_dot(a, b, c, deriv):  # self defined function by Derrick Yang
     a = Vector3(9, deriv, a, (0, 1, 2))
     b = Vector3(9, deriv, b, (3, 4, 5))
     c = Vector3(9, deriv, c, (6, 7, 8))
-    a /= a.norm()
-    c /= c.norm()
-    return dot(a, c).results()
+    v = dot(a, c)
+    v /= a.norm()
+    v /= c.norm()
+    return v.results()
 
 
 def _dihed_new_cross(a, b, c, deriv):  # self defined function by Derrick Yang
@@ -641,11 +642,11 @@ def _dihed_new_cross(a, b, c, deriv):  # self defined function by Derrick Yang
     a = Vector3(9, deriv, a, (0, 1, 2))
     b = Vector3(9, deriv, b, (3, 4, 5))
     c = Vector3(9, deriv, c, (6, 7, 8))
-    a /= a.norm()
-    b /= b.norm()
-    c /= c.norm()
-    tmp = cross(a, c)
-    return dot(b, tmp).results()
+    v = dot(b, cross(a, c))
+    v /= a.norm()
+    v /= b.norm()
+    v /= c.norm()
+    return v.results()
 
 
 def _dihed_cos_low(a, b, c, deriv):

@@ -27,7 +27,8 @@ from itertools import combinations
 import numpy as np
 from saddle.cartesian import Cartesian
 from saddle.coordinate_types import (BendAngle, BondLength, CoordinateTypes,
-                                     DihedralAngle)
+                                     DihedralAngle, NewDihedralCross,
+                                     NewDihedralDot)
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
 from saddle.opt import GeoOptimizer, Point
@@ -145,7 +146,11 @@ class Internal(Cartesian):
         self._fragment = np.arange(self.natom)
         return None
 
-    def add_bond(self, atom1: int, atom2: int,
+    def add_bond(self,
+                 atom1: int,
+                 atom2: int,
+                 *_,
+                 b_type: int = 0,
                  frag_bond=False) -> None:  # tested
         """Add bond connection between atom1 and atom2
 
@@ -162,11 +167,11 @@ class Internal(Cartesian):
         # reorder the sequence of atoms indices
         atoms = self._atoms_sequence_reorder(atoms)
         # just sorting, no sequence changes
-        rs = self.coordinates[np.array(atoms)]
-        new_ic_obj = BondLength(atoms, rs)
-        d, dd = new_ic_obj.get_gradient_hessian()
-        # gradient and hessian need to be set
-        if self._repeat_check(new_ic_obj):  # repeat internal coordinates check
+        if self._repeat_atoms_check(atoms):
+            rs = self.coordinates[np.array(atoms)]
+            new_ic_obj = BondLength(atoms, rs, b_type)
+            d, dd = new_ic_obj.get_gradient_hessian()
+            # gradient and hessian need to be set
             self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
             # after adding a bond, change the connectivity of atoms pair to 1
             self._add_connectivity(atoms)
@@ -191,18 +196,24 @@ class Internal(Cartesian):
             raise AtomsIndexError("The two indece are the same")
         atoms = (atom1, atom2, atom3)
         atoms = self._atoms_sequence_reorder(atoms)
-        rs = self.coordinates[np.array(atoms)]
-        new_ic_obj = BendAngle(atoms, rs)
-        d, dd = new_ic_obj.get_gradient_hessian()
-        # check if the angle is formed by two connected bonds
-        if self._check_connectivity(atom1, atom2) and self._check_connectivity(
-                atom2, atom3):
-            if self._repeat_check(new_ic_obj):
+        if self._repeat_atoms_check(atoms):
+            if self._check_connectivity(
+                    atom1, atom2) and self._check_connectivity(
+                        atom2, atom3
+                    ):  # check if the angle is formed by two connected bonds
+                rs = self.coordinates[np.array(atoms)]
+                new_ic_obj = BendAngle(atoms, rs)
+                d, dd = new_ic_obj.get_gradient_hessian()
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
         return None
 
-    def add_dihedral(self, atom1: int, atom2: int, atom3: int,
-                     atom4: int) -> None:  # tested
+    def add_dihedral(self,
+                     atom1: int,
+                     atom2: int,
+                     atom3: int,
+                     atom4: int,
+                     *_,
+                     special=False) -> None:  # tested
         """Add a dihedral connection for atom1, atom2, atom3, and atom4
         The dihedral is consist of plane(atom1, atom2, atom3) and
         plane(atom2, atom3, atom4)
@@ -222,17 +233,26 @@ class Internal(Cartesian):
             raise AtomsIndexError("The two indece are the same")
         atoms = (atom1, atom2, atom3, atom4)
         atoms = self._atoms_sequence_reorder(atoms)
-        rs = self.coordinates[np.array(atoms)]
-        new_ic_obj = DihedralAngle(atoms, rs)
-        d, dd = new_ic_obj.get_gradient_hessian()
-        if (self._check_connectivity(atom2, atom3)
-                and (self._check_connectivity(atom1, atom2)
-                     or self._check_connectivity(atom1, atom3))
-                and (self._check_connectivity(atom4, atom3)
-                     or self._check_connectivity(atom4, atom2))):
-            if self._repeat_check(new_ic_obj):
-                self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
-        return None
+        if self._repeat_atoms_check(atoms):
+            if (self._check_connectivity(atom2, atom3)
+                    and (self._check_connectivity(atom1, atom2)
+                         or self._check_connectivity(atom1, atom3))
+                    and (self._check_connectivity(atom4, atom3)
+                         or self._check_connectivity(atom4, atom2))):
+                rs = self.coordinates[np.array(atoms)]
+                if special:
+                    # add Dot dihedral
+                    new_ic_obj_1 = NewDihedralDot(atoms, rs)
+                    d, dd = new_ic_obj_1.get_gradient_hessian()
+                    self._add_new_internal_coordinate(new_ic_obj_1, d, dd, atoms)
+                    # add cross dihedral
+                    new_ic_obj_2 = NewDihedralCross(atoms, rs)
+                    d, dd = new_ic_obj_2.get_gradient_hessian()
+                    self._add_new_internal_coordinate(new_ic_obj_2, d, dd, atoms)
+                else:
+                    new_ic_obj = DihedralAngle(atoms, rs)
+                    d, dd = new_ic_obj.get_gradient_hessian()
+                    self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
 
     def delete_ic(self, *indices: int) -> None:
         """Delete a exsiting internal coordinates
@@ -547,9 +567,6 @@ class Internal(Cartesian):
             keep bond information and regenerate bend angle and dihedral
             information.
         """
-        if dihed_special:
-            raise NotImplementedError(
-                "This functionality hasn't been implemented yet")
         bonds = [i for i in self.ic if isinstance(i, BondLength)]
         if reset_ic is True:
             self.wipe_ic_info(True)
@@ -560,8 +577,8 @@ class Internal(Cartesian):
         else:
             self.set_new_ics(bonds)
         self._auto_select_angle()
-        self._auto_select_dihed_normal()
-        self._auto_select_dihed_improper()
+        self._auto_select_dihed_normal(dihed_special)
+        self._auto_select_dihed_improper(dihed_special)
         self._recal_g_and_h()
         return None
 
@@ -572,6 +589,7 @@ class Internal(Cartesian):
         return None
 
     def _allocate_fragment_group(self, atom1, atom2):
+        '''adjust fragment groups for atom1 and atom2'''
         num1 = self._fragment[atom1]
         num2 = self._fragment[atom2]
         if num1 != num2:
@@ -588,6 +606,23 @@ class Internal(Cartesian):
         self._internal_gradient = None
         self._internal_hessian = None
         return None
+
+    def _auto_select_cov_bond(self):
+        for ind1, ind2 in combinations(len(self.numbers), 2):
+            atom1 = self.numbers[ind1]
+            atom2 = self.numbers[ind2]
+            distance = self.distance(ind1, ind2)
+            rad_sum = periodic[atom1].cov_radius + periodic[atom2].cov_radius
+            if distance < rad_sum * 1.3:
+                self.add_bond(atom1, atom2, b_type=1)
+
+    def _auto_select_h_bond(self):
+        halidish_atom = set([7, 8, 9, 15, 16, 17])
+        h_indices = np.where(self.numbers == 1)  # find index of h
+        for index, atom in enumerate(self.numbers):
+            if atom in halidish_atom:
+                for h_ind in h_indices:
+                    pass  # use bond type in connectivity matrix to indicate
 
     def _auto_select_bond(self) -> None:
         """A private method for automatically selecting bond
@@ -677,7 +712,7 @@ class Internal(Cartesian):
                     self.add_angle(side_1, center_index, side_2)
         return None
 
-    def _auto_select_dihed_normal(self) -> None:
+    def _auto_select_dihed_normal(self, special=False) -> None:
         """A private method for automatically selecting normal dihedral
         """
         for center_ind_1, _ in enumerate(self.numbers):
@@ -697,10 +732,10 @@ class Internal(Cartesian):
                     for side_2 in connected_to_index_2:
                         if side_2 not in (center_ind_1, center_ind_2, side_1):
                             self.add_dihedral(side_1, center_ind_1,
-                                              center_ind_2, side_2)
+                                              center_ind_2, side_2, special=special)
         return None
 
-    def _auto_select_dihed_improper(self) -> None:
+    def _auto_select_dihed_improper(self, special=False) -> None:
         """A private method for automatically selecting improper dihedral
         """
         connect_sum = np.sum(
@@ -716,7 +751,8 @@ class Internal(Cartesian):
                     ang3_r = self.angle(ind_j, center_ind, ind_k)
                     sum_r = ang1_r + ang2_r + ang3_r
                     if sum_r >= 6.02139:
-                        self.add_dihedral(ind_i, center_ind, ind_j, ind_k)
+                        self.add_dihedral(ind_i, center_ind, ind_j, ind_k,
+                                          special=special)
         return None
 
     def _energy_hessian_transformation(self) -> None:
@@ -796,6 +832,10 @@ class Internal(Cartesian):
         _, x_d, x_dd = self.cost_value_in_cc
         return Point(x_d, x_dd, len(self.numbers))
 
+    def optimizer_to_target(self):
+        # return new_coordinates
+        pass
+
     def _ic_gradient_hessian_transform_to_cc(
             self, gradient: 'np.ndarray[float]', hessian: 'np.ndarray[float]'
     ) -> Tuple['np.ndarray[float]', 'np.ndarray[float]']:
@@ -846,22 +886,22 @@ class Internal(Cartesian):
         elif self.connectivity[atom1, atom2] == 0:
             return False
 
-    def _repeat_check(self, ic_obj: CoordinateTypes) -> bool:
-        """Check whether the given ic_obj already existed in ic list or not
+    def _repeat_atoms_check(self, atoms) -> bool:
+        """Check whether the given atoms already existed in ic atoms or not
 
         Arguments
         ---------
-        ic_obj : Coordinate_Types
+        atoms : tuple
             the given ic object to be tested
 
         Returns
         -------
-        repeat_check : bool
+        bool
             Return True if there is no duplicate and it's a valid new ic
             object, otherwise False
         """
         for ic in self.ic:
-            if ic_obj.atoms == ic.atoms and type(ic_obj) == type(ic):
+            if atoms == ic.atoms:
                 return False
         return True
 
@@ -986,4 +1026,3 @@ class Internal(Cartesian):
         deriv = 2 * (origin - target)
         deriv2 = 2
         return value, deriv, deriv2
-

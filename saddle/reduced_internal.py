@@ -128,6 +128,12 @@ class ReducedInternal(Internal):  # need tests
         self._reset_v_space()
 
     @property
+    def key_ic(self):
+        """Return the key internal coordinates
+        """
+        return self.ic[:self.key_ic_number]
+
+    @property
     def key_ic_number(self) -> int:
         """The number of key internal coordinates
 

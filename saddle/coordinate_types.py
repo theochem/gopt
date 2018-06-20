@@ -21,12 +21,11 @@
 "Coordinates types for represent internal coordinates."
 
 import numpy as np
-
-from typing import Tuple
+from enum import Enum
 from saddle.errors import NotSetError
-
-from saddle.molmod import (bend_angle, bend_cos, bond_length, dihed_cos,
-                           dihed_angle, dihed_new_cross, dihed_new_dot)
+from saddle.molmod import (bend_angle, bend_cos, bond_length, dihed_angle,
+                           dihed_cos, dihed_new_cross, dihed_new_dot)
+from typing import Tuple
 
 __all__ = ('BondLength', 'BendAngle', 'BendCos', 'ConventionDihedral',
            'NewDihedralDot', 'NewDihedralCross')
@@ -35,13 +34,18 @@ __all__ = ('BondLength', 'BendAngle', 'BendCos', 'ConventionDihedral',
 class CoordinateTypes:
     """General internal coordinates class"""
 
-    def __init__(self, atoms: "np.ndarray[int]",
-                 coordinates: "np.ndarray[float]") -> None:
+    def __init__(self,
+                 atoms: "np.ndarray[int]",
+                 coordinates: "np.ndarray[float]",
+                 *_,
+                 weight=1,
+                 ic_type=None) -> None:
         self._coordinates = coordinates
         self._atoms = atoms
         self._value, self._d, self._dd = self._get_all()
-        self._weight = 1
+        self._weight = weight
         self._target = None
+        self._ic_type = ic_type
         return None
 
     @property
@@ -49,6 +53,13 @@ class CoordinateTypes:
         if self._target:
             return self._target
         raise NotSetError('target ic is not set')
+
+    @property
+    def ic_type(self):
+        if self._ic_type:
+            return self._ic_type
+        else:
+            pass
 
     @target.setter
     def target(self, value):
@@ -131,7 +142,12 @@ class BondLength(CoordinateTypes):
         pass
 
     def __repr__(self) -> str:
-        return "Bond-{}-({})".format(self.atoms, self.value)
+        if self.ic_type:
+            return "Bond({})-{}-({})".format(
+                BondLength._bond_type_dict[self.ic_type], self.atoms,
+                self.value)
+        else:
+            return "Bond-{}-({})".format(self.atoms, self.value)
 
     @property
     def cost_v(self):
@@ -144,6 +160,15 @@ class BondLength(CoordinateTypes):
     @property
     def cost_dd(self):
         return 2 * self.weight
+
+    _bond_type_dict = {
+        0: 'NotSet',
+        1: 'Covalent',
+        2: 'Hydrogen',
+        3: 'Inter-fragment',
+        4: 'auxiliary',
+        5: 'linear-chain'
+    }
 
 
 class BendAngle(CoordinateTypes):
@@ -252,6 +277,16 @@ class DihedralAngle(CoordinateTypes):
         Set the cartesian coordinates of this internal coodinates
     """
 
+    @property
+    def sub_weight(self):
+        sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))
+        sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))
+        return sin_ang1**2 * sin_ang2**2
+
+    @sub_weight.setter
+    def sub_weight(self, value):
+        self._weight = value
+
     def _get_all(self):
         return dihed_angle(self._coordinates, 2)
 
@@ -264,24 +299,18 @@ class DihedralAngle(CoordinateTypes):
 
     @property
     def cost_v(self):
-        sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))**2
-        sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))**2
-        return sin_ang1 * sin_ang2 * (
-            2 - 2 * np.cos(self.value - self.target)) * self.weight
+        return (2 - 2 * np.cos(self.value - self.target)
+                ) * self.weight * self.sub_weight
 
     @property
     def cost_d(self):
-        sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))**2
-        sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))**2
-        return sin_ang1 * sin_ang2 * 2 * np.sin(
-            self.value - self.target) * self.weight
+        return 2 * np.sin(
+            self.value - self.target) * self.weight * self.sub_weight
 
     @property
     def cost_dd(self):
-        sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))**2
-        sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))**2
-        return sin_ang1 * sin_ang2 * 2 * np.cos(
-            self.value - self.target) * self.weight
+        return 2 * np.cos(
+            self.value - self.target) * self.weight * self.sub_weight
 
 
 class ConventionDihedral(CoordinateTypes):
@@ -359,6 +388,21 @@ class NewDihedralDot(CoordinateTypes):  # need tests
     def info(self) -> None:
         pass
 
+    def __repr__(self) -> str:
+        return "Dihed_dot-{}-({})".format(self.atoms, self.value)
+
+    @property
+    def cost_v(self):
+        return (self.value - self.target)**2 * self.weight
+
+    @property
+    def cost_d(self):
+        return 2 * (self.value - self.target) * self.weight
+
+    @property
+    def cost_dd(self):
+        return 2 * self.weight
+
 
 class NewDihedralCross(CoordinateTypes):  # need tests
     """NewDihedralCross type internal coordinates class
@@ -387,3 +431,18 @@ class NewDihedralCross(CoordinateTypes):  # need tests
     @property
     def info(self) -> None:
         pass
+
+    def __repr__(self) -> str:
+        return "Dihed_cross-{}-({})".format(self.atoms, self.value)
+
+    @property
+    def cost_v(self):
+        return (self.value - self.target)**2 * self.weight
+
+    @property
+    def cost_d(self):
+        return 2 * (self.value - self.target) * self.weight
+
+    @property
+    def cost_dd(self):
+        return 2 * self.weight
