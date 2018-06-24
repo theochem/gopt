@@ -350,7 +350,7 @@ class TestInternal(unittest.TestCase):
         assert len(mol.fragments) == mol.natom - 3
         mol.add_bond(4, 5)
         assert len(mol.fragments) == mol.natom - 4
-        mol.add_bond(0, 5, frag_bond=True)
+        mol.add_bond(0, 5, b_type=3)
         assert len(mol.fragments) == 2
 
     def test_fragments_bond_add(self):
@@ -470,3 +470,37 @@ class TestInternal(unittest.TestCase):
         print(h2o2.ic_values)
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-2)
         # print(h2o2.ic_values)
+
+    def test_bond_type(self):
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/ch3_hf.xyz')
+        mol = Internal.from_file(mol_path, charge=0, multi=1)
+        mol._auto_select_bond()  # numbers [6 1 1 1 9 1]
+        assert np.sum(mol.connectivity[0] == 1) == 3
+        assert np.sum(mol.connectivity[4] == 1) == 1
+        mol._auto_select_fragment_bond()
+        assert np.sum(mol.connectivity[0] == 1) == 3
+        assert len(np.unique(mol.fragments)) == 1
+        assert np.sum(mol.connectivity[5] == 3) == 2
+        mol._regenerate_ic()
+        assert np.sum(mol.connectivity[0] == 1) == 3
+        assert len(np.unique(mol.fragments)) == 1
+        assert np.sum(mol.connectivity[5] == 3) == 2
+        mol.wipe_ic_info(True)
+        mol.auto_select_ic()
+        assert np.sum(mol.connectivity[0] == 1) == 3
+        assert len(np.unique(mol.fragments)) == 1
+        assert np.sum(mol.connectivity[5] == 3) == 2
+
+    def test_h_bond(self):
+        mol_path = resource_filename(
+            Requirement.parse('saddle'), 'data/di_water.xyz')
+        mol = Internal.from_file(mol_path, charge=0, multi=1)
+        mol._auto_select_cov_bond()  # numbers [8 1 1 8 1 1]
+        assert np.sum(mol.connectivity[0] == 1) == 2
+        assert np.sum(mol.connectivity[3] == 1) == 2
+        assert len(mol.fragments) == 2
+        print(mol.connectivity)
+        mol._auto_select_h_bond()
+        assert mol.connectivity[2][3] == 2
+        assert len(mol.fragments) == 1

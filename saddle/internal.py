@@ -146,12 +146,8 @@ class Internal(Cartesian):
         self._fragment = np.arange(self.natom)
         return None
 
-    def add_bond(self,
-                 atom1: int,
-                 atom2: int,
-                 *_,
-                 b_type: int = 0,
-                 frag_bond=False) -> None:  # tested
+    def add_bond(self, atom1: int, atom2: int, *_,
+                 b_type: int = 1) -> None:  # tested
         """Add bond connection between atom1 and atom2
 
         Arguments
@@ -169,13 +165,13 @@ class Internal(Cartesian):
         # just sorting, no sequence changes
         if self._repeat_atoms_check(atoms):
             rs = self.coordinates[np.array(atoms)]
-            new_ic_obj = BondLength(atoms, rs, b_type)
+            new_ic_obj = BondLength(atoms, rs, ic_type=b_type)
             d, dd = new_ic_obj.get_gradient_hessian()
             # gradient and hessian need to be set
             self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
             # after adding a bond, change the connectivity of atoms pair to 1
-            self._add_connectivity(atoms)
-            if frag_bond is False:
+            self._add_connectivity(atoms, b_type)
+            if b_type != 3:
                 self._allocate_fragment_group(atom1, atom2)
         return None
 
@@ -244,11 +240,13 @@ class Internal(Cartesian):
                     # add Dot dihedral
                     new_ic_obj_1 = NewDihedralDot(atoms, rs)
                     d, dd = new_ic_obj_1.get_gradient_hessian()
-                    self._add_new_internal_coordinate(new_ic_obj_1, d, dd, atoms)
+                    self._add_new_internal_coordinate(new_ic_obj_1, d, dd,
+                                                      atoms)
                     # add cross dihedral
                     new_ic_obj_2 = NewDihedralCross(atoms, rs)
                     d, dd = new_ic_obj_2.get_gradient_hessian()
-                    self._add_new_internal_coordinate(new_ic_obj_2, d, dd, atoms)
+                    self._add_new_internal_coordinate(new_ic_obj_2, d, dd,
+                                                      atoms)
                 else:
                     new_ic_obj = DihedralAngle(atoms, rs)
                     d, dd = new_ic_obj.get_gradient_hessian()
@@ -277,7 +275,6 @@ class Internal(Cartesian):
         new_ic : np.ndarray(K,) or list of int, len(new_ic) = K
         """
         if len(new_ic) != len(self.ic):
-            print(len(new_ic), len(self.ic))
             raise AtomsNumberError("The ic is not in the same shape")
         for index, ic in enumerate(self.ic):
             ic.target = new_ic[index]
@@ -607,21 +604,34 @@ class Internal(Cartesian):
         return None
 
     def _auto_select_cov_bond(self):
-        for ind1, ind2 in combinations(len(self.numbers), 2):
+        for ind1, ind2 in combinations(range(self.natom), 2):
             atom1 = self.numbers[ind1]
             atom2 = self.numbers[ind2]
             distance = self.distance(ind1, ind2)
             rad_sum = periodic[atom1].cov_radius + periodic[atom2].cov_radius
             if distance < rad_sum * 1.3:
-                self.add_bond(atom1, atom2, b_type=1)
+                self.add_bond(ind1, ind2, b_type=1)
 
     def _auto_select_h_bond(self):
-        halidish_atom = set([7, 8, 9, 15, 16, 17])
-        h_indices = np.where(self.numbers == 1)  # find index of h
-        for index, atom in enumerate(self.numbers):
-            if atom in halidish_atom:
-                for h_ind in h_indices:
-                    pass  # use bond type in connectivity matrix to indicate
+        ele_neg = np.array([7, 8, 9, 15, 16, 17])
+        # find strong ele nagative atoms' indices
+        halo_indices = np.where(np.isin(self.numbers, ele_neg))[0]
+        for ha_idx in halo_indices:
+            # indices formed cov bond with index ha_idx
+            cnnt_idxs = np.where(self.connectivity[ha_idx] == 1)[0]
+            # indices of H atoms formed bond with ha_idx
+            cnnt_h_idx = cnnt_idxs[self.numbers[cnnt_idxs] == 1]
+            for h_idx in cnnt_h_idx:
+                # loop over second halo atoms
+                for ha_idx2 in halo_indices:
+                    if (ha_idx2 != ha_idx
+                            and self.connectivity[h_idx][ha_idx2] == 0):
+                        dist = self.distance(h_idx, ha_idx2)
+                        angle_cos = self.angle_cos(ha_idx, h_idx, ha_idx2)
+                        cut_off = (periodic[self.numbers[h_idx]].vdw_radius +
+                                   periodic[self.numbers[ha_idx2]].vdw_radius)
+                        if dist <= 0.9 * cut_off and angle_cos < 0:
+                            self.add_bond(h_idx, ha_idx2, b_type=2)
 
     def _auto_select_bond(self) -> None:
         """A private method for automatically selecting bond
@@ -636,7 +646,7 @@ class Internal(Cartesian):
             radius_sum = (periodic[atom_num1].cov_radius +
                           periodic[atom_num2].cov_radius)
             if distance < 1.3 * radius_sum:
-                self.add_bond(index_i, index_j)
+                self.add_bond(index_i, index_j, b_type=1)
                 # test hydrogen bond
                 if atom_num1 == 1 and atom_num2 in halidish_atom:
                     h_index = index_i
@@ -654,7 +664,7 @@ class Internal(Cartesian):
                     thresh_sum = (periodic[self.numbers[h_index]].vdw_radius +
                                   periodic[self.numbers[index_k]].vdw_radius)
                     if dis <= 0.9 * thresh_sum and angle >= 1.5708:
-                        self.add_bond(h_index, index_k)  # add H bond
+                        self.add_bond(h_index, index_k, b_type=2)  # add H bond
         return None
 
     def _auto_select_fragment_bond(self):
@@ -672,7 +682,7 @@ class Internal(Cartesian):
             g2_numbers = self.numbers[g2_atoms]
 
             # min atoms for each fragments
-            min_atom = min(len(g1_atoms), len(g2_atoms))
+            # min_atom = min(len(g1_atoms), len(g2_atoms))
             # most non h atoms
             max_f_bond = max(
                 np.sum([g1_numbers != 1]), np.sum([g2_numbers != 1]))
@@ -691,14 +701,14 @@ class Internal(Cartesian):
             while atoms_set:
                 bond_dis, atom1, atom2 = heappop(atoms_set)
                 if counter < 2:
-                    self.add_bond(atom1, atom2, frag_bond=True)
+                    self.add_bond(atom1, atom2, b_type=3)
                     counter += 1
                     continue
                 if bond_dis > max(3.7794520, 2 * least_length):
                     break
                 if counter >= max(2, max_f_bond):
                     break
-                self.add_bond(atom1, atom2, frag_bond=True)
+                self.add_bond(atom1, atom2, b_type=3)
                 counter += 1
 
     def _auto_select_angle(self) -> None:
@@ -730,15 +740,18 @@ class Internal(Cartesian):
                     connected_to_index_2 = self.connected_indices(center_ind_2)
                     for side_2 in connected_to_index_2:
                         if side_2 not in (center_ind_1, center_ind_2, side_1):
-                            self.add_dihedral(side_1, center_ind_1,
-                                              center_ind_2, side_2, special=special)
+                            self.add_dihedral(
+                                side_1,
+                                center_ind_1,
+                                center_ind_2,
+                                side_2,
+                                special=special)
         return None
 
     def _auto_select_dihed_improper(self, special=False) -> None:
         """A private method for automatically selecting improper dihedral
         """
-        connect_sum = np.sum(
-            self.connectivity > 0, axis=0)
+        connect_sum = np.sum(self.connectivity > 0, axis=0)
         for center_ind, _ in enumerate(connect_sum):
             if connect_sum[center_ind] >= 3:
                 cnct_atoms = self.connected_indices(center_ind)
@@ -750,8 +763,8 @@ class Internal(Cartesian):
                     ang3_r = self.angle(ind_j, center_ind, ind_k)
                     sum_r = ang1_r + ang2_r + ang3_r
                     if sum_r >= 6.02139:
-                        self.add_dihedral(ind_i, center_ind, ind_j, ind_k,
-                                          special=special)
+                        self.add_dihedral(
+                            ind_i, center_ind, ind_j, ind_k, special=special)
         return None
 
     def _energy_hessian_transformation(self) -> None:
@@ -808,7 +821,7 @@ class Internal(Cartesian):
         self._connectivity = np.diag([-1] * len(self.numbers))
         for ic in self.ic:
             if isinstance(ic, BondLength):
-                self._add_connectivity(ic.atoms)
+                self._add_connectivity(ic.atoms, ic.ic_type)
         return None
 
     def _recal_g_and_h(self) -> None:
@@ -880,7 +893,7 @@ class Internal(Cartesian):
         connected : bool
             Return True if they are connected, otherwise False
         """
-        if self.connectivity[atom1, atom2] == 1:
+        if self.connectivity[atom1, atom2] > 0:
             return True
         elif self.connectivity[atom1, atom2] == 0:
             return False
@@ -916,7 +929,7 @@ class Internal(Cartesian):
         self._recal_g_and_h()
         return None
 
-    def _add_connectivity(self, atoms: Tuple[int, ...]) -> None:
+    def _add_connectivity(self, atoms: Tuple[int, ...], bond_type) -> None:
         """Change the value of connectivity matrix to 1 for two atoms
 
         Arguments
@@ -926,8 +939,8 @@ class Internal(Cartesian):
         if len(atoms) != 2:
             raise AtomsNumberError("The number of atoms is not correct")
         num1, num2 = atoms
-        self._connectivity[num1, num2] = 1
-        self._connectivity[num2, num1] = 1
+        self._connectivity[num1, num2] = bond_type
+        self._connectivity[num2, num1] = bond_type
 
     @staticmethod
     def _atoms_sequence_reorder(atoms: Tuple[int, ...]) -> None:

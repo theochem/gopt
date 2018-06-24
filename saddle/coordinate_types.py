@@ -38,14 +38,12 @@ class CoordinateTypes:
                  atoms: "np.ndarray[int]",
                  coordinates: "np.ndarray[float]",
                  *_,
-                 weight=1,
-                 ic_type=None) -> None:
+                 weight=1) -> None:
         self._coordinates = coordinates
         self._atoms = atoms
         self._value, self._d, self._dd = self._get_all()
         self._weight = weight
         self._target = None
-        self._ic_type = ic_type
         return None
 
     @property
@@ -54,12 +52,6 @@ class CoordinateTypes:
             return self._target
         raise NotSetError('target ic is not set')
 
-    @property
-    def ic_type(self):
-        if self._ic_type:
-            return self._ic_type
-        else:
-            pass
 
     @target.setter
     def target(self, value):
@@ -134,6 +126,15 @@ class BondLength(CoordinateTypes):
         Set the cartesian coordinates of this internal coodinates
     """
 
+    def __init__(self,
+                 atoms: "np.ndarray[int]",
+                 coordinates: "np.ndarray[float]",
+                 *_,
+                 ic_type=None,
+                 weight=1) -> None:
+        super().__init__(atoms, coordinates, weight=weight)
+        self._ic_type = ic_type
+
     def _get_all(self):
         return bond_length(self._coordinates, 2)
 
@@ -160,6 +161,13 @@ class BondLength(CoordinateTypes):
     @property
     def cost_dd(self):
         return 2 * self.weight
+
+    @property
+    def ic_type(self):
+        if self._ic_type:
+            return self._ic_type
+        else:
+            pass
 
     _bond_type_dict = {
         0: 'NotSet',
