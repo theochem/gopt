@@ -246,7 +246,12 @@ class TSConstruct(object):
         self._reactant.delete_ic(*indices)
         self._product.delete_ic(*indices)
 
-    def auto_select_ic(self, reset_ic=False, auto_select=True, mode="mix"):
+    def auto_select_ic(self,
+                       *_,
+                       reset_ic=False,
+                       auto_select=True,
+                       dihed_special=False,
+                       mode="mix"):
         """Select internal coordinates for both reactant and product based on
         given structure and choices
 
@@ -264,8 +269,10 @@ class TSConstruct(object):
                 "product" : choose the product ic as the template
         """
         if auto_select:
-            self._reactant.auto_select_ic(reset_ic=reset_ic)
-            self._product.auto_select_ic(reset_ic=reset_ic)
+            self._reactant.auto_select_ic(
+                reset_ic=reset_ic, dihed_special=dihed_special)
+            self._product.auto_select_ic(
+                reset_ic=reset_ic, dihed_special=dihed_special)
         target_ic_list = self._get_union_of_ics(mode=mode)
         self._reactant.set_new_ics(target_ic_list)
         self._product.set_new_ics(target_ic_list)
@@ -327,9 +334,11 @@ class TSConstruct(object):
 
     def auto_generate_ts(self,
                          ratio=0.5,
+                         *_,
                          start_with="reactant",
                          reset_ic=False,
                          auto_select=True,
+                         dihed_special=False,
                          mode="mix",
                          task='ts'):
         """Complete auto generate transition state structure based on some
@@ -356,7 +365,11 @@ class TSConstruct(object):
                 "reactant" : choose the reactant ic as the template
                 "product" : choose the product ic as the template
         """
-        self.auto_select_ic(reset_ic, auto_select, mode=mode)
+        self.auto_select_ic(
+            reset_ic,
+            dihed_special=dihed_special,
+            auto_select=auto_select,
+            mode=mode)
         self.create_ts_state(start_with, ratio, task=task)
 
     def ts_to_file(self, filename=''):

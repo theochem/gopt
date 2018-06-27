@@ -340,21 +340,26 @@ class Internal(Cartesian):
         raise NotConvergeError(
             "The coordinates transformation optimization failed to converge")
 
-    def connected_indices(self, index: int) -> 'np.ndarray[int]':
+    def connected_indices(self, index: int, *_, exclude=None) -> 'np.ndarray[int]':
         """Return the indices of atoms connected to given index atom
 
         Arguments
         ---------
         index : int
             the index of given index for finding connection
+        exclude : int
+            the value of connectivity be excluded from selection
 
         Returns
         -------
-        connected_index : np.ndarray(M)
+        connected_index : np.ndarray[int]
             indices of atoms connected to given index
         """
+        if exclude:
+            assert isinstance(exclude, int)
+            assert exclude > 0
         connection = self.connectivity[index]
-        connected_index = np.where(connection > 0)[0]
+        connected_index = np.where((connection > 0) & (connection != exclude))[0]
         return connected_index
 
     def energy_from_fchk(self,
@@ -715,11 +720,11 @@ class Internal(Cartesian):
         """A private method for automatically selecting angle
         """
         for center_index, _ in enumerate(self.numbers):
-            connected = self.connected_indices(center_index)
+            connected = self.connected_indices(center_index, exclude=4)
+            # connected = self.connected_indices(center_index)
             if len(connected) >= 2:
                 for side_1, side_2 in combinations(connected, 2):
                     self.add_angle(side_1, center_index, side_2)
-        return None
 
     def _auto_select_dihed_normal(self, special=False) -> None:
         """A private method for automatically selecting normal dihedral

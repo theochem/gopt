@@ -52,7 +52,6 @@ class CoordinateTypes:
             return self._target
         raise NotSetError('target ic is not set')
 
-
     @target.setter
     def target(self, value):
         self._target = value
@@ -145,7 +144,7 @@ class BondLength(CoordinateTypes):
     def __repr__(self) -> str:
         if self.ic_type:
             return "Bond({})-{}-({})".format(
-                BondLength._bond_type_dict[self.ic_type], self.atoms,
+                BONDTYPE[self.ic_type], self.atoms,
                 self.value)
         else:
             return "Bond-{}-({})".format(self.atoms, self.value)
@@ -169,14 +168,14 @@ class BondLength(CoordinateTypes):
         else:
             pass
 
-    _bond_type_dict = {
-        0: 'NotSet',
-        1: 'Covalent',
-        2: 'Hydrogen',
-        3: 'Inter-fragment',
-        4: 'auxiliary',
-        5: 'linear-chain'
-    }
+
+BONDTYPE = {
+    1: 'Covalent',
+    2: 'Hydrogen',
+    3: 'Inter-frag',
+    4: 'auxiliary',
+    5: 'linear-chain'
+}
 
 
 class BendAngle(CoordinateTypes):

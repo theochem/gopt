@@ -221,7 +221,23 @@ class Test_TS_Construct(unittest.TestCase):
         for i in range(12):
             assert ts_mol.rct.ic[i].atoms == ts_mol.prd.ic[i].atoms
 
+    def test_dihed_special_structure(self):
+        rct_path = resource_filename(
+            Requirement.parse("saddle"), "data/rct.xyz")
+        prd_path = resource_filename(
+            Requirement.parse("saddle"), "data/prd.xyz")
+
+        ts_mol = TSConstruct.from_file(rct_path, prd_path)
+        ts_mol.auto_generate_ts(dihed_special=True)
+        assert len(ts_mol.ts.ic) == 11
+
     @classmethod
     def tearDownClass(cls):
         for i in cls.file_list:
             os.remove(i)
+
+    def test_new_dihed_ts_construct(self):
+        self.reactant_ic.auto_select_ic()
+        self.product_ic.auto_select_ic()
+        new_ins = TSConstruct(self.reactant_ic, self.product_ic)
+        new_ins.auto_generate_ts(start_with='product', reset_ic=False)
