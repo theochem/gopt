@@ -493,8 +493,8 @@ class Internal(Cartesian):
         target_ic : np.ndarray(K,)
         """
         target_ic = [i.target for i in self.ic]
-        if None in target_ic:
-            raise NotSetError('Not all target ic are set')
+        # if None in target_ic:  REASON: # redundant
+            # raise NotSetError('Not all target ic are set')
         return np.array(target_ic)
 
     @property

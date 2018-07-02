@@ -366,7 +366,7 @@ class TSConstruct(object):
                 "product" : choose the product ic as the template
         """
         self.auto_select_ic(
-            reset_ic,
+            reset_ic=False,
             dihed_special=dihed_special,
             auto_select=auto_select,
             mode=mode)

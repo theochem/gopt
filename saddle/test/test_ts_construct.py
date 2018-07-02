@@ -1,10 +1,9 @@
 import os
+import unittest
 from copy import deepcopy
 
 import numpy as np
-import unittest
 from pkg_resources import Requirement, resource_filename
-
 from saddle.errors import InvalidArgumentError
 from saddle.internal import Internal
 from saddle.iodata import IOData
@@ -166,9 +165,8 @@ class Test_TS_Construct(unittest.TestCase):
         self.reactant_ic.add_bond(2, 4)
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(auto_select=False)
-        ref_ic = (
-            self.reactant_ic.distance(2, 4) + self.product_ic.distance(2, 4)
-        ) / 2
+        ref_ic = (self.reactant_ic.distance(2, 4) + self.product_ic.distance(
+            2, 4)) / 2
         assert np.allclose(new_ins.ts.ic_values, ref_ic)
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(auto_select=True, reset_ic=False)
@@ -231,13 +229,19 @@ class Test_TS_Construct(unittest.TestCase):
         ts_mol.auto_generate_ts(dihed_special=True)
         assert len(ts_mol.ts.ic) == 11
 
+    def test_dihed_HSCN_ts(self):
+        rct_path = resource_filename(
+            Requirement.parse("saddle"), "data/HSCN.xyz")
+        prd_path = resource_filename(
+            Requirement.parse("saddle"), "data/HNCS.xyz")
+
+        ts_mol = TSConstruct.from_file(rct_path, prd_path)
+        ts_mol.auto_generate_ts(dihed_special=True)
+        assert len(ts_mol.ts.ic) == 11
+        # from saddle.iodata.xyz import dump_xyz
+        # dump_xyz('hscn_ts.xyz', ts_mol.ts)
+
     @classmethod
     def tearDownClass(cls):
         for i in cls.file_list:
             os.remove(i)
-
-    def test_new_dihed_ts_construct(self):
-        self.reactant_ic.auto_select_ic()
-        self.product_ic.auto_select_ic()
-        new_ins = TSConstruct(self.reactant_ic, self.product_ic)
-        new_ins.auto_generate_ts(start_with='product', reset_ic=False)

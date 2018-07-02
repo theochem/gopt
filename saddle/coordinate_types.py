@@ -48,9 +48,9 @@ class CoordinateTypes:
 
     @property
     def target(self):
-        if self._target:
+        if self._target is not None:
             return self._target
-        raise NotSetError('target ic is not set')
+        raise NotSetError('target ic is not set', self)
 
     @target.setter
     def target(self, value):

@@ -23,7 +23,8 @@ class OptLoop:
                  max_pt=0):
         if not isinstance(init_structure, ReducedInternal):
             raise TypeError(
-                f'Improper input type {type(init_structure)} for {init_structure}'
+                f'Improper input type \
+                {type(init_structure)} for {init_structure}'
             )
         # TODO: possible momery saving mode
         self._point = [PathPoint(init_structure)]
