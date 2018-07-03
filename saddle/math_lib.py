@@ -1,3 +1,5 @@
+"""Summary
+"""
 from typing import Callable, Tuple
 
 import numpy as np
@@ -16,19 +18,32 @@ def ridders_solver(func: Callable[[float], float],
     root for a continuous function. the value of the two end should be of
     different sign.
 
-    Args:
-        func (function): function to find the right root
-        x1 (float): left end of interval
-        x2 (float): right end of interval
-        iteration (int, optional): numbers of iterations, default is 30
-        error (float, optional): the threshold for convergence,
-            default is 10e-6
+    Parameters
+    ----------
+    func : Callable[[float], float]
+        function to find the right root
+    x1 : float
+        left end of interval
+    x2 : float
+        right end of interval
+    iteration : int, optional
+        numbers of iterations, default is 30
+    error : float, optional
+        the threshold for convergence,
+        default is 10e-6
 
-    Raises:
-        PositiveProductError: when the function value of two ends of the
-            interval is of the same sign
-    return:
-        (float): the root for function in the interval between x1 and x2
+    Raises
+    ------
+    OverIterLimitError
+        Description
+    PositiveProductError
+        when the function value of two ends of the
+        interval is of the same sign
+
+    Returns
+    -------
+    float
+        the root for function in the interval between x1 and x2
 
 
     """
@@ -72,15 +87,42 @@ def diagonalize(matrix: 'np.ndarray[Float]'
 
     Arguments
     ---------
-    matrix : np.ndarray(N, M)
+    matrix : np.ndarray[Float]
         Given matrix to be diagonalized
 
     Returns
     -------
-    (w, v) : (np.ndarray(N,), np.ndarray(N, N))
+    (w, v) : Tuple['np.ndarray[Float]', 'np.ndarray[Float]']
         w is the eigenvalues of the Grammian matrix
         v is the eigenvectors of the Grammian matrix, each column is one vector
     """
     product = np.dot(matrix, matrix.T)
     w, v = np.linalg.eigh(product)
     return w, v
+
+
+def pse_inv(matrix):
+    """Calculate pseudo inverse of given matrix
+
+    Parameters
+    ----------
+    matrix : np.ndarray(N, K)
+        a 2-dimention numpy array
+
+    Returns
+    -------
+    np.ndarray(K, N)
+        pseudo inverse of given matrix, inverse if it is revertible
+    """
+    assert isinstance(matrix, np.ndarray)
+    matrix[abs(matrix) < 1e-8] = 0
+    shape = matrix.shape[::-1]
+    u, s, vh = np.linalg.svd(matrix)
+    s[abs(s) < 1e-8] = 0
+    s[s != 0] = 1 / s[s != 0]
+
+    s_mtr = np.zeros(shape)
+    s_mtr[:len(s), :len(s)] = np.diag(s)
+    res = np.dot(np.dot(vh.T, s_mtr), u.T)
+    res[abs(res) < 1e-8] = 0
+    return res

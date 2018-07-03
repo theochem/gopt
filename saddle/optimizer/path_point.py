@@ -2,6 +2,7 @@ import numpy as np
 from copy import deepcopy
 
 from saddle.errors import NotSetError
+from saddle.math_lib import pse_inv
 
 
 class PathPoint:
@@ -140,6 +141,6 @@ class PathPoint:
         part1 = d_gv
         part2 = np.dot(np.dot(origin.b_matrix.T, d_v), origin.v_gradient)
         part3 = np.dot(d_b.T, origin.q_gradient)
-        multiply = np.dot(origin.vspace.T, np.linalg.pinv(origin.b_matrix.T))
+        multiply = np.dot(origin.vspace.T, pse_inv(origin.b_matrix.T))
         result = part1 - np.dot(multiply, (part2 + part3))
         return result

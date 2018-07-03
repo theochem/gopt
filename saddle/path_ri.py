@@ -3,8 +3,8 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 import numpy as np
-
 from saddle.internal import Internal
+from saddle.math_lib import pse_inv
 from saddle.reduced_internal import ReducedInternal
 
 
@@ -30,7 +30,7 @@ class PathRI(ReducedInternal):
 
     def _reduced_perturbation(self):
         tsfm = np.dot(self.b_matrix,
-                      np.linalg.pinv(self.b_matrix))
+                      pse_inv(self.b_matrix))
         result = np.dot(tsfm, self._path_vector.T)
         assert len(result.shape) == 1
         return result[:, None]
@@ -104,5 +104,5 @@ class PathRI(ReducedInternal):
     # def _realizable_change_in_vspace(self, change_vector):
     #     v = self.vspace
     #     b = self.b_matrix
-    #     b_inv = np.linalg.pinv(b)
+    #     b_inv = pse_inv(b)
     #     return np.dot(v.T, np.dot(b, np.dot(b_inv, change_vector)))

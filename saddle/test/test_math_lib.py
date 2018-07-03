@@ -1,8 +1,9 @@
 import unittest
-import numpy as np
 
-from saddle.solver import ridders_solver, diagonalize
+import numpy as np
 from saddle.errors import PositiveProductError
+from saddle.math_lib import diagonalize, pse_inv, ridders_solver
+
 
 class TestSolver(unittest.TestCase):
     def test_ridder_quadratic(self):
@@ -18,7 +19,7 @@ class TestSolver(unittest.TestCase):
             assert False
 
     def test_ridder_quatic(self):
-        func = lambda x: x**3 - x**2 - 2*x
+        func = lambda x: x**3 - x**2 - 2 * x
         answer = ridders_solver(func, -2, 0)
         assert answer == 0
 
@@ -41,3 +42,27 @@ class TestSolver(unittest.TestCase):
         v, w = np.linalg.eigh(prd)
         assert np.allclose(ei_value, v)
         assert np.allclose(ei_vector, w)
+
+    def test_pse_inv(self):
+        np.random.seed(500)
+        mtr_1 = np.random.rand(5, 5)
+        mtr_1_r = pse_inv(mtr_1)
+        assert np.allclose(np.dot(mtr_1, mtr_1_r), np.eye(5))
+
+        mtr_2 = np.array([[3, 0], [0, 0]])
+        mtr_2_r = pse_inv(mtr_2)
+        ref_mtr = np.array([[1/3, 0], [0, 0]])
+        assert np.allclose(mtr_2_r, ref_mtr)
+
+        mtr_3 = np.array([[3, 3e-9], [1e-11, 2e-10]])
+        mtr_3_r = pse_inv(mtr_3)
+        assert np.allclose(mtr_3_r, ref_mtr)
+
+    def test_pse_inv_with_np(self):
+        np.random.seed(100)
+        for _ in range(5):
+            shape = np.random.randint(1, 10, 2)
+            target_mt = np.random.rand(*shape)
+            np_ref = np.linalg.pinv(target_mt)
+            pse_inv_res = pse_inv(target_mt)
+            assert np.allclose(pse_inv_res, np_ref)

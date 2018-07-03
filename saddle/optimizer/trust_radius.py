@@ -1,6 +1,6 @@
 import numpy as np
 
-from saddle.solver import ridders_solver
+from saddle.math_lib import ridders_solver
 from saddle.optimizer.path_point import PathPoint
 
 

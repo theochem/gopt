@@ -49,4 +49,4 @@ class TestSecant(unittest.TestCase):
         part4 = np.dot((self.newp.b_matrix - self.oldp.b_matrix).T,
                        self.newp.q_gradient)
         final = part1 - np.dot(part2, (part3 + part4))
-        assert np.allclose(result, final)
+        assert np.allclose(result, final, atol=1e-6)

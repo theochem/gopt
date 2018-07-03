@@ -3,7 +3,7 @@ from copy import deepcopy
 import numpy as np
 from saddle.errors import ICNumberError, NotSetError
 from saddle.internal import Internal
-from saddle.solver import diagonalize
+from saddle.math_lib import diagonalize, pse_inv
 
 __all__ = ('ReducedInternal', )
 
@@ -370,7 +370,7 @@ class ReducedInternal(Internal):  # need tests
             vectors
         """
         unit_mtx = self._reduced_unit_vectors()
-        tsfm = np.dot(self.b_matrix, np.linalg.pinv(self.b_matrix))
+        tsfm = np.dot(self.b_matrix, pse_inv(self.b_matrix))
         return np.dot(tsfm, unit_mtx)
 
     def _generate_reduce_space(self, threshold=1e-6) -> None:  # tested

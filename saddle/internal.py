@@ -31,6 +31,7 @@ from saddle.coordinate_types import (BendAngle, BondLength, CoordinateTypes,
                                      NewDihedralDot)
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
+from saddle.math_lib import pse_inv
 from saddle.opt import GeoOptimizer, Point
 from saddle.periodic.periodic import periodic
 from typing import List, Tuple
@@ -321,8 +322,8 @@ class Internal(Cartesian):
         optimizer = GeoOptimizer()
         # calculate the init structure
         init_coor = np.dot(
-            np.linalg.pinv(self.b_matrix),
-            self.target_ic - self.ic_values).reshape(-1, 3) + self.coordinates
+            pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
+                -1, 3) + self.coordinates
         self.set_new_coordinates(init_coor)
         init_point = self.create_geo_point()
         optimizer.add_new(init_point)
@@ -340,7 +341,8 @@ class Internal(Cartesian):
         raise NotConvergeError(
             "The coordinates transformation optimization failed to converge")
 
-    def connected_indices(self, index: int, *_, exclude=None) -> 'np.ndarray[int]':
+    def connected_indices(self, index: int, *_,
+                          exclude=None) -> 'np.ndarray[int]':
         """Return the indices of atoms connected to given index atom
 
         Arguments
@@ -359,7 +361,8 @@ class Internal(Cartesian):
             assert isinstance(exclude, int)
             assert exclude > 0
         connection = self.connectivity[index]
-        connected_index = np.where((connection > 0) & (connection != exclude))[0]
+        connected_index = np.where((connection > 0) & (connection != exclude))[
+            0]
         return connected_index
 
     def energy_from_fchk(self,
@@ -494,7 +497,7 @@ class Internal(Cartesian):
         """
         target_ic = [i.target for i in self.ic]
         # if None in target_ic:  REASON: # redundant
-            # raise NotSetError('Not all target ic are set')
+        # raise NotSetError('Not all target ic are set')
         return np.array(target_ic)
 
     @property
@@ -784,13 +787,13 @@ class Internal(Cartesian):
         self._hessian_transform()
         # self._tilt_internal_hessian = np.dot(
         #   np.dot(
-        #     np.linalg.pinv(self._cc_to_ic_gradient.T),
-        #     self._energy_hessian), np.linalg.pinv(self._cc_to_ic_gradient))
+        #     pse_inv(self._cc_to_ic_gradient.T),
+        #     self._energy_hessian), pse_inv(self._cc_to_ic_gradient))
         return None
 
     def _gradient_transform(self) -> None:
         self._internal_gradient = np.dot(
-            np.linalg.pinv(self._cc_to_ic_gradient.T), self._energy_gradient)
+            pse_inv(self.b_matrix.T), self._energy_gradient)
         return None
 
     def _hessian_transform(self) -> None:
@@ -799,8 +802,7 @@ class Internal(Cartesian):
         hes_k = self._energy_hessian - np.tensordot(
             self._internal_gradient, self._cc_to_ic_hessian, axes=1)
         self._internal_hessian = np.dot(
-            np.dot(np.linalg.pinv(self._cc_to_ic_gradient.T), hes_k),
-            np.linalg.pinv(self._cc_to_ic_gradient))
+            np.dot(pse_inv(self.b_matrix.T), hes_k), pse_inv(self.b_matrix))
         return None
 
     def _regenerate_ic(self) -> None:
@@ -1018,8 +1020,8 @@ class Internal(Cartesian):
                                3 * len(self.numbers)))
         for i, _ in enumerate(atoms):
             for j, _ in enumerate(atoms):
-                tmp_vector[0, 3 * atoms[i]:3 * atoms[i] + 3, 3 * atoms[j]:
-                           3 * atoms[j] + 3] += deriv[i, :3, j]
+                tmp_vector[0, 3 * atoms[i]:3 * atoms[i] +
+                           3, 3 * atoms[j]:3 * atoms[j] + 3] += deriv[i, :3, j]
         self._cc_to_ic_hessian = np.vstack((self._cc_to_ic_hessian,
                                             tmp_vector))
         return None

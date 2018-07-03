@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from saddle.solver import ridders_solver
+from saddle.math_lib import ridders_solver, pse_inv
 
 __all__ = ('Point', 'GeoOptimizer')
 
@@ -37,7 +37,7 @@ class GeoOptimizer(object):
 
     def newton_step(self, index):
         point = self.points[index]
-        return -np.dot(np.linalg.pinv(point.hessian), point.gradient)
+        return -np.dot(pse_inv(point.hessian), point.gradient)
 
     def add_new(self, point):
         self.points.append(point)
