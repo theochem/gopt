@@ -66,3 +66,12 @@ class TestSolver(unittest.TestCase):
             np_ref = np.linalg.pinv(target_mt)
             pse_inv_res = pse_inv(target_mt)
             assert np.allclose(pse_inv_res, np_ref)
+
+    def test_pse_inv_close(self):
+        np.random.seed(200)
+        for _ in range(5):
+            shape = np.random.randint(1, 20, 2)
+            rand_mt = np.random.rand(*shape)
+            inv_mt = pse_inv(rand_mt)
+            diff = np.dot(np.dot(rand_mt, inv_mt), rand_mt) - rand_mt
+            assert np.allclose(np.linalg.norm(diff), 0)

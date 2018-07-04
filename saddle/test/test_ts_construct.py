@@ -229,18 +229,6 @@ class Test_TS_Construct(unittest.TestCase):
         ts_mol.auto_generate_ts(dihed_special=True)
         assert len(ts_mol.ts.ic) == 11
 
-    def test_dihed_HSCN_ts(self):
-        rct_path = resource_filename(
-            Requirement.parse("saddle"), "data/HSCN.xyz")
-        prd_path = resource_filename(
-            Requirement.parse("saddle"), "data/HNCS.xyz")
-
-        ts_mol = TSConstruct.from_file(rct_path, prd_path)
-        ts_mol.auto_generate_ts(dihed_special=True)
-        assert len(ts_mol.ts.ic) == 11
-        # from saddle.iodata.xyz import dump_xyz
-        # dump_xyz('hscn_ts.xyz', ts_mol.ts)
-
     @classmethod
     def tearDownClass(cls):
         for i in cls.file_list:
