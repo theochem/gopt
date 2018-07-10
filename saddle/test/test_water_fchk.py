@@ -1,16 +1,14 @@
-import numpy as np
-from pkg_resources import Requirement, resource_filename
-
-from saddle.fchk import FCHKFile
-
 import unittest
+
+import numpy as np
+from importlib_resources import path
+from saddle.fchk import FCHKFile
 
 
 class TestFormatCheck(unittest.TestCase):
     def test_water_fchk(self):
-        fchk_path = resource_filename(
-            Requirement.parse("saddle"), "data/water_0.fchk")
-        f = FCHKFile(fchk_path)
+        with path('saddle.test.data', 'water_0.fchk') as fchk_path:
+            f = FCHKFile(fchk_path)
         hessian = f.get_hessian()
         gradient = f.get_gradient()
         energy = f.get_energy()

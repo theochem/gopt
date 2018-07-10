@@ -5,4 +5,6 @@
 *.com
 *.swp
 *.swo
+work/*
+!work/.gitkeep
 !single_hf_template.com

@@ -6,8 +6,6 @@ import numpy as np
 from saddle.errors import (AtomsNumberError, InputTypeError,
                            InvalidArgumentError, NotSetError)
 from saddle.internal import Internal
-from saddle.iodata import IOData
-from saddle.iodata.xyz import dump_xyz
 from saddle.path_ri import PathRI
 from saddle.reduced_internal import ReducedInternal
 
@@ -164,10 +162,8 @@ class TSConstruct(object):
             new instance create from the structure of given reactant and
             product
         """
-        rct = IOData.from_file(rct_file)
-        prd = IOData.from_file(prd_file)
-        rct_mol = Internal(rct.coordinates, rct.numbers, charge, multi)
-        prd_mol = Internal(prd.coordinates, prd.numbers, charge, multi)
+        rct_mol = Internal.from_file(rct_file, charge, multi)
+        prd_mol = Internal.from_file(prd_file, charge, multi)
         return cls(rct_mol, prd_mol)
 
     def add_bond(self, atom1, atom2):

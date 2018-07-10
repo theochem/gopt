@@ -24,8 +24,7 @@ import os
 from string import Template
 
 import numpy as np
-from pkg_resources import resource_filename
-
+from importlib_resources import read_text
 from saddle.conf import work_dir
 from saddle.fchk import FCHKFile
 from saddle.periodic.periodic import angstrom, periodic
@@ -37,9 +36,7 @@ class GaussianWrapper(object):
 
     counter = 0
 
-    with open(resource_filename(__name__, "data/single_hf_template.com"),
-              "r") as f:
-        template = Template(f.read())
+    template = Template(read_text('saddle.data', 'single_hf_template.com'))
 
     def __init__(self, molecule, title):
         self.molecule = molecule

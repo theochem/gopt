@@ -19,9 +19,7 @@
 #
 # --
 "Coordinates types for represent internal coordinates."
-
 import numpy as np
-from enum import Enum
 from saddle.errors import NotSetError
 from saddle.molmod import (bend_angle, bend_cos, bond_length, dihed_angle,
                            dihed_cos, dihed_new_cross, dihed_new_dot)
@@ -143,9 +141,8 @@ class BondLength(CoordinateTypes):
 
     def __repr__(self) -> str:
         if self.ic_type:
-            return "Bond({})-{}-({})".format(
-                BONDTYPE[self.ic_type], self.atoms,
-                self.value)
+            return "Bond({})-{}-({})".format(BONDTYPE[self.ic_type],
+                                             self.atoms, self.value)
         else:
             return "Bond-{}-({})".format(self.atoms, self.value)
 
@@ -311,13 +308,13 @@ class DihedralAngle(CoordinateTypes):
 
     @property
     def cost_d(self):
-        return 2 * np.sin(
-            self.value - self.target) * self.weight * self.sub_weight
+        return 2 * np.sin(self.value -
+                          self.target) * self.weight * self.sub_weight
 
     @property
     def cost_dd(self):
-        return 2 * np.cos(
-            self.value - self.target) * self.weight * self.sub_weight
+        return 2 * np.cos(self.value -
+                          self.target) * self.weight * self.sub_weight
 
 
 class ConventionDihedral(CoordinateTypes):

@@ -1,19 +1,16 @@
-import numpy as np
-from pkg_resources import Requirement, resource_filename
-
-from saddle.ts_construct import TSConstruct
-
 import unittest
+
+import numpy as np
+from importlib_resources import path
+from saddle.ts_construct import TSConstruct
 
 
 class TestPathRI(unittest.TestCase):
     @classmethod
     def setup_class(self):
-        rct_path = resource_filename(
-            Requirement.parse('saddle'), 'data/rct.xyz')
-        prd_path = resource_filename(
-            Requirement.parse('saddle'), 'data/prd.xyz')
-        self.ts_mol = TSConstruct.from_file(rct_path, prd_path)
+        with path('saddle.test.data', 'rct.xyz') as rct_path:
+            with path('saddle.test.data', 'prd.xyz') as prd_path:
+                self.ts_mol = TSConstruct.from_file(rct_path, prd_path)
         self.ts_mol.auto_generate_ts(task='path')
         self.path_mol = self.ts_mol.ts
 

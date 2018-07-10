@@ -2,24 +2,21 @@ import unittest
 from copy import deepcopy
 
 import numpy as np
-from pkg_resources import Requirement, resource_filename
-
+from importlib_resources import path
 from saddle.cartesian import Cartesian
-from saddle.iodata import IOData
 from saddle.periodic.periodic import angstrom
+from saddle.utils import Utils
 
 
 class TestCartesian(unittest.TestCase):
-    @classmethod
-    def setup_class(self):
-        mol_path = resource_filename(
-            Requirement.parse("saddle"), "data/water.xyz")
-        mol = IOData.from_file(mol_path)
+    def setUp(self):
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         self.cartesian = Cartesian(mol.coordinates, mol.numbers, 0, 1)
 
     def test_from_file(self):
-        path = resource_filename(Requirement.parse("saddle"), "data/water.xyz")
-        mol = Cartesian.from_file(path)
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Cartesian.from_file(mol_path)
         ref_coordinates = np.array([[0.783837, -0.492236, -0.000000],
                                     [-0.000000, 0.062020, -0.000000],
                                     [-0.783837, -0.492236, -0.000000]])
@@ -46,8 +43,8 @@ class TestCartesian(unittest.TestCase):
 
     def test_distance(self):
         ref_distance = np.linalg.norm(
-            np.array([0.783837, -0.492236, -0.000000]) - np.array(
-                [-0.000000, 0.062020, -0.000000]))
+            np.array([0.783837, -0.492236, -0.000000]) -
+            np.array([-0.000000, 0.062020, -0.000000]))
         assert self.cartesian.distance(0, 1) / angstrom == ref_distance
 
     def test_angle(self):
@@ -62,10 +59,9 @@ class TestCartesian(unittest.TestCase):
             self.cartesian.angle(0, 1, 2), np.arccos(ref_angle_cos))
 
     def test_get_energy_from_fchk(self):
-        fchk_path = resource_filename(
-            Requirement.parse("saddle"), "data/water_1.fchk")
-        mole = deepcopy(self.cartesian)
-        mole.energy_from_fchk(fchk_path)
+        with path('saddle.test.data', 'water_1.fchk') as fchk_path:
+            mole = deepcopy(self.cartesian)
+            mole.energy_from_fchk(fchk_path)
         assert np.allclose(mole.energy, -7.599264122862e1)
         ref_gradient = [
             2.44329621e-17, 4.95449892e-03, -9.09914286e-03, 7.79137241e-16,

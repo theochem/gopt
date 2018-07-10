@@ -138,7 +138,7 @@ class FCHKFile(object):
             return True
 
         self.fields = {}
-        with open(filename, 'r') as f:
+        with open(filename, mode='r', encoding='utf-8') as f:
             self.title = f.readline()[:-1].strip()
             words = f.readline().split()
             if len(words) == 3:

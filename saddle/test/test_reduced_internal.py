@@ -1,20 +1,17 @@
 from copy import deepcopy
+from unittest import TestCase
 
-import unittest
 import numpy as np
-
-from pkg_resources import Requirement, resource_filename
-
+from importlib_resources import path
 from saddle.internal import Internal
-from saddle.iodata import IOData
 from saddle.reduced_internal import ReducedInternal
+from saddle.utils import Utils
 
 
-class TestReduceInternal(unittest.TestCase):
+class TestReduceInternal(TestCase):
     def setUp(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         self.red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1,
                                        'water')
         self.red_int.add_bond(1, 0)
@@ -121,9 +118,8 @@ class TestReduceInternal(unittest.TestCase):
                     or np.allclose(mole.vspace[:, i], -1 * vp_ref[:, i]))
 
     def test_ic_ric_transform(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
@@ -169,9 +165,8 @@ class TestReduceInternal(unittest.TestCase):
         assert ri_mol._non_red_space is None
 
     def test_ric_add_ic(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol = ReducedInternal.update_to_reduced_internal(ri_mol)
         ri_mol.add_bond(1, 0)
@@ -194,9 +189,8 @@ class TestReduceInternal(unittest.TestCase):
         assert ri_mol._non_red_space is None
 
     def test_get_delta_v(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         ri_mol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
@@ -216,9 +210,8 @@ class TestReduceInternal(unittest.TestCase):
                            np.array([2.01413724, 2.01413724, 1.9106340176]))
 
     def test_set_new_vspace(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         ri_mol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
@@ -229,9 +222,8 @@ class TestReduceInternal(unittest.TestCase):
         assert (np.allclose(ri_mol.vspace, np.eye(3)))
 
     def test_align_v_space(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         mol_1.add_bond(1, 0)
         mol_1.add_bond(1, 2)
@@ -245,10 +237,9 @@ class TestReduceInternal(unittest.TestCase):
         copy2 = deepcopy(mol_2)
         copy1.align_vspace(copy2)
         assert np.allclose(copy1.vspace, mol_2.vspace)
-        fchk_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water_1.fchk')
-        # print 'cv2',copy2.vspace
-        copy2.energy_from_fchk(fchk_path)
+        with path('saddle.test.data', 'water_1.fchk') as fchk_path:
+            # print 'cv2',copy2.vspace
+            copy2.energy_from_fchk(fchk_path)
         # print 'cv2, new',copy2.vspace, copy2.vspace_gradient
         ref_ic_gradient = np.dot(copy2.vspace, copy2.vspace_gradient)
         # print 'cv2,energy'
@@ -259,9 +250,8 @@ class TestReduceInternal(unittest.TestCase):
         assert np.allclose(copy1.vspace, copy2.vspace)
 
     def test_select_key_ic(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         mol_1.add_bond(1, 0)
         mol_1.add_bond(1, 2)

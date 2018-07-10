@@ -1,11 +1,9 @@
+import unittest
 from collections import Iterable
 from copy import deepcopy
 
 import numpy as np
-import unittest
-
-from pkg_resources import Requirement, resource_filename
-
+from importlib_resources import path
 from saddle.iodata import IOData
 from saddle.periodic.periodic import periodic
 from saddle.periodic.units import amu
@@ -75,9 +73,10 @@ class test_procrustes(unittest.TestCase):
         assert np.allclose(center_1, center_2)
 
     def test_main_function(self):
-        file_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        water = IOData.from_file(file_path)
+        # file_path = resource_filename(
+        #     Requirement.parse('saddle'), 'data/water.xyz')
+        with path('saddle.procrustes.test.data', 'water.xyz') as file_path:
+            water = IOData.from_file(file_path)
         water.coordinates = np.array([[0, 1, 0], [1, 0, 0], [-1, -1, 1]])
         water_2 = deepcopy(water)
         water_2.coordinates = np.array([[-1, 0, 0], [0, 1, 0], [1, -1, 0]])

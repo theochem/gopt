@@ -22,10 +22,10 @@
 
 import numpy as np
 import numpy.linalg as npl
+from saddle.utils import Utils
 from saddle.errors import AtomsNumberError, NotSetError
 from saddle.fchk import FCHKFile
 from saddle.gaussianwrapper import GaussianWrapper
-from saddle.iodata import IOData
 from secrets import token_hex
 
 __all__ = ('Cartesian', )
@@ -98,7 +98,7 @@ class Cartesian:
 
     @classmethod
     def from_file(cls, filename: str, charge: int = 0,
-                  multi: int = 1) -> 'Cartesian':
+                  multi: int = 1, title='') -> 'Cartesian':
         """Create an Cartesian instance from file .xyz, .com,
         .gjf or .fchk
 
@@ -115,8 +115,9 @@ class Cartesian:
         ------
         new Cartesian instance : Cartesian
         """
-        mol = IOData.from_file(filename)
-        return cls(mol.coordinates, mol.numbers, charge, multi)
+        mol = Utils.load_file(filename)
+        return cls(
+            mol.coordinates, mol.numbers, charge, multi, title=title)
 
     @property
     def energy_gradient(self) -> 'np.ndarray[float]':

@@ -2,9 +2,9 @@ import unittest
 from copy import deepcopy
 
 import numpy as np
-from pkg_resources import Requirement, resource_filename
+from importlib_resources import path
 from saddle.internal import Internal
-from saddle.iodata import IOData
+from saddle.utils import Utils
 from saddle.molmod import dihed_angle
 from saddle.opt import Point
 from saddle.coordinate_types import DihedralAngle
@@ -12,9 +12,8 @@ from saddle.coordinate_types import DihedralAngle
 
 class TestInternal(unittest.TestCase):
     def setUp(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         self.mol = Internal(mol.coordinates, mol.numbers, 0, 1)
 
     def test_connectivity(self):
@@ -124,9 +123,8 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(self.mol.target_ic, np.array([1.6, 1.7, -0.5]))
 
     def test_dihedral_add(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/2h-azirine.xyz')
-        mol = IOData.from_file(mol_path)  # create a water molecule
+        with path('saddle.test.data', '2h-azirine.xyz') as mol_path:
+            mol = Utils.load_file(mol_path) # create a water molecule
         internal = Internal(mol.coordinates, mol.numbers, 0, 1)
         internal.add_bond(0, 1)
         internal.add_bond(1, 2)
@@ -233,17 +231,16 @@ class TestInternal(unittest.TestCase):
             [1.8141372422079882, 1.8141372422079882, 1.9106340153991836])
 
     def test_auto_ic_select_ethane(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/ethane.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
         assert len(ethane.ic) == 24
 
     def test_auto_dihed_number_ethane(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/ethane.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
+        mol = Utils.load_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
         counter = 0
@@ -253,9 +250,8 @@ class TestInternal(unittest.TestCase):
         assert counter == 5
 
     def test_auto_select_improper_ch3_hf(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/ch3_hf.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'ch3_hf.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         mol.auto_select_ic()
         ic_ref = np.array([
@@ -268,9 +264,8 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(mol.ic_values, ic_ref)
 
     def test_auto_ic_select_methanol(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/methanol.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'methanol.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         methanol = Internal(mol.coordinates, mol.numbers, 0, 1)
         methanol.auto_select_ic()
         assert len(methanol.ic) == 15
@@ -301,12 +296,11 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(mol1.connectivity, mol2.connectivity)
 
     def test_get_energy_from_fchk(self):
-        fchk_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water_1.fchk')
-        self.mol.add_bond(0, 1)
-        self.mol.add_bond(1, 2)
-        self.mol.add_angle(0, 1, 2)
-        self.mol.energy_from_fchk(fchk_path)
+        with path('saddle.test.data', 'water_1.fchk') as fchk_path:
+            self.mol.add_bond(0, 1)
+            self.mol.add_bond(1, 2)
+            self.mol.add_angle(0, 1, 2)
+            self.mol.energy_from_fchk(fchk_path)
         ref_g = self.mol.internal_gradient.copy()
         assert np.allclose(self.mol.internal_gradient, ref_g)
         ic_ref = deepcopy(self.mol.ic)
@@ -319,9 +313,8 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(self.mol.internal_gradient[0], ref_g[2])
 
     def test_delete_ic(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/ethane.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
         ethane._delete_ic_index(0)
@@ -335,9 +328,8 @@ class TestInternal(unittest.TestCase):
         # assert False
 
     def test_fragments_in_mole(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/ch3_hf.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'ch3_hf.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         assert len(mol.fragments) == mol.natom
         mol.add_bond(0, 1)
@@ -354,9 +346,8 @@ class TestInternal(unittest.TestCase):
         assert len(mol.fragments) == 2
 
     def test_fragments_bond_add(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/ch3_hf.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'ch3_hf.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         mol._auto_select_fragment_bond()
         assert len(mol.ic) == 15
@@ -394,9 +385,8 @@ class TestInternal(unittest.TestCase):
         assert len(mol.ic) == 6
 
     def test_dihedral_rotation(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/h2o2.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
         h2o2.auto_select_ic()
         ref_ic = np.array([
@@ -420,9 +410,8 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
 
     def test_dihedral_repeak(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/h2o2.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
         h2o2.add_bond(0, 1)
         h2o2.add_bond(1, 2)
@@ -437,9 +426,8 @@ class TestInternal(unittest.TestCase):
         assert len(h2o2.ic) == 6
 
     def test_new_dihed(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/h2o2.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
         h2o2.add_bond(0, 1)
         h2o2.add_bond(1, 2)
@@ -457,9 +445,9 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(h2o2.b_matrix, ref_b)
 
     def test_new_dihed_converge(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/h2o2.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
+        mol = Utils.load_file(mol_path)
         h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
         h2o2.auto_select_ic(dihed_special=True)
         assert len(h2o2.ic) == 7
@@ -472,9 +460,8 @@ class TestInternal(unittest.TestCase):
         # print(h2o2.ic_values)
 
     def test_bond_type(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/ch3_hf.xyz')
-        mol = Internal.from_file(mol_path, charge=0, multi=1)
+        with path('saddle.test.data', 'ch3_hf.xyz') as mol_path:
+            mol = Internal.from_file(mol_path, charge=0, multi=1)
         mol._auto_select_bond()  # numbers [6 1 1 1 9 1]
         assert np.sum(mol.connectivity[0] == 1) == 3
         assert np.sum(mol.connectivity[4] == 1) == 1
@@ -493,9 +480,8 @@ class TestInternal(unittest.TestCase):
         assert np.sum(mol.connectivity[5] == 3) == 2
 
     def test_h_bond(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/di_water.xyz')
-        mol = Internal.from_file(mol_path, charge=0, multi=1)
+        with path('saddle.test.data', 'di_water.xyz') as mol_path:
+            mol = Internal.from_file(mol_path, charge=0, multi=1)
         mol._auto_select_cov_bond()  # numbers [8 1 1 8 1 1]
         assert np.sum(mol.connectivity[0] == 1) == 2
         assert np.sum(mol.connectivity[3] == 1) == 2

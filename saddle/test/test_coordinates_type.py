@@ -1,29 +1,25 @@
-from pkg_resources import Requirement, resource_filename
+import unittest
+from unittest import TestCase
 
 import numpy as np
-
+from importlib_resources import path
 from saddle.coordinate_types import (BendAngle, BendCos, BondLength,
                                      ConventionDihedral, DihedralAngle,
                                      NewDihedralCross, NewDihedralDot)
-from saddle.iodata import IOData
 from saddle.errors import NotSetError
 from saddle.molmod import bend_angle
-from unittest import TestCase
-
-import unittest
+from saddle.utils import Utils
 
 
 class Test_Coordinates_Types(TestCase):
     @classmethod
     def setup_class(self):
-        file_path = resource_filename(
-            Requirement.parse("saddle"), 'data/methanol.xyz')
-        mol = IOData.from_file(file_path)
+        with path('saddle.test.data', 'methanol.xyz') as file_path:
+            mol = Utils.load_file(file_path)
         self.molecule = mol
 
-        file_path2 = resource_filename(
-            Requirement.parse("saddle"), 'data/h2o2.xyz')
-        mol2 = IOData.from_file(file_path2)
+        with path('saddle.test.data', 'h2o2.xyz') as file_path2:
+            mol2 = Utils.load_file(file_path2)
         self.h2o2 = mol2
 
     def test_bond_length(self):
@@ -34,10 +30,10 @@ class Test_Coordinates_Types(TestCase):
         # set target
         bond.target = 3.0
         # calculate ref
-        ref_v = (bond.value - 3.0) ** 2
+        ref_v = (bond.value - 3.0)**2
         real_v = bond.cost_v
         assert np.allclose(ref_v, bond.cost_v)
-        ref_d = (bond.cost_v - (bond.value - 1e-6 - 3) ** 2) / 1e-6
+        ref_d = (bond.cost_v - (bond.value - 1e-6 - 3)**2) / 1e-6
         real_d = bond.cost_d
         assert np.allclose(ref_d, bond.cost_d, atol=1e-6)
         ref_dd = (bond.cost_d - 2 * (bond.value - 1e-6 - 3)) / 1e-6
@@ -47,7 +43,6 @@ class Test_Coordinates_Types(TestCase):
         assert np.allclose(real_v * 1.2, bond.cost_v)
         assert np.allclose(real_d * 1.2, bond.cost_d)
         assert np.allclose(real_dd * 1.2, bond.cost_dd)
-
 
     def test_bend_angle(self):
         angle = BendAngle((1, 0, 2), self.molecule.coordinates[[1, 0, 2]])
@@ -61,13 +56,14 @@ class Test_Coordinates_Types(TestCase):
         real_v = angle.cost_v
         assert np.allclose(ref_v, angle.cost_v)
         # calculate ref d
-        ref_d = (angle.cost_v - (np.cos(angle.value - 1e-6) - np.cos(1.8))**2) / 1e-6
+        ref_d = (angle.cost_v -
+                 (np.cos(angle.value - 1e-6) - np.cos(1.8))**2) / 1e-6
         real_d = angle.cost_d
         # print(ref_d, angle.cost_d)
         assert np.allclose(ref_d, angle.cost_d, atol=1e-6)
         # calculate ref dd
-        ref_d2 = -2 * (np.cos(angle.value - 1e-6) - np.cos(1.8)) * np.sin(
-            angle.value - 1e-6)
+        ref_d2 = -2 * (np.cos(angle.value - 1e-6) -
+                       np.cos(1.8)) * np.sin(angle.value - 1e-6)
         ref_dd = (angle.cost_d - ref_d2) / 1e-6
         real_dd = angle.cost_dd
         assert np.allclose(ref_dd, angle.cost_dd, atol=1e-6)
@@ -100,16 +96,16 @@ class Test_Coordinates_Types(TestCase):
             2 - 2 * np.cos(dihed_angle.value - dihed_angle.target))
         assert np.allclose(ref_v, v)
         # finite diff for g
-        ref_v2 = sin_ang1 * sin_ang2 * (
-            2 - 2 * np.cos((dihed_angle.value - 1e-6) - dihed_angle.target))
+        ref_v2 = sin_ang1 * sin_ang2 * (2 - 2 * np.cos(
+            (dihed_angle.value - 1e-6) - dihed_angle.target))
         ref_d = (ref_v - ref_v2) / 1e-6
         assert np.allclose(ref_d, d, atol=1e-6)
         # finite diff for h
-        ref_d1 = sin_ang1 * sin_ang2 * 2 * np.sin(
-            dihed_angle.value - dihed_angle.target)
+        ref_d1 = sin_ang1 * sin_ang2 * 2 * np.sin(dihed_angle.value -
+                                                  dihed_angle.target)
         assert np.allclose(ref_d1, d)
-        ref_d2 = sin_ang1 * sin_ang2 * 2 * np.sin(
-            dihed_angle.value - 1e-6 - dihed_angle.target)
+        ref_d2 = sin_ang1 * sin_ang2 * 2 * np.sin(dihed_angle.value - 1e-6 -
+                                                  dihed_angle.target)
         ref_dd = (ref_d1 - ref_d2) / 1e-6
         assert np.allclose(ref_dd, dd, atol=1e-6)
         dihed_angle.weight = 1.2
