@@ -4,10 +4,10 @@ from copy import deepcopy
 
 import numpy as np
 from importlib_resources import path
-from saddle.iodata import IOData
 from saddle.periodic.periodic import periodic
 from saddle.periodic.units import amu
 from saddle.procrustes.procrustes import Procrustes
+from saddle.utils import Utils
 
 
 class test_procrustes(unittest.TestCase):
@@ -76,14 +76,14 @@ class test_procrustes(unittest.TestCase):
         # file_path = resource_filename(
         #     Requirement.parse('saddle'), 'data/water.xyz')
         with path('saddle.procrustes.test.data', 'water.xyz') as file_path:
-            water = IOData.from_file(file_path)
+            water = Utils.load_file(file_path)
         water.coordinates = np.array([[0, 1, 0], [1, 0, 0], [-1, -1, 1]])
         water_2 = deepcopy(water)
         water_2.coordinates = np.array([[-1, 0, 0], [0, 1, 0], [1, -1, 0]])
-        water_2.coordinates += 1.
+        water_2.coordinates += 1
         water_3 = deepcopy(water)
         water_3.coordinates = np.array([[1, 0, 0], [0, -1, 0], [-1, 1, 0]])
-        water_3.coordinates -= 1.
+        water_3.coordinates -= 1
 
         pcs = Procrustes(water, water_2, water_3)
         final_xyz = pcs.rotate_mols()

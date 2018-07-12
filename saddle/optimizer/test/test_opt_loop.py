@@ -1,23 +1,20 @@
-import numpy as np
-
-from unittest import TestCase
 from copy import deepcopy
+from unittest import TestCase
 
-from pkg_resources import Requirement, resource_filename
-
+import numpy as np
+from importlib_resources import path
 from saddle.optimizer.optloop import OptLoop
-from saddle.reduced_internal import ReducedInternal
-from saddle.optimizer.trust_radius import TrustRegion
 from saddle.optimizer.quasi_newton import QuasiNT
 from saddle.optimizer.secant import secant
-from saddle.iodata import IOData
+from saddle.optimizer.trust_radius import TrustRegion
+from saddle.reduced_internal import ReducedInternal
+from saddle.utils import Utils
 
 
 class TestOptLoop(TestCase):
     def setUp(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.optimizer.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         red_int.add_bond(0, 1)
         red_int.add_bond(1, 2)
@@ -26,9 +23,8 @@ class TestOptLoop(TestCase):
 
     def setup_opt(self):
         self.mol.select_key_ic(0)
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/water_old.fchk')
-        self.mol.energy_from_fchk(fchk_file)
+        with path('saddle.optimizer.test.data', 'water_old.fchk') as fchk_file:
+            self.mol.energy_from_fchk(fchk_file)
         opt = OptLoop(
             self.mol, quasi_nt='bfgs', trust_rad='trim', upd_size='energy')
         return opt
@@ -58,9 +54,9 @@ class TestOptLoop(TestCase):
 
         # generate new point
         new_p = opt.next_step_structure()
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/new_step_water.fchk')
-        result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
+        with path('saddle.optimizer.test.data',
+                  'new_step_water.fchk') as fchk_file:
+            result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
         assert len(opt) == 2
@@ -76,9 +72,9 @@ class TestOptLoop(TestCase):
 
         new_p = opt.next_step_structure()
         # new_p._instance.create_gauss_input(title='new_step_water.com')
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/new_step_water.fchk')
-        result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
+        with path('saddle.optimizer.test.data',
+                  'new_step_water.fchk') as fchk_file:
+            result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
         opt.update_trust_radius()
@@ -96,9 +92,9 @@ class TestOptLoop(TestCase):
         opt.calculate_trust_step()
 
         new_p = opt.next_step_structure()
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/new_step_water.fchk')
-        result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
+        with path('saddle.optimizer.test.data',
+                  'new_step_water.fchk') as fchk_file:
+            result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
         opt.update_trust_radius()
@@ -120,9 +116,9 @@ class TestOptLoop(TestCase):
         opt.calculate_trust_step()
 
         new_p = opt.next_step_structure()
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/new_step_water.fchk')
-        result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
+        with path('saddle.optimizer.test.data',
+                  'new_step_water.fchk') as fchk_file:
+            result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
         opt.update_trust_radius()
@@ -143,9 +139,9 @@ class TestOptLoop(TestCase):
         opt.calculate_trust_step()
 
         new_p = opt.next_step_structure()
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/new_step_water.fchk')
-        result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
+        with path('saddle.optimizer.test.data',
+                  'new_step_water.fchk') as fchk_file:
+            result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
         opt.update_trust_radius()
@@ -158,9 +154,9 @@ class TestOptLoop(TestCase):
         assert np.allclose(ref_step, opt.new.step)
         opt.calculate_trust_step()
         new_point = opt.next_step_structure()
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/final_water.fchk')
-        opt.verify_new_point(new_point, debug_fchk=fchk_file)
+        with path('saddle.optimizer.test.data',
+                  'final_water.fchk') as fchk_file:
+            opt.verify_new_point(new_point, debug_fchk=fchk_file)
         opt.add_new_point(new_point)
         assert opt.check_converge() is True
 

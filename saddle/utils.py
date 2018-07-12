@@ -48,7 +48,7 @@ class Utils():
             size = int(f.readline())
             title = f.readline().strip()
             numbers = np.zeros(size)
-            coordinates = np.zeros((size, 3))
+            coordinates = np.zeros((size, 3), dtype=float)
             for i in range(size):
                 contents = f.readline().split()
                 numbers[i] = periodic[contents[0]].number

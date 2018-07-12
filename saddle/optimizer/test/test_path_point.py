@@ -1,19 +1,17 @@
-import numpy as np
-
 from unittest import TestCase
 
-from pkg_resources import Requirement, resource_filename
-from saddle.optimizer.path_point import PathPoint
-from saddle.iodata import IOData
-from saddle.reduced_internal import ReducedInternal
+import numpy as np
+from importlib_resources import path
 from saddle.errors import NotSetError
+from saddle.optimizer.path_point import PathPoint
+from saddle.reduced_internal import ReducedInternal
+from saddle.utils import Utils
 
 
 class TestPathPoint(TestCase):
     def setUp(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.optimizer.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         red_int.add_bond(1, 0)
         red_int.add_bond(1, 2)
@@ -29,10 +27,9 @@ class TestPathPoint(TestCase):
         self.ri._energy_hessian_transformation()
         with self.assertRaises(NotSetError):
             self.ri.energy_hessian
-        assert np.allclose(self.pp.q_gradient,
-                           np.dot(
-                               np.linalg.pinv(self.ri.b_matrix.T),
-                               self.pp.x_gradient))
+        assert np.allclose(
+            self.pp.q_gradient,
+            np.dot(np.linalg.pinv(self.ri.b_matrix.T), self.pp.x_gradient))
         with self.assertRaises(NotSetError):
             self.pp.v_hessian
         self.pp._mod_hessian = np.eye(3)
@@ -110,14 +107,12 @@ class TestPathPoint(TestCase):
         return point_a, point_b
 
     def test_finite_diff_with_water(self):  # TODO: error need to figure out
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.optimizer.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         red_int.auto_select_ic()
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/water_old.fchk')
-        red_int.energy_from_fchk(fchk_file)
+        with path('saddle.optimizer.test.data', 'water_old.fchk') as fchk_file:
+            red_int.energy_from_fchk(fchk_file)
         assert red_int.energy - 75.99264142 < 1e-6
         wt_p1 = PathPoint(red_int=red_int)
         step = [0.001, 0, 0]
@@ -130,56 +125,52 @@ class TestPathPoint(TestCase):
         wt_p2 = wt_p1.copy()
         wt_p2.update_coordinates_with_delta_v(step)
         # wt_p2._instance.create_gauss_input(title='water_new')
-        fchk_file_new = resource_filename(
-            Requirement.parse('saddle'), 'data/water_new.fchk')
-        wt_p2._instance.energy_from_fchk(fchk_file_new)
+        with path('saddle.optimizer.test.data',
+                  'water_new.fchk') as fchk_file_new:
+            wt_p2._instance.energy_from_fchk(fchk_file_new)
         wt_p2._instance.align_vspace(wt_p1._instance)
         assert np.allclose(wt_p1.vspace, wt_p2.vspace)
         result = PathPoint._calculate_finite_diff_h(wt_p1, wt_p2)
         assert np.allclose(result, wt_p1._instance.v_hessian[:, 0], atol=1e-2)
 
     def test_finite_diff_with_water_2(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.optimizer.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         red_int.auto_select_ic()
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/water_old.fchk')
-        red_int.energy_from_fchk(fchk_file)
+        with path('saddle.optimizer.test.data', 'water_old.fchk') as fchk_file:
+            red_int.energy_from_fchk(fchk_file)
         assert red_int.energy - 75.99264142 < 1e-6
         red_int.select_key_ic(0)
         wt_p1 = PathPoint(red_int=red_int)
         step = [0.001, 0, 0]
         wt_p2 = wt_p1.copy()
         wt_p2.update_coordinates_with_delta_v(step)
-        fchk_file_new = resource_filename(
-            Requirement.parse('saddle'), 'data/water_new_2.fchk')
-        wt_p2._instance.energy_from_fchk(fchk_file_new)
+        with path('saddle.optimizer.test.data',
+                  'water_new_2.fchk') as fchk_file_new:
+            wt_p2._instance.energy_from_fchk(fchk_file_new)
         wt_p2._instance.align_vspace(wt_p1._instance)
         assert np.allclose(wt_p1.vspace, wt_p2.vspace)
         result = PathPoint._calculate_finite_diff_h(wt_p1, wt_p2)
         assert np.allclose(result, wt_p1._instance.v_hessian[:, 0], atol=1e-2)
 
     def test_finite_different_with_water_3(self):
-        mol_path = resource_filename(
-            Requirement.parse('saddle'), 'data/water.xyz')
-        mol = IOData.from_file(mol_path)
+        with path('saddle.optimizer.test.data', 'water.xyz') as mol_path:
+            mol = Utils.load_file(mol_path)
         red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         red_int.auto_select_ic()
         red_int.add_bond(0, 2)
-        fchk_file = resource_filename(
-            Requirement.parse('saddle'), 'data/water_old.fchk')
-        red_int.energy_from_fchk(fchk_file)
+        with path('saddle.optimizer.test.data', 'water_old.fchk') as fchk_file:
+            red_int.energy_from_fchk(fchk_file)
         assert red_int.energy - 75.99264142 < 1e-6
         red_int.select_key_ic(0)
         wt_p1 = PathPoint(red_int=red_int)
         step = [0.001, 0, 0]
         wt_p2 = wt_p1.copy()
         wt_p2.update_coordinates_with_delta_v(step)
-        fchk_file_new = resource_filename(
-            Requirement.parse('saddle'), 'data/water_new_3.fchk')
-        wt_p2._instance.energy_from_fchk(fchk_file_new)
+        with path('saddle.optimizer.test.data',
+                  'water_new_3.fchk') as fchk_file_new:
+            wt_p2._instance.energy_from_fchk(fchk_file_new)
         wt_p2._instance.align_vspace(wt_p1._instance)
         assert np.allclose(wt_p1.vspace, wt_p2.vspace, atol=1e-2)
         result = PathPoint._calculate_finite_diff_h(wt_p1, wt_p2)

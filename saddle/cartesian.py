@@ -26,6 +26,7 @@ from saddle.utils import Utils
 from saddle.errors import AtomsNumberError, NotSetError
 from saddle.fchk import FCHKFile
 from saddle.gaussianwrapper import GaussianWrapper
+from pathlib import Path
 from secrets import token_hex
 
 __all__ = ('Cartesian', )
@@ -266,6 +267,8 @@ class Cartesian:
             True if want to obtain hessian information, otherwise False.
             Default value is True
         """
+        if isinstance(abs_path, Path):
+            fchk_file = str(abs_path)
         fchk_file = FCHKFile(filename=abs_path)
         self.set_new_coordinates(fchk_file.get_coordinates().reshape(-1, 3))
         self._energy = fchk_file.get_energy()
