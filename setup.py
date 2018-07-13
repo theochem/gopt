@@ -1,5 +1,3 @@
-'''setup.py for Saddle package
-'''
 #!/usr/bin/env python3
 
 from glob import glob
@@ -15,9 +13,10 @@ setup(
     author_email='yxt1991@gmail.com',
     package_dir={'saddle': 'saddle'},
     packages=[
-        'saddle', 'saddle.test', 'saddle.iodata', 'saddle.periodic',
-        'saddle.procrustes', 'saddle.procrustes.test', 'saddle.optimizer',
-        'saddle.optimizer.test',
+        'saddle',
+        'saddle.periodic',
+        'saddle.procrustes',
+        'saddle.optimizer',
     ],
     include_package_data=True,
     package_data={
@@ -30,10 +29,7 @@ setup(
     # package_data is only useful for bdist
     # add to MANIFEST.in works for both bdist and sdist
     data_files=[
-        ('data', glob('data/*.*')),
         ('work', glob('work/*.*')),
         ('work/log', glob('work/log/.*')),
     ],
-    install_requires=[
-        'numpy', 'pytest',
-    ], )
+)

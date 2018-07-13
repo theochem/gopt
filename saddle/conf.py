@@ -24,6 +24,7 @@ import json
 import os
 
 from pkg_resources import Requirement, resource_filename
+from importlib_resources import path
 
 conf_path = resource_filename(__name__, "data/conf.json")
 
