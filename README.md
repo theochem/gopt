@@ -1,5 +1,5 @@
 # GOpt
-<a href='https://travis-ci.com/tczorro/SpSaddle'><img src='https://travis-ci.com/tczorro/SpSaddle.svg?token=wtCKs521Yw1urAV4F5DM&branch=master'></a>
+<a href='https://travis-ci.com/tczorro/GOpt'><img src='https://travis-ci.com/tczorro/GOpt.svg?token=wtCKs521Yw1urAV4F5DM&branch=master'></a>
 <a href='https://docs.python.org/3.6/'><img src='https://img.shields.io/badge/python-3.6-blue.svg'></a>
 ## Synopsis
 

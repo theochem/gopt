@@ -21,23 +21,27 @@
 "Config file to configure file directory"
 
 import json
-import os
 
-from pkg_resources import Requirement, resource_filename
 from importlib_resources import path
 
-conf_path = resource_filename(__name__, "data/conf.json")
+with path('saddle.data', 'conf.json') as json_path:
+    with json_path.open() as json_data_f:
+        json_data = json.load(json_data_f)
 
-with open(conf_path) as json_data_f:
-    json_data = json.load(json_data_f)
+# conf_path = resource_filename(__name__, "data/conf.json")
 
-base_path = resource_filename(Requirement.parse('saddle'), '')
+# with open(conf_path) as json_data_f:
+#     json_data = json.load(json_data_f)
+
+with path('saddle', '') as saddle_path:
+    base_path = saddle_path
+# base_path = resource_filename(Requirement.parse('saddle'), '')
 
 
 def get_path(given_path: str, base: str = base_path) -> str:
     if given_path.startswith('/' or '~'):  # abs path
         return given_path
-    return os.path.join(base, given_path)
+    return base / given_path
 
 
 def set_work_dir(given):

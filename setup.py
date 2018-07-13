@@ -17,19 +17,18 @@ setup(
         'saddle.periodic',
         'saddle.procrustes',
         'saddle.optimizer',
+        'saddle.data',
+        'saddle.periodic.data'
     ],
     include_package_data=True,
     package_data={
         'saddle': [
             'data/*.json',
             'data/*.com',
+            'work/log/.gitkeep'
         ],
         'saddle.periodic': ['data/*.csv'],
     },
     # package_data is only useful for bdist
     # add to MANIFEST.in works for both bdist and sdist
-    data_files=[
-        ('work', glob('work/*.*')),
-        ('work/log', glob('work/log/.*')),
-    ],
 )

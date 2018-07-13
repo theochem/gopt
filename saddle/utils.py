@@ -25,7 +25,8 @@ class Utils():
             raise ValueError(f"Not supported file type: {file_path.suffix}")
         return cls(nums, coors)
 
-    def save_file(self, file_path, format='xyz', encoding='utf-8'):
+    @classmethod
+    def save_file(cls, file_path, mole, format='xyz', encoding='utf-8'):
         if isinstance(file_path, str):
             file_path = Path(file_path)
         if not isinstance(file_path, Path):
@@ -34,7 +35,7 @@ class Utils():
             file_path = file_path.parent / (file_path.name + f'.{format}')
         assert file_path.suffix == f'.{format}'
         if file_path.suffix == '.xyz':
-            self._save_xyz(file_path, encoding=encoding)
+            cls._save_xyz(file_path, mole, encoding=encoding)
         else:
             raise TypeError(
                 f'given file format {file_path.suffix} is not supported by GOpt'
@@ -57,16 +58,17 @@ class Utils():
                 coordinates[i, 2] = float(contents[3]) * angstrom
         return numbers, coordinates, title
 
-    def _save_xyz(self, file_path, encoding='utf-8'):
+    @staticmethod
+    def _save_xyz(file_path, mole, encoding='utf-8'):
         assert isinstance(file_path, Path)
         assert file_path.suffix == '.xyz'
         with file_path.open(encoding=encoding, mode='w') as f:
-            f.write(f"{len(self.numbers)}\n")
-            title = getattr(self, 'title', 'XYZ file Created by GOpt')
+            f.write(f"{len(mole.numbers)}\n")
+            title = getattr(mole, 'title', 'XYZ file Created by GOpt')
             f.write(f'{title}\n')
-            for index, atom_n in enumerate(self.numbers):
+            for index, atom_n in enumerate(mole.numbers):
                 atom_sym = periodic[atom_n].symbol
-                coor_x, coor_y, coor_z = self.coordinates[index] / angstrom
+                coor_x, coor_y, coor_z = mole.coordinates[index] / angstrom
                 f.write(
                     f'{atom_sym:>2} {coor_x:15.10f} {coor_y:15.10f} {coor_z:15.10f}\n'
                 )

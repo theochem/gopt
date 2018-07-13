@@ -5,7 +5,7 @@ from importlib_resources import path
 from saddle.utils import Utils
 
 
-class TestBaseMole(TestCase):
+class TestUtils(TestCase):
 
     file_list = []
 
@@ -24,9 +24,9 @@ class TestBaseMole(TestCase):
             water_mol = Utils.load_file(file_path)
         with path('saddle.test.data', '') as file_path:
             new_file_name = file_path / 'test_base_mole_test_file'
-        water_mol.save_file(new_file_name)
+        Utils.save_file(new_file_name, water_mol)
         new_add_file = new_file_name.parent / (new_file_name.name + '.xyz')
-        TestBaseMole.file_list.append(new_add_file)
+        TestUtils.file_list.append(new_add_file)
         with path('saddle.test.data',
                   'test_base_mole_test_file.xyz') as file_path:
             mol = Utils.load_file(file_path)

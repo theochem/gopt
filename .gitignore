@@ -2,9 +2,8 @@
 *.DS_Store
 *.log
 *.chk
-*.com
 *.swp
 *.swo
-work/*
-!work/.gitkeep
+saddle/work/*
+!saddle/work/.gitkeep
 !single_hf_template.com

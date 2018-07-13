@@ -7,6 +7,7 @@ from saddle.errors import (AtomsNumberError, InputTypeError,
                            InvalidArgumentError, NotSetError)
 from saddle.internal import Internal
 from saddle.path_ri import PathRI
+from saddle.utils import Utils
 from saddle.reduced_internal import ReducedInternal
 
 __all__ = ('TSConstruct', )
@@ -370,7 +371,7 @@ class TSConstruct(object):
 
     def ts_to_file(self, filename=''):
         if filename:
-            dump_xyz(filename, self.ts)
+            Utils.save_file(filename, self.ts)
         else:
             raise InvalidArgumentError('Invalid empty filename')
 
