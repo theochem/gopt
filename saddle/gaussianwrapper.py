@@ -25,7 +25,7 @@ from string import Template
 
 import numpy as np
 from importlib_resources import read_text
-from saddle.conf import work_dir
+from saddle.conf import WORK_DIR
 from saddle.fchk import FCHKFile
 from saddle.periodic.periodic import angstrom, periodic
 
@@ -94,7 +94,7 @@ class GaussianWrapper(object):
         if path:
             path = os.path.join(path, filename + postfix)
         else:
-            path = os.path.join(work_dir, filename + postfix)
+            path = os.path.join(WORK_DIR, filename + postfix)
         with open(path, "w") as f:
             f.write(
                 self.template.substitute(
@@ -112,7 +112,7 @@ class GaussianWrapper(object):
 
     def _run_gaussian(self, filename, fchk=True, command_bin="g09"):
         fchk_ob = None
-        path = work_dir
+        path = WORK_DIR
         os.chdir(path)
         os.system("{0} {1}.com".format(command_bin, filename))
         if fchk:

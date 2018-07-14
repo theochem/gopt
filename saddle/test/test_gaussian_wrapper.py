@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 from importlib_resources import path
-from saddle.conf import work_dir
+from saddle.conf import WORK_DIR
 from saddle.gaussianwrapper import GaussianWrapper
 from saddle.utils import Utils
 
@@ -26,7 +26,7 @@ class TestGaussWrap(unittest.TestCase):
 
     def test_create_input(self):
         self.gwob.create_gauss_input(0, 1, spe_title='test_gauss')
-        filepath = os.path.join(work_dir, "test_gauss.com")
+        filepath = os.path.join(WORK_DIR, "test_gauss.com")
         mol = Utils.load_file(filepath)
         self.file_list.append(filepath)
         assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
@@ -42,7 +42,7 @@ class TestGaussWrap(unittest.TestCase):
     def test_create_input_file(self):
         self.gwob.title = 'test_untitled'
         input_file = self.gwob._create_input_file(0, 1)
-        filepath = os.path.join(work_dir, input_file + ".com")
+        filepath = os.path.join(WORK_DIR, input_file + ".com")
         mol = Utils.load_file(filepath)
         self.file_list.append(filepath)
         assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
