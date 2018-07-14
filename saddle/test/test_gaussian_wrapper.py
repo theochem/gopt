@@ -1,4 +1,3 @@
-import os
 import unittest
 
 import numpy as np
@@ -10,7 +9,8 @@ from saddle.utils import Utils
 
 class TestGaussWrap(unittest.TestCase):
 
-    path = os.path.dirname(os.path.realpath(__file__))
+    with path('saddle.test', '') as test_folder:
+        test_path = test_folder
     file_list = []
 
     def setUp(self):
@@ -26,15 +26,15 @@ class TestGaussWrap(unittest.TestCase):
 
     def test_create_input(self):
         self.gwob.create_gauss_input(0, 1, spe_title='test_gauss')
-        filepath = os.path.join(WORK_DIR, "test_gauss.com")
+        filepath = WORK_DIR / "test_gauss.com"
         mol = Utils.load_file(filepath)
         self.file_list.append(filepath)
         assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
 
     def test_create_input_gjf(self):
         self.gwob.create_gauss_input(
-            0, 1, spe_title='test_2nd_gauss', path=self.path, postfix='.gjf')
-        filepath = os.path.join(self.path, 'test_2nd_gauss.gjf')
+            0, 1, spe_title='test_2nd_gauss', path=self.test_path, postfix='.gjf')
+        filepath = self.test_path / 'test_2nd_gauss.gjf'
         self.file_list.append(filepath)
         mol = Utils.load_file(filepath)
         assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
@@ -42,7 +42,7 @@ class TestGaussWrap(unittest.TestCase):
     def test_create_input_file(self):
         self.gwob.title = 'test_untitled'
         input_file = self.gwob._create_input_file(0, 1)
-        filepath = os.path.join(WORK_DIR, input_file + ".com")
+        filepath = WORK_DIR / (input_file + ".com")
         mol = Utils.load_file(filepath)
         self.file_list.append(filepath)
         assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
@@ -50,4 +50,4 @@ class TestGaussWrap(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         for i in cls.file_list:
-            os.remove(i)
+            i.unlink()

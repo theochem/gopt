@@ -55,7 +55,6 @@ class Config:
         keyword_path = cls._find_path(keyword_path)
         if not keyword_path.is_absolute():
             keyword_path = cls.base_path / keyword_path
-        print(keyword_path, '2')
         return keyword_path
 
     @classmethod

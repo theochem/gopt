@@ -25,6 +25,7 @@ from string import Template
 
 import numpy as np
 from importlib_resources import read_text
+from pathlib import Path
 from saddle.conf import WORK_DIR
 from saddle.fchk import FCHKFile
 from saddle.periodic.periodic import angstrom, periodic
@@ -78,7 +79,7 @@ class GaussianWrapper(object):
                            spe_title='',
                            path='',
                            postfix='.com'):
-        assert isinstance(path, str)
+        assert isinstance(path, str) or isinstance(path, Path)
         assert isinstance(spe_title, str)
         atoms = ""
         for i in range(len(self.molecule.numbers)):

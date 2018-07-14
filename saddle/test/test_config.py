@@ -17,7 +17,6 @@ class TestUtils(TestCase):
     def test_set_work(self):
         new_work_dir = Config.set_path('work_dir', '/usr/local')
         work_dir = Config.get_path('work_dir')
-        print(work_dir)
         assert work_dir == PosixPath('/usr/local')
 
         Config.reset_path()
