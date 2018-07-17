@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Grape: Because I like it.
+# GOpt: Geometry Optimization program
 # Copyright (C) 2015-2017 The Grape Development Team
 #
 # This file is part of Grape.
@@ -20,5 +20,6 @@
 # --
 '''The main Saddle Package'''
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'Derrick Yang'
+__license__ = 'GPLv3'

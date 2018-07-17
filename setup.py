@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 from setuptools import setup
+import saddle
 
 setup(
     name="saddle",
-    version="0.1.1",
+    version=saddle.__version__,
     description="Geometry optimization program for chemical reaction",
-    license='GPLv3',
-    author='Derrick Yang',
+    license=saddle.__license__,
+    author=saddle.__author__,
     author_email='yxt1991@gmail.com',
     package_dir={'saddle': 'saddle'},
     packages=[
