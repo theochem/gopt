@@ -11,6 +11,7 @@ class PathPoint:
         self._step = None
         self._stepsize = None
         self._mod_hessian = None
+        self._step_hessian = None
 
     @property
     def instance(self):
@@ -53,6 +54,17 @@ class PathPoint:
         if self._mod_hessian is not None:
             return self._mod_hessian
         return self.raw_hessian
+
+    @property
+    def step_hessian(self):
+        if self._step_hessian is None:
+            raise NotSetError('Step hessian is not set yet')
+        return self._step_hessian
+
+    @step_hessian.setter
+    def step_hessian(self, value):
+        assert value.shape == self.v_hessian.shape
+        self._step_hessian = value
 
     @v_hessian.setter
     def v_hessian(self, value):
@@ -126,14 +138,16 @@ class PathPoint:
         new_pp = self.copy()
         new_pp.update_coordinates_with_delta_v(unit_vec)
         new_pp.run_calculation(method=method)
+        # align vspace in finite diff
+        new_pp.instance.align_vspace(self.instance)
         # calculate the finite hessian
-        result = self._calculate_finite_diff_h(self, new_pp)
+        result = self._calculate_finite_diff_h(self, new_pp, eps=eps)
         # assgin result to the column and row
         self._mod_hessian[:, coord] = result
         self._mod_hessian[coord, :] = result
 
     @staticmethod  # TODO: need test
-    def _calculate_finite_diff_h(origin, new_point, eps=0.001):
+    def _calculate_finite_diff_h(origin, new_point, eps):
         # calculate
         d_gv = (new_point.v_gradient - origin.v_gradient) / eps
         d_v = (new_point.vspace - origin.vspace) / eps

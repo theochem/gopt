@@ -27,6 +27,7 @@ class TestOptLoop(TestCase):
             self.mol.energy_from_fchk(fchk_file)
         opt = OptLoop(
             self.mol, quasi_nt='bfgs', trust_rad='trim', upd_size='energy')
+        opt.new.step_hessian = opt.new.v_hessian
         return opt
 
     def test_first_step(self):
@@ -109,7 +110,7 @@ class TestOptLoop(TestCase):
         # set non positive hessian
         opt.new.v_hessian = np.diag([-1, 1, 2])
         opt.modify_hessian()
-        assert np.allclose(np.diag([0.005, 1, 2]), opt.new.v_hessian)
+        assert np.allclose(np.diag([0.005, 1, 2]), opt.new.step_hessian)
 
     def test_finite_diff(self):
         opt = self.setup_opt()

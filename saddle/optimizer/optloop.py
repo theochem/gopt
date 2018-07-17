@@ -77,7 +77,7 @@ class OptLoop:
     def modify_hessian(self):
         moded_hessian = modify_hessian_with_pos_defi(
             self.new.v_hessian, self._neg, key_ic=self.new.key_ic_number)
-        self.new.v_hessian = moded_hessian
+        self.new.step_hessian = moded_hessian
 
     def update_trust_radius(self):
         target_p = self.new
@@ -192,11 +192,11 @@ class OptLoop:
                 opt.update_trust_radius()
                 # quasi newton method for updating hessian
                 opt.update_hessian()
-                # regulate hessian
-                opt.modify_hessian()
                 # finite diff for hessian if need
                 opt.finite_diff_hessian()
-                # calculate new step
+            # regulate hessian
+            opt.modify_hessian()
+            # calculate new step
             opt.calculate_trust_step()
             # calculate new point
             new_point = opt.next_step_structure()

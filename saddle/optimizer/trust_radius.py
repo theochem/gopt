@@ -14,7 +14,7 @@ class TrustRegion:
     def calculate_trust_step(self, point):
         if not isinstance(point, PathPoint):
             raise TypeError(f'Improper input type for {point}')
-        return self._update_tr(point.v_hessian, point.v_gradient, point.stepsize)
+        return self._update_tr(point.step_hessian, point.v_gradient, point.stepsize)
 
     @staticmethod
     def trust_region_image_potential(hessian, gradient, stepsize):

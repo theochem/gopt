@@ -73,6 +73,7 @@ class TestTrustRadius(TestCase):
         trim_ob = TrustRegion('trim')
         assert np.allclose(self.p1.v_gradient, np.array([9, 14]))
         assert np.allclose(self.p1.v_hessian, np.array([[2, 3], [3, 4]]))
+        self.p1.step_hessian = self.p1.v_hessian
         step = trim_ob.calculate_trust_step(self.p1)
         assert np.linalg.norm(step) - 1 < 1e-6
         self.p1._stepsize = 1.8353865
