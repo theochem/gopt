@@ -172,7 +172,7 @@ class Internal(Cartesian):
             self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
             # after adding a bond, change the connectivity of atoms pair to 1
             self._add_connectivity(atoms, b_type)
-            if b_type != 3:
+            if b_type == 1:
                 self._allocate_fragment_group(atom1, atom2)
         return None
 
@@ -575,7 +575,8 @@ class Internal(Cartesian):
         if reset_ic is True:
             self.wipe_ic_info(True)
         if keep_bond is False:
-            self._auto_select_bond()
+            self._auto_select_cov_bond()
+            self._auto_select_h_bond()
             self._auto_select_fragment_bond()
             # TODO: fix auto bond function
         else:
@@ -641,12 +642,9 @@ class Internal(Cartesian):
                         if dist <= 0.9 * cut_off and angle_cos < 0:
                             self.add_bond(h_idx, ha_idx2, b_type=2)
 
-    def _auto_select_bond(self) -> None:
+    def _auto_select_cov_bond(self) -> None:
         """A private method for automatically selecting bond
         """
-        halidish_atom = set([7, 8, 9, 15, 16, 17])
-        all_halo_index = (i for i, j in enumerate(self.numbers)
-                          if j in halidish_atom)
         for index_i, index_j in combinations(range(len(self.numbers)), 2):
             atom_num1 = self.numbers[index_i]
             atom_num2 = self.numbers[index_j]
@@ -656,23 +654,6 @@ class Internal(Cartesian):
             if distance < 1.3 * radius_sum:
                 self.add_bond(index_i, index_j, b_type=1)
                 # test hydrogen bond
-                if atom_num1 == 1 and atom_num2 in halidish_atom:
-                    h_index = index_i
-                    halo_index = index_j
-                elif atom_num2 == 1 and atom_num1 in halidish_atom:
-                    h_index = index_j
-                    halo_index = index_i
-                else:
-                    continue
-                potent_halo_index = (i for i in all_halo_index
-                                     if i != halo_index)  # all other halo
-                for index_k in potent_halo_index:
-                    dis = self.distance(h_index, index_k)
-                    angle = self.angle(halo_index, h_index, index_k)
-                    thresh_sum = (periodic[self.numbers[h_index]].vdw_radius +
-                                  periodic[self.numbers[index_k]].vdw_radius)
-                    if dis <= 0.9 * thresh_sum and angle >= 1.5708:
-                        self.add_bond(h_index, index_k, b_type=2)  # add H bond
         return None
 
     def _auto_select_fragment_bond(self):

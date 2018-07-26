@@ -462,7 +462,7 @@ class TestInternal(unittest.TestCase):
     def test_bond_type(self):
         with path('saddle.test.data', 'ch3_hf.xyz') as mol_path:
             mol = Internal.from_file(mol_path, charge=0, multi=1)
-        mol._auto_select_bond()  # numbers [6 1 1 1 9 1]
+        mol._auto_select_cov_bond()  # numbers [6 1 1 1 9 1]
         assert np.sum(mol.connectivity[0] == 1) == 3
         assert np.sum(mol.connectivity[4] == 1) == 1
         mol._auto_select_fragment_bond()
@@ -489,4 +489,4 @@ class TestInternal(unittest.TestCase):
         print(mol.connectivity)
         mol._auto_select_h_bond()
         assert mol.connectivity[2][3] == 2
-        assert len(mol.fragments) == 1
+        assert len(mol.fragments) == 2

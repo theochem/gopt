@@ -85,7 +85,8 @@ class Utils():
             while line:
                 contents = line.strip().split()
                 if len(contents) == 2:
-                    if (contents[0].isdigit() and contents[1].isdigit()):
+                    if ((contents[0].isdigit() or contents[0][0] == "-")
+                            and contents[1].isdigit()):
                         charge, multi = tuple(map(int, contents))
                         flag = True  # reached coorinates lines
                 if len(contents) == 4 and flag:
