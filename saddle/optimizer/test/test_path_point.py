@@ -24,7 +24,6 @@ class TestPathPoint(TestCase):
         self.ri._energy = 5.
         np.random.seed(10)
         self.ri._energy_gradient = np.random.rand(9)
-        self.ri._energy_hessian_transformation()
         with self.assertRaises(NotSetError):
             self.ri.energy_hessian
         assert np.allclose(

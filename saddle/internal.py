@@ -141,8 +141,7 @@ class Internal(Cartesian):
         self._connectivity = np.diag([-1] * len(self.numbers))
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
-        self._internal_gradient = None
-        self._internal_hessian = None
+
         # to indicate fragment groups in system
         self._fragment = np.arange(self.natom)
         return None
@@ -281,8 +280,7 @@ class Internal(Cartesian):
             ic.target = new_ic[index]
         return None
 
-    def set_new_coordinates(self,
-                            new_coor: 'np.ndarray') -> None:  # to be tested
+    def set_new_coordinates(self, new_coor: 'np.ndarray') -> None:
         """Assign new cartesian coordinates to this molecule
 
         Arguments
@@ -384,7 +382,6 @@ class Internal(Cartesian):
             Default value is True
         """
         super(Internal, self).energy_from_fchk(abs_path, gradient, hessian)
-        self._energy_hessian_transformation()
 
     def energy_calculation(self, *_, method: str = 'g09') -> None:
         """Conduct calculation with designated method.
@@ -398,7 +395,6 @@ class Internal(Cartesian):
             property
         """
         super(Internal, self).energy_calculation(method=method)
-        self._energy_hessian_transformation()
         return None
         # h_q = (B^T)^+ \cdot (H_x - K) \cdot B^+
 
@@ -530,9 +526,18 @@ class Internal(Cartesian):
         -------
         internal_gradient : np.ndarray(K,)
         """
-        return self._internal_gradient
+        return np.dot(pse_inv(self.b_matrix.T), self.energy_gradient)
 
     q_gradient = internal_gradient
+
+    @property
+    def _internal_hessian(self) -> 'np.ndarray[float]':
+        if self._energy_hessian is None:
+            return None
+        hes_k = self._energy_hessian - np.tensordot(
+            self.internal_gradient, self._cc_to_ic_hessian, axes=1)
+        return np.dot(
+            np.dot(pse_inv(self.b_matrix.T), hes_k), pse_inv(self.b_matrix))
 
     @property
     def fragments(self):
@@ -584,7 +589,6 @@ class Internal(Cartesian):
         self._auto_select_angle()
         self._auto_select_dihed_normal(dihed_special)
         self._auto_select_dihed_improper(dihed_special)
-        self._recal_g_and_h()
         return None
 
     def _delete_ic_index(self, index: int) -> None:
@@ -608,8 +612,6 @@ class Internal(Cartesian):
         self._connectivity = np.diag([-1] * len(self.numbers))
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
-        self._internal_gradient = None
-        self._internal_hessian = None
         return None
 
     def _auto_select_cov_bond(self):
@@ -756,36 +758,6 @@ class Internal(Cartesian):
                             ind_i, center_ind, ind_j, ind_k, special=special)
         return None
 
-    def _energy_hessian_transformation(self) -> None:
-        """convert gradient, hessian versus cartesian coordinates into
-        gradient, hessian versus internal coordinates
-        ..math::
-            g_q = (B_T)^+ g_x
-            H_q = B_T^+ (H_x - K) B^+ + K, where
-            K = g_q b^\\prime
-        """
-        self._gradient_transform()
-        self._hessian_transform()
-        # self._tilt_internal_hessian = np.dot(
-        #   np.dot(
-        #     pse_inv(self._cc_to_ic_gradient.T),
-        #     self._energy_hessian), pse_inv(self._cc_to_ic_gradient))
-        return None
-
-    def _gradient_transform(self) -> None:
-        self._internal_gradient = np.dot(
-            pse_inv(self.b_matrix.T), self._energy_gradient)
-        return None
-
-    def _hessian_transform(self) -> None:
-        if self._energy_hessian is None:
-            return None
-        hes_k = self._energy_hessian - np.tensordot(
-            self._internal_gradient, self._cc_to_ic_hessian, axes=1)
-        self._internal_hessian = np.dot(
-            np.dot(pse_inv(self.b_matrix.T), hes_k), pse_inv(self.b_matrix))
-        return None
-
     def _regenerate_ic(self) -> None:
         """reset internal coordinates system, reset gradient, hessian versus
         internal coordinates, regenerate internal coordinates and
@@ -799,7 +771,6 @@ class Internal(Cartesian):
             d, dd = ic.get_gradient_hessian()
             self._add_cc_to_ic_gradient(d, ic.atoms)  # add transform gradient
             self._add_cc_to_ic_hessian(dd, ic.atoms)  # add transform hessian
-        self._recal_g_and_h()  # clean internal gradient and hessian
         return None
 
     def _regenerate_connectivity(self) -> None:
@@ -810,15 +781,6 @@ class Internal(Cartesian):
         for ic in self.ic:
             if isinstance(ic, BondLength):
                 self._add_connectivity(ic.atoms, ic.ic_type)
-        return None
-
-    def _recal_g_and_h(self) -> None:
-        """reset internal energy gradient and hessian matrix
-        """
-        self._internal_gradient = None
-        self._internal_hessian = None
-        if self._energy_gradient is not None:
-            self._energy_hessian_transformation()
         return None
 
     def create_geo_point(self) -> Point:
@@ -914,7 +876,6 @@ class Internal(Cartesian):
         self._ic.append(new_ic)
         self._add_cc_to_ic_gradient(d, atoms)  # add gradient
         self._add_cc_to_ic_hessian(dd, atoms)  # add hessian
-        self._recal_g_and_h()
         return None
 
     def _add_connectivity(self, atoms: Tuple[int, ...], bond_type) -> None:

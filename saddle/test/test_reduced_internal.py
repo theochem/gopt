@@ -160,7 +160,9 @@ class TestReduceInternal(TestCase):
         ri_mol.vspace
         assert ri_mol._red_space is not None
         assert ri_mol._non_red_space is not None
+        print(ri_mol._red_space)
         ri_mol.add_angle(0, 2, 1)
+        print(ri_mol._red_space)
         assert ri_mol._red_space is None
         assert ri_mol._non_red_space is None
 

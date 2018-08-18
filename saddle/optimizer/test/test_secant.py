@@ -28,9 +28,7 @@ class TestSecant(unittest.TestCase):
         self.new_ob.add_angle(0, 2, 1)
         np.random.seed(100)
         self.old_ob._energy_gradient = np.random.rand(9)
-        self.old_ob._gradient_transform()
         self.new_ob._energy_gradient = np.random.rand(9)
-        self.new_ob._gradient_transform()
         self.oldp = PathPoint(self.old_ob)
         self.newp = PathPoint(self.new_ob)
 

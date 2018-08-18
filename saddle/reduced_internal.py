@@ -170,10 +170,10 @@ class ReducedInternal(Internal):  # need tests
         vspace_gradient : np.ndarray(3N - 6,)
         """
         if self._vspace_gradient is None:
-            if self._internal_gradient is None:
+            if self.internal_gradient is None:
                 raise NotSetError
             self._vspace_gradient = np.dot(self.vspace.T,
-                                           self._internal_gradient)
+                                           self.internal_gradient)
         return self._vspace_gradient
 
     v_gradient = vspace_gradient
@@ -306,15 +306,13 @@ class ReducedInternal(Internal):  # need tests
         """
         return np.dot(self.vspace, delta_v)
 
-    def _recal_g_and_h(self) -> None:
-        super(ReducedInternal, self)._recal_g_and_h()
+    def _add_cc_to_ic_gradient(self, deriv, atoms):
+        super(ReducedInternal, self)._add_cc_to_ic_gradient(deriv, atoms)
         self._reset_v_space()
-        return None
 
-    def _clear_ic_info(self) -> None:
+    def _clear_ic_info(self):
         super(ReducedInternal, self)._clear_ic_info()
         self._reset_v_space()
-        return None
 
     def _reset_v_space(self) -> None:
         """Reset vspace coordinates data, including vspace, gradient, hessian
@@ -407,6 +405,6 @@ class ReducedInternal(Internal):  # need tests
         """
         d_mtx = self._nonreduce_vectors()
         w, v = diagonalize(d_mtx)
-        self._non_red_space = v[:, abs(
-            w) > threshold][:, :self.df - len(self._red_space[0])]
+        self._non_red_space = v[:, abs(w) > threshold][:, :self.df -
+                                                       len(self._red_space[0])]
         return None
