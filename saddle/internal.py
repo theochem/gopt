@@ -539,6 +539,8 @@ class Internal(Cartesian):
         return np.dot(
             np.dot(pse_inv(self.b_matrix.T), hes_k), pse_inv(self.b_matrix))
 
+    q_hessian = _internal_hessian
+
     @property
     def fragments(self):
         unique_groups = np.unique(self._fragment)

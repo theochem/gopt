@@ -37,9 +37,9 @@ class PathPoint:
     def q_gradient(self):
         return self._instance.q_gradient
 
-    # @property
-    # def q_hessian(self):
-    #     return self._instance.q_hessian
+    @property
+    def q_hessian(self):
+        return self._instance.q_hessian
 
     @property
     def vspace(self):
