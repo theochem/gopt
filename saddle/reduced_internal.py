@@ -169,12 +169,9 @@ class ReducedInternal(Internal):  # need tests
         -------
         vspace_gradient : np.ndarray(3N - 6,)
         """
-        if self._vspace_gradient is None:
-            if self.internal_gradient is None:
-                raise NotSetError
-            self._vspace_gradient = np.dot(self.vspace.T,
-                                           self.internal_gradient)
-        return self._vspace_gradient
+        if self.internal_gradient is None:
+            raise NotSetError
+        return np.dot(self.vspace.T, self.internal_gradient)
 
     v_gradient = vspace_gradient
 
@@ -186,12 +183,10 @@ class ReducedInternal(Internal):  # need tests
         -------
         vspace_hessian : np.ndarray(3N - 6, 3N - 6)
         """
-        if self._vspace_hessian is None:
-            if self._internal_hessian is None:
-                raise NotSetError
-            self._vspace_hessian = np.dot(
-                np.dot(self.vspace.T, self._internal_hessian), self.vspace)
-        return self._vspace_hessian
+        if self._internal_hessian is None:
+            raise NotSetError
+        return np.dot(
+            np.dot(self.vspace.T, self._internal_hessian), self.vspace)
 
     v_hessian = vspace_hessian
 
@@ -267,8 +262,6 @@ class ReducedInternal(Internal):  # need tests
         self._vspace = new_vspace
         self._red_space = new_vspace[:, :self.key_ic_number]
         self._non_red_space = new_vspace[:, self.key_ic_number:]
-        self._vspace_gradient = None
-        self._vspace_hessian = None
         return None
 
     def update_to_new_structure_with_delta_v(self,
@@ -319,8 +312,6 @@ class ReducedInternal(Internal):  # need tests
         """
         self._red_space = None
         self._non_red_space = None
-        self._vspace_gradient = None
-        self._vspace_hessian = None
         self._vspace = None
         return None
 
