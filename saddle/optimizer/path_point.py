@@ -73,6 +73,7 @@ class PathPoint:
                 raise ValueError("The shape of input is not valid")
             if not np.allclose(value, value.T):
                 raise ValueError("The input Hessian is not hermitian")
+            print('Overwrite old mod_hessian')
         self._mod_hessian = value.copy()
 
     @property

@@ -25,7 +25,9 @@ class ReactPoint(PathPoint):
 
     @property
     def v_hessian(self):
-        return np.dot(np.dot(self.vspace.T, self.q_hessian), self.vspace)
+        if self._mod_hessian is None:
+            return np.dot(np.dot(self.vspace.T, self.q_hessian), self.vspace)
+        return self._mod_hessian
 
     @property
     def sub_q_gradient(self):
@@ -33,4 +35,14 @@ class ReactPoint(PathPoint):
 
     @property
     def sub_x_gradient(self):
-        return np.dot(self.b_matrix.T, self.sub_q_gradient)
+        return np.dot(self.b_matrix.T, self.sub_q_gradient)\
+
+    @v_hessian.setter
+    def v_hessian(self, value):
+        if self._mod_hessian is not None:
+            if self._mod_hessian.shape != value.shape:
+                raise ValueError("The shape of input is not valid")
+            if not np.allclose(value, value.T):
+                raise ValueError("The input Hessian is not hermitian")
+            print('Overwrite old mod_hessian')
+        self._mod_hessian = value.copy()
