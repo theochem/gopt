@@ -105,7 +105,7 @@ class TestPathPoint(TestCase):
         point_b._non_red_space = True
         return point_a, point_b
 
-    def test_finite_diff_with_water(self):  # TODO: error need to figure out
+    def test_finite_diff_with_water(self):
         with path('saddle.optimizer.test.data', 'water.xyz') as mol_path:
             mol = Utils.load_file(mol_path)
         red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
@@ -142,15 +142,17 @@ class TestPathPoint(TestCase):
         assert red_int.energy - 75.99264142 < 1e-6
         red_int.select_key_ic(0)
         wt_p1 = PathPoint(red_int=red_int)
-        step = [0.001, 0, 0]
+        step = [-0.001, 0, 0]
         wt_p2 = wt_p1.copy()
         wt_p2.update_coordinates_with_delta_v(step)
+        # fchk file is for -0.001
         with path('saddle.optimizer.test.data',
                   'water_new_2.fchk') as fchk_file_new:
             wt_p2._instance.energy_from_fchk(fchk_file_new)
+
         wt_p2._instance.align_vspace(wt_p1._instance)
         assert np.allclose(wt_p1.vspace, wt_p2.vspace)
-        result = PathPoint._calculate_finite_diff_h(wt_p1, wt_p2, 0.001)
+        result = PathPoint._calculate_finite_diff_h(wt_p1, wt_p2, -0.001)
         assert np.allclose(result, wt_p1._instance.v_hessian[:, 0], atol=1e-2)
 
     def test_finite_different_with_water_3(self):
