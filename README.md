@@ -1,6 +1,7 @@
 # GOpt
 <a href='https://travis-ci.com/tczorro/GOpt'><img src='https://travis-ci.com/tczorro/GOpt.svg?token=wtCKs521Yw1urAV4F5DM&branch=master'></a>
 <a href='https://docs.python.org/3.6/'><img src='https://img.shields.io/badge/python-3.6-blue.svg'></a>
+<a href='https://codecov.io/gh/tczorro/GOpt'><img src='https://codecov.io/gh/tczorro/GOpt/branch/master/graph/badge.svg?token=Yo3TmFd3sf'></a>
 ## Synopsis
 
 GOpt is a python(3.6+) package for quantum chemistry geometry optimization. It

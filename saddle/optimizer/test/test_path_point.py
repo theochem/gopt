@@ -141,6 +141,12 @@ class TestPathPoint(TestCase):
             red_int.energy_from_fchk(fchk_file)
         assert red_int.energy - 75.99264142 < 1e-6
         red_int.select_key_ic(0)
+        ref_v = np.array([[-1.00000000e+00, -4.17292908e-16, 0.00000000e+00],
+                          [2.10951257e-16, -4.69422035e-01, -8.82973926e-01],
+                          [3.39185671e-16, -8.82973926e-01, 4.69422035e-01]])
+        ref_v2 = np.dot(ref_v, ref_v.T)
+        assert np.allclose(ref_v2, np.dot(red_int.vspace, red_int.vspace.T))
+        red_int.set_vspace(ref_v)
         wt_p1 = PathPoint(red_int=red_int)
         step = [-0.001, 0, 0]
         wt_p2 = wt_p1.copy()

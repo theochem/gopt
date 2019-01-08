@@ -3,20 +3,6 @@ language: python
 python:
     - 3.6
 
-install:
-    - pip install --upgrade pip
-    - pip install -r requirements.txt
-    - pip install pylint
+install: pip install tox-travis
 
-jobs:
-  include:
-    # test stage
-    - stage: test
-      script: pytest saddle
-    - script: pylint saddle --errors-only
-    # deploy stage
-    - stage: deploy
-      script: python setup.py install
-
-notifications:
-  email: false
+script: tox
