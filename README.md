@@ -1,32 +1,34 @@
 # GOpt
-<a href='https://travis-ci.com/tczorro/GOpt'><img src='https://travis-ci.com/tczorro/GOpt.svg?token=wtCKs521Yw1urAV4F5DM&branch=master'></a>
-<a href='https://docs.python.org/3.6/'><img src='https://img.shields.io/badge/python-3.6-blue.svg'></a>
-<a href='https://codecov.io/gh/tczorro/GOpt'><img src='https://codecov.io/gh/tczorro/GOpt/branch/master/graph/badge.svg?token=Yo3TmFd3sf'></a>
-## Synopsis
+[![Python](https://img.shields.io/badge/python-3.6-blue.svg)](https://docs.python.org/3.6/)
+[![Build Status](https://travis-ci.org/tczorro/gbasis.svg?branch=master)](https://github.com/tczorro/GOpt)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://github.com/tczorro/GOpt/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/tczorro/GOpt/branch/master/graph/badge.svg?token=Yo3TmFd3sf)](https://codecov.io/gh/tczorro/GOpt)
 
+## Synopsis
 GOpt is a python(3.6+) package for quantum chemistry geometry optimization. It
 provides robust performance for both energy minimization and transition state
 search.
 
 ## License
-
 GOpt is distributed under the conditions of the GPL License version 3 (GPLv3)
 
 You are free to use `GOpt` for any purpose. However, `GOpt`, or any derived
 version, can only be (re)distributed under the same license conditions.
 
-## Dependence
+## Build Dependence
 `Numpy`
-`pytest`
 `importlib_resources`
 
-## Tests
+## Test Dependence
+`pytest`
+`tox`
+
+## CI Tests
 ```bash
-pytest
-
+tox
 ```
-## Installation
 
+## Installation
 ```bash
 python ./setup.py install
 ```
