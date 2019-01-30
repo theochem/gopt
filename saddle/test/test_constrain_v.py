@@ -94,3 +94,37 @@ class TestConstrainVspace(TestCase):
         uni_v_3 = self.mol._reduced_unit_vectors(2, 3)
         ref_3 = np.array([0, 0, 1, 0, 0, 0]).reshape(6, -1)
         assert np.allclose(uni_v_3, ref_3)
+
+        with self.assertRaises(ValueError):
+            self.mol._reduced_perturbation(0)
+
+        with self.assertRaises(ValueError):
+            self.mol._reduced_perturbation(-2)
+
+    def test_reduced_perturbation(self):
+        red_pert = self.mol._reduced_perturbation(2)
+        project = np.dot(self.mol.b_matrix, np.linalg.pinv(self.mol.b_matrix))
+        vec_a = np.array([1, 0, 0, 0, 0, 0])
+        vec_b = np.array([0, 1, 0, 0, 0, 0])
+        init_v = np.vstack((vec_a, vec_b)).T
+        ref_pert = np.dot(project, np.dot(project, init_v))
+        assert np.allclose(red_pert, ref_pert)
+
+        red_pert2 = self.mol._reduced_perturbation(1, 3)
+        project = np.dot(self.mol.b_matrix, np.linalg.pinv(self.mol.b_matrix))
+        vec_a2 = np.array([0, 1, 0, 0, 0, 0])
+        vec_b2 = np.array([0, 0, 1, 0, 0, 0])
+        init_v2 = np.vstack((vec_a2, vec_b2)).T
+        ref_pert2 = np.dot(project, np.dot(project, init_v2))
+        assert np.allclose(red_pert2, ref_pert2)
+
+        red_pert3 = self.mol._reduced_perturbation(2, 3)
+        project = np.dot(self.mol.b_matrix, np.linalg.pinv(self.mol.b_matrix))
+        init_v3 = np.array([0, 0, 1, 0, 0, 0]).reshape(-1, 1)
+        ref_pert3 = np.dot(project, np.dot(project, init_v3))
+        assert np.allclose(red_pert3, ref_pert3)
+
+        with self.assertRaises(ValueError):
+            self.mol._reduced_perturbation(0)
+        with self.assertRaises(ValueError):
+            self.mol._reduced_perturbation(-1, -3)

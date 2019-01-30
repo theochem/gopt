@@ -81,7 +81,7 @@ class NewVspace(Internal):
         elif len(start_ends) == 2 and start_ends[1] > start_ends[0]:
             start, end = start_ends
         else:
-            raise TypeError('takes 1 or 2 arguments. Invalid args received')
+            raise ValueError('takes 1 or 2 arguments. Invalid args received')
         num_col = end - start
         unit_mtx = np.zeros((len(self.ic), num_col))
         unit_mtx[start:end, :] = np.eye(num_col)
