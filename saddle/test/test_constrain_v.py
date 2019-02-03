@@ -4,12 +4,18 @@ from unittest import TestCase
 import numpy as np
 from importlib_resources import path
 from saddle.constrain_v import NewVspace
+from copy import deepcopy
+
 
 class TestConstrainVspace(TestCase):
     def setUp(self):
         with path('saddle.test.data', 'h2o2.xyz') as mol_file:
             self.mol = NewVspace.from_file(mol_file, charge=0, multi=1)
             self.mol.auto_select_ic()
+        with path('saddle.test.data', 'water.xyz') as mol_file:
+            self.mol2 = NewVspace.from_file(mol_file, charge=0, multi=1)
+            self.mol2.auto_select_ic()
+            self.mol2.add_bond(0, 2)
 
     def test_select_ic(self):
         # (0, 1), (0, 2), (1, 3), (1, 0, 2), (0, 1, 3), (2, 0, 1, 3)
@@ -128,3 +134,56 @@ class TestConstrainVspace(TestCase):
             self.mol._reduced_perturbation(0)
         with self.assertRaises(ValueError):
             self.mol._reduced_perturbation(-1, -3)
+
+    def test_generate_freeze_space(self):
+        self.mol2.select_freeze_ic(0, 3)
+        self.mol2._generate_freeze_space()
+        vec_a2 = np.array([1, 0, 0, 0])
+        vec_b2 = np.array([0, 1, 0, 0])
+        init_v2 = np.vstack((vec_a2, vec_b2)).T
+        proj = np.dot(self.mol2.b_matrix, np.linalg.pinv(self.mol2.b_matrix))
+        mtx = np.dot(proj, init_v2)
+        # print(self.mol2._freeze_space)
+        assert mtx.shape == (4, 2)
+        _, vectors = np.linalg.eigh(np.dot(mtx.T, mtx))
+        bset = np.dot(mtx, vectors)
+        bset[:, 0] /= np.linalg.norm(bset[:, 0])
+        bset[:, 1] /= np.linalg.norm(bset[:, 1])
+        assert np.allclose(self.mol2._freeze_space**2, bset**2)
+
+    def test_generate_key_space(self):
+        ref_mol = deepcopy(self.mol2)
+        self.mol2.select_freeze_ic(0, 3)
+        self.mol2.select_key_ic(3)
+        self.mol2._generate_freeze_space()
+        self.mol2._generate_key_space()
+        f_space = self.mol2._freeze_space
+
+        ref_mol.select_freeze_ic(0, 3)
+        ref_mol.select_freeze_ic(0, 1, 3)
+        ref_mol._generate_freeze_space()
+        rf_space = ref_mol._freeze_space
+        left_over_v = rf_space - np.dot(np.dot(f_space, f_space.T), rf_space)
+        values, vectors = np.linalg.eigh(np.dot(left_over_v, left_over_v.T))
+        ref_kspace = vectors[:, np.abs(values) > 1e-6]
+        assert np.allclose(self.mol2._key_space[:, 0]**2, ref_kspace[:, 0]**2)
+
+    def test_generate_non_space(self):
+        ref_mol = deepcopy(self.mol2)
+        self.mol2.select_freeze_ic(0, 3)
+        self.mol2.select_key_ic(3)
+        self.mol2._generate_freeze_space()
+        self.mol2._generate_key_space()
+        self.mol2._generate_non_space()
+        f_space = self.mol2._freeze_space
+        k_space = self.mol2._key_space
+
+        ref_mol.select_freeze_ic(0, 3)
+        ref_mol.select_freeze_ic(0, 1, 2, 3)
+        ref_mol._generate_freeze_space()
+        rf_space = ref_mol._freeze_space
+        left_ov_1 = rf_space - np.dot(np.dot(f_space, f_space.T), rf_space)
+        left_ov_2 = left_ov_1 - np.dot(np.dot(k_space, k_space.T), left_ov_1)
+        values, vectors = np.linalg.eigh(np.dot(left_ov_2, left_ov_2.T))
+        ref_n_space = vectors[:, np.abs(values) > 1e-6]
+        assert np.allclose(self.mol2._non_space**2, ref_n_space**2)

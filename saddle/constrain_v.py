@@ -107,10 +107,11 @@ class NewVspace(Internal):
         self._freeze_space = v[:, np.abs(w) > threshold]
 
     def _generate_key_space(self, threshold=1e-6):
-        b_mtx = self._reduced_perturbation(self.n_freeze, self.n_key)
+        b_mtx = self._reduced_perturbation(self.n_freeze,
+                                           self.n_key + self.n_freeze)
         # project out freezed space
         proj_f = np.dot(self._freeze_space, self._freeze_space.T)
-        left_b_mtx = b_mtx - np.odt(proj_f, b_mtx)
+        left_b_mtx = b_mtx - np.dot(proj_f, b_mtx)
         w, v = diagonalize(left_b_mtx)
         self._key_space = v[:, np.abs(w) > threshold]
 
@@ -130,6 +131,7 @@ class NewVspace(Internal):
         u : np.ndarray(K, 3N - 6)
             3N - 6 non-singular vectors from SVD
         """
+        # use eigh rather than svd, more likely to get unique result
         b_space = np.dot(self.b_matrix, self.b_matrix.T)
         values, vectors = np.linalg.eigh(b_space)
         # b_matrix shape is n * 3N
