@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from numpy.testing import assert_allclose
 from saddle.errors import PositiveProductError
-from saddle.math_lib import diagonalize, pse_inv, ridders_solver, maximum_overlap
+from saddle.math_lib import diagonalize, pse_inv, ridders_solver, maximum_overlap, procrustes
 
 
 # pylint: disable=E1101, E1133
@@ -102,3 +102,27 @@ class TestSolver(unittest.TestCase):
         tf_mtr = maximum_overlap(array_c, array_d)
         new_d = np.dot(tf_mtr, array_d)
         assert_allclose(array_c, new_d)
+
+    def test_procrustes(self):
+        np.random.seed(101)
+        for _ in range(5):
+            a = np.random.rand(3, 2)
+            n_a, s_a, m_a = np.linalg.svd(a)
+            a_ref = n_a[:, :2]
+
+            b = np.random.rand(3, 2)
+            n_b, s_b, m_b = np.linalg.svd(b)
+            b_ref = n_b[:, :2]
+            result = procrustes(a_ref, b_ref)
+            assert np.allclose(result, b_ref)
+
+        for _ in range(5):
+            a = np.random.rand(6, 4)
+            n_a, s_a, m_a = np.linalg.svd(a)
+            a_ref = n_a[:, :4]
+
+            b = np.random.rand(6, 4)
+            n_b, s_b, m_b = np.linalg.svd(b)
+            b_ref = n_b[:, :4]
+            result = procrustes(a_ref, b_ref)
+            assert np.allclose(result, b_ref)

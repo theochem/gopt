@@ -4,6 +4,7 @@ import numpy as np
 from saddle.errors import ICNumberError, NotSetError
 from saddle.internal import Internal
 from saddle.math_lib import diagonalize, pse_inv
+from saddle.math_lib import procrustes
 
 
 class NewVspace(Internal):
@@ -21,6 +22,25 @@ class NewVspace(Internal):
         self._freeze_space = None
         self._key_space = None
         self._non_space = None
+        self._vspace = None
+
+    @property
+    def vspace(self):
+        if (self._freeze_space is None or self._key_space is None
+                or self._non_space is None):
+            self._generate_freeze_space()
+            self._generate_key_space()
+            self._generate_non_space()
+        return np.hstack((self._freeze_space, self._key_space,
+                          self._non_space))
+
+    @property
+    def vspace_gradient(self):
+        return ...
+
+    @property
+    def vspace_hessian(self):
+        return ...
 
     @property
     def n_freeze(self):
@@ -50,6 +70,7 @@ class NewVspace(Internal):
             self.swap_internal_coordinates(n_freeze_ic, index)
             n_freeze_ic += 1
         self._n_freeze_ic = n_freeze_ic
+        self._reset_v_space()
 
     def select_key_ic(self, *indices: int) -> None:
         if any(np.array(indices) < 0):
@@ -64,6 +85,44 @@ class NewVspace(Internal):
             self.swap_internal_coordinates(n_key_ic + self.n_freeze, index)
             n_key_ic += 1
         self._n_key_ic = n_key_ic
+        self._reset_v_space()
+
+    def set_vspace(self, new_vspace):
+        if new_vspace.shape != (len(self.ic), self.df):
+            raise ValueError('Given new vspace is not in the right shape')
+        n_f_k = self.n_freeze + self.n_key
+        self._freeze_space = new_vspace[:, :self.n_freeze]
+        self._key_space = new_vspace[:, self.n_freeze:n_f_k]
+        self._non_space = new_vspace[:, n_f_k:]
+
+    def align_vspace_matrix(self, target, special=False):
+        if not isinstance(target, np.ndarray):
+            raise TypeError('Input matrix is not a legit numpy array')
+        if target.shape != (len(self.ic), self.df):
+            raise ValueError(
+                f'Input array doesn\'t have a correct shape {target.shape}')
+        if special is False:
+            new_v = procrustes(self.vspace, target)
+            self.set_vspace(new_v)
+        else:
+            n_f_k = self.n_freeze + self.n_key
+            n_f = self.n_freeze
+            new_v_freeze = procrustes(self.vspace[:, :n_f], target[:, :n_f])
+            new_v_key = procrustes(self.vspace[:, n_f:n_f_k],
+                                   target[:, n_f:n_f_k])
+            new_v_non = procrustes(self.vspace[:, n_f_k:], target[:, n_f_k:])
+            new_v = np.hstack((new_v_freeze, new_v_key, new_v_non))
+        self.set_vspace(new_v)
+
+    def align_vspace(self, target, ic_check=False):
+        # could add check for same ic selection
+        if not isinstance(target, NewVspace):
+            raise TypeError('Input molecule is not a valid type')
+        if ic_check:
+            if target.n_freeze != self.n_freeze or target.n_key != self.n_key:
+                raise ValueError(
+                    'Number of special cooridnates does not match')
+        self.align_vspace_matrix(target.vspace)
 
     def _reduced_unit_vectors(self, *start_ends) -> 'np.ndarray':  # tested
         """Generate unit vectors where every position is 0 except the
@@ -75,13 +134,13 @@ class NewVspace(Internal):
             Unit vectors with 0 everywhere except that key_ic_number position
             is 0
         """
-        if len(start_ends) == 1 and start_ends[0] > 0:
+        if len(start_ends) == 1 and start_ends[0] >= 0:
             start = 0
             end = start_ends[0]
-        elif len(start_ends) == 2 and start_ends[1] > start_ends[0]:
+        elif len(start_ends) == 2 and start_ends[1] >= start_ends[0]:
             start, end = start_ends
         else:
-            raise ValueError('takes 1 or 2 arguments. Invalid args received')
+            raise ValueError(f'takes 1 or 2 arguments. {start_ends} is given')
         num_col = end - start
         unit_mtx = np.zeros((len(self.ic), num_col))
         unit_mtx[start:end, :] = np.eye(num_col)
@@ -141,3 +200,16 @@ class NewVspace(Internal):
         # TODO: need change for nonlinear molecules
         assert len(basis[0]) == self.df
         return basis
+
+    def _reset_v_space(self):
+        self._freeze_space = None
+        self._key_space = None
+        self._non_space = None
+
+    def _add_cc_to_ic_gradient(self, deriv, atoms):
+        super()._add_cc_to_ic_gradient(deriv, atoms)
+        self._reset_v_space()
+
+    def _clear_ic_info(self):
+        super()._clear_ic_info()
+        self._reset_v_space()
