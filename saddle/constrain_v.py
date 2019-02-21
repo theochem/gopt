@@ -23,6 +23,7 @@ class NewVspace(Internal):
         self._key_space = None
         self._non_space = None
         self._vspace = None
+        self._reset_v_space()
 
     @property
     def vspace(self):
@@ -36,11 +37,20 @@ class NewVspace(Internal):
 
     @property
     def vspace_gradient(self):
-        return ...
+        if self.internal_gradient is None:
+            raise NotSetError
+        return np.dot(self.vspace.T, self.internal_gradient)
+
+    v_gradient = vspace_gradient
 
     @property
     def vspace_hessian(self):
-        return ...
+        if self._internal_hessian is None:
+            raise NotSetError
+        return np.dot(
+            np.dot(self.vspace.T, self._internal_hessian), self.vspace)
+
+    v_hessian = vspace_hessian
 
     @property
     def n_freeze(self):
@@ -123,6 +133,14 @@ class NewVspace(Internal):
                 raise ValueError(
                     'Number of special cooridnates does not match')
         self.align_vspace_matrix(target.vspace)
+
+    def update_to_new_structure_with_delta_v(self, delta_v):
+        delta_v = np.array(delta_v)
+        delta_ic = np.dot(self.vspace, delta_v)
+        new_ic = self.ic_values + delta_ic
+        self.set_target_ic(new_ic)
+        self.converge_to_target_ic()
+        self._reset_v_space()
 
     def _reduced_unit_vectors(self, *start_ends) -> 'np.ndarray':  # tested
         """Generate unit vectors where every position is 0 except the
@@ -212,4 +230,8 @@ class NewVspace(Internal):
 
     def _clear_ic_info(self):
         super()._clear_ic_info()
+        self._reset_v_space()
+
+    def _regenerate_ic(self):
+        super()._regenerate_ic()
         self._reset_v_space()
