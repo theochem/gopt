@@ -359,9 +359,18 @@ class Internal(Cartesian):
             assert isinstance(exclude, int)
             assert exclude > 0
         connection = self.connectivity[index]
-        connected_index = np.where((connection > 0) & (connection != exclude))[
-            0]
+        connected_index = np.where((connection > 0) &
+                                   (connection != exclude))[0]
         return connected_index
+
+    @property
+    def number_of_connect(self):
+        """Return a list of number of connections of each atoms in the molecule
+           The index of the list is the same index in self.numbers. Connection
+           exclude auxiliary bond
+        """
+        return np.sum(
+            (self.connectivity > 0) & (self.connectivity != 4), axis=0)
 
     def energy_from_fchk(self,
                          abs_path: str,
@@ -480,6 +489,7 @@ class Internal(Cartesian):
 
     @property
     def ic_weights(self):
+        """Weights of each ic for coordinates transformation"""
         weights = [i.weight for i in self._ic]
         return np.array(weights)
 
@@ -532,6 +542,7 @@ class Internal(Cartesian):
 
     @property
     def _internal_hessian(self) -> 'np.ndarray[float]':
+        """Hessian of energy versus internal coordinates"""
         if self._energy_hessian is None:
             return None
         hes_k = self._energy_hessian - np.tensordot(
@@ -543,11 +554,19 @@ class Internal(Cartesian):
 
     @property
     def fragments(self):
+        """return a dict of fragments in the molecule"""
         unique_groups = np.unique(self._fragment)
         groups = {}
         for i in unique_groups:
             groups[i] = np.arange(self.natom)[self._fragment == i]
         return groups
+
+    @property
+    def list_ic(self):
+        """Print out all internal coordiantes, return None"""
+        for index, ic in enumerate(self.ic):
+            print(f"({index}), {ic}")
+        return None
 
     def print_connectivity(self) -> None:
         """Print the connectivity matrix on screen
@@ -562,7 +581,8 @@ class Internal(Cartesian):
     def auto_select_ic(self,
                        dihed_special: bool = False,
                        reset_ic: bool = True,
-                       keep_bond: bool = False) -> None:
+                       keep_bond: bool = False,
+                       minimum: bool = False) -> None:
         """A method for Automatically selecting internal coordinates based on
         out buildin algorithm
 
@@ -577,6 +597,8 @@ class Internal(Cartesian):
         keep_bond : bool, default is False
             keep bond information and regenerate bend angle and dihedral
             information.
+        minimum : bool, default is False
+            Select minimum amount of dihedral, one per rotatble bond.
         """
         bonds = [i for i in self.ic if isinstance(i, BondLength)]
         if reset_ic is True:
@@ -589,8 +611,11 @@ class Internal(Cartesian):
         else:
             self.set_new_ics(bonds)
         self._auto_select_angle()
-        self._auto_select_dihed_normal(dihed_special)
-        self._auto_select_dihed_improper(dihed_special)
+        if minimum:
+            self._auto_select_minimum_dihed_normal(dihed_special)
+        else:
+            self._auto_select_dihed_normal(dihed_special)
+            self._auto_select_dihed_improper(dihed_special)
         return None
 
     def _delete_ic_index(self, index: int) -> None:
@@ -617,6 +642,7 @@ class Internal(Cartesian):
         return None
 
     def _auto_select_cov_bond(self):
+        """Low level function for selecting covalence bond"""
         for ind1, ind2 in combinations(range(self.natom), 2):
             atom1 = self.numbers[ind1]
             atom2 = self.numbers[ind2]
@@ -626,6 +652,7 @@ class Internal(Cartesian):
                 self.add_bond(ind1, ind2, b_type=1)
 
     def _auto_select_h_bond(self):
+        """Low level function for selecting hydrogen bond"""
         ele_neg = np.array([7, 8, 9, 15, 16, 17])
         # find strong ele nagative atoms' indices
         halo_indices = np.where(np.isin(self.numbers, ele_neg))[0]
@@ -719,9 +746,10 @@ class Internal(Cartesian):
         """
         for center_ind_1, _ in enumerate(self.numbers):
             # find indices connected to center_ind_1
-            connected = self.connected_indices(center_ind_1)
+            connected = self.connected_indices(center_ind_1, exclude=4)
             if len(connected) >= 2:
                 for center_ind_2 in connected:
+                    # TODO: may introduce bugs in the future
                     sum_cnct = np.sum(self.connectivity, axis=0)
                     # find total connection for all atoms connected c1
                     sum_select_cnct = sum_cnct[connected]
@@ -730,7 +758,8 @@ class Internal(Cartesian):
                     # select the atom with the largest connection
                     if connected[sorted_index[0]] == center_ind_2:
                         side_1 = connected[sorted_index[1]]
-                    connected_to_index_2 = self.connected_indices(center_ind_2)
+                    connected_to_index_2 = self.connected_indices(
+                        center_ind_2, exclude=4)
                     for side_2 in connected_to_index_2:
                         if side_2 not in (center_ind_1, center_ind_2, side_1):
                             self.add_dihedral(
@@ -739,7 +768,32 @@ class Internal(Cartesian):
                                 center_ind_2,
                                 side_2,
                                 special=special)
-        return None
+
+    def _auto_select_minimum_dihed_normal(self, special=False):
+        """Low level code for select one dihedral per rotatable bond"""
+        for i in range(self.natom - 1):
+            for j in range(i + 1, self.natom):
+                if self.connectivity[i][j] <= 0 or self.connectivity[i][j] == 4:
+                    continue
+                cnct_to_i = self.connected_indices(i, exclude=4)
+                cnct_to_j = self.connected_indices(j, exclude=4)
+                if len(cnct_to_i) < 2 or len(cnct_to_j) < 2:
+                    continue
+                if len(set(cnct_to_i).union(set(cnct_to_j))) < 4:
+                    continue
+                sorted_index_i = self.number_of_connect[cnct_to_i].argsort(
+                )[::-1]
+                for k in sorted_index_i:
+                    if cnct_to_i[k] != j:
+                        side_i = cnct_to_i[k]
+                        break
+                sorted_index_j = self.number_of_connect[cnct_to_j].argsort(
+                )[::-1]
+                for k in sorted_index_j:
+                    if cnct_to_j[k] not in (side_i, i):
+                        side_j = cnct_to_j[k]
+                        break
+                self.add_dihedral(side_i, i, j, side_j, special=special)
 
     def _auto_select_dihed_improper(self, special=False) -> None:
         """A private method for automatically selecting improper dihedral
@@ -795,10 +849,6 @@ class Internal(Cartesian):
         """
         _, x_d, x_dd = self.cost_value_in_cc
         return Point(x_d, x_dd, len(self.numbers))
-
-    def optimizer_to_target(self):
-        # return new_coordinates
-        pass
 
     def _ic_gradient_hessian_transform_to_cc(
             self, gradient: 'np.ndarray[float]', hessian: 'np.ndarray[float]'

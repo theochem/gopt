@@ -490,3 +490,26 @@ class TestInternal(unittest.TestCase):
         mol._auto_select_h_bond()
         assert mol.connectivity[2][3] == 2
         assert len(mol.fragments) == 2
+
+    def test_mini_dihed(self):
+        with path('saddle.test.data', 'methanol.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol._auto_select_cov_bond()
+        mol._auto_select_h_bond()
+        mol._auto_select_fragment_bond()
+        mol._auto_select_angle()
+        # start real parts
+        ref = len(mol.ic)
+        mol._auto_select_minimum_dihed_normal()
+        assert len(mol.ic) - ref == 1
+
+        with path('saddle.test.data', 'ethane.xyz') as mol2_path:
+            mol2 = Internal.from_file(mol2_path)
+        mol2._auto_select_cov_bond()
+        mol2._auto_select_h_bond()
+        mol2._auto_select_fragment_bond()
+        mol2._auto_select_angle()
+        # start real parts
+        ref = len(mol2.ic)
+        mol2._auto_select_minimum_dihed_normal()
+        assert len(mol2.ic) - ref == 1
