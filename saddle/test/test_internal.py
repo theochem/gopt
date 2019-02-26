@@ -565,3 +565,135 @@ class TestInternal(unittest.TestCase):
             fd = (q2 - q1) / 1e-4
             b = mol.b_matrix[2][6 + i]
             assert np.allclose(fd, b, atol=1e-4)
+
+    def test_cost_tfm_bond(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.add_bond(0, 1)
+        ref_mol = deepcopy(mol)
+        coor = mol.coordinates.copy()
+        target_ic = mol.ic_values
+        # print(mol.ic)
+        target_ic[0] = 2
+        mol.set_target_ic(target_ic)
+        # print(mol.ic[0].value - mol.ic[0].target)
+        cost_v = mol._compute_tfm_cost()
+        cost_g = mol._compute_tfm_gradient()
+        diff = 1e-4
+        assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
+        # finite diff test
+        for i in range(4):
+            for j in range(3):
+                coor = ref_mol.coordinates.copy()
+                coor[i][j] += diff
+                mol.set_new_coordinates(coor)
+                cost_v_2 = mol._compute_tfm_cost()
+                fd = (cost_v_2 - cost_v) / 1e-4
+                print(fd, cost_g[i * 3 + j], i * 3 + j)
+                assert np.allclose(fd, cost_g[3 * i + j], atol=2e-4)
+
+        # tests with bond and angle
+    def test_cost_tfm_angle(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.add_bond(0, 1)
+        mol.add_bond(0, 2)
+        mol.add_angle(1, 0, 2)
+        ref_mol = deepcopy(mol)
+        coor = mol.coordinates.copy()
+        target_ic = mol.ic_values
+        # print(mol.ic)
+        target_ic[2] = 2
+        target_ic[0] = 2
+        mol.set_target_ic(target_ic)
+        # print(mol.ic[0].value - mol.ic[0].target)
+        cost_v = mol._compute_tfm_cost()
+        cost_g = mol._compute_tfm_gradient()
+        diff = 1e-4
+        # assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
+        # finite diff test
+        for i in range(4):
+            for j in range(3):
+                coor = ref_mol.coordinates.copy()
+                coor[i][j] += diff
+                mol.set_new_coordinates(coor)
+                cost_v_2 = mol._compute_tfm_cost()
+                fd = (cost_v_2 - cost_v) / 1e-4
+                print(fd, cost_g[i * 3 + j], i * 3 + j)
+                assert np.allclose(fd, cost_g[3 * i + j], atol=2e-4)
+
+    def test_cost_tfm_dihed(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.auto_select_ic()
+        ref_mol = deepcopy(mol)
+        coor = mol.coordinates.copy()
+        target_ic = mol.ic_values
+        # print(mol.ic)
+        target_ic[0] = 2
+        target_ic[3] = 2
+        target_ic[5] = 2
+        mol.set_target_ic(target_ic)
+        # print(mol.ic[0].value - mol.ic[0].target)
+        cost_v = mol._compute_tfm_cost()
+        cost_g = mol._compute_tfm_gradient()
+        diff = 1e-4
+        # assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
+        # finite diff test
+        for i in range(4):
+            for j in range(3):
+                coor = ref_mol.coordinates.copy()
+                coor[i][j] += diff
+                mol.set_new_coordinates(coor)
+                cost_v_2 = mol._compute_tfm_cost()
+                fd = (cost_v_2 - cost_v) / 1e-4
+                assert np.allclose(fd, cost_g[3 * i + j], atol=2e-4)
+
+    def test_cost_tfm_dihed_cmplx(self):
+        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.auto_select_ic()
+        ref_mol = deepcopy(mol)
+        coor = mol.coordinates.copy()
+        target_ic = mol.ic_values + 0.5
+        # print(mol.ic)
+        mol.set_target_ic(target_ic)
+        # print(mol.ic[0].value - mol.ic[0].target)
+        cost_v = mol._compute_tfm_cost()
+        cost_g = mol._compute_tfm_gradient()
+        diff = 1e-4
+        # assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
+        # finite diff test
+        for i in range(8):
+            for j in range(3):
+                coor = ref_mol.coordinates.copy()
+                coor[i][j] += diff
+                mol.set_new_coordinates(coor)
+                cost_v_2 = mol._compute_tfm_cost()
+                fd = (cost_v_2 - cost_v) / 1e-4
+                assert np.allclose(fd, cost_g[3 * i + j], atol=4e-4)
+
+    def test_scipy_opt_tfm(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.auto_select_ic()
+        target_ic = mol.ic_values
+        target_ic[0] = 2
+        target_ic[3] = 2
+        target_ic[5] = 2
+        mol.set_target_ic(target_ic)
+        mol.optimize_to_target()
+        np.allclose(mol.ic_values[0], 2, atol=1e-4)
+        np.allclose(mol.ic_values[3], 2, atol=1e-4)
+        np.allclose(mol.ic_values[5], 2, atol=1e-4)
+
+    def test_scipy_opt_tfm_cmpx(self):
+        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.auto_select_ic()
+        target_ic = mol.ic_values
+        target_ic[-1] = -1
+        mol.set_target_ic(target_ic)
+        print(mol.ic_values)
+        mol.optimize_to_target()
+        assert np.max(np.abs(mol._compute_tfm_gradient())) < 1e-4

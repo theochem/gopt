@@ -25,6 +25,8 @@ from heapq import heappop, heappush
 from itertools import combinations
 
 import numpy as np
+from scipy.optimize import minimize
+
 from saddle.cartesian import Cartesian
 from saddle.coordinate_types import (BendAngle, BondLength, CoordinateTypes,
                                      DihedralAngle, NewDihedralCross,
@@ -466,6 +468,73 @@ class Internal(Cartesian):
     def _cost_q_dd(self):
         return np.diag([i.cost_dd for i in self.ic])
 
+    def _compute_tfm_cost(self):
+        return sum([i.cost_v for i in self.ic])
+
+    def _compute_tfm_gradient(self):
+        cost_g = np.zeros(3 * self.natom)
+        for index, ic in enumerate(self.ic):
+            if isinstance(ic, (BondLength, NewDihedralCross, NewDihedralDot)):
+                cost_g += 2 * (ic.value - ic.target) * self.b_matrix[index]
+            elif isinstance(ic, BendAngle):
+                cost_g += -2 * (np.cos(ic.value) - np.cos(ic.target)) * np.sin(
+                    ic.value) * self.b_matrix[index]
+            elif isinstance(ic, DihedralAngle):
+                # find the index of angle 1
+                angle1_ind = self._find_angle_of_atoms(ic.atoms[:3])
+                ang1 = self.ic[angle1_ind]
+                deriv_ang1 = 2 * np.sin(ang1.value) * np.cos(
+                    ang1.value) * self.b_matrix[angle1_ind]
+                # find the index of angle 2
+                angle2_ind = self._find_angle_of_atoms(ic.atoms[1:])
+                ang2 = self.ic[angle2_ind]
+                deriv_ang2 = 2 * np.sin(ang2.value) * np.cos(
+                    ang2.value) * self.b_matrix[angle2_ind]
+                # deriv for dihedral angle
+                deriv_dihed = 2 * np.sin(ic.value -
+                                         ic.target) * self.b_matrix[index]
+                part1 = deriv_ang1 * np.sin(
+                    ang2.value)**2 * (2 - 2 * np.cos(ic.value - ic.target))
+                part2 = deriv_ang2 * np.sin(
+                    ang1.value)**2 * (2 - 2 * np.cos(ic.value - ic.target))
+                part3 = np.sin(ang1.value)**2 * np.sin(
+                    ang2.value)**2 * deriv_dihed
+                total_d = part1 + part2 + part3
+                cost_g += total_d
+            else:
+                raise TypeError(f'Given {ic} is not support type')
+        return cost_g
+
+    def _compute_tfm_cost_api(self, new_coors):
+        tmp_mol = deepcopy(self)
+        tmp_mol.set_new_coordinates(new_coors.reshape(-1, 3))
+        return tmp_mol._compute_tfm_cost()
+
+    def _compute_tfm_g_api(self, new_coors):
+        tmp_mol = deepcopy(self)
+        tmp_mol.set_new_coordinates(new_coors.reshape(-1, 3))
+        return tmp_mol._compute_tfm_gradient()
+
+    def optimize_to_target(self):
+        init_coor = np.dot(
+            pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
+                -1, 3) + self.coordinates
+        result = minimize(
+            self._compute_tfm_cost_api,
+            x0=init_coor,
+            method='BFGS',
+            jac=self._compute_tfm_g_api,
+            tol=1e-4,
+            options={"maxiter": 100})
+        if result.success:
+            new_coors = result.x.reshape(-1, 3)
+            self.set_new_coordinates(new_coors)
+        else:
+            raise NotConvergeError("Failed to converge to target ic")
+
+    def _compute_tfm_hessian(self):
+        cost_h = np.zeros((3 * self.natom, 3 * self.natom))
+
     @property
     def ic(self) -> List[CoordinateTypes]:
         """list of internal coordinates object
@@ -617,6 +686,18 @@ class Internal(Cartesian):
             self._auto_select_dihed_normal(dihed_special)
             self._auto_select_dihed_improper(dihed_special)
         return None
+
+    def _find_angle_of_atoms(self, indices):
+        """find ic index for an angle consist of given indices"""
+        if len(indices) != 3:
+            raise ValueError(
+                f"Input {indices} need to consist only 3 elements")
+        indices = self._atoms_sequence_reorder(indices)
+        for index, ic in enumerate(self.ic):
+            if isinstance(ic, BendAngle) and tuple(ic.atoms) == tuple(indices):
+                return index
+        else:
+            raise NotSetError(f"Given {indices} is not an angle in system.")
 
     def _delete_ic_index(self, index: int) -> None:
         del self._ic[index]
