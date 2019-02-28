@@ -36,6 +36,7 @@ from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
 from saddle.math_lib import pse_inv
 from saddle.opt import GeoOptimizer, Point
 from saddle.periodic.periodic import periodic
+from saddle.utils import deprecated
 from typing import List, Tuple
 
 __all__ = ('Internal', )
@@ -309,6 +310,7 @@ class Internal(Cartesian):
         self._regenerate_ic()
         return None
 
+    @deprecated("Replaced by 'Internal.optimize_to_target_ic'")
     def converge_to_target_ic(self,
                               iteration: int = 100) -> None:  # to be test
         """Using buildin optimization process to optimize geometry to target
@@ -515,7 +517,7 @@ class Internal(Cartesian):
         tmp_mol.set_new_coordinates(new_coors.reshape(-1, 3))
         return tmp_mol._compute_tfm_gradient()
 
-    def optimize_to_target(self):
+    def optimize_to_target_ic(self, max_iter=100):
         init_coor = np.dot(
             pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
                 -1, 3) + self.coordinates
@@ -525,7 +527,7 @@ class Internal(Cartesian):
             method='BFGS',
             jac=self._compute_tfm_g_api,
             tol=1e-4,
-            options={"maxiter": 100})
+            options={"maxiter": max_iter})
         if result.success:
             new_coors = result.x.reshape(-1, 3)
             self.set_new_coordinates(new_coors)
