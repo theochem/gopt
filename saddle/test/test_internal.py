@@ -566,6 +566,55 @@ class TestInternal(unittest.TestCase):
             b = mol.b_matrix[2][6 + i]
             assert np.allclose(fd, b, atol=1e-4)
 
+    def test_b_matrix_dihed(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.auto_select_ic()
+        ref_mol = deepcopy(mol)
+        for j in range(4):
+            q1 = mol.ic_values[j]
+            for i in range(3):
+                coor = mol.coordinates.copy()
+                coor[j][i] += 1e-4
+                ref_mol.set_new_coordinates(coor)
+                q2 = ref_mol.ic_values[j]
+                fd = (q2 - q1) / 1e-4
+                b = mol.b_matrix[j][j * 3 + i]
+                assert np.allclose(fd, b, atol=1e-4)
+
+    def test_tfm_hessian(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.add_bond(0, 1)
+        mol.add_bond(1, 2)
+        mol.add_angle(0, 1, 2)
+        ref_mol = deepcopy(mol)
+        qd1 = mol.b_matrix
+        for i in range(3):
+            coor = mol.coordinates.copy()
+            coor[0][i] += 1e-4
+            ref_mol.set_new_coordinates(coor)
+            qd2 = ref_mol.b_matrix
+            fd_b = (qd2 - qd1) / 1e-4
+            analytic_b = mol._cc_to_ic_hessian[:, :, i]
+            assert np.allclose(fd_b, analytic_b, atol=1e-4)
+
+    def test_tfm_hessian_dihed(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.auto_select_ic()
+        ref_mol = deepcopy(mol)
+        qd1 = mol.b_matrix
+        for j in range(4):
+            for i in range(3):
+                coor = mol.coordinates.copy()
+                coor[j][i] += 1e-4
+                ref_mol.set_new_coordinates(coor)
+                qd2 = ref_mol.b_matrix
+                fd_b = (qd2 - qd1) / 1e-4
+                analytic_b = mol._cc_to_ic_hessian[:, :, 3 * j + i]
+                assert np.allclose(fd_b, analytic_b, atol=1e-4)
+
     def test_cost_tfm_bond(self):
         with path('saddle.test.data', 'h2o2.xyz') as mol_path:
             mol = Internal.from_file(mol_path)
@@ -682,7 +731,7 @@ class TestInternal(unittest.TestCase):
         target_ic[3] = 2
         target_ic[5] = 2
         mol.set_target_ic(target_ic)
-        mol.optimize_to_target()
+        mol.optimize_to_target_ic()
         np.allclose(mol.ic_values[0], 2, atol=1e-4)
         np.allclose(mol.ic_values[3], 2, atol=1e-4)
         np.allclose(mol.ic_values[5], 2, atol=1e-4)
@@ -695,5 +744,5 @@ class TestInternal(unittest.TestCase):
         target_ic[-1] = -1
         mol.set_target_ic(target_ic)
         print(mol.ic_values)
-        mol.optimize_to_target()
+        mol.optimize_to_target_ic()
         assert np.max(np.abs(mol._compute_tfm_gradient())) < 1e-4
