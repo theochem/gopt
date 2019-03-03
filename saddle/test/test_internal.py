@@ -172,7 +172,7 @@ class TestInternal(unittest.TestCase):
             [1.8141372422079882, 1.8141372422079882, 1.9106340153991836])
         assert np.allclose(self.mol.target_ic, [1.7, 1.7, 1.5])
         # test cost function in ic
-        v = self.mol._cost_v
+        v = self.mol.tf_cost
         d = self.mol._cost_q_d
         dd = self.mol._cost_q_dd
 

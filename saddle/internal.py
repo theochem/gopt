@@ -457,24 +457,29 @@ class Internal(Cartesian):
         """
         q_d, q_dd = self._cost_q_d, self._cost_q_dd
         x_d, x_dd = self._ic_gradient_hessian_transform_to_cc(q_d, q_dd)
-        return self._cost_v, x_d, x_dd
+        return self.tf_cost, x_d, x_dd
 
     @property
-    def _cost_v(self):
-        return sum([i.cost_v for i in self.ic])
+    def tf_cost(self):
+        """Compute cost function for transformation."""
+        return self._compute_tfm_cost()
 
     @property
     def _cost_q_d(self):
+        """Compute tf cost function gradient, deprecated."""
         return np.array([i.cost_d for i in self.ic])
 
     @property
     def _cost_q_dd(self):
+        """Compute tf cost function hessian, deprecated."""
         return np.diag([i.cost_dd for i in self.ic])
 
     def _compute_tfm_cost(self):
+        """Compute tf cost function"""
         return sum([i.cost_v for i in self.ic])
 
     def _compute_tfm_gradient_internal(self):
+        """Compute tf cost function gradient in internal coors."""
         cost_g_q = np.zeros(len(self.ic))
         for index, ic in enumerate(self.ic):
             if isinstance(ic, (BondLength, NewDihedralCross, NewDihedralDot)):
@@ -506,10 +511,12 @@ class Internal(Cartesian):
         return cost_g_q
 
     def _compute_tfm_gradient(self):
+        """Compute tf cost function gradient in cartesian coors."""
         cost_g_q = self._compute_tfm_gradient_internal()
         return np.dot(self.b_matrix.T, cost_g_q)
 
     def _compute_tfm_hessian(self):
+        """Compute tf cost function hessian in cartesian coors."""
         cost_h_q = np.zeros((len(self.ic), len(self.ic)))
         cost_g_q = self._compute_tfm_gradient_internal()
         # cost_h = np.zeros((3 * self.natom, 3 * self.natom))
@@ -563,16 +570,40 @@ class Internal(Cartesian):
         return part1 + part2
 
     def _compute_tfm_cost_api(self, new_coors):
+        """Obeject free cost function api for scipy optimization."""
         tmp_mol = deepcopy(self)
         tmp_mol.set_new_coordinates(new_coors.reshape(-1, 3))
         return tmp_mol._compute_tfm_cost()
 
     def _compute_tfm_g_api(self, new_coors):
+        """Obeject free cost function gradient api for scipy optimization."""
         tmp_mol = deepcopy(self)
         tmp_mol.set_new_coordinates(new_coors.reshape(-1, 3))
         return tmp_mol._compute_tfm_gradient()
 
-    def optimize_to_target_ic(self, max_iter=100):
+    def _compute_tfm_h_api(self, new_coors):
+        """Obeject free cost function hessian api for scipy optimization."""
+        tmp_mol = deepcopy(self)
+        tmp_mol.set_new_coordinates(new_coors.reshape(-1, 3))
+        return tmp_mol._compute_tfm_hessian()
+
+
+    def optimize_to_target_ic(self, method='BFGS', max_iter=100):
+        """Optimize molecule structure to given target internal coordinates.
+
+        Parameters
+        ----------
+        method : str, default to BFGS,
+            Optimization methods for minimize cost function. More key words
+            can be found: https://bit.ly/2ea73op
+        max_iter : int, default to 100
+            Numbers of iteration for optimization loops
+
+        Raises
+        ------
+        NotConvergeError
+            Raised when optimization failed
+        """
         init_coor = np.dot(
             pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
                 -1, 3) + self.coordinates
@@ -581,11 +612,16 @@ class Internal(Cartesian):
             x0=init_coor,
             method='BFGS',
             jac=self._compute_tfm_g_api,
+            hess=self._compute_tfm_hessian,
             tol=1e-4,
             options={"maxiter": max_iter})
         if result.success:
             new_coors = result.x.reshape(-1, 3)
             self.set_new_coordinates(new_coors)
+            hessian = self._compute_tfm_hessian()
+            if np.any(np.linalg.eigh(hessian)[0] < -1e-4):
+                raise NotConvergeError(
+                    "Converge to saddle point, need to change optimizer")
         else:
             raise NotConvergeError("Failed to converge to target ic")
 
@@ -689,7 +725,6 @@ class Internal(Cartesian):
         """Print out all internal coordiantes, return None"""
         for index, ic in enumerate(self.ic):
             print(f"({index}), {ic}")
-        return None
 
     def print_connectivity(self) -> None:
         """Print the connectivity matrix on screen
@@ -699,7 +734,6 @@ class Internal(Cartesian):
         for i, _ in enumerate(self.numbers):
             print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
             print("\n--Connectivity Ends--")
-        return None
 
     def auto_select_ic(self,
                        dihed_special: bool = False,
@@ -739,7 +773,6 @@ class Internal(Cartesian):
         else:
             self._auto_select_dihed_normal(dihed_special)
             self._auto_select_dihed_improper(dihed_special)
-        return None
 
     def _find_angle_of_atoms(self, indices):
         """find ic index for an angle consist of given indices"""
@@ -754,13 +787,13 @@ class Internal(Cartesian):
             raise NotSetError(f"Given {indices} is not an angle in system.")
 
     def _delete_ic_index(self, index: int) -> None:
+        """Low level function for deleting one ic"""
         del self._ic[index]
         self._regenerate_ic()
         self._regenerate_connectivity()
-        return None
 
     def _allocate_fragment_group(self, atom1, atom2):
-        '''adjust fragment groups for atom1 and atom2'''
+        """adjust fragment groups for atom1 and atom2"""
         num1 = self._fragment[atom1]
         num2 = self._fragment[atom2]
         if num1 != num2:
@@ -774,7 +807,6 @@ class Internal(Cartesian):
         self._connectivity = np.diag([-1] * len(self.numbers))
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
-        return None
 
     def _auto_select_cov_bond(self):
         """Low level function for selecting covalence bond"""
@@ -820,7 +852,6 @@ class Internal(Cartesian):
             if distance < 1.3 * radius_sum:
                 self.add_bond(index_i, index_j, b_type=1)
                 # test hydrogen bond
-        return None
 
     def _auto_select_fragment_bond(self):
         """automatically select fragmental bonds"""
