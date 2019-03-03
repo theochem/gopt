@@ -140,8 +140,7 @@ class OptLoop:
             return
         # delete extra points
         elif len(self) > self._max_pt:
-            head = self._point.pop(0)
-            del head
+            self._point.pop(0)
 
     def finite_diff_hessian(self, *_, omega=1.0, nu=1.0):
         update_index = self._judge_finite_diff(omega, nu)

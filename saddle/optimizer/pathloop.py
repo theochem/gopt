@@ -1,8 +1,8 @@
 import numpy as np
 from functools import partialmethod
 
-from saddle.errors import NotSetError, OptError
-from saddle.optimizer.hessian_modify import modify_hessian_with_pos_defi
+from saddle.errors import OptError
+# from saddle.optimizer.hessian_modify import modify_hessian_with_pos_defi
 from saddle.optimizer.optloop import OptLoop
 from saddle.optimizer.react_point import ReactPoint
 from saddle.optimizer.quasi_newton import QuasiNT

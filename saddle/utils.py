@@ -1,5 +1,3 @@
-from abc import abstractproperty
-
 import numpy as np
 import functools
 import inspect
@@ -101,8 +99,6 @@ class Utils():
         numbers = np.array(numbers)
         coordinates = np.array(coordinates) * angstrom
         return numbers, coordinates, charge, multi
-
-
 
 
 def deprecated(reason):

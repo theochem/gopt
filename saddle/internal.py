@@ -587,8 +587,7 @@ class Internal(Cartesian):
         tmp_mol.set_new_coordinates(new_coors.reshape(-1, 3))
         return tmp_mol._compute_tfm_hessian()
 
-
-    def optimize_to_target_ic(self, method='BFGS', max_iter=100):
+    def optimize_to_target_ic(self, method='BFGS', max_iter=100, hess=False):
         """Optimize molecule structure to given target internal coordinates.
 
         Parameters
@@ -598,6 +597,9 @@ class Internal(Cartesian):
             can be found: https://bit.ly/2ea73op
         max_iter : int, default to 100
             Numbers of iteration for optimization loops
+        hess : bool, False
+            Provide analytic hessian to optimizer, mainly used to mute runtime
+            warning for quasi-newton optimizer
 
         Raises
         ------
@@ -607,12 +609,13 @@ class Internal(Cartesian):
         init_coor = np.dot(
             pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
                 -1, 3) + self.coordinates
+        hess = self._compute_tfm_h_api if hess else None
         result = minimize(
             self._compute_tfm_cost_api,
             x0=init_coor,
             method='BFGS',
             jac=self._compute_tfm_g_api,
-            hess=self._compute_tfm_hessian,
+            hess=hess,
             tol=1e-4,
             options={"maxiter": max_iter})
         if result.success:
@@ -839,19 +842,6 @@ class Internal(Cartesian):
                                    periodic[self.numbers[ha_idx2]].vdw_radius)
                         if dist <= 0.9 * cut_off and angle_cos < 0:
                             self.add_bond(h_idx, ha_idx2, b_type=2)
-
-    def _auto_select_cov_bond(self) -> None:
-        """A private method for automatically selecting bond
-        """
-        for index_i, index_j in combinations(range(len(self.numbers)), 2):
-            atom_num1 = self.numbers[index_i]
-            atom_num2 = self.numbers[index_j]
-            distance = self.distance(index_i, index_j)
-            radius_sum = (periodic[atom_num1].cov_radius +
-                          periodic[atom_num2].cov_radius)
-            if distance < 1.3 * radius_sum:
-                self.add_bond(index_i, index_j, b_type=1)
-                # test hydrogen bond
 
     def _auto_select_fragment_bond(self):
         """automatically select fragmental bonds"""

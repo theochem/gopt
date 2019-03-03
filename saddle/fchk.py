@@ -31,7 +31,10 @@ class FCHKFile(object):
        command, lot (level of theory) and basis.
     """
 
-    def __init__(self, filename:str, ignore_errors:bool=False, field_labels=None):
+    def __init__(self,
+                 filename: str,
+                 ignore_errors: bool = False,
+                 field_labels=None):
         """
            Arguments:
             | ``filename``  --  The formatted checkpoint file
@@ -120,8 +123,9 @@ class FCHKFile(object):
                             try:
                                 value[counter] = datatype(word)
                             except (ValueError, OverflowError):
-                                print('WARNING: could not interpret word while reading %s: %s' % (
-                                    word, self.filename))
+                                print(
+                                    'WARNING: could not interpret word while reading %s: %s'
+                                    % (word, self.filename))
                                 if self.ignore_errors:
                                     value[counter] = unreadable
                                 else:
@@ -163,7 +167,8 @@ class FCHKFile(object):
                 self.fields["Atomic numbers"],
                 np.reshape(self.fields["Current cartesian coordinates"],
                            (-1, 3)),
-                self.title, )
+                self.title,
+            )
 
     def get_coordinates(self):
         """Return cartesian coordinates in format check file"""

@@ -148,12 +148,11 @@ kelvin = 1.0
 
 # *** Dipole ***
 
-debye = 0.39343031369146675 # = 1e-21*coulomb*meter**2/second/lightspeed
+debye = 0.39343031369146675  # = 1e-21*coulomb*meter**2/second/lightspeed
 
 # *** Current ***
 
 ampere = coulomb/second
-
 
 
 # automatically spice up the docstrings

@@ -284,6 +284,7 @@ def bond_length(rs, deriv=0):
     """
     return _bond_transform(rs, _bond_length_low, deriv)
 
+
 pair_distance = bond_length
 
 
@@ -310,8 +311,10 @@ def bend_angle(rs, deriv=0):
     """
     return _bend_transform(rs, _bend_angle_low, deriv)
 
+
 def dihed_new_dot(rs, deriv=0):
     return _dihed_transform(rs, _dihed_new_dot, deriv)
+
 
 def dihed_new_cross(rs, deriv=0):
     return _dihed_transform(rs, _dihed_new_cross, deriv)
@@ -343,7 +346,8 @@ def dihed_angle(rs, deriv=0):
 
 
 def opbend_dist(rs, deriv=0):
-    """Compute the out-of-plane distance, i.e. the distance between atom rs[3] and plane rs[0],rs[1],rs[2]
+    """Compute the out-of-plane distance, i.e. the distance between atom rs[3]
+       and plane rs[0],rs[1],rs[2]
 
        Arguments:
         | ``rs``  --  four numpy array with three elements

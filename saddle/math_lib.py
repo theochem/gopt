@@ -81,18 +81,18 @@ def ridders_solver(func: Callable[[float], float],
     raise OverIterLimitError
 
 
-def diagonalize(matrix: 'np.ndarray[Float]'
-                ) -> Tuple['np.ndarray[Float]', 'np.ndarray[Float]']:
+def diagonalize(matrix: 'np.ndarray[float]'
+                ) -> Tuple['np.ndarray[float]', 'np.ndarray[float]']:
     """Orthogonilize a given matrix my Grammian Matrix method
 
     Arguments
     ---------
-    matrix : np.ndarray[Float]
+    matrix : np.ndarray[float]
         Given matrix to be diagonalized
 
     Returns
     -------
-    (w, v) : Tuple['np.ndarray[Float]', 'np.ndarray[Float]']
+    (w, v) : Tuple['np.ndarray[float]', 'np.ndarray[float]']
         w is the eigenvalues of the Grammian matrix
         v is the eigenvectors of the Grammian matrix, each column is one vector
     """

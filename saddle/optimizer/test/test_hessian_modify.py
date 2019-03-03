@@ -161,7 +161,7 @@ class TestHessianModify(TestCase):
         val, vec = np.linalg.eigh(inner_m)
         val[val > -0.005] = -0.005
         ref_ini[:2, :2] = np.dot(np.dot(vec, np.diag(val)), vec.T)
-        ref_vec = np.linalg.eigh(ref_ini)
+        # ref_vec = np.linalg.eigh(ref_ini)
 
         ref_val, vec = np.linalg.eigh(ref_ini)
         # val = [-1.73835521, -0.45764908,  0.01310965,  1.09467051,  1.54577737]

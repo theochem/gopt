@@ -76,7 +76,7 @@ class GeoOptimizer(object):
         while func_value(max_w) >= 0:
             max_w *= 2
         result = ridders_solver(func_value, 0, max_w)
-        result = round(result, 7) # incase different test result
+        result = round(result, 7)  # incase different test result
         # print ("result", result)
         step = func_step(result)
         point.step = step

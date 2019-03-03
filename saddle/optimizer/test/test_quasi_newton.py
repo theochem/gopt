@@ -24,7 +24,7 @@ class TestInternal(TestCase):
         self.sample_g = lambda x, y: np.array([2 * x + y, x + 4 * y])
         self.sample_h = lambda x, y: np.array([[2, 1], [1, 4]])
         start_point = np.array([2, 1])
-        f_v = self.sample_fcn(*start_point)  # f_v = 8
+        # f_v = self.sample_fcn(*start_point)  # f_v = 8
         self.init_step = np.array([-0.2, -0.2])
         init_g = self.sample_g(*start_point)
         self.init_h = self.sample_h(*start_point)
@@ -37,7 +37,7 @@ class TestInternal(TestCase):
         self.sample_g = lambda x, y: np.array([x**2 + y, x + 2 * y**2])
         self.sample_h = lambda x, y: np.array([[2 * x, 1], [1, 4 * y]])
         start_point = np.array([2, 1])
-        f_v = self.sample_fcn(*start_point)  # f_v = 8
+        # f_v = self.sample_fcn(*start_point)  # f_v = 8
         self.init_step = np.array([-0.2, -0.2])
         init_g = self.sample_g(*start_point)
         self.init_h = self.sample_h(*start_point)

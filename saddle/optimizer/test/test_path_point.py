@@ -58,16 +58,24 @@ class TestPathPoint(TestCase):
                                self.pp._instance.coordinates)
 
     def test_finite_different(self):
-        fct = lambda x, y, z: x**2 + y**2 + z**2
-        grad = lambda x, y, z: np.array([2 * x, 2 * y, 2 * z])
+        def fct(x, y, z):
+            return x**2 + y**2 + z**2
+
+        def grad(x, y, z):
+            return np.array([2 * x, 2 * y, 2 * z])
+
         # hessian = lambda x, y, z: np.eye(3) * 2
         p1, p2 = self._set_point(fct, grad)
 
         result = PathPoint._calculate_finite_diff_h(p1, p2, 0.001)
         assert np.allclose(result, [2, 0, 0])
 
-        fct = lambda x, y, z: x**3 + 2 * y**3 + 3 * z**3
-        grad = lambda x, y, z: np.array([3 * x**2, 6 * y**2, 9 * z**2])
+        def fct(x, y, z):
+            return x**3 + 2 * y**3 + 3 * z**3
+
+        def grad(x, y, z):
+            return np.array([3 * x**2, 6 * y**2, 9 * z**2])
+
         p1, p2 = self._set_point(fct, grad)
         result = PathPoint._calculate_finite_diff_h(p1, p2, 0.001)
         assert np.allclose(result, [6.003, 0, 0])

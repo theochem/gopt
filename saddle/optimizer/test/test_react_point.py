@@ -2,11 +2,9 @@ from unittest import TestCase
 
 import numpy as np
 from importlib_resources import path
-from saddle.errors import NotSetError
 from saddle.optimizer.react_point import ReactPoint
-from saddle.reduced_internal import ReducedInternal
 from saddle.ts_construct import TSConstruct
-from saddle.utils import Utils
+# from saddle.utils import Utils
 
 
 # pylint: disable=E1101, E1133
@@ -22,7 +20,6 @@ class TestReactPoint(TestCase):
         self.r_p1 = ReactPoint(self.ts, self.dir_vec)
 
     def test_dir_vec(self):
-        b_matrix = self.ts.b_matrix
         proj_b = np.dot(self.ts.b_matrix, np.linalg.pinv(self.ts.b_matrix))
         # project twice
         dir_v = np.dot(proj_b, np.dot(proj_b, self.dir_vec))

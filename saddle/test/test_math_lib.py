@@ -9,7 +9,9 @@ from saddle.math_lib import diagonalize, pse_inv, ridders_solver
 # Disable pylint on numpy.random functions
 class TestSolver(unittest.TestCase):
     def test_ridder_quadratic(self):
-        func = lambda x: x**2 - 4
+        def func(x):
+            return x**2 - 4
+
         answer = ridders_solver(func, -1, 10)
         assert abs(answer - 2) < 1e-6
 
@@ -21,7 +23,9 @@ class TestSolver(unittest.TestCase):
             assert False
 
     def test_ridder_quatic(self):
-        func = lambda x: x**3 - x**2 - 2 * x
+        def func(x):
+            return x**3 - x**2 - 2 * x
+
         answer = ridders_solver(func, -2, 0)
         assert answer == 0
 
