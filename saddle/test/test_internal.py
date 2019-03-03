@@ -629,7 +629,7 @@ class TestInternal(unittest.TestCase):
         cost_v = mol._compute_tfm_cost()
         cost_g = mol._compute_tfm_gradient()
         diff = 1e-4
-        assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
+        assert np.allclose(cost_v, (2 - 2.47617635)**2)
         # finite diff test
         for i in range(4):
             for j in range(3):
@@ -721,6 +721,100 @@ class TestInternal(unittest.TestCase):
                 cost_v_2 = mol._compute_tfm_cost()
                 fd = (cost_v_2 - cost_v) / 1e-4
                 assert np.allclose(fd, cost_g[3 * i + j], atol=4e-4)
+
+    def test_cost_hessian_bond(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.add_bond(0, 1)
+        ref_mol = deepcopy(mol)
+        coor = mol.coordinates.copy()
+        target_ic = mol.ic_values + 0.5
+        # print(mol.ic)
+        mol.set_target_ic(target_ic)
+        # print(mol.ic[0].value - mol.ic[0].target)
+        # cost_v = mol._compute_tfm_cost()
+        cost_g = mol._compute_tfm_gradient()
+        cost_h = mol._compute_tfm_hessian()
+        diff = 1e-4
+
+        for j in range(4):
+            for i in range(3):
+                coor = ref_mol.coordinates.copy()
+                coor[j, i] += diff
+                mol.set_new_coordinates(coor)
+                cost_g_2 = mol._compute_tfm_gradient()
+                fd = (cost_g_2 - cost_g) / 1e-4
+                assert np.allclose(fd, cost_h[3 * j + i], atol=4e-4)
+
+    def test_cost_hessian_angle(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.add_bond(0, 1)
+        mol.add_bond(0, 2)
+        mol.add_angle(1, 0, 2)
+        # print(mol.b_matrix)
+        # print(mol.ic)
+        # assert False
+        ref_mol = deepcopy(mol)
+        coor = mol.coordinates.copy()
+        target_ic = mol.ic_values + 0.5
+        # print(mol.ic)
+        mol.set_target_ic(target_ic)
+        cost_g = mol._compute_tfm_gradient()
+        cost_h = mol._compute_tfm_hessian()
+        diff = 1e-4
+
+        for j in range(4):
+            for i in range(3):
+                coor = ref_mol.coordinates.copy()
+                coor[j, i] += diff
+                mol.set_new_coordinates(coor)
+                cost_g_2 = mol._compute_tfm_gradient()
+                fd = (cost_g_2 - cost_g) / 1e-4
+                assert np.allclose(fd, cost_h[j * 3 + i], atol=4e-4)
+
+    def test_cost_hessian_dihed(self):
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.auto_select_ic()
+        ref_mol = deepcopy(mol)
+        coor = mol.coordinates.copy()
+        target_ic = mol.ic_values + 0.5
+        mol.set_target_ic(target_ic)
+        cost_g = mol._compute_tfm_gradient()
+        cost_h = mol._compute_tfm_hessian()
+        diff = 1e-4
+
+        for j in range(4):
+            for i in range(3):
+                coor = ref_mol.coordinates.copy()
+                coor[j, i] += diff
+                mol.set_new_coordinates(coor)
+                cost_g_2 = mol._compute_tfm_gradient()
+                fd = (cost_g_2 - cost_g) / 1e-4
+                assert np.allclose(fd, cost_h[j * 3 + i], atol=4e-4)
+
+    def test_cost_hessian_cmpl(self):
+        with path('saddle.test.data', 'methanol.xyz') as mol_path:
+            mol = Internal.from_file(mol_path)
+        mol.auto_select_ic()
+        ref_mol = deepcopy(mol)
+        coor = mol.coordinates.copy()
+        target_ic = mol.ic_values + 0.5
+        mol.set_target_ic(target_ic)
+        cost_g = mol._compute_tfm_gradient()
+        cost_h = mol._compute_tfm_hessian()
+        diff = 1e-4
+
+        for j in range(6):
+            for i in range(3):
+                coor = ref_mol.coordinates.copy()
+                coor[j, i] += diff
+                mol.set_new_coordinates(coor)
+                cost_g_2 = mol._compute_tfm_gradient()
+                fd = (cost_g_2 - cost_g) / 1e-4
+                assert np.allclose(fd, cost_h[j * 3 + i], atol=4e-4)
+
 
     def test_scipy_opt_tfm(self):
         with path('saddle.test.data', 'h2o2.xyz') as mol_path:
