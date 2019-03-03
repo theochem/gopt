@@ -5,6 +5,8 @@ from saddle.errors import PositiveProductError
 from saddle.math_lib import diagonalize, pse_inv, ridders_solver
 
 
+# pylint: disable=E1101, E1133
+# Disable pylint on numpy.random functions
 class TestSolver(unittest.TestCase):
     def test_ridder_quadratic(self):
         func = lambda x: x**2 - 4
@@ -51,7 +53,7 @@ class TestSolver(unittest.TestCase):
 
         mtr_2 = np.array([[3, 0], [0, 0]])
         mtr_2_r = pse_inv(mtr_2)
-        ref_mtr = np.array([[1/3, 0], [0, 0]])
+        ref_mtr = np.array([[1 / 3, 0], [0, 0]])
         assert np.allclose(mtr_2_r, ref_mtr)
 
         mtr_3 = np.array([[3, 3e-9], [1e-11, 2e-10]])

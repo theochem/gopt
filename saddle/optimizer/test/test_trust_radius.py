@@ -7,6 +7,8 @@ from saddle.optimizer.path_point import PathPoint
 trim = TrustRegion.trim
 
 
+# pylint: disable=E1101, E1133
+# Disable pylint on numpy.random functions
 class TestTrustRadius(TestCase):
     def setUp(self):
         np.random.seed(199)
@@ -48,8 +50,8 @@ class TestTrustRadius(TestCase):
 
     def _quad_func_setup(self):
         # function f = x^2 + 2y^2 + 3xy + 2x + 4y + 1
-        self.gradient = lambda x, y: np.array([2 * x + 3 * y + 2,
-                                               4 * y + 3 * x + 4])
+        self.gradient = lambda x, y: np.array(
+            [2 * x + 3 * y + 2, 4 * y + 3 * x + 4])
         self.hessian = lambda x, y: np.array([[2, 3], [3, 4]])
 
     def _set_path_points(self):

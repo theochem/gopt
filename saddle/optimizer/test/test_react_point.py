@@ -9,6 +9,8 @@ from saddle.ts_construct import TSConstruct
 from saddle.utils import Utils
 
 
+# pylint: disable=E1101, E1133
+# Disable pylint on numpy.random functions
 class TestReactPoint(TestCase):
     def setUp(self):
         with path('saddle.test.data', 'rct.xyz') as rct_path:
