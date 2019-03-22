@@ -34,6 +34,8 @@ class Test_TS_Construct(unittest.TestCase):
         ts_ins.auto_select_ic()
         assert len(ts_ins.reactant.ic) == len(ts_ins.product.ic)
         self.reactant_ic.auto_select_ic()
+        print(ts_ins.reactant.ic)
+        print(self.reactant_ic.ic)
         # self.reactant_ic.add_bond(0, 4)
         # self.reactant_ic.add_angle(1, 0, 4)
         # self.reactant_ic.add_angle(2, 0, 4)

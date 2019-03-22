@@ -18,7 +18,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-"internal coordinates implementation"
+"""internal coordinates implementation."""
 
 from copy import deepcopy
 from heapq import heappop, heappush
@@ -44,7 +44,7 @@ __all__ = ('Internal', )
 
 
 class Internal(Cartesian):
-    """Internal Coordinate
+    """Internal Coordinate Class.
 
     Properties
     ----------
@@ -232,7 +232,7 @@ class Internal(Cartesian):
         if atom1 == atom4 or atom2 == atom3:
             raise AtomsIndexError("The two indece are the same")
         atoms = (atom1, atom2, atom3, atom4)
-        atoms = self._atoms_sequence_reorder(atoms)
+        # atoms = self._atoms_sequence_reorder(atoms)
         if self._repeat_atoms_check(atoms):
             if (self._check_connectivity(atom2, atom3)
                     and (self._check_connectivity(atom1, atom2)
@@ -1070,10 +1070,22 @@ class Internal(Cartesian):
             Return True if there is no duplicate and it's a valid new ic
             object, otherwise False
         """
-        for ic in self.ic:
-            if atoms == ic.atoms:
-                return False
-        return True
+        if len(atoms) <= 3:
+            for ic in self.ic:
+                if atoms == ic.atoms:
+                    return False
+            return True
+        if len(atoms) == 4:
+            for ic in self.ic:
+                if len(ic.atoms) == 4:
+                    mid = atoms[1:3]
+                    side = atoms[0], atoms[3]
+                    mid_ref = ic.atoms[1:3]
+                    side_ref = ic.atoms[0], ic.atoms[3]
+                    if all(np.sort(mid) == np.sort(mid_ref)) and all(
+                            np.sort(side) == np.sort(side_ref)):
+                        return False
+            return True
 
     def _add_new_internal_coordinate(
             self, new_ic: CoordinateTypes, d: 'np.ndarray[float]',
@@ -1122,10 +1134,11 @@ class Internal(Cartesian):
             if atoms[0] > atoms[2]:
                 atoms[0], atoms[2] = atoms[2], atoms[0]
         elif len(atoms) == 4:
-            if atoms[0] > atoms[3]:
-                atoms[0], atoms[3] = atoms[3], atoms[0]
-            if atoms[1] > atoms[2]:
-                atoms[1], atoms[2] = atoms[2], atoms[1]
+            pass
+            # if atoms[0] > atoms[3]:
+            #     atoms[0], atoms[3] = atoms[3], atoms[0]
+            # if atoms[1] > atoms[2]:
+            #     atoms[1], atoms[2] = atoms[2], atoms[1]
         else:
             raise AtomsNumberError("The number of atoms is not correct")
         return tuple(atoms)

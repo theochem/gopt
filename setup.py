@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import saddle
 
 setup(
@@ -11,10 +11,7 @@ setup(
     author=saddle.__author__,
     author_email='yxt1991@gmail.com',
     package_dir={'saddle': 'saddle'},
-    packages=[
-        'saddle', 'saddle.periodic', 'saddle.procrustes', 'saddle.optimizer',
-        'saddle.data', 'saddle.periodic.data'
-    ],
+    packages=find_packages(exclude=["*.test", "*.test.*", "test.*", "test"]),
     include_package_data=True,
     package_data={
         'saddle': ['data/*.json', 'data/*.com', 'work/log/.gitkeep'],

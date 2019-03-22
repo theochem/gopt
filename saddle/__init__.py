@@ -20,6 +20,6 @@
 # --
 '''The main Saddle Package'''
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'Derrick Yang'
 __license__ = 'GPLv3'

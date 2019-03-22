@@ -388,8 +388,21 @@ class TSConstruct(object):
             basic_ic = deepcopy(self._reactant.ic)
             for new_ic in self._product.ic:
                 for ic in self._reactant.ic:
-                    if new_ic.atoms == ic.atoms and type(new_ic) == type(ic):
-                        break
+                    if len(new_ic.atoms) <= 3:
+                        if new_ic.atoms == ic.atoms and type(new_ic) == type(
+                                ic):
+                            break
+                    elif len(new_ic.atoms) == 4 and len(ic.atoms) == 4:
+                        new_mid = new_ic.atoms[1:3]
+                        new_side = new_ic.atoms[0], new_ic.atoms[3]
+                        ic_mid = ic.atoms[1:3]
+                        ic_side = ic.atoms[0], ic.atoms[3]
+                        if (np.all(np.sort(new_mid) == np.sort(ic_mid)) and
+                                np.all(np.sort(new_side) == np.sort(ic_side))
+                                and type(new_ic) == type(ic)):
+                            break
+                    else:
+                        continue
                 else:
                     basic_ic.append(new_ic)
             return basic_ic
