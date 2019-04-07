@@ -32,7 +32,7 @@ from saddle.cartesian import Cartesian
 from saddle.coordinate_types import (BendAngle, BondLength, CoordinateTypes,
                                      DihedralAngle, NewDihedralCross,
                                      NewDihedralDot)
-from saddle.molmod import bend_angle
+from saddle.molmod import bend_angle, dihed_angle
 from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
                            NotSetError)
 from saddle.math_lib import pse_inv
@@ -489,15 +489,7 @@ class Internal(Cartesian):
                 cost_g_q[index] += -2 * (cos(ic.value) - cos(ic.target)) * sin(
                     ic.value) * ic.weight
             elif isinstance(ic, DihedralAngle):
-                # derivative of angle 1
-                ang1_ind = np.array(ic.atoms[:3])
-                ang1_v = bend_angle(self.coordinates[ang1_ind])
-                # derivative of angle 2
-                ang2_ind = np.array(ic.atoms[1:])
-                ang2_v = bend_angle(self.coordinates[ang2_ind])
-                # deriv for dihedral angle
-                cost_g_q[index] += 2 * sin(ic.value - ic.target) * sin(
-                    ang1_v)**2 * sin(ang2_v)**2 * ic.weight
+                continue
             else:
                 raise TypeError(f'Given {ic} is not support type')
         return cost_g_q
@@ -506,32 +498,41 @@ class Internal(Cartesian):
         cost_g_x = np.zeros(self.natom * 3)
         for index, ic in enumerate(self.ic):
             if isinstance(ic, DihedralAngle):
+                atoms = np.array(ic.atoms)
                 # value and b matrix of angle1
-                ang1_ind = np.array(ic.atoms[:3])
+                ang1_ind = np.array(atoms[:3])
                 ang1_v, ang1_d1 = bend_angle(self.coordinates[ang1_ind], 1)
                 # value and b matrix of angle2
-                ang2_ind = np.array(ic.atoms[1:])
+                ang2_ind = np.array(atoms[1:])
                 ang2_v, ang2_d1 = bend_angle(self.coordinates[ang2_ind], 1)
+                # value and b matrix for dihed
+                _, dihed_d1 = dihed_angle(self.coordinates[atoms], 1)
                 # derivative of angle 1
-                tmp_cost_g_q = 2 * sin(ang1_v) * cos(
-                    ang1_v) * sin(ang2_v)**2 * (
+                tmp_cost_g_q = 2 * sin(ang1_v) * cos(ang1_v) * sin(
+                    ang2_v)**2 * (
                         2 - 2 * cos(ic.value - ic.target)) * ic.weight
                 tmp_cost_g_x = ang1_d1 * tmp_cost_g_q
                 cost_g_x.reshape(-1, 3)[ang1_ind] += tmp_cost_g_x
 
                 # derivative of angle 2
-                tmp_cost_g_q = 2 * sin(ang2_v) * cos(
-                    ang2_v) * sin(ang1_v)**2 * (
+                tmp_cost_g_q = 2 * sin(ang2_v) * cos(ang2_v) * sin(
+                    ang1_v)**2 * (
                         2 - 2 * cos(ic.value - ic.target)) * ic.weight
                 tmp_cost_g_x = ang2_d1 * tmp_cost_g_q
                 cost_g_x.reshape(-1, 3)[ang2_ind] += tmp_cost_g_x
+
+                # derivative of dihed
+                tmp_cost_g_q = 2 * sin(ic.value - ic.target) * sin(
+                    ang1_v)**2 * sin(ang2_v)**2 * ic.weight
+                tmp_cost_g_x = dihed_d1 * tmp_cost_g_q
+                cost_g_x.reshape(-1, 3)[atoms] += tmp_cost_g_x
 
         cost_g_q = self._compute_tfm_gradient_internal()
         return np.dot(self.b_matrix.T, cost_g_q) + cost_g_x
 
     def _compute_tfm_hessian(self):
         """Compute tf cost function hessian in cartesian coors."""
-        cost_h_x = np.zeros(3 * self.natom, 3 * self.natom)
+        cost_h_x = np.zeros((3 * self.natom, 3 * self.natom))
         cost_h_q = np.zeros((len(self.ic), len(self.ic)))
         cost_g_q = self._compute_tfm_gradient_internal()
         # cost_h = np.zeros((3 * self.natom, 3 * self.natom))
@@ -542,49 +543,86 @@ class Internal(Cartesian):
                 cost_h_q[index, index] += 2 * (sin(ic.value)**2 - cos(
                     ic.value)**2 + cos(ic.value) * cos(ic.target)) * ic.weight
             elif isinstance(ic, DihedralAngle):
-                angle1_ind = self._find_angle_of_atoms(ic.atoms[:3])
-                angle2_ind = self._find_angle_of_atoms(ic.atoms[1:])
-                ang1_ind = np.array(ic.atoms[:3])
-                ang1_v, ang1_d, ang1_dd = bend_angle(self.coordinates[ang1_ind, 2])
-                ang2_ind = np.array(ic.atoms[1:])
-                ang2_v, ang2_d, ang2_dd = bend_angle(self.coordinates[ang2_ind, 2])
+                atoms = np.array(ic.atoms)
+                atoms_xyz = np.ravel(
+                    list(zip(atoms * 3, atoms * 3 + 1, atoms * 3 + 2)))
+                assert len(atoms_xyz) == 12
+                dihed_cost_h_q = np.zeros((3, 3))
+                dihed_cost_g_q = np.zeros(3)
+                dihed_b = np.zeros((3, 12))
+                dihed_bp = np.zeros((3, 12, 12))
+                # value and b matrix of angle1
+                ang1_ind = atoms[:3]
+                ang1_v, ang1_d1, ang1_d2 = bend_angle(
+                    self.coordinates[ang1_ind], 2)
+                # value and b matrix of angle2
+                ang2_ind = atoms[1:]
+                ang2_v, ang2_d1, ang2_d2 = bend_angle(
+                    self.coordinates[ang2_ind], 2)
+
+                # value of b`_ijk
+                di_ind = np.array(ic.atoms)
+                dihed, di_d1, di_d2 = dihed_angle(self.coordinates[di_ind], 2)
+                # add dihed_b
+                dihed_b[0] += di_d1.ravel()
+                dihed_b[1][:9] += ang1_d1.ravel()
+                dihed_b[2][3:] += ang2_d1.ravel()
+
+                # add dihed_H
+                dihed_bp[0, :, :] += di_d2.reshape(12, 12)
+                dihed_bp[1, : 9, : 9] += ang1_d2.reshape(9, 9)
+                dihed_bp[2, 3:, 3:] += ang2_d2.reshape(9, 9)
+
+                # first derivative
+                dihed_cost_g_q[0] += 2 * sin(ic.value - ic.target) * sin(
+                    ang1_v)**2 * sin(ang2_v)**2 * ic.weight
+                dihed_cost_g_q[1] += 2 * sin(ang1_v) * cos(ang1_v) * sin(
+                    ang2_v)**2 * (
+                        2 - 2 * cos(ic.value - ic.target)) * ic.weight
+                dihed_cost_g_q[2] += 2 * sin(ang2_v) * cos(ang2_v) * sin(
+                    ang1_v)**2 * (
+                        2 - 2 * cos(ic.value - ic.target)) * ic.weight
+
                 # d2f/(d di d di)
-                cost_h_q[index, index] += 2 * sin(ang1_v)**2 * sin(
+                dihed_cost_h_q[0, 0] += 2 * sin(ang1_v)**2 * sin(
                     ang2_v)**2 * cos(ic.value - ic.target) * ic.weight
                 # d2f/(da1 da1)
-                cost_h_q[angle1_ind, angle1_ind] += -2 * (
-                    -2 * cos(ic.value - ic.target) + 2) * sin(
-                        ang1_v)**2 * sin(ang2_v)**2 + 2 * (
-                            -2 * cos(ic.value - ic.target) + 2) * sin(
-                                ang2_v)**2 * cos(ang1_v)**2 * ic.weight
+                dihed_cost_h_q[1, 1] += -2 * (
+                    -2 * cos(ic.value - ic.target) +
+                    2) * sin(ang1_v)**2 * sin(ang2_v)**2 + 2 * (
+                        -2 * cos(ic.value - ic.target) +
+                        2) * sin(ang2_v)**2 * cos(ang1_v)**2 * ic.weight
                 # d2f/(da2 da2)
-                cost_h_q[angle2_ind, angle2_ind] += -2 * (
-                    -2 * cos(ic.value - ic.target) + 2) * sin(
-                        ang1_v)**2 * sin(ang2_v)**2 + 2 * (
-                            -2 * cos(ic.value - ic.target) + 2) * sin(
-                                ang1_v)**2 * cos(ang2_v)**2 * ic.weight
+                dihed_cost_h_q[2, 2] += -2 * (
+                    -2 * cos(ic.value - ic.target) +
+                    2) * sin(ang1_v)**2 * sin(ang2_v)**2 + 2 * (
+                        -2 * cos(ic.value - ic.target) +
+                        2) * sin(ang1_v)**2 * cos(ang2_v)**2 * ic.weight
                 # d2f/(da1 da2) and d2f/(da2 da1)
-                deriv1 = 4 * (-2 * cos(ic.value - ic.target) + 2) * sin(
-                    ang1_v) * sin(ang2_v) * cos(ang1_v) * cos(
-                        ang2_v) * ic.weight
-                cost_h_q[angle1_ind, angle2_ind] += deriv1
-                cost_h_q[angle2_ind, angle1_ind] += deriv1
+                deriv1 = 4 * (
+                    -2 * cos(ic.value - ic.target) + 2) * sin(ang1_v) * sin(
+                        ang2_v) * cos(ang1_v) * cos(ang2_v) * ic.weight
+                dihed_cost_h_q[1, 2] += deriv1
+                dihed_cost_h_q[2, 1] += deriv1
                 # d2f/(da1 ddi)
-                deriv2 = 4 * sin(ang1_v) * sin(
-                    ang2_v)**2 * sin(ic.value - ic.target) * cos(
-                        ang1_v) * ic.weight
-                cost_h_q[angle1_ind, index] += deriv2
-                cost_h_q[index, angle1_ind] += deriv2
+                deriv2 = 4 * sin(ang1_v) * sin(ang2_v)**2 * sin(
+                    ic.value - ic.target) * cos(ang1_v) * ic.weight
+                dihed_cost_h_q[1, 0] += deriv2
+                dihed_cost_h_q[0, 1] += deriv2
                 # d2f/(da2 ddi)
-                deriv3 = 4 * sin(ang1_v)**2 * sin(
-                    ang2_v) * sin(ic.value - ic.target) * cos(
-                        ang2_v) * ic.weight
-                cost_h_q[index, angle2_ind] += deriv3
-                cost_h_q[angle2_ind, index] += deriv3
+                deriv3 = 4 * sin(ang1_v)**2 * sin(ang2_v) * sin(
+                    ic.value - ic.target) * cos(ang2_v) * ic.weight
+                dihed_cost_h_q[0, 2] += deriv3
+                dihed_cost_h_q[2, 0] += deriv3
+                di_part1 = np.dot(np.dot(dihed_b.T, dihed_cost_h_q), dihed_b)
+                di_part2 = np.einsum('i, ijk -> jk', dihed_cost_g_q, dihed_bp)
+                dihed_cost_h_x = di_part1 + di_part2
+                # print(dihed_cost_h_x)
+                cost_h_x[atoms_xyz[:, None], atoms_xyz] += dihed_cost_h_x
 
         part1 = np.dot(np.dot(self.b_matrix.T, cost_h_q), self.b_matrix)
         part2 = np.einsum('i, ijk -> jk', cost_g_q, self._cc_to_ic_hessian)
-        return part1 + part2
+        return part1 + part2 + cost_h_x
 
     def _compute_tfm_cost_api(self, new_coors):
         """Obeject free cost function api for scipy optimization."""

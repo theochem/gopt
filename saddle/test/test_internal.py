@@ -2,6 +2,7 @@ import unittest
 from copy import deepcopy
 
 import numpy as np
+from numpy.testing import assert_allclose
 from importlib_resources import path
 from saddle.internal import Internal
 from saddle.utils import Utils
@@ -233,7 +234,7 @@ class TestInternal(unittest.TestCase):
         assert isinstance(n_p, Point)
         assert n_p.trust_radius == 1.7320508075688772
 
-        self.mol.converge_to_target_ic(iteration=100)
+        self.mol.optimize_to_target_ic(max_iter=100)
         g_array = self.mol.cost_value_in_cc[1]
         assert len(g_array[abs(g_array) > 3e-4]) == 0
 
@@ -409,17 +410,17 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(h2o2.ic_values, ref_ic)
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 1.57]
         h2o2.set_target_ic(target_ic)
-        h2o2.converge_to_target_ic()
+        h2o2.optimize_to_target_ic()
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
 
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 3.14]
         h2o2.set_target_ic(target_ic)
-        h2o2.converge_to_target_ic()
+        h2o2.optimize_to_target_ic()
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-4)
 
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, -1.57]
         h2o2.set_target_ic(target_ic)
-        h2o2.converge_to_target_ic()
+        h2o2.optimize_to_target_ic()
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
 
     def test_dihedral_repeak(self):
@@ -464,11 +465,11 @@ class TestInternal(unittest.TestCase):
         h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
         h2o2.auto_select_ic(dihed_special=True)
         assert len(h2o2.ic) == 7
-        print(h2o2.ic_values)
+        # print(h2o2.ic_values)
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 0.8, 0.6]
         h2o2.set_target_ic(target_ic)
-        h2o2.converge_to_target_ic()
-        print(h2o2.ic_values)
+        h2o2.optimize_to_target_ic()
+        # print(h2o2.ic_values)
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-2)
         # print(h2o2.ic_values)
 
@@ -499,7 +500,7 @@ class TestInternal(unittest.TestCase):
         assert np.sum(mol.connectivity[0] == 1) == 2
         assert np.sum(mol.connectivity[3] == 1) == 2
         assert len(mol.fragments) == 2
-        print(mol.connectivity)
+        # print(mol.connectivity)
         mol._auto_select_h_bond()
         assert mol.connectivity[2][3] == 2
         assert len(mol.fragments) == 2
@@ -687,6 +688,7 @@ class TestInternal(unittest.TestCase):
         diff = 1e-4
         # assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
         # finite diff test
+        mol.list_ic
         for i in range(4):
             for j in range(3):
                 coor = ref_mol.coordinates.copy()
@@ -790,7 +792,7 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()
                 fd = (cost_g_2 - cost_g) / 1e-4
-                assert np.allclose(fd, cost_h[j * 3 + i], atol=4e-4)
+                assert_allclose(fd, cost_h[j * 3 + i], atol=4e-4)
 
     def test_cost_hessian_cmpl(self):
         with path('saddle.test.data', 'methanol.xyz') as mol_path:
@@ -834,6 +836,6 @@ class TestInternal(unittest.TestCase):
         target_ic = mol.ic_values
         target_ic[-1] = -1
         mol.set_target_ic(target_ic)
-        print(mol.ic_values)
+        # print(mol.ic_values)
         mol.optimize_to_target_ic()
         assert np.max(np.abs(mol._compute_tfm_gradient())) < 1e-4
