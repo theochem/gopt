@@ -3,6 +3,7 @@ import unittest
 from copy import deepcopy
 
 import numpy as np
+from numpy.testing import assert_allclose
 from importlib_resources import path
 from saddle.errors import InvalidArgumentError
 from saddle.internal import Internal
@@ -75,7 +76,6 @@ class Test_TS_Construct(unittest.TestCase):
         ts_ins.auto_select_ic()
         ts_ins.create_ts_state(start_with="product")
         result = deepcopy(ts_ins.ts)
-        # print result.ic_values
         ts_ins.create_ts_state(start_with="reactant")
         result_2 = deepcopy(ts_ins.ts)
         # print result_2.ic_values
@@ -88,7 +88,7 @@ class Test_TS_Construct(unittest.TestCase):
         # TODO: need to check structure
         # assert np.allclose(
         #     result_2.ic_values[:4], result_2.target_ic[:4], atol=1e-6)
-        assert np.allclose(
+        assert_allclose(
             result.ic_values[:16], result_2.ic_values[:16], atol=1e-3)
         ts_ins.select_key_ic(1)
         assert ts_ins.key_ic_counter == 1

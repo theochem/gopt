@@ -302,6 +302,7 @@ class TSConstruct(object):
         target_ic = ratio * self.reactant.ic_values + (
             1. - ratio) * self.product.ic_values
         ts_internal.set_target_ic(target_ic)
+        # ts_internal.list_ic
         ts_internal.converge_to_target_ic()
         if task == 'ts':
             ts_internal = ReducedInternal.update_to_reduced_internal(

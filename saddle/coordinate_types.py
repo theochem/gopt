@@ -283,8 +283,8 @@ class DihedralAngle(CoordinateTypes):
 
     @property
     def sub_weight(self):
-        sin_ang1 = np.sin(bend_angle(self._coordinates[:3]))
-        sin_ang2 = np.sin(bend_angle(self._coordinates[1:]))
+        sin_ang1 = np.sin(bend_angle(self._coordinates[:3])[0])
+        sin_ang2 = np.sin(bend_angle(self._coordinates[1:])[0])
         return sin_ang1**2 * sin_ang2**2
 
     @sub_weight.setter
