@@ -16,6 +16,19 @@ class TestInternal(unittest.TestCase):
         with path('saddle.test.data', 'water.xyz') as mol_path:
             mol = Utils.load_file(mol_path)
         self.mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+            mol2 = Utils.load_file(mol_path)
+        self.h2o2 = Internal(mol2.coordinates, mol2.numbers, 0, 1)
+
+    def test_ic_weights(self):
+        self.mol.auto_select_ic()
+        assert_allclose(self.mol.ic_weights, [1, 1, 1])
+        self.mol.set_ic_weights(np.array([0.5, 0.5, 2]))
+        assert_allclose(self.mol.ic_weights, [0.5, 0.5, 2])
+
+        self.h2o2.auto_select_ic()
+        self.h2o2.set_dihed_weights(0)
+        assert self.h2o2.ic[-1].weight == 0
 
     def test_connectivity(self):
         assert np.allclose(self.mol.connectivity, np.eye(3) * -1)

@@ -434,6 +434,24 @@ class Internal(Cartesian):
         self._regenerate_ic()
         self._regenerate_connectivity()
 
+    def set_ic_weights(self, weights):
+        if not isinstance(weights, np.ndarray):
+            raise TypeError(
+                f"Weights need to be a numpy array, got {type(weights)}")
+        if len(weights) != len(self.ic):
+            raise ValueError(f"# of Weights is not equal to ics. Total ")
+        for i, ic in enumerate(self.ic):
+            ic.weight = weights[i]
+
+    def set_dihed_weights(self, value):
+        for ic in self.ic:
+            if isinstance(ic, DihedralAngle):
+                ic.weight = value
+
+    @property
+    def ic_weights(self):
+        return np.array([i.weight for i in self.ic])
+
     @property
     def cost_value_in_cc(
             self) -> Tuple[float, 'np.ndarray[float]', 'np.ndarray[float]']:
@@ -560,7 +578,7 @@ class Internal(Cartesian):
 
                 # add dihed_H
                 dihed_bp[0, :, :] += di_d2.reshape(12, 12)
-                dihed_bp[1, : 9, : 9] += ang1_d2.reshape(9, 9)
+                dihed_bp[1, :9, :9] += ang1_d2.reshape(9, 9)
                 dihed_bp[2, 3:, 3:] += ang2_d2.reshape(9, 9)
 
                 # first derivative
@@ -632,7 +650,7 @@ class Internal(Cartesian):
         tmp_mol.set_new_coordinates(new_coors.reshape(-1, 3))
         return tmp_mol._compute_tfm_hessian()
 
-    def optimize_to_target_ic(self, method='BFGS', max_iter=100, hess=False):
+    def optimize_to_target_ic(self, method='BFGS', *_, max_iter=100, hess=False, hess_check=True, dihed_weight=None):
         """Optimize molecule structure to given target internal coordinates.
 
         Parameters
@@ -654,22 +672,29 @@ class Internal(Cartesian):
         init_coor = np.dot(
             pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
                 -1, 3) + self.coordinates
+        wts_bk = None
+        if dihed_weight is not None:
+            wts_bk = self.ic_weights
+            self.set_dihed_weights(dihed_weight)
         hess = self._compute_tfm_h_api if hess else None
         result = minimize(
             self._compute_tfm_cost_api,
             x0=init_coor,
-            method='BFGS',
+            method=method,
             jac=self._compute_tfm_g_api,
             hess=hess,
             tol=1e-4,
             options={"maxiter": max_iter})
+        # if wts_bk is not None:
+        #     self.set_ic_weights(wts_bk)
         if result.success:
             new_coors = result.x.reshape(-1, 3)
             self.set_new_coordinates(new_coors)
-            # hessian = self._compute_tfm_hessian()
-            # if np.any(np.linalg.eigh(hessian)[0] < -1e-4):
-            #     raise NotConvergeError(
-            #         "Converge to saddle point, need to change optimizer")
+            if hess_check:
+                hessian = self._compute_tfm_hessian()
+                if np.any(np.linalg.eigh(hessian)[0] < -1e-4):
+                    raise NotConvergeError(
+                        "Converge to saddle point, need to change optimizer")
         else:
             raise NotConvergeError("Failed to converge to target ic")
 
@@ -1217,9 +1242,11 @@ class Internal(Cartesian):
             self._cc_to_ic_hessian = np.zeros((0, 3 * len(self.numbers),
                                                3 * len(self.numbers)))
         atoms = np.array(atoms)
-        tmp_vector = np.zeros((1, 3 * len(self.numbers), 3 * len(self.numbers)))
+        tmp_vector = np.zeros((1, 3 * len(self.numbers),
+                               3 * len(self.numbers)))
         index = np.ravel(list(zip(3 * atoms, 3 * atoms + 1, 3 * atoms + 2)))
-        tmp_vector[0, index[:, None], index] = deriv.reshape(-1, 3 * len(atoms))
+        tmp_vector[0, index[:, None], index] = deriv.reshape(
+            -1, 3 * len(atoms))
         self._cc_to_ic_hessian = np.vstack((self._cc_to_ic_hessian,
                                             tmp_vector))
 

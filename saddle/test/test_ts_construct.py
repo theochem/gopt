@@ -171,7 +171,8 @@ class Test_TS_Construct(unittest.TestCase):
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(auto_select=True, reset_ic=False)
         assert len(new_ins.ts.ic) == 31
-        assert np.allclose(new_ins.ts.ic_values[0], ref_ic, atol=2e-2)
+        # TODO: need to be reviewed
+        assert np.allclose(new_ins.ts.ic_values[0], ref_ic, atol=1e-2)
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(auto_select=True, reset_ic=True)
         assert all(
