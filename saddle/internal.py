@@ -305,7 +305,7 @@ class Internal(Cartesian):
             index_1]
         self._regenerate_ic()
 
-    @deprecated("Use 'optimize_to_target_ic' instead")
+    # @deprecated("Use 'optimize_to_target_ic' instead")
     def converge_to_target_ic(self,
                               iteration: int = 100) -> None:  # to be test
         """Using buildin optimization process to optimize geometry to target
@@ -672,10 +672,13 @@ class Internal(Cartesian):
         init_coor = np.dot(
             pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
                 -1, 3) + self.coordinates
+        self.set_new_coordinates(init_coor)
         wts_bk = None
         if dihed_weight is not None:
             wts_bk = self.ic_weights
             self.set_dihed_weights(dihed_weight)
+        for i in self.ic:
+            print(i, i.weight)
         hess = self._compute_tfm_h_api if hess else None
         result = minimize(
             self._compute_tfm_cost_api,
@@ -685,8 +688,8 @@ class Internal(Cartesian):
             hess=hess,
             tol=1e-4,
             options={"maxiter": max_iter})
-        # if wts_bk is not None:
-        #     self.set_ic_weights(wts_bk)
+        if wts_bk is not None:
+            self.set_ic_weights(wts_bk)
         if result.success:
             new_coors = result.x.reshape(-1, 3)
             self.set_new_coordinates(new_coors)

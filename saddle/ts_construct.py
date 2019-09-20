@@ -3,14 +3,18 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 import numpy as np
-from saddle.errors import (AtomsNumberError, InputTypeError,
-                           InvalidArgumentError, NotSetError)
+from saddle.errors import (
+    AtomsNumberError,
+    InputTypeError,
+    InvalidArgumentError,
+    NotSetError,
+)
 from saddle.internal import Internal
 from saddle.path_ri import PathRI
 from saddle.utils import Utils
 from saddle.reduced_internal import ReducedInternal
 
-__all__ = ('TSConstruct', )
+__all__ = ("TSConstruct",)
 
 
 class TSConstruct(object):
@@ -71,8 +75,7 @@ class TSConstruct(object):
     """
 
     def __init__(self, reactant_ic, product_ic):
-        if isinstance(reactant_ic, Internal) and isinstance(
-                product_ic, Internal):
+        if isinstance(reactant_ic, Internal) and isinstance(product_ic, Internal):
             if np.allclose(reactant_ic.numbers, product_ic.numbers):
                 self._numbers = reactant_ic.numbers
                 self._reactant = deepcopy(reactant_ic)
@@ -243,12 +246,9 @@ class TSConstruct(object):
         self._reactant.delete_ic(*indices)
         self._product.delete_ic(*indices)
 
-    def auto_select_ic(self,
-                       *_,
-                       reset_ic=False,
-                       auto_select=True,
-                       dihed_special=False,
-                       mode="mix"):
+    def auto_select_ic(
+        self, *_, reset_ic=False, auto_select=True, dihed_special=False, mode="mix"
+    ):
         """Select internal coordinates for both reactant and product based on
         given structure and choices
 
@@ -267,14 +267,14 @@ class TSConstruct(object):
         """
         if auto_select:
             self._reactant.auto_select_ic(
-                reset_ic=reset_ic, dihed_special=dihed_special)
-            self._product.auto_select_ic(
-                reset_ic=reset_ic, dihed_special=dihed_special)
+                reset_ic=reset_ic, dihed_special=dihed_special
+            )
+            self._product.auto_select_ic(reset_ic=reset_ic, dihed_special=dihed_special)
         target_ic_list = self._get_union_of_ics(mode=mode)
         self._reactant.set_new_ics(target_ic_list)
         self._product.set_new_ics(target_ic_list)
 
-    def create_ts_state(self, start_with, ratio=0.5, task='ts'):
+    def create_ts_state(self, start_with, ratio=0.5, task="ts"):
         """Create transition state structure based on the linear combination of
         internal structure of both reactant and product.
 
@@ -294,20 +294,22 @@ class TSConstruct(object):
         elif start_with == "product":
             model = self.product
         else:
-            raise InvalidArgumentError(
-                "The input of start_with is not supported")
-        if ratio > 1. or ratio < 0:
+            raise InvalidArgumentError("The input of start_with is not supported")
+        if ratio > 1.0 or ratio < 0:
             raise InvalidArgumentError("The input of ratio is not supported")
         ts_internal = deepcopy(model)
-        target_ic = ratio * self.reactant.ic_values + (
-            1. - ratio) * self.product.ic_values
+        target_ic = (
+            ratio * self.reactant.ic_values + (1.0 - ratio) * self.product.ic_values
+        )
         ts_internal.set_target_ic(target_ic)
         # ts_internal.list_ic
-        ts_internal.optimize_to_target_ic(dihed_weight=0, hess_check=False)
-        if task == 'ts':
-            ts_internal = ReducedInternal.update_to_reduced_internal(
-                ts_internal)
-        elif task == 'path':
+        ts_internal.converge_to_target_ic()
+        # ts_internal.optimize_to_target_ic(dihed_weight=0, hess_check=False)
+        # dihed_weight=0, hess=True, method="Newton-CG", hess_check=False, max_iter=500
+        # )
+        if task == "ts":
+            ts_internal = ReducedInternal.update_to_reduced_internal(ts_internal)
+        elif task == "path":
             path_vector = self.product.ic_values - self.reactant.ic_values
             ts_internal = PathRI.update_to_path_ri(ts_internal, path_vector)
         # change the ts_internal to Class ReducedInternal
@@ -330,15 +332,17 @@ class TSConstruct(object):
                 self._key_ic_counter += 1
                 self.ts.set_key_ic_number(self._key_ic_counter)
 
-    def auto_generate_ts(self,
-                         ratio=0.5,
-                         *_,
-                         start_with="reactant",
-                         reset_ic=False,
-                         auto_select=True,
-                         dihed_special=False,
-                         mode="mix",
-                         task='ts'):
+    def auto_generate_ts(
+        self,
+        ratio=0.5,
+        *_,
+        start_with="reactant",
+        reset_ic=False,
+        auto_select=True,
+        dihed_special=False,
+        mode="mix",
+        task="ts"
+    ):
         """Complete auto generate transition state structure based on some
         default parameters
 
@@ -367,50 +371,51 @@ class TSConstruct(object):
             reset_ic=False,
             dihed_special=dihed_special,
             auto_select=auto_select,
-            mode=mode)
+            mode=mode,
+        )
         self.create_ts_state(start_with, ratio, task=task)
 
-    def ts_to_file(self, filename=''):
+    def ts_to_file(self, filename=""):
         if filename:
             Utils.save_file(filename, self.ts)
         else:
-            raise InvalidArgumentError('Invalid empty filename')
+            raise InvalidArgumentError("Invalid empty filename")
 
     def update_rct_and_prd_with_ts(self):
         target_ic = self.ts.ic
         self._reactant.set_new_ics(target_ic)
         self._product.set_new_ics(target_ic)
 
-    def _get_union_of_ics(self, mode='mix'):  # need tests
+    def _get_union_of_ics(self, mode="mix"):  # need tests
         """Get the combined internal coordinates based on the ic structure of
         both reactant and product
         """
-        if mode == 'mix':
+        if mode == "mix":
             basic_ic = deepcopy(self._reactant.ic)
             for new_ic in self._product.ic:
                 for ic in self._reactant.ic:
                     if len(new_ic.atoms) <= 3:
-                        if new_ic.atoms == ic.atoms and type(new_ic) == type(
-                                ic):
+                        if new_ic.atoms == ic.atoms and type(new_ic) == type(ic):
                             break
                     elif len(new_ic.atoms) == 4 and len(ic.atoms) == 4:
                         new_mid = new_ic.atoms[1:3]
                         new_side = new_ic.atoms[0], new_ic.atoms[3]
                         ic_mid = ic.atoms[1:3]
                         ic_side = ic.atoms[0], ic.atoms[3]
-                        if (np.all(np.sort(new_mid) == np.sort(ic_mid)) and
-                                np.all(np.sort(new_side) == np.sort(ic_side))
-                                and type(new_ic) == type(ic)):
+                        if (
+                            np.all(np.sort(new_mid) == np.sort(ic_mid))
+                            and np.all(np.sort(new_side) == np.sort(ic_side))
+                            and type(new_ic) == type(ic)
+                        ):
                             break
                     else:
                         continue
                 else:
                     basic_ic.append(new_ic)
             return basic_ic
-        elif mode == 'reactant':
+        elif mode == "reactant":
             return deepcopy(self._reactant.ic)
-        elif mode == 'product':
+        elif mode == "product":
             return deepcopy(self._product.ic)
         else:
-            raise InvalidArgumentError(
-                'The argument {} is invalid'.format(mode))
+            raise InvalidArgumentError("The argument {} is invalid".format(mode))
