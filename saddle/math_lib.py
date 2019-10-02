@@ -6,14 +6,16 @@ import numpy as np
 
 from saddle.errors import OverIterLimitError, PositiveProductError
 
-__all__ = ('ridders_solver', 'diagonalize')
+__all__ = ("ridders_solver", "diagonalize")
 
 
-def ridders_solver(func: Callable[[float], float],
-                   x1: float,
-                   x2: float,
-                   iteration: int = 500,
-                   error: float = 1e-6) -> float:
+def ridders_solver(
+    func: Callable[[float], float],
+    x1: float,
+    x2: float,
+    iteration: int = 500,
+    error: float = 1e-6,
+) -> float:
     """The ridders solver to solver nonlinear equation to find a mathematical
     root for a continuous function. the value of the two end should be of
     different sign.
@@ -67,7 +69,7 @@ def ridders_solver(func: Callable[[float], float],
             return answer
         answer = x4
         f4 = func(x4)
-        if np.allclose(f4, 0.):
+        if np.allclose(f4, 0.0):
             return answer
         if np.sign(f4) != np.sign(f3):
             x1, f1 = x3, f3
@@ -81,8 +83,9 @@ def ridders_solver(func: Callable[[float], float],
     raise OverIterLimitError
 
 
-def diagonalize(matrix: 'np.ndarray[float]'
-                ) -> Tuple['np.ndarray[float]', 'np.ndarray[float]']:
+def diagonalize(
+    matrix: "np.ndarray[float]"
+) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
     """Orthogonilize a given matrix my Grammian Matrix method
 
     Arguments
@@ -122,10 +125,23 @@ def pse_inv(matrix):
     s[s != 0] = 1 / s[s != 0]
 
     s_mtr = np.zeros(shape)
-    s_mtr[:len(s), :len(s)] = np.diag(s)
+    s_mtr[: len(s), : len(s)] = np.diag(s)
     res = np.dot(np.dot(vh.T, s_mtr), u.T)
     res[abs(res) < 1e-9] = 0
     # infunction test
     diff = np.dot(np.dot(matrix, res), matrix) - matrix
     assert np.allclose(np.linalg.norm(diff), 0), f"pseudo inverse didn't converge"
     return res
+
+
+def maximum_overlap(target_mtr, input_mtr):
+    """Compute the rotation matrix of maximum overlap for given input matrix."""
+    if target_mtr.ndim == 1 or input_mtr.ndim == 1:
+        raise ("Input array need to be 2d array, reshape 1d array with (n, 1)")
+    if target_mtr.shape != input_mtr.shape:
+        raise (
+            f"Different shape of matrices, got {target_mtr.shape}, {input_mtr.shape}"
+        )
+    outer_space = np.dot(target_mtr, input_mtr.T)
+    u, _, v = np.linalg.svd(outer_space)
+    return np.dot(u, v)

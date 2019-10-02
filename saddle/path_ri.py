@@ -4,7 +4,6 @@ from copy import deepcopy
 
 import numpy as np
 from saddle.internal import Internal
-from saddle.math_lib import pse_inv
 from saddle.reduced_internal import ReducedInternal
 
 

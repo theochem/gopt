@@ -1,8 +1,9 @@
 import unittest
 
 import numpy as np
+from numpy.testing import assert_allclose
 from saddle.errors import PositiveProductError
-from saddle.math_lib import diagonalize, pse_inv, ridders_solver
+from saddle.math_lib import diagonalize, pse_inv, ridders_solver, maximum_overlap
 
 
 # pylint: disable=E1101, E1133
@@ -39,7 +40,7 @@ class TestSolver(unittest.TestCase):
         assert abs(answer - 2) < 1e-6
 
     def test_diagonalize(self):
-        np.random.seed(111)
+        # np.random.seed(111)
         mtx = np.random.rand(4, 2)
         assert mtx.shape == (4, 2)
         ei_value, ei_vector = diagonalize(mtx)
@@ -50,7 +51,7 @@ class TestSolver(unittest.TestCase):
         assert np.allclose(ei_vector, w)
 
     def test_pse_inv(self):
-        np.random.seed(500)
+        # np.random.seed(500)
         mtr_1 = np.random.rand(5, 5)
         mtr_1_r = pse_inv(mtr_1)
         assert np.allclose(np.dot(mtr_1, mtr_1_r), np.eye(5))
@@ -65,7 +66,7 @@ class TestSolver(unittest.TestCase):
         assert np.allclose(mtr_3_r, ref_mtr)
 
     def test_pse_inv_with_np(self):
-        np.random.seed(100)
+        # np.random.seed(100)
         for _ in range(5):
             shape = np.random.randint(1, 10, 2)
             target_mt = np.random.rand(*shape)
@@ -74,10 +75,30 @@ class TestSolver(unittest.TestCase):
             assert np.allclose(pse_inv_res, np_ref)
 
     def test_pse_inv_close(self):
-        np.random.seed(200)
+        # np.random.seed(200)
         for _ in range(5):
             shape = np.random.randint(1, 20, 2)
             rand_mt = np.random.rand(*shape)
             inv_mt = pse_inv(rand_mt)
             diff = np.dot(np.dot(rand_mt, inv_mt), rand_mt) - rand_mt
             assert np.allclose(np.linalg.norm(diff), 0)
+
+    def test_maximum_overlap(self):
+        # oned case
+        array_a = np.random.rand(5).reshape(5, 1)
+        array_a /= np.linalg.norm(array_a)
+        array_b = np.random.rand(5).reshape(5, 1)
+        array_b /= np.linalg.norm(array_b)
+        tf_mtr = maximum_overlap(array_a, array_b)
+        new_b = np.dot(tf_mtr, array_b)
+        assert_allclose(array_a, new_b)
+        # nd case
+        rand_c = np.random.rand(5, 5)
+        array_c = np.linalg.eigh(np.dot(rand_c, rand_c.T))[1]
+        array_c /= np.linalg.norm(array_c, axis=0)
+        rand_d = np.random.rand(5, 5)
+        array_d = np.linalg.eigh(np.dot(rand_d, rand_d.T))[1]
+        array_d /= np.linalg.norm(array_d, axis=0)
+        tf_mtr = maximum_overlap(array_c, array_d)
+        new_d = np.dot(tf_mtr, array_d)
+        assert_allclose(array_c, new_d)

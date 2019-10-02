@@ -3,9 +3,9 @@ from copy import deepcopy
 import numpy as np
 from saddle.errors import ICNumberError, NotSetError
 from saddle.internal import Internal
-from saddle.math_lib import diagonalize, pse_inv
+from saddle.math_lib import diagonalize, pse_inv, maximum_overlap
 
-__all__ = ('ReducedInternal', )
+__all__ = ("ReducedInternal",)
 
 
 class ReducedInternal(Internal):  # need tests
@@ -115,15 +115,18 @@ class ReducedInternal(Internal):  # need tests
         Create cartesian instance from file
     """
 
-    def __init__(self,
-                 coordinates: 'np.ndarray',
-                 numbers: 'np.ndarray',
-                 charge: int,
-                 multi: int,
-                 title: str = "",
-                 key_ic_number: int = 0) -> None:
-        super(ReducedInternal, self).__init__(coordinates, numbers, charge,
-                                              multi, title)
+    def __init__(
+        self,
+        coordinates: "np.ndarray",
+        numbers: "np.ndarray",
+        charge: int,
+        multi: int,
+        title: str = "",
+        key_ic_number: int = 0,
+    ) -> None:
+        super(ReducedInternal, self).__init__(
+            coordinates, numbers, charge, multi, title
+        )
         self._k_ic_n = key_ic_number
         self._reset_v_space()
 
@@ -131,7 +134,7 @@ class ReducedInternal(Internal):  # need tests
     def key_ic(self):
         """Return the key internal coordinates
         """
-        return self.ic[:self.key_ic_number]
+        return self.ic[: self.key_ic_number]
 
     @property
     def key_ic_number(self) -> int:
@@ -144,7 +147,7 @@ class ReducedInternal(Internal):  # need tests
         return self._k_ic_n
 
     @property
-    def vspace(self) -> 'np.ndarray':
+    def vspace(self) -> "np.ndarray":
         """Vspace transformation matrix from internal to reduced internal
 
         Returns
@@ -153,8 +156,9 @@ class ReducedInternal(Internal):  # need tests
         """
         if self.df > len(self.ic):
             raise ICNumberError(
-                f'''Internal coordinates number {len(self.ic)} is less
-                than the degree freedom of the system {self.df}''')
+                f"""Internal coordinates number {len(self.ic)} is less
+                than the degree freedom of the system {self.df}"""
+            )
         if self._red_space is None or self._non_red_space is None:
             self._generate_reduce_space()
             self._generate_nonreduce_space()
@@ -162,7 +166,7 @@ class ReducedInternal(Internal):  # need tests
         return self._vspace
 
     @property
-    def vspace_gradient(self) -> 'np.ndarray':
+    def vspace_gradient(self) -> "np.ndarray":
         """Gradient of energy versus reduced internal coordinates
 
         Returns
@@ -176,7 +180,7 @@ class ReducedInternal(Internal):  # need tests
     v_gradient = vspace_gradient
 
     @property
-    def vspace_hessian(self) -> 'np.ndarray':
+    def vspace_hessian(self) -> "np.ndarray":
         """Hessian of energy versus reduced internal coordinates
 
         Returns
@@ -185,8 +189,7 @@ class ReducedInternal(Internal):  # need tests
         """
         if self._internal_hessian is None:
             raise NotSetError
-        return np.dot(
-            np.dot(self.vspace.T, self._internal_hessian), self.vspace)
+        return np.dot(np.dot(self.vspace.T, self._internal_hessian), self.vspace)
 
     v_hessian = vspace_hessian
 
@@ -215,10 +218,9 @@ class ReducedInternal(Internal):  # need tests
         return None
 
     @classmethod
-    def update_to_reduced_internal(cls,
-                                   internal_ob: Internal,
-                                   key_ic_number: int = 0
-                                   ) -> 'ReducedInternal':
+    def update_to_reduced_internal(
+        cls, internal_ob: Internal, key_ic_number: int = 0
+    ) -> "ReducedInternal":
         """Update a internal coordinates object into reduced internal
         coordinates object
 
@@ -235,7 +237,7 @@ class ReducedInternal(Internal):  # need tests
         new_ob.set_key_ic_number(key_ic_number)
         return new_ob
 
-    def align_vspace(self, target: 'ReducedInternal') -> None:
+    def align_vspace(self, target: "ReducedInternal", separation_ic=False) -> None:
         """Align vspace with a given target ReducedInternal object
 
         Arguments
@@ -244,14 +246,17 @@ class ReducedInternal(Internal):  # need tests
             the target ReducedInternal object to align to
         """
         assert isinstance(target, ReducedInternal)
-        overlap = np.dot(self.vspace.T, target.vspace)
-        u, _, v = np.linalg.svd(overlap)
-        q_min = np.dot(u, v)
-        new_v = np.dot(self.vspace, q_min)
+        if separation_ic:
+            key_ic_num = self.key_ic_number
+        else:
+            key_ic_num = 0
+        new_v = self._align_vspace_separate(target.vspace, self.vspace, key_ic_num)
+        # q_min = maximum_overlap(target.vspace, self.vspace)
+        # new_v = np.dot(q_min, self.vspace)
         self.set_vspace(new_v)
         return None
 
-    def set_vspace(self, new_vspace: 'np.ndarray') -> None:
+    def set_vspace(self, new_vspace: "np.ndarray") -> None:
         """Set vspace of system with given values
 
         Arguments
@@ -260,12 +265,11 @@ class ReducedInternal(Internal):  # need tests
             The new value of vspace
         """
         self._vspace = new_vspace
-        self._red_space = new_vspace[:, :self.key_ic_number]
-        self._non_red_space = new_vspace[:, self.key_ic_number:]
+        self._red_space = new_vspace[:, : self.key_ic_number]
+        self._non_red_space = new_vspace[:, self.key_ic_number :]
         return None
 
-    def update_to_new_structure_with_delta_v(self,
-                                             delta_v: 'np.ndarray') -> None:
+    def update_to_new_structure_with_delta_v(self, delta_v: "np.ndarray") -> None:
         """Update system to a new internal coordinates structure given a
         change in vspace delta_v
 
@@ -283,8 +287,7 @@ class ReducedInternal(Internal):  # need tests
         self._reset_v_space()
         return None
 
-    def _get_delta_ic_from_delta_v(self,
-                                   delta_v: 'np.ndarray') -> 'np.ndarray':
+    def _get_delta_ic_from_delta_v(self, delta_v: "np.ndarray") -> "np.ndarray":
         """Calculate corresponding change in internal coordinates given a
         change in vspace coordinates
 
@@ -316,7 +319,7 @@ class ReducedInternal(Internal):  # need tests
         self._vspace = None
         return None
 
-    def _svd_of_b_matrix(self, threshold=1e-6) -> 'np.ndarray':  # tested
+    def _svd_of_b_matrix(self, threshold=1e-6) -> "np.ndarray":  # tested
         """Select 3N - 6 non-singular vectors from b_matrix through SVD
         (eigenvalue) decomposition
 
@@ -334,7 +337,7 @@ class ReducedInternal(Internal):  # need tests
         assert len(basis[0]) == self.df
         return basis
 
-    def _reduced_unit_vectors(self) -> 'np.ndarray':  # tested
+    def _reduced_unit_vectors(self) -> "np.ndarray":  # tested
         """Generate unit vectors where every position is 0 except the
         key_ic_number position is 1
 
@@ -345,11 +348,12 @@ class ReducedInternal(Internal):  # need tests
             is 0
         """
         unit_mtx = np.zeros((len(self.ic), self.key_ic_number))
-        unit_mtx[:self.key_ic_number, :self.key_ic_number] = np.eye(
-            self.key_ic_number)
+        unit_mtx[: self.key_ic_number, : self.key_ic_number] = np.eye(
+            self.key_ic_number
+        )
         return unit_mtx
 
-    def _reduced_perturbation(self) -> 'np.ndarray':  # tested
+    def _reduced_perturbation(self) -> "np.ndarray":  # tested
         """Calculate the realizable purterbation in internal cooridnates from
         the unit vectors
 
@@ -378,7 +382,7 @@ class ReducedInternal(Internal):  # need tests
         self._red_space = v[:, np.abs(w) > threshold]
         return None
 
-    def _nonreduce_vectors(self) -> 'np.ndarray':
+    def _nonreduce_vectors(self) -> "np.ndarray":
         """Calculate the nonspace of reduced space
 
         Returns
@@ -397,6 +401,19 @@ class ReducedInternal(Internal):  # need tests
         """
         d_mtx = self._nonreduce_vectors()
         w, v = diagonalize(d_mtx)
-        self._non_red_space = v[:, abs(w) > threshold][:, :self.df -
-                                                       len(self._red_space[0])]
+        self._non_red_space = v[:, abs(w) > threshold][
+            :, : self.df - len(self._red_space[0])
+        ]
         return None
+
+    @staticmethod
+    def _align_vspace_separate(target_v, rotate_v, key_ic):
+        tar_red_v = target_v[:, :key_ic]
+        rot_red_v = rotate_v[:, :key_ic]
+        red_rot_mtr = maximum_overlap(tar_red_v, rot_red_v)
+        new_red_v = np.dot(red_rot_mtr, rot_red_v)
+        tar_non_v = target_v[:, key_ic:]
+        rot_non_v = rotate_v[:, key_ic:]
+        non_rot_mtr = maximum_overlap(tar_non_v, rot_non_v)
+        new_non_v = np.dot(non_rot_mtr, rot_non_v)
+        return np.hstack([new_red_v, new_non_v])

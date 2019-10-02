@@ -19,6 +19,7 @@
 #
 # --
 """internal coordinates implementation."""
+import warnings
 
 from copy import deepcopy
 from heapq import heappop, heappush
@@ -29,19 +30,28 @@ from numpy import cos, sin
 from scipy.optimize import minimize
 
 from saddle.cartesian import Cartesian
-from saddle.coordinate_types import (BendAngle, BondLength, CoordinateTypes,
-                                     DihedralAngle, NewDihedralCross,
-                                     NewDihedralDot)
+from saddle.coordinate_types import (
+    BendAngle,
+    BondLength,
+    CoordinateTypes,
+    DihedralAngle,
+    NewDihedralCross,
+    NewDihedralDot,
+)
 from saddle.molmod import bend_angle, dihed_angle
-from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
-                           NotSetError)
+from saddle.errors import (
+    AtomsIndexError,
+    AtomsNumberError,
+    NotConvergeError,
+    NotSetError,
+)
 from saddle.math_lib import pse_inv
 from saddle.opt import GeoOptimizer, Point
 from saddle.periodic.periodic import periodic
 from saddle.utils import deprecated
 from typing import List, Tuple
 
-__all__ = ('Internal', )
+__all__ = ("Internal",)
 
 
 class Internal(Cartesian):
@@ -133,14 +143,15 @@ class Internal(Cartesian):
         automatic internal coordinates depends on buildin algorithm
     """
 
-    def __init__(self,
-                 coordinates: 'np.ndarray[float]',
-                 numbers: 'np.ndarray[int]',
-                 charge: int,
-                 multi: int,
-                 title: str = "") -> None:
-        super(Internal, self).__init__(coordinates, numbers, charge, multi,
-                                       title)
+    def __init__(
+        self,
+        coordinates: "np.ndarray[float]",
+        numbers: "np.ndarray[int]",
+        charge: int,
+        multi: int,
+        title: str = "",
+    ) -> None:
+        super(Internal, self).__init__(coordinates, numbers, charge, multi, title)
         self._ic = []
         # 1 is connected, 0 is not, -1 is itself
         self._connectivity = np.diag([-1] * len(self.numbers))
@@ -150,8 +161,7 @@ class Internal(Cartesian):
         # to indicate fragment groups in system
         self._fragment = np.arange(self.natom)
 
-    def add_bond(self, atom1: int, atom2: int, *_,
-                 b_type: int = 1) -> None:  # tested
+    def add_bond(self, atom1: int, atom2: int, *_, b_type: int = 1) -> None:  # tested
         """Add bond connection between atom1 and atom2
 
         Arguments
@@ -196,22 +206,17 @@ class Internal(Cartesian):
         atoms = (atom1, atom2, atom3)
         atoms = self._atoms_sequence_reorder(atoms)
         if self._repeat_atoms_check(atoms):
-            if self._check_connectivity(
-                    atom1, atom2) and self._check_connectivity(
-                        atom2, atom3
-                    ):  # check if the angle is formed by two connected bonds
+            if self._check_connectivity(atom1, atom2) and self._check_connectivity(
+                atom2, atom3
+            ):  # check if the angle is formed by two connected bonds
                 rs = self.coordinates[np.array(atoms)]
                 new_ic_obj = BendAngle(atoms, rs)
                 d, dd = new_ic_obj.get_gradient_hessian()
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
 
-    def add_dihedral(self,
-                     atom1: int,
-                     atom2: int,
-                     atom3: int,
-                     atom4: int,
-                     *_,
-                     special=False) -> None:  # tested
+    def add_dihedral(
+        self, atom1: int, atom2: int, atom3: int, atom4: int, *_, special=False
+    ) -> None:  # tested
         """Add a dihedral connection for atom1, atom2, atom3, and atom4
         The dihedral is consist of plane(atom1, atom2, atom3) and
         plane(atom2, atom3, atom4)
@@ -232,23 +237,27 @@ class Internal(Cartesian):
         atoms = (atom1, atom2, atom3, atom4)
         # atoms = self._atoms_sequence_reorder(atoms)
         if self._repeat_atoms_check(atoms):
-            if (self._check_connectivity(atom2, atom3)
-                    and (self._check_connectivity(atom1, atom2)
-                         or self._check_connectivity(atom1, atom3))
-                    and (self._check_connectivity(atom4, atom3)
-                         or self._check_connectivity(atom4, atom2))):
+            if (
+                self._check_connectivity(atom2, atom3)
+                and (
+                    self._check_connectivity(atom1, atom2)
+                    or self._check_connectivity(atom1, atom3)
+                )
+                and (
+                    self._check_connectivity(atom4, atom3)
+                    or self._check_connectivity(atom4, atom2)
+                )
+            ):
                 rs = self.coordinates[np.array(atoms)]
                 if special:
                     # add Dot dihedral
                     new_ic_obj_1 = NewDihedralDot(atoms, rs)
                     d, dd = new_ic_obj_1.get_gradient_hessian()
-                    self._add_new_internal_coordinate(new_ic_obj_1, d, dd,
-                                                      atoms)
+                    self._add_new_internal_coordinate(new_ic_obj_1, d, dd, atoms)
                     # add cross dihedral
                     new_ic_obj_2 = NewDihedralCross(atoms, rs)
                     d, dd = new_ic_obj_2.get_gradient_hessian()
-                    self._add_new_internal_coordinate(new_ic_obj_2, d, dd,
-                                                      atoms)
+                    self._add_new_internal_coordinate(new_ic_obj_2, d, dd, atoms)
                 else:
                     new_ic_obj = DihedralAngle(atoms, rs)
                     d, dd = new_ic_obj.get_gradient_hessian()
@@ -268,7 +277,7 @@ class Internal(Cartesian):
         for seq, index in enumerate(indices):
             self._delete_ic_index(index - seq)
 
-    def set_target_ic(self, new_ic: 'np.ndarray[float]') -> None:
+    def set_target_ic(self, new_ic: "np.ndarray[float]") -> None:
         """Set a target internal coordinates to optimize
 
         Arguments
@@ -280,7 +289,7 @@ class Internal(Cartesian):
         for index, ic in enumerate(self.ic):
             ic.target = new_ic[index]
 
-    def set_new_coordinates(self, new_coor: 'np.ndarray') -> None:
+    def set_new_coordinates(self, new_coor: "np.ndarray") -> None:
         """Assign new cartesian coordinates to this molecule
 
         Arguments
@@ -301,13 +310,11 @@ class Internal(Cartesian):
         index_2 : int
             index of the second internal coordinate
         """
-        self._ic[index_1], self._ic[index_2] = self._ic[index_2], self._ic[
-            index_1]
+        self._ic[index_1], self._ic[index_2] = self._ic[index_2], self._ic[index_1]
         self._regenerate_ic()
 
     # @deprecated("Use 'optimize_to_target_ic' instead")
-    def converge_to_target_ic(self,
-                              iteration: int = 100) -> None:  # to be test
+    def converge_to_target_ic(self, iteration: int = 100) -> None:  # to be test
         """Using buildin optimization process to optimize geometry to target
         internal coordinates as close as possible
 
@@ -318,9 +325,12 @@ class Internal(Cartesian):
         """
         optimizer = GeoOptimizer()
         # calculate the init structure
-        init_coor = np.dot(
-            pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
-                -1, 3) + self.coordinates
+        init_coor = (
+            np.dot(pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
+                -1, 3
+            )
+            + self.coordinates
+        )
         self.set_new_coordinates(init_coor)
         init_point = self.create_geo_point()
         optimizer.add_new(init_point)
@@ -336,10 +346,10 @@ class Internal(Cartesian):
                 return
             optimizer.update_trust_radius(optimizer.newest)
         raise NotConvergeError(
-            "The coordinates transformation optimization failed to converge")
+            "The coordinates transformation optimization failed to converge"
+        )
 
-    def connected_indices(self, index: int, *_,
-                          exclude=None) -> 'np.ndarray[int]':
+    def connected_indices(self, index: int, *_, exclude=None) -> "np.ndarray[int]":
         """Return the indices of atoms connected to given index atom
 
         Arguments
@@ -358,8 +368,7 @@ class Internal(Cartesian):
             assert isinstance(exclude, int)
             assert exclude > 0
         connection = self.connectivity[index]
-        connected_index = np.where((connection > 0) &
-                                   (connection != exclude))[0]
+        connected_index = np.where((connection > 0) & (connection != exclude))[0]
         return connected_index
 
     @property
@@ -368,14 +377,11 @@ class Internal(Cartesian):
            The index of the list is the same index in self.numbers. Connection
            exclude auxiliary bond
         """
-        return np.sum(
-            (self.connectivity > 0) & (self.connectivity != 4), axis=0)
+        return np.sum((self.connectivity > 0) & (self.connectivity != 4), axis=0)
 
-    def energy_from_fchk(self,
-                         abs_path: str,
-                         *_,
-                         gradient: bool = True,
-                         hessian: bool = True):
+    def energy_from_fchk(
+        self, abs_path: str, *_, gradient: bool = True, hessian: bool = True
+    ):
         """Abtain Energy and relative information from FCHK file.
 
         Arguments
@@ -391,7 +397,7 @@ class Internal(Cartesian):
         """
         super(Internal, self).energy_from_fchk(abs_path, gradient, hessian)
 
-    def energy_calculation(self, *_, method: str = 'g09') -> None:
+    def energy_calculation(self, *_, method: str = "g09") -> None:
         """Conduct calculation with designated method.
 
         Keywords Arguments
@@ -405,8 +411,7 @@ class Internal(Cartesian):
         super(Internal, self).energy_calculation(method=method)
         # h_q = (B^T)^+ \cdot (H_x - K) \cdot B^+
 
-    def wipe_ic_info(self,
-                     I_am_sure_i_am_going_to_wipe_all_ic_info: bool) -> None:
+    def wipe_ic_info(self, I_am_sure_i_am_going_to_wipe_all_ic_info: bool) -> None:
         """wipe all internal coordinates information in this structure
         including ic, ic_values, target_ic, b_matrix, internal gradient and
         internal hessian
@@ -436,8 +441,7 @@ class Internal(Cartesian):
 
     def set_ic_weights(self, weights):
         if not isinstance(weights, np.ndarray):
-            raise TypeError(
-                f"Weights need to be a numpy array, got {type(weights)}")
+            raise TypeError(f"Weights need to be a numpy array, got {type(weights)}")
         if len(weights) != len(self.ic):
             raise ValueError(f"# of Weights is not equal to ics. Total ")
         for i, ic in enumerate(self.ic):
@@ -454,7 +458,8 @@ class Internal(Cartesian):
 
     @property
     def cost_value_in_cc(
-            self) -> Tuple[float, 'np.ndarray[float]', 'np.ndarray[float]']:
+        self
+    ) -> Tuple[float, "np.ndarray[float]", "np.ndarray[float]"]:
         """Cost function value and its gradient, hessian versus Cartesian
         coordinates
 
@@ -494,12 +499,13 @@ class Internal(Cartesian):
             if isinstance(ic, (BondLength, NewDihedralCross, NewDihedralDot)):
                 cost_g_q[index] += 2 * (ic.value - ic.target) * ic.weight
             elif isinstance(ic, BendAngle):
-                cost_g_q[index] += -2 * (cos(ic.value) - cos(ic.target)) * sin(
-                    ic.value) * ic.weight
+                cost_g_q[index] += (
+                    -2 * (cos(ic.value) - cos(ic.target)) * sin(ic.value) * ic.weight
+                )
             elif isinstance(ic, DihedralAngle):
                 continue
             else:
-                raise TypeError(f'Given {ic} is not support type')
+                raise TypeError(f"Given {ic} is not support type")
         return cost_g_q
 
     def _compute_tfm_gradient(self):
@@ -516,22 +522,37 @@ class Internal(Cartesian):
                 # value and b matrix for dihed
                 _, dihed_d1 = dihed_angle(self.coordinates[atoms], 1)
                 # derivative of angle 1
-                tmp_cost_g_q = 2 * sin(ang1_v) * cos(ang1_v) * sin(
-                    ang2_v)**2 * (
-                        2 - 2 * cos(ic.value - ic.target)) * ic.weight
+                tmp_cost_g_q = (
+                    2
+                    * sin(ang1_v)
+                    * cos(ang1_v)
+                    * sin(ang2_v) ** 2
+                    * (2 - 2 * cos(ic.value - ic.target))
+                    * ic.weight
+                )
                 tmp_cost_g_x = ang1_d1 * tmp_cost_g_q
                 cost_g_x.reshape(-1, 3)[ang1_ind] += tmp_cost_g_x
 
                 # derivative of angle 2
-                tmp_cost_g_q = 2 * sin(ang2_v) * cos(ang2_v) * sin(
-                    ang1_v)**2 * (
-                        2 - 2 * cos(ic.value - ic.target)) * ic.weight
+                tmp_cost_g_q = (
+                    2
+                    * sin(ang2_v)
+                    * cos(ang2_v)
+                    * sin(ang1_v) ** 2
+                    * (2 - 2 * cos(ic.value - ic.target))
+                    * ic.weight
+                )
                 tmp_cost_g_x = ang2_d1 * tmp_cost_g_q
                 cost_g_x.reshape(-1, 3)[ang2_ind] += tmp_cost_g_x
 
                 # derivative of dihed
-                tmp_cost_g_q = 2 * sin(ic.value - ic.target) * sin(
-                    ang1_v)**2 * sin(ang2_v)**2 * ic.weight
+                tmp_cost_g_q = (
+                    2
+                    * sin(ic.value - ic.target)
+                    * sin(ang1_v) ** 2
+                    * sin(ang2_v) ** 2
+                    * ic.weight
+                )
                 tmp_cost_g_x = dihed_d1 * tmp_cost_g_q
                 cost_g_x.reshape(-1, 3)[atoms] += tmp_cost_g_x
 
@@ -548,12 +569,18 @@ class Internal(Cartesian):
             if isinstance(ic, (BondLength, NewDihedralCross, NewDihedralDot)):
                 cost_h_q[index, index] += 2 * ic.weight
             elif isinstance(ic, BendAngle):
-                cost_h_q[index, index] += 2 * (sin(ic.value)**2 - cos(
-                    ic.value)**2 + cos(ic.value) * cos(ic.target)) * ic.weight
+                cost_h_q[index, index] += (
+                    2
+                    * (
+                        sin(ic.value) ** 2
+                        - cos(ic.value) ** 2
+                        + cos(ic.value) * cos(ic.target)
+                    )
+                    * ic.weight
+                )
             elif isinstance(ic, DihedralAngle):
                 atoms = np.array(ic.atoms)
-                atoms_xyz = np.ravel(
-                    list(zip(atoms * 3, atoms * 3 + 1, atoms * 3 + 2)))
+                atoms_xyz = np.ravel(list(zip(atoms * 3, atoms * 3 + 1, atoms * 3 + 2)))
                 assert len(atoms_xyz) == 12
                 dihed_cost_h_q = np.zeros((3, 3))
                 dihed_cost_g_q = np.zeros(3)
@@ -561,12 +588,10 @@ class Internal(Cartesian):
                 dihed_bp = np.zeros((3, 12, 12))
                 # value and b matrix of angle1
                 ang1_ind = atoms[:3]
-                ang1_v, ang1_d1, ang1_d2 = bend_angle(
-                    self.coordinates[ang1_ind], 2)
+                ang1_v, ang1_d1, ang1_d2 = bend_angle(self.coordinates[ang1_ind], 2)
                 # value and b matrix of angle2
                 ang2_ind = atoms[1:]
-                ang2_v, ang2_d1, ang2_d2 = bend_angle(
-                    self.coordinates[ang2_ind], 2)
+                ang2_v, ang2_d1, ang2_d2 = bend_angle(self.coordinates[ang2_ind], 2)
 
                 # value of b`_ijk
                 di_ind = np.array(ic.atoms)
@@ -582,54 +607,104 @@ class Internal(Cartesian):
                 dihed_bp[2, 3:, 3:] += ang2_d2.reshape(9, 9)
 
                 # first derivative
-                dihed_cost_g_q[0] += 2 * sin(ic.value - ic.target) * sin(
-                    ang1_v)**2 * sin(ang2_v)**2 * ic.weight
-                dihed_cost_g_q[1] += 2 * sin(ang1_v) * cos(ang1_v) * sin(
-                    ang2_v)**2 * (
-                        2 - 2 * cos(ic.value - ic.target)) * ic.weight
-                dihed_cost_g_q[2] += 2 * sin(ang2_v) * cos(ang2_v) * sin(
-                    ang1_v)**2 * (
-                        2 - 2 * cos(ic.value - ic.target)) * ic.weight
+                dihed_cost_g_q[0] += (
+                    2
+                    * sin(ic.value - ic.target)
+                    * sin(ang1_v) ** 2
+                    * sin(ang2_v) ** 2
+                    * ic.weight
+                )
+                dihed_cost_g_q[1] += (
+                    2
+                    * sin(ang1_v)
+                    * cos(ang1_v)
+                    * sin(ang2_v) ** 2
+                    * (2 - 2 * cos(ic.value - ic.target))
+                    * ic.weight
+                )
+                dihed_cost_g_q[2] += (
+                    2
+                    * sin(ang2_v)
+                    * cos(ang2_v)
+                    * sin(ang1_v) ** 2
+                    * (2 - 2 * cos(ic.value - ic.target))
+                    * ic.weight
+                )
 
                 # d2f/(d di d di)
-                dihed_cost_h_q[0, 0] += 2 * sin(ang1_v)**2 * sin(
-                    ang2_v)**2 * cos(ic.value - ic.target) * ic.weight
+                dihed_cost_h_q[0, 0] += (
+                    2
+                    * sin(ang1_v) ** 2
+                    * sin(ang2_v) ** 2
+                    * cos(ic.value - ic.target)
+                    * ic.weight
+                )
                 # d2f/(da1 da1)
-                dihed_cost_h_q[1, 1] += -2 * (
-                    -2 * cos(ic.value - ic.target) +
-                    2) * sin(ang1_v)**2 * sin(ang2_v)**2 + 2 * (
-                        -2 * cos(ic.value - ic.target) +
-                        2) * sin(ang2_v)**2 * cos(ang1_v)**2 * ic.weight
+                dihed_cost_h_q[1, 1] += (
+                    -2
+                    * (-2 * cos(ic.value - ic.target) + 2)
+                    * sin(ang1_v) ** 2
+                    * sin(ang2_v) ** 2
+                    + 2
+                    * (-2 * cos(ic.value - ic.target) + 2)
+                    * sin(ang2_v) ** 2
+                    * cos(ang1_v) ** 2
+                    * ic.weight
+                )
                 # d2f/(da2 da2)
-                dihed_cost_h_q[2, 2] += -2 * (
-                    -2 * cos(ic.value - ic.target) +
-                    2) * sin(ang1_v)**2 * sin(ang2_v)**2 + 2 * (
-                        -2 * cos(ic.value - ic.target) +
-                        2) * sin(ang1_v)**2 * cos(ang2_v)**2 * ic.weight
+                dihed_cost_h_q[2, 2] += (
+                    -2
+                    * (-2 * cos(ic.value - ic.target) + 2)
+                    * sin(ang1_v) ** 2
+                    * sin(ang2_v) ** 2
+                    + 2
+                    * (-2 * cos(ic.value - ic.target) + 2)
+                    * sin(ang1_v) ** 2
+                    * cos(ang2_v) ** 2
+                    * ic.weight
+                )
                 # d2f/(da1 da2) and d2f/(da2 da1)
-                deriv1 = 4 * (
-                    -2 * cos(ic.value - ic.target) + 2) * sin(ang1_v) * sin(
-                        ang2_v) * cos(ang1_v) * cos(ang2_v) * ic.weight
+                deriv1 = (
+                    4
+                    * (-2 * cos(ic.value - ic.target) + 2)
+                    * sin(ang1_v)
+                    * sin(ang2_v)
+                    * cos(ang1_v)
+                    * cos(ang2_v)
+                    * ic.weight
+                )
                 dihed_cost_h_q[1, 2] += deriv1
                 dihed_cost_h_q[2, 1] += deriv1
                 # d2f/(da1 ddi)
-                deriv2 = 4 * sin(ang1_v) * sin(ang2_v)**2 * sin(
-                    ic.value - ic.target) * cos(ang1_v) * ic.weight
+                deriv2 = (
+                    4
+                    * sin(ang1_v)
+                    * sin(ang2_v) ** 2
+                    * sin(ic.value - ic.target)
+                    * cos(ang1_v)
+                    * ic.weight
+                )
                 dihed_cost_h_q[1, 0] += deriv2
                 dihed_cost_h_q[0, 1] += deriv2
                 # d2f/(da2 ddi)
-                deriv3 = 4 * sin(ang1_v)**2 * sin(ang2_v) * sin(
-                    ic.value - ic.target) * cos(ang2_v) * ic.weight
+                deriv3 = (
+                    4
+                    * sin(ang1_v) ** 2
+                    * sin(ang2_v)
+                    * sin(ic.value - ic.target)
+                    * cos(ang2_v)
+                    * ic.weight
+                )
                 dihed_cost_h_q[0, 2] += deriv3
                 dihed_cost_h_q[2, 0] += deriv3
                 di_part1 = np.dot(np.dot(dihed_b.T, dihed_cost_h_q), dihed_b)
-                di_part2 = np.einsum('i, ijk -> jk', dihed_cost_g_q, dihed_bp)
+                di_part2 = np.einsum("i, ijk -> jk", dihed_cost_g_q, dihed_bp)
                 dihed_cost_h_x = di_part1 + di_part2
                 # print(dihed_cost_h_x)
                 cost_h_x[atoms_xyz[:, None], atoms_xyz] += dihed_cost_h_x
 
         part1 = np.dot(np.dot(self.b_matrix.T, cost_h_q), self.b_matrix)
-        part2 = np.einsum('i, ijk -> jk', cost_g_q, self._cc_to_ic_hessian)
+        part2 = np.einsum("i, ijk -> jk", cost_g_q, self._cc_to_ic_hessian)
         return part1 + part2 + cost_h_x
 
     def _compute_tfm_cost_api(self, new_coors):
@@ -650,7 +725,15 @@ class Internal(Cartesian):
         tmp_mol.set_new_coordinates(new_coors.reshape(-1, 3))
         return tmp_mol._compute_tfm_hessian()
 
-    def optimize_to_target_ic(self, method='BFGS', *_, max_iter=100, hess=False, hess_check=True, dihed_weight=None):
+    def optimize_to_target_ic(
+        self,
+        method="BFGS",
+        *_,
+        max_iter=100,
+        hess=True,
+        hess_check=True,
+        dihed_weight=None,
+    ):
         """Optimize molecule structure to given target internal coordinates.
 
         Parameters
@@ -669,16 +752,19 @@ class Internal(Cartesian):
         NotConvergeError
             Raised when optimization failed
         """
-        init_coor = np.dot(
-            pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
-                -1, 3) + self.coordinates
+        init_coor = (
+            np.dot(pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
+                -1, 3
+            )
+            + self.coordinates
+        )
         self.set_new_coordinates(init_coor)
         wts_bk = None
         if dihed_weight is not None:
             wts_bk = self.ic_weights
             self.set_dihed_weights(dihed_weight)
-        for i in self.ic:
-            print(i, i.weight)
+        # for i in self.ic:
+        #     print(i, i.weight)
         hess = self._compute_tfm_h_api if hess else None
         result = minimize(
             self._compute_tfm_cost_api,
@@ -687,7 +773,8 @@ class Internal(Cartesian):
             jac=self._compute_tfm_g_api,
             hess=hess,
             tol=1e-4,
-            options={"maxiter": max_iter})
+            options={"maxiter": max_iter},
+        )
         if wts_bk is not None:
             self.set_ic_weights(wts_bk)
         if result.success:
@@ -697,7 +784,8 @@ class Internal(Cartesian):
                 hessian = self._compute_tfm_hessian()
                 if np.any(np.linalg.eigh(hessian)[0] < -1e-4):
                     raise NotConvergeError(
-                        "Converge to saddle point, need to change optimizer")
+                        "Converge to saddle point, need to change optimizer"
+                    )
         else:
             raise NotConvergeError("Failed to converge to target ic")
 
@@ -712,7 +800,7 @@ class Internal(Cartesian):
         return self._ic
 
     @property
-    def ic_values(self) -> 'np.ndarray[float]':
+    def ic_values(self) -> "np.ndarray[float]":
         """list of internal coordinates values
 
         Returns
@@ -729,7 +817,7 @@ class Internal(Cartesian):
         return np.array(weights)
 
     @property
-    def target_ic(self) -> 'np.ndarray[float]':
+    def target_ic(self) -> "np.ndarray[float]":
         """target internal coordinates values
 
         Returns
@@ -742,7 +830,7 @@ class Internal(Cartesian):
         return np.array(target_ic)
 
     @property
-    def connectivity(self) -> 'np.ndarray[float]':
+    def connectivity(self) -> "np.ndarray[float]":
         """A connectivity matrix shows the connection of atoms, 1 is
         connected, 0 is not connected, -1 is itself
 
@@ -753,7 +841,7 @@ class Internal(Cartesian):
         return self._connectivity
 
     @property
-    def b_matrix(self) -> 'np.ndarray[float]':
+    def b_matrix(self) -> "np.ndarray[float]":
         """Jacobian matrix for transforming cartisian coordinates into
         internal coordinates
 
@@ -761,10 +849,12 @@ class Internal(Cartesian):
         -------
         b_matrix : np.ndarray(K, 3N)
         """
+        if np.any(np.isnan(self._cc_to_ic_gradient)):
+            raise ValueError("NaN generated, some IC is not properly defined")
         return self._cc_to_ic_gradient
 
     @property
-    def internal_gradient(self) -> 'np.ndarray[float]':
+    def internal_gradient(self) -> "np.ndarray[float]":
         """Gradient of energy versus internal coordinates
 
         Returns
@@ -776,14 +866,14 @@ class Internal(Cartesian):
     q_gradient = internal_gradient
 
     @property
-    def _internal_hessian(self) -> 'np.ndarray[float]':
+    def _internal_hessian(self) -> "np.ndarray[float]":
         """Hessian of energy versus internal coordinates"""
         if self._energy_hessian is None:
             return
         hes_k = self._energy_hessian - np.tensordot(
-            self.internal_gradient, self._cc_to_ic_hessian, axes=1)
-        return np.dot(
-            np.dot(pse_inv(self.b_matrix.T), hes_k), pse_inv(self.b_matrix))
+            self.internal_gradient, self._cc_to_ic_hessian, axes=1
+        )
+        return np.dot(np.dot(pse_inv(self.b_matrix.T), hes_k), pse_inv(self.b_matrix))
 
     q_hessian = _internal_hessian
 
@@ -808,14 +898,16 @@ class Internal(Cartesian):
         format_func = "{:3}".format
         print("--Connectivity Starts-- \n")
         for i, _ in enumerate(self.numbers):
-            print(" ".join(map(format_func, self.connectivity[i, :i + 1])))
+            print(" ".join(map(format_func, self.connectivity[i, : i + 1])))
             print("\n--Connectivity Ends--")
 
-    def auto_select_ic(self,
-                       dihed_special: bool = False,
-                       reset_ic: bool = True,
-                       keep_bond: bool = False,
-                       minimum: bool = False) -> None:
+    def auto_select_ic(
+        self,
+        dihed_special: bool = False,
+        reset_ic: bool = True,
+        keep_bond: bool = False,
+        minimum: bool = False,
+    ) -> None:
         """A method for Automatically selecting internal coordinates based on
         out buildin algorithm
 
@@ -853,8 +945,7 @@ class Internal(Cartesian):
     def _find_angle_of_atoms(self, indices):
         """find ic index for an angle consist of given indices"""
         if len(indices) != 3:
-            raise ValueError(
-                f"Input {indices} need to consist only 3 elements")
+            raise ValueError(f"Input {indices} need to consist only 3 elements")
         indices = self._atoms_sequence_reorder(indices)
         for index, ic in enumerate(self.ic):
             if isinstance(ic, BendAngle) and tuple(ic.atoms) == tuple(indices):
@@ -907,12 +998,13 @@ class Internal(Cartesian):
             for h_idx in cnnt_h_idx:
                 # loop over second halo atoms
                 for ha_idx2 in halo_indices:
-                    if (ha_idx2 != ha_idx
-                            and self.connectivity[h_idx][ha_idx2] == 0):
+                    if ha_idx2 != ha_idx and self.connectivity[h_idx][ha_idx2] == 0:
                         dist = self.distance(h_idx, ha_idx2)
                         angle_cos = self.angle_cos(ha_idx, h_idx, ha_idx2)
-                        cut_off = (periodic[self.numbers[h_idx]].vdw_radius +
-                                   periodic[self.numbers[ha_idx2]].vdw_radius)
+                        cut_off = (
+                            periodic[self.numbers[h_idx]].vdw_radius
+                            + periodic[self.numbers[ha_idx2]].vdw_radius
+                        )
                         if dist <= 0.9 * cut_off and angle_cos < 0:
                             self.add_bond(h_idx, ha_idx2, b_type=2)
 
@@ -933,15 +1025,13 @@ class Internal(Cartesian):
             # min atoms for each fragments
             # min_atom = min(len(g1_atoms), len(g2_atoms))
             # most non h atoms
-            max_f_bond = max(
-                np.sum([g1_numbers != 1]), np.sum([g2_numbers != 1]))
+            max_f_bond = max(np.sum([g1_numbers != 1]), np.sum([g2_numbers != 1]))
             for atom_1 in g1_atoms:
                 # print('a1', atom_1)
                 for atom_2 in g2_atoms:
                     # print('a2', atom_2)
                     new_distance = self.distance(atom_1, atom_2)
-                    if (len(atoms_set) > 1
-                            and new_distance > 2 * atoms_set[0][0]):
+                    if len(atoms_set) > 1 and new_distance > 2 * atoms_set[0][0]:
                         continue
                     heappush(atoms_set, (new_distance, atom_1, atom_2))
 
@@ -988,7 +1078,8 @@ class Internal(Cartesian):
                     if connected[sorted_index[0]] == center_ind_2:
                         side_1 = connected[sorted_index[1]]
                     connected_to_index_2 = self.connected_indices(
-                        center_ind_2, exclude=4)
+                        center_ind_2, exclude=4
+                    )
                     for side_2 in connected_to_index_2:
                         if side_2 not in (center_ind_1, center_ind_2, side_1):
                             self.add_dihedral(
@@ -996,7 +1087,8 @@ class Internal(Cartesian):
                                 center_ind_1,
                                 center_ind_2,
                                 side_2,
-                                special=special)
+                                special=special,
+                            )
 
     def _auto_select_minimum_dihed_normal(self, special=False):
         """Low level code for select one dihedral per rotatable bond"""
@@ -1010,14 +1102,12 @@ class Internal(Cartesian):
                     continue
                 if len(set(cnct_to_i).union(set(cnct_to_j))) < 4:
                     continue
-                sorted_index_i = self.number_of_connect[cnct_to_i].argsort(
-                )[::-1]
+                sorted_index_i = self.number_of_connect[cnct_to_i].argsort()[::-1]
                 for k in sorted_index_i:
                     if cnct_to_i[k] != j:
                         side_i = cnct_to_i[k]
                         break
-                sorted_index_j = self.number_of_connect[cnct_to_j].argsort(
-                )[::-1]
+                sorted_index_j = self.number_of_connect[cnct_to_j].argsort()[::-1]
                 for k in sorted_index_j:
                     if cnct_to_j[k] not in (side_i, i):
                         side_j = cnct_to_j[k]
@@ -1040,7 +1130,8 @@ class Internal(Cartesian):
                     sum_r = ang1_r + ang2_r + ang3_r
                     if sum_r >= 6.02139:
                         self.add_dihedral(
-                            ind_i, center_ind, ind_j, ind_k, special=special)
+                            ind_i, center_ind, ind_j, ind_k, special=special
+                        )
 
     def _regenerate_ic(self) -> None:
         """reset internal coordinates system, reset gradient, hessian versus
@@ -1077,8 +1168,8 @@ class Internal(Cartesian):
         return Point(x_d, x_dd, len(self.numbers))
 
     def _ic_gradient_hessian_transform_to_cc(
-            self, gradient: 'np.ndarray[float]', hessian: 'np.ndarray[float]'
-    ) -> Tuple['np.ndarray[float]', 'np.ndarray[float]']:
+        self, gradient: "np.ndarray[float]", hessian: "np.ndarray[float]"
+    ) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
         """transform energy gradient and hessian back from internal coordinates to
         cartesian cooridnates
         ..math::
@@ -1095,10 +1186,9 @@ class Internal(Cartesian):
         """
         cartesian_gradient = np.dot(gradient, self._cc_to_ic_gradient)
         cartesian_hessian_part_1 = np.dot(
-            np.dot(self._cc_to_ic_gradient.T, hessian),
-            self._cc_to_ic_gradient)
-        cartesian_hessian_part_2 = np.tensordot(gradient,
-                                                self._cc_to_ic_hessian, 1)
+            np.dot(self._cc_to_ic_gradient.T, hessian), self._cc_to_ic_gradient
+        )
+        cartesian_hessian_part_2 = np.tensordot(gradient, self._cc_to_ic_hessian, 1)
         cartesian_hessian = cartesian_hessian_part_1 + cartesian_hessian_part_2
         return cartesian_gradient, cartesian_hessian
 
@@ -1153,13 +1243,18 @@ class Internal(Cartesian):
                     mid_ref = ic.atoms[1:3]
                     side_ref = ic.atoms[0], ic.atoms[3]
                     if all(np.sort(mid) == np.sort(mid_ref)) and all(
-                            np.sort(side) == np.sort(side_ref)):
+                        np.sort(side) == np.sort(side_ref)
+                    ):
                         return False
             return True
 
     def _add_new_internal_coordinate(
-            self, new_ic: CoordinateTypes, d: 'np.ndarray[float]',
-            dd: "np.ndarray[float]", atoms: Tuple[int, ...]) -> None:
+        self,
+        new_ic: CoordinateTypes,
+        d: "np.ndarray[float]",
+        dd: "np.ndarray[float]",
+        atoms: Tuple[int, ...],
+    ) -> None:
         """Add a new ic object to the system and add corresponding
         transformation matrix parts
         """
@@ -1209,8 +1304,8 @@ class Internal(Cartesian):
         return tuple(atoms)
 
     def _add_cc_to_ic_gradient(
-            self, deriv: 'np.ndarray[float]',
-            atoms: Tuple[int, ...]) -> None:  # need to be tested
+        self, deriv: "np.ndarray[float]", atoms: Tuple[int, ...]
+    ) -> None:  # need to be tested
         """Add new entries from a new ic to transformation matrix gradient
 
         Arguments
@@ -1226,12 +1321,11 @@ class Internal(Cartesian):
         atoms = np.array(atoms)
         index = np.ravel(list(zip(3 * atoms, 3 * atoms + 1, 3 * atoms + 2)))
         tmp_vector[index] += deriv.ravel()
-        self._cc_to_ic_gradient = np.vstack((self._cc_to_ic_gradient,
-                                             tmp_vector))
+        self._cc_to_ic_gradient = np.vstack((self._cc_to_ic_gradient, tmp_vector))
 
     def _add_cc_to_ic_hessian(
-            self, deriv: 'np.ndarray[float]',
-            atoms: Tuple[int, ...]) -> None:  # need to be tested
+        self, deriv: "np.ndarray[float]", atoms: Tuple[int, ...]
+    ) -> None:  # need to be tested
         """Add new entries from a new ic to transformation matrix hessian
 
         Arguments
@@ -1242,16 +1336,14 @@ class Internal(Cartesian):
             indices of atoms for those transformation
         """
         if self._cc_to_ic_hessian is None:
-            self._cc_to_ic_hessian = np.zeros((0, 3 * len(self.numbers),
-                                               3 * len(self.numbers)))
+            self._cc_to_ic_hessian = np.zeros(
+                (0, 3 * len(self.numbers), 3 * len(self.numbers))
+            )
         atoms = np.array(atoms)
-        tmp_vector = np.zeros((1, 3 * len(self.numbers),
-                               3 * len(self.numbers)))
+        tmp_vector = np.zeros((1, 3 * len(self.numbers), 3 * len(self.numbers)))
         index = np.ravel(list(zip(3 * atoms, 3 * atoms + 1, 3 * atoms + 2)))
-        tmp_vector[0, index[:, None], index] = deriv.reshape(
-            -1, 3 * len(atoms))
-        self._cc_to_ic_hessian = np.vstack((self._cc_to_ic_hessian,
-                                            tmp_vector))
+        tmp_vector[0, index[:, None], index] = deriv.reshape(-1, 3 * len(atoms))
+        self._cc_to_ic_hessian = np.vstack((self._cc_to_ic_hessian, tmp_vector))
 
     @staticmethod
     def _direct_square(origin: float, target: float) -> Tuple[float, ...]:
@@ -1268,7 +1360,7 @@ class Internal(Cartesian):
         -------
         (value, deriv, deriv2) : ()
         """
-        value = (origin - target)**2
+        value = (origin - target) ** 2
         deriv = 2 * (origin - target)
         deriv2 = 2
         return value, deriv, deriv2
