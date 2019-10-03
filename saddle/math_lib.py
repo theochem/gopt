@@ -135,7 +135,21 @@ def pse_inv(matrix):
 
 
 def maximum_overlap(target_mtr, input_mtr):
-    """Compute the rotation matrix of maximum overlap for given input matrix."""
+    """Compute the rotation matrix of maximum overlap for given input matrix.
+
+    Parameters
+    ----------
+    target_mtr : np.ndarray(M, N)
+        target basis
+    input_mtr : np.ndarray(M, n)
+        input basis to be rotate
+
+    Returns
+    -------
+    np.ndarray
+        The transform matrix for input matrix to rotate to maximum overlap
+        with target matrix.
+    """
     if target_mtr.ndim == 1 or input_mtr.ndim == 1:
         raise ("Input array need to be 2d array, reshape 1d array with (n, 1)")
     if target_mtr.shape != input_mtr.shape:

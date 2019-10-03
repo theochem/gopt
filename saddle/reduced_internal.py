@@ -237,7 +237,7 @@ class ReducedInternal(Internal):  # need tests
         new_ob.set_key_ic_number(key_ic_number)
         return new_ob
 
-    def align_vspace(self, target: "ReducedInternal", separation_ic=False) -> None:
+    def align_vspace(self, target: "ReducedInternal", separation_ic=True) -> None:
         """Align vspace with a given target ReducedInternal object
 
         Arguments
@@ -407,13 +407,31 @@ class ReducedInternal(Internal):  # need tests
         return None
 
     @staticmethod
-    def _align_vspace_separate(target_v, rotate_v, key_ic):
-        tar_red_v = target_v[:, :key_ic]
-        rot_red_v = rotate_v[:, :key_ic]
+    def _align_vspace_separate(target_v, rotate_v, key_ic_num):
+        """Rotate given orthonormal basis to align with target basis.
+
+        Parameters
+        ----------
+        target_v : np.ndarray(M, N)
+            Target basis to be aligned
+        rotate_v : np.ndarray(M, N)
+            Given basis to be rotated
+        key_ic_num : int, >=0
+            # of key internal coordinates for separate two subspaces
+
+        Returns
+        -------
+        np.ndarray(M, N0
+            Maximum overlapped new basis rotated from given basis
+        """
+        if key_ic_num < 0:
+            raise ValueError(f"key_ic_num need to be >=0, got {key_ic_num}")
+        tar_red_v = target_v[:, :key_ic_num]
+        rot_red_v = rotate_v[:, :key_ic_num]
         red_rot_mtr = maximum_overlap(tar_red_v, rot_red_v)
         new_red_v = np.dot(red_rot_mtr, rot_red_v)
-        tar_non_v = target_v[:, key_ic:]
-        rot_non_v = rotate_v[:, key_ic:]
+        tar_non_v = target_v[:, key_ic_num:]
+        rot_non_v = rotate_v[:, key_ic_num:]
         non_rot_mtr = maximum_overlap(tar_non_v, rot_non_v)
         new_non_v = np.dot(non_rot_mtr, rot_non_v)
         return np.hstack([new_red_v, new_non_v])
