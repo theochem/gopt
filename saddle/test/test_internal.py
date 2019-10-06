@@ -13,16 +13,16 @@ from saddle.coordinate_types import DihedralAngle
 
 class TestInternal(unittest.TestCase):
     def setUp(self):
-        with path('saddle.test.data', 'water.xyz') as mol_path:
+        with path("saddle.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         self.mol = Internal(mol.coordinates, mol.numbers, 0, 1)
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol2 = Utils.load_file(mol_path)
         self.h2o2 = Internal(mol2.coordinates, mol2.numbers, 0, 1)
 
     def test_ic_weights(self):
         self.mol.auto_select_ic()
-        assert_allclose(self.mol.ic_weights, [1, 1, 1])
+        assert_allclose(self.mol.ic_weights, [100, 100, 10])
         self.mol.set_ic_weights(np.array([0.5, 0.5, 2]))
         assert_allclose(self.mol.ic_weights, [0.5, 0.5, 2])
 
@@ -49,25 +49,60 @@ class TestInternal(unittest.TestCase):
         assert self.mol.ic[0].atoms == (0, 1)
         self.mol.add_bond(0, 1)
         ref_hessian = np.array(
-            [[[
-                0.18374187, 0.25985046, 0., -0.18374187, -0.25985046, 0., 0.,
-                0., 0.
-            ],
-              [
-                  0.25985046, 0.36748434, 0., -0.25985046, -0.36748434, 0., 0.,
-                  0., 0.
-              ], [0., 0., 0.55122621, 0., 0., -0.55122621, 0., 0., 0.],
-              [
-                  -0.18374187, -0.25985046, 0., 0.18374187, 0.25985046, 0., 0.,
-                  0., 0.
-              ],
-              [
-                  -0.25985046, -0.36748434, 0., 0.25985046, 0.36748434, 0., 0.,
-                  0., 0.
-              ], [0., 0., -0.55122621, 0., 0., 0.55122621, 0., 0., 0.],
-              [0., 0., 0., 0., 0., 0., 0., 0., 0.],
-              [0., 0., 0., 0., 0., 0., 0., 0., 0.],
-              [0., 0., 0., 0., 0., 0., 0., 0., 0.]]])
+            [
+                [
+                    [
+                        0.18374187,
+                        0.25985046,
+                        0.0,
+                        -0.18374187,
+                        -0.25985046,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                    ],
+                    [
+                        0.25985046,
+                        0.36748434,
+                        0.0,
+                        -0.25985046,
+                        -0.36748434,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                    ],
+                    [0.0, 0.0, 0.55122621, 0.0, 0.0, -0.55122621, 0.0, 0.0, 0.0],
+                    [
+                        -0.18374187,
+                        -0.25985046,
+                        0.0,
+                        0.18374187,
+                        0.25985046,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                    ],
+                    [
+                        -0.25985046,
+                        -0.36748434,
+                        0.0,
+                        0.25985046,
+                        0.36748434,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                    ],
+                    [0.0, 0.0, -0.55122621, 0.0, 0.0, 0.55122621, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                ]
+            ]
+        )
         assert np.allclose(self.mol._cc_to_ic_hessian, ref_hessian)
         assert len(self.mol.ic) == 1
         assert np.allclose(self.mol.connectivity, new_con)
@@ -76,14 +111,33 @@ class TestInternal(unittest.TestCase):
         assert self.mol.ic[1].atoms == (1, 2)
         assert np.allclose(
             self.mol._cc_to_ic_gradient,
-            np.array([[
-                0.81649681, -0.57734995, 0., -0.81649681, 0.57734995, 0., 0.,
-                0., 0.
-            ],
-                      [
-                          0., 0., 0., 0.81649681, 0.57734995, 0., -0.81649681,
-                          -0.57734995, 0.
-                      ]]))
+            np.array(
+                [
+                    [
+                        0.81649681,
+                        -0.57734995,
+                        0.0,
+                        -0.81649681,
+                        0.57734995,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                    ],
+                    [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.81649681,
+                        0.57734995,
+                        0.0,
+                        -0.81649681,
+                        -0.57734995,
+                        0.0,
+                    ],
+                ]
+            ),
+        )
 
     def test_angle_add(self):
         self.mol.add_angle(0, 1, 2)
@@ -97,62 +151,131 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(self.mol.ic[2].value, 1.9106340153991836)
         assert np.allclose(
             self.mol.b_matrix[2],
-            np.array([
-                0.31825043, 0.45007444, 0., 0., -0.90014888, -0., -0.31825043,
-                0.45007444, 0.
-            ]))
+            np.array(
+                [
+                    0.31825043,
+                    0.45007444,
+                    0.0,
+                    0.0,
+                    -0.90014888,
+                    -0.0,
+                    -0.31825043,
+                    0.45007444,
+                    0.0,
+                ]
+            ),
+        )
         assert np.allclose(
             self.mol._cc_to_ic_hessian[2],
-            np.array([[
-                -2.86472766e-01, -1.01283669e-01, 0.00000000e+00,
-                2.86472766e-01, 1.01283669e-01, 0.00000000e+00, 2.08166817e-17,
-                -6.93889390e-18, 0.00000000e+00
-            ],
-                      [
-                          -1.01283669e-01, 2.86472766e-01, 0.00000000e+00,
-                          1.01283669e-01, -2.86472766e-01, 0.00000000e+00,
-                          6.93889390e-18, 4.16333634e-17, 0.00000000e+00
-                      ],
-                      [
-                          0.00000000e+00, 0.00000000e+00, -1.07427583e-01,
-                          0.00000000e+00, 0.00000000e+00, 4.29709622e-01,
-                          0.00000000e+00, 0.00000000e+00, -3.22282039e-01
-                      ],
-                      [
-                          2.86472766e-01, 1.01283669e-01, 0.00000000e+00,
-                          -5.72945532e-01, 0.00000000e+00, 0.00000000e+00,
-                          2.86472766e-01, -1.01283669e-01, 0.00000000e+00
-                      ],
-                      [
-                          1.01283669e-01, -2.86472766e-01, 0.00000000e+00,
-                          0.00000000e+00, 5.72945532e-01, 0.00000000e+00,
-                          -1.01283669e-01, -2.86472766e-01, 0.00000000e+00
-                      ],
-                      [
-                          0.00000000e+00, 0.00000000e+00, 4.29709622e-01,
-                          0.00000000e+00, 0.00000000e+00, -8.59419245e-01,
-                          0.00000000e+00, 0.00000000e+00, 4.29709622e-01
-                      ],
-                      [
-                          2.08166817e-17, 6.93889390e-18, 0.00000000e+00,
-                          2.86472766e-01, -1.01283669e-01, 0.00000000e+00,
-                          -2.86472766e-01, 1.01283669e-01, 0.00000000e+00
-                      ],
-                      [
-                          -6.93889390e-18, 4.16333634e-17, 0.00000000e+00,
-                          -1.01283669e-01, -2.86472766e-01, 0.00000000e+00,
-                          1.01283669e-01, 2.86472766e-01, 0.00000000e+00
-                      ],
-                      [
-                          0.00000000e+00, 0.00000000e+00, -3.22282039e-01,
-                          0.00000000e+00, 0.00000000e+00, 4.29709622e-01,
-                          0.00000000e+00, 0.00000000e+00, -1.07427583e-01
-                      ]]))
+            np.array(
+                [
+                    [
+                        -2.86472766e-01,
+                        -1.01283669e-01,
+                        0.00000000e00,
+                        2.86472766e-01,
+                        1.01283669e-01,
+                        0.00000000e00,
+                        2.08166817e-17,
+                        -6.93889390e-18,
+                        0.00000000e00,
+                    ],
+                    [
+                        -1.01283669e-01,
+                        2.86472766e-01,
+                        0.00000000e00,
+                        1.01283669e-01,
+                        -2.86472766e-01,
+                        0.00000000e00,
+                        6.93889390e-18,
+                        4.16333634e-17,
+                        0.00000000e00,
+                    ],
+                    [
+                        0.00000000e00,
+                        0.00000000e00,
+                        -1.07427583e-01,
+                        0.00000000e00,
+                        0.00000000e00,
+                        4.29709622e-01,
+                        0.00000000e00,
+                        0.00000000e00,
+                        -3.22282039e-01,
+                    ],
+                    [
+                        2.86472766e-01,
+                        1.01283669e-01,
+                        0.00000000e00,
+                        -5.72945532e-01,
+                        0.00000000e00,
+                        0.00000000e00,
+                        2.86472766e-01,
+                        -1.01283669e-01,
+                        0.00000000e00,
+                    ],
+                    [
+                        1.01283669e-01,
+                        -2.86472766e-01,
+                        0.00000000e00,
+                        0.00000000e00,
+                        5.72945532e-01,
+                        0.00000000e00,
+                        -1.01283669e-01,
+                        -2.86472766e-01,
+                        0.00000000e00,
+                    ],
+                    [
+                        0.00000000e00,
+                        0.00000000e00,
+                        4.29709622e-01,
+                        0.00000000e00,
+                        0.00000000e00,
+                        -8.59419245e-01,
+                        0.00000000e00,
+                        0.00000000e00,
+                        4.29709622e-01,
+                    ],
+                    [
+                        2.08166817e-17,
+                        6.93889390e-18,
+                        0.00000000e00,
+                        2.86472766e-01,
+                        -1.01283669e-01,
+                        0.00000000e00,
+                        -2.86472766e-01,
+                        1.01283669e-01,
+                        0.00000000e00,
+                    ],
+                    [
+                        -6.93889390e-18,
+                        4.16333634e-17,
+                        0.00000000e00,
+                        -1.01283669e-01,
+                        -2.86472766e-01,
+                        0.00000000e00,
+                        1.01283669e-01,
+                        2.86472766e-01,
+                        0.00000000e00,
+                    ],
+                    [
+                        0.00000000e00,
+                        0.00000000e00,
+                        -3.22282039e-01,
+                        0.00000000e00,
+                        0.00000000e00,
+                        4.29709622e-01,
+                        0.00000000e00,
+                        0.00000000e00,
+                        -1.07427583e-01,
+                    ],
+                ]
+            ),
+        )
         self.mol.set_target_ic((1.6, 1.7, -0.5))
         assert np.allclose(self.mol.target_ic, np.array([1.6, 1.7, -0.5]))
 
     def test_dihedral_add(self):
-        with path('saddle.test.data', '2h-azirine.xyz') as mol_path:
+        with path("saddle.test.data", "2h-azirine.xyz") as mol_path:
             mol = Utils.load_file(mol_path)  # create a water molecule
         internal = Internal(mol.coordinates, mol.numbers, 0, 1)
         internal.add_bond(0, 1)
@@ -171,17 +294,20 @@ class TestInternal(unittest.TestCase):
         self.mol.add_angle(0, 1, 2)
         assert np.allclose(
             self.mol.ic_values,
-            [1.8141372422079882, 1.8141372422079882, 1.9106340153991836])
+            [1.8141372422079882, 1.8141372422079882, 1.9106340153991836],
+        )
         self.mol.set_target_ic([1.7, 1.7, 1.5])
         self.mol.swap_internal_coordinates(0, 2)
         assert np.allclose(
             self.mol.ic_values,
-            [1.9106340153991836, 1.8141372422079882, 1.8141372422079882])
+            [1.9106340153991836, 1.8141372422079882, 1.8141372422079882],
+        )
         assert np.allclose(self.mol.target_ic, [1.5, 1.7, 1.7])
         self.mol.swap_internal_coordinates(0, 2)
         assert np.allclose(
             self.mol.ic_values,
-            [1.8141372422079882, 1.8141372422079882, 1.9106340153991836])
+            [1.8141372422079882, 1.8141372422079882, 1.9106340153991836],
+        )
         assert np.allclose(self.mol.target_ic, [1.7, 1.7, 1.5])
         # test cost function in ic
         v = self.mol.tf_cost
@@ -189,53 +315,51 @@ class TestInternal(unittest.TestCase):
         dd = self.mol._cost_q_dd
 
         # calculate ref cost value
-        ref_cost = (self.mol.ic_values[0] - 1.7)**2 * 2 + (
-            np.cos(self.mol.ic_values[-1]) - np.cos(1.5))**2
+        ref_cost = (self.mol.ic_values[0] - 1.7) ** 2 * 2 + (
+            np.cos(self.mol.ic_values[-1]) - np.cos(1.5)
+        ) ** 2
         assert np.allclose(ref_cost, v)
-        ref_gradient = np.array(
-            [0.22827448441597653, 0.22827448441597653, 0.76192388])
+        ref_gradient = np.array([0.22827448441597653, 0.22827448441597653, 0.76192388])
         assert np.allclose(d, ref_gradient)
-        ref_hessian = np.array([[
-            2.,
-            0.,
-            0.,
-        ], [
-            0.,
-            2.,
-            0.,
-        ], [
-            0.,
-            0.,
-            1.5083953582,
-        ]])
+        ref_hessian = np.array(
+            [[2.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 1.5083953582]]
+        )
         assert np.allclose(dd, ref_hessian)
         # assert False
         new_v, xd, xdd = self.mol.cost_value_in_cc
         assert new_v == v
         assert np.allclose(xd, np.dot(self.mol._cc_to_ic_gradient.T, d))
         ref_x_hessian = np.dot(
-            np.dot(self.mol._cc_to_ic_gradient.T, dd),
-            self.mol._cc_to_ic_gradient)
+            np.dot(self.mol._cc_to_ic_gradient.T, dd), self.mol._cc_to_ic_gradient
+        )
         K = np.tensordot(d, self.mol._cc_to_ic_hessian, 1)
         ref_x_hessian += K
         assert np.allclose(xdd, ref_x_hessian)
-        new_coor = np.array([[1.40, -0.93019123, -0.], [-0., 0.11720081, -0.],
-                             [-1.40, -0.93019123, -0.]])
+        new_coor = np.array(
+            [
+                [1.40, -0.93019123, -0.0],
+                [-0.0, 0.11720081, -0.0],
+                [-1.40, -0.93019123, -0.0],
+            ]
+        )
         self.mol.set_new_coordinates(new_coor)
         assert np.allclose(
-            self.mol.ic_values,
-            [1.7484364736491811, 1.7484364736491811, 1.85697699])
+            self.mol.ic_values, [1.7484364736491811, 1.7484364736491811, 1.85697699]
+        )
         assert np.allclose(
             self.mol._cc_to_ic_gradient[0, :6],
-            np.array(
-                [0.80071539, -0.59904495, 0., -0.80071539, 0.59904495, -0.]))
+            np.array([0.80071539, -0.59904495, 0.0, -0.80071539, 0.59904495, -0.0]),
+        )
         ref_hessian = np.array(
-            [[0.20524329, 0.27433912, 0., -0.20524329, -0.27433912, -0.],
-             [0.27433912, 0.36669628, 0., -0.27433912, -0.36669628, -0.],
-             [0., 0., 0.57193957, -0., -0., -0.57193957],
-             [-0.20524329, -0.27433912, -0., 0.20524329, 0.27433912, 0.],
-             [-0.27433912, -0.36669628, -0., 0.27433912, 0.36669628, 0.],
-             [-0., -0., -0.57193957, 0., 0., 0.57193957]])
+            [
+                [0.20524329, 0.27433912, 0.0, -0.20524329, -0.27433912, -0.0],
+                [0.27433912, 0.36669628, 0.0, -0.27433912, -0.36669628, -0.0],
+                [0.0, 0.0, 0.57193957, -0.0, -0.0, -0.57193957],
+                [-0.20524329, -0.27433912, -0.0, 0.20524329, 0.27433912, 0.0],
+                [-0.27433912, -0.36669628, -0.0, 0.27433912, 0.36669628, 0.0],
+                [-0.0, -0.0, -0.57193957, 0.0, 0.0, 0.57193957],
+            ]
+        )
         assert np.allclose(self.mol._cc_to_ic_hessian[0, :6, :6], ref_hessian)
 
     def test_transform_function(self):
@@ -255,17 +379,18 @@ class TestInternal(unittest.TestCase):
         self.mol.auto_select_ic()
         assert np.allclose(
             self.mol.ic_values,
-            [1.8141372422079882, 1.8141372422079882, 1.9106340153991836])
+            [1.8141372422079882, 1.8141372422079882, 1.9106340153991836],
+        )
 
     def test_auto_ic_select_ethane(self):
-        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+        with path("saddle.test.data", "ethane.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
         assert len(ethane.ic) == 24
 
     def test_auto_dihed_number_ethane(self):
-        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+        with path("saddle.test.data", "ethane.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         mol = Utils.load_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
@@ -277,21 +402,41 @@ class TestInternal(unittest.TestCase):
         assert counter == 5
 
     def test_auto_select_improper_ch3_hf(self):
-        with path('saddle.test.data', 'ch3_hf.xyz') as mol_path:
+        with path("saddle.test.data", "ch3_hf.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         mol.auto_select_ic()
-        ic_ref = np.array([
-            2.02762919, 2.02769736, 2.02761705, 1.77505755, 4.27707385,
-            4.87406146, 2.08356856, 2.08391343, 1.64995596, 2.08364916,
-            1.64984524, 1.64881837, 1.06512165, 0.42765264, 3.14154596,
-            2.71390135, 0.59485389, -1.70630517, 1.7061358, -3.14152957,
-            2.09455878, -2.09427619, -2.87079827
-        ])
+        ic_ref = np.array(
+            [
+                2.02762919,
+                2.02769736,
+                2.02761705,
+                1.77505755,
+                4.27707385,
+                4.87406146,
+                2.08356856,
+                2.08391343,
+                1.64995596,
+                2.08364916,
+                1.64984524,
+                1.64881837,
+                1.06512165,
+                0.42765264,
+                3.14154596,
+                2.71390135,
+                0.59485389,
+                -1.70630517,
+                1.7061358,
+                -3.14152957,
+                2.09455878,
+                -2.09427619,
+                -2.87079827,
+            ]
+        )
         assert np.allclose(mol.ic_values, ic_ref)
 
     def test_auto_ic_select_methanol(self):
-        with path('saddle.test.data', 'methanol.xyz') as mol_path:
+        with path("saddle.test.data", "methanol.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         methanol = Internal(mol.coordinates, mol.numbers, 0, 1)
         methanol.auto_select_ic()
@@ -323,7 +468,7 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(mol1.connectivity, mol2.connectivity)
 
     def test_get_energy_from_fchk(self):
-        with path('saddle.test.data', 'water_1.fchk') as fchk_path:
+        with path("saddle.test.data", "water_1.fchk") as fchk_path:
             self.mol.add_bond(0, 1)
             self.mol.add_bond(1, 2)
             self.mol.add_angle(0, 1, 2)
@@ -340,7 +485,7 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(self.mol.internal_gradient[0], ref_g[2])
 
     def test_delete_ic(self):
-        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+        with path("saddle.test.data", "ethane.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
         ethane.auto_select_ic()
@@ -355,7 +500,7 @@ class TestInternal(unittest.TestCase):
         # assert False
 
     def test_fragments_in_mole(self):
-        with path('saddle.test.data', 'ch3_hf.xyz') as mol_path:
+        with path("saddle.test.data", "ch3_hf.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         assert len(mol.fragments) == mol.natom
@@ -373,7 +518,7 @@ class TestInternal(unittest.TestCase):
         assert len(mol.fragments) == 2
 
     def test_fragments_bond_add(self):
-        with path('saddle.test.data', 'ch3_hf.xyz') as mol_path:
+        with path("saddle.test.data", "ch3_hf.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
         mol._auto_select_fragment_bond()
@@ -412,14 +557,13 @@ class TestInternal(unittest.TestCase):
         assert len(mol.ic) == 6
 
     def test_dihedral_rotation(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
         h2o2.auto_select_ic()
-        ref_ic = np.array([
-            2.47617635, 1.85058569, 1.85070922, 1.81937566, 1.81930967,
-            1.43966113
-        ])
+        ref_ic = np.array(
+            [2.47617635, 1.85058569, 1.85070922, 1.81937566, 1.81930967, 1.43966113]
+        )
         assert np.allclose(h2o2.ic_values, ref_ic)
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 1.57]
         h2o2.set_target_ic(target_ic)
@@ -437,7 +581,7 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
 
     def test_dihedral_repeak(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
         h2o2.add_bond(0, 1)
@@ -453,7 +597,7 @@ class TestInternal(unittest.TestCase):
         assert len(h2o2.ic) == 6
 
     def test_new_dihed(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
         h2o2.add_bond(0, 1)
@@ -472,7 +616,7 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(h2o2.b_matrix, ref_b)
 
     def test_new_dihed_converge(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         mol = Utils.load_file(mol_path)
         h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
@@ -487,7 +631,7 @@ class TestInternal(unittest.TestCase):
         # print(h2o2.ic_values)
 
     def test_bond_type(self):
-        with path('saddle.test.data', 'ch3_hf.xyz') as mol_path:
+        with path("saddle.test.data", "ch3_hf.xyz") as mol_path:
             mol = Internal.from_file(mol_path, charge=0, multi=1)
         mol._auto_select_cov_bond()  # numbers [6 1 1 1 9 1]
         assert np.sum(mol.connectivity[0] == 1) == 3
@@ -507,7 +651,7 @@ class TestInternal(unittest.TestCase):
         assert np.sum(mol.connectivity[5] == 3) == 2
 
     def test_h_bond(self):
-        with path('saddle.test.data', 'di_water.xyz') as mol_path:
+        with path("saddle.test.data", "di_water.xyz") as mol_path:
             mol = Internal.from_file(mol_path, charge=0, multi=1)
         mol._auto_select_cov_bond()  # numbers [8 1 1 8 1 1]
         assert np.sum(mol.connectivity[0] == 1) == 2
@@ -519,7 +663,7 @@ class TestInternal(unittest.TestCase):
         assert len(mol.fragments) == 2
 
     def test_mini_dihed(self):
-        with path('saddle.test.data', 'methanol.xyz') as mol_path:
+        with path("saddle.test.data", "methanol.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol._auto_select_cov_bond()
         mol._auto_select_h_bond()
@@ -530,7 +674,7 @@ class TestInternal(unittest.TestCase):
         mol._auto_select_minimum_dihed_normal()
         assert len(mol.ic) - ref == 1
 
-        with path('saddle.test.data', 'ethane.xyz') as mol2_path:
+        with path("saddle.test.data", "ethane.xyz") as mol2_path:
             mol2 = Internal.from_file(mol2_path)
         mol2._auto_select_cov_bond()
         mol2._auto_select_h_bond()
@@ -542,7 +686,7 @@ class TestInternal(unittest.TestCase):
         assert len(mol2.ic) - ref == 1
 
     def test_b_matrix(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.add_bond(0, 1)
         mol.add_bond(1, 2)
@@ -579,7 +723,7 @@ class TestInternal(unittest.TestCase):
             assert np.allclose(fd, b, atol=1e-4)
 
     def test_b_matrix_dihed(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
@@ -595,7 +739,7 @@ class TestInternal(unittest.TestCase):
                 assert np.allclose(fd, b, atol=1e-4)
 
     def test_tfm_hessian(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.add_bond(0, 1)
         mol.add_bond(1, 2)
@@ -612,7 +756,7 @@ class TestInternal(unittest.TestCase):
             assert np.allclose(fd_b, analytic_b, atol=1e-4)
 
     def test_tfm_hessian_dihed(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
@@ -628,7 +772,7 @@ class TestInternal(unittest.TestCase):
                 assert np.allclose(fd_b, analytic_b, atol=1e-4)
 
     def test_cost_tfm_bond(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.add_bond(0, 1)
         ref_mol = deepcopy(mol)
@@ -641,7 +785,7 @@ class TestInternal(unittest.TestCase):
         cost_v = mol._compute_tfm_cost()
         cost_g = mol._compute_tfm_gradient()
         diff = 1e-4
-        assert np.allclose(cost_v, (2 - 2.47617635)**2)
+        assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
         # finite diff test
         for i in range(4):
             for j in range(3):
@@ -654,8 +798,9 @@ class TestInternal(unittest.TestCase):
                 assert np.allclose(fd, cost_g[3 * i + j], atol=2e-4)
 
         # tests with bond and angle
+
     def test_cost_tfm_angle(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.add_bond(0, 1)
         mol.add_bond(0, 2)
@@ -684,7 +829,7 @@ class TestInternal(unittest.TestCase):
                 assert np.allclose(fd, cost_g[3 * i + j], atol=2e-4)
 
     def test_cost_tfm_dihed(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
@@ -709,10 +854,10 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_v_2 = mol._compute_tfm_cost()
                 fd = (cost_v_2 - cost_v) / 1e-4
-                assert np.allclose(fd, cost_g[3 * i + j], atol=2e-4)
+                assert np.allclose(fd, cost_g[3 * i + j], atol=2e-2)
 
     def test_cost_tfm_dihed_cmplx(self):
-        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+        with path("saddle.test.data", "ethane.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
@@ -733,10 +878,10 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_v_2 = mol._compute_tfm_cost()
                 fd = (cost_v_2 - cost_v) / 1e-4
-                assert np.allclose(fd, cost_g[3 * i + j], atol=4e-4)
+                assert np.allclose(fd, cost_g[3 * i + j], atol=4e-2)
 
     def test_cost_hessian_bond(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.add_bond(0, 1)
         ref_mol = deepcopy(mol)
@@ -760,7 +905,7 @@ class TestInternal(unittest.TestCase):
                 assert np.allclose(fd, cost_h[3 * j + i], atol=4e-4)
 
     def test_cost_hessian_angle(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.add_bond(0, 1)
         mol.add_bond(0, 2)
@@ -787,7 +932,7 @@ class TestInternal(unittest.TestCase):
                 assert np.allclose(fd, cost_h[j * 3 + i], atol=4e-4)
 
     def test_cost_hessian_dihed(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
@@ -805,10 +950,10 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()
                 fd = (cost_g_2 - cost_g) / 1e-4
-                assert_allclose(fd, cost_h[j * 3 + i], atol=4e-4)
+                assert_allclose(fd, cost_h[j * 3 + i], atol=4e-2)
 
     def test_cost_hessian_cmpl(self):
-        with path('saddle.test.data', 'methanol.xyz') as mol_path:
+        with path("saddle.test.data", "methanol.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
@@ -826,10 +971,10 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()
                 fd = (cost_g_2 - cost_g) / 1e-4
-                assert np.allclose(fd, cost_h[j * 3 + i], atol=4e-4)
+                assert np.allclose(fd, cost_h[j * 3 + i], atol=4e-2)
 
     def test_scipy_opt_tfm(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_path:
+        with path("saddle.test.data", "h2o2.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         target_ic = mol.ic_values
@@ -843,7 +988,7 @@ class TestInternal(unittest.TestCase):
         np.allclose(mol.ic_values[5], 2, atol=1e-4)
 
     def test_scipy_opt_tfm_cmpx(self):
-        with path('saddle.test.data', 'ethane.xyz') as mol_path:
+        with path("saddle.test.data", "ethane.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         target_ic = mol.ic_values
