@@ -2,13 +2,13 @@ import unittest
 from copy import deepcopy
 
 import numpy as np
-from numpy.testing import assert_allclose
 from importlib_resources import path
+from numpy.testing import assert_allclose
+from saddle.coordinate_types import DihedralAngle
 from saddle.internal import Internal
-from saddle.utils import Utils
 from saddle.molmod import dihed_angle
 from saddle.opt import Point
-from saddle.coordinate_types import DihedralAngle
+from saddle.utils import Utils
 
 
 class TestInternal(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestInternal(unittest.TestCase):
 
     def test_ic_weights(self):
         self.mol.auto_select_ic()
-        assert_allclose(self.mol.ic_weights, [100, 100, 10])
+        assert_allclose(self.mol.ic_weights, [1, 1, 1])
         self.mol.set_ic_weights(np.array([0.5, 0.5, 2]))
         assert_allclose(self.mol.ic_weights, [0.5, 0.5, 2])
 
