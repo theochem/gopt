@@ -24,10 +24,10 @@ from secrets import token_hex
 
 import numpy as np
 import numpy.linalg as npl
-from saddle.utils import Utils
 from saddle.errors import AtomsNumberError, NotSetError
 from saddle.fchk import FCHKFile
 from saddle.gaussianwrapper import GaussianWrapper
+from saddle.utils import Utils
 
 __all__ = ('Cartesian', )
 
