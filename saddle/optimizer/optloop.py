@@ -1,14 +1,13 @@
 from functools import partialmethod
 
 import numpy as np
-
-from saddle.optimizer.path_point import PathPoint
-from saddle.reduced_internal import ReducedInternal
-from saddle.optimizer.trust_radius import TrustRegion
-from saddle.optimizer.quasi_newton import QuasiNT
+from saddle.errors import NotSetError, OptError
 from saddle.optimizer.hessian_modify import modify_hessian_with_pos_defi
+from saddle.optimizer.path_point import PathPoint
+from saddle.optimizer.quasi_newton import QuasiNT
 from saddle.optimizer.step_size import Stepsize
-from saddle.errors import OptError, NotSetError
+from saddle.optimizer.trust_radius import TrustRegion
+from saddle.reduced_internal import ReducedInternal
 
 
 class OptLoop:
@@ -220,3 +219,12 @@ class OptLoop:
         trust_rad='trim',
         upd_size='gradient',
         neg_num=1)
+
+
+class PathLoop(OptLoop):
+
+    def check_converge(self, cutoff=3e-4):
+        sub_x_gradient = np.dot(np.dot(self.new.b_matrix.T, self.new.vspace), self.new.v_gradient)
+        if np.max(np.abs(sub_x_gradient)) < cutoff:
+            return True
+        return False
