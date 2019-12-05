@@ -209,6 +209,7 @@ class OptLoop:
                 print('Failed to converge')
                 break
         print("Geometry optimization finished")
+        return opt
 
     min_solver = partialmethod(
         opt_solver, quasi_nt='bfgs', trust_rad='trim', upd_size='energy')
