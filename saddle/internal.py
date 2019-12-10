@@ -20,36 +20,25 @@
 # --
 """internal coordinates implementation."""
 import warnings
-
 from copy import deepcopy
 from heapq import heappop, heappush
 from itertools import combinations
+from typing import List, Tuple
 
 import numpy as np
 from numpy import cos, sin
-from scipy.optimize import minimize
-
 from saddle.cartesian import Cartesian
-from saddle.coordinate_types import (
-    BendAngle,
-    BondLength,
-    CoordinateTypes,
-    DihedralAngle,
-    NewDihedralCross,
-    NewDihedralDot,
-)
-from saddle.molmod import bend_angle, dihed_angle
-from saddle.errors import (
-    AtomsIndexError,
-    AtomsNumberError,
-    NotConvergeError,
-    NotSetError,
-)
+from saddle.coordinate_types import (BendAngle, BondLength, CoordinateTypes,
+                                     DihedralAngle, NewDihedralCross,
+                                     NewDihedralDot)
+from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
+                           NotSetError)
 from saddle.math_lib import pse_inv
+from saddle.molmod import bend_angle, dihed_angle
 from saddle.opt import GeoOptimizer, Point
 from saddle.periodic.periodic import periodic
 from saddle.utils import deprecated
-from typing import List, Tuple
+from scipy.optimize import minimize
 
 __all__ = ("Internal",)
 
@@ -991,7 +980,7 @@ class Internal(Cartesian):
             distance = self.distance(ind1, ind2)
             rad_sum = periodic[atom1].cov_radius + periodic[atom2].cov_radius
             if distance < rad_sum * 1.3:
-                self.add_bond(ind1, ind2, b_type=1, weight=1)
+                self.add_bond(ind1, ind2, b_type=1, weight=100)
 
     def _auto_select_h_bond(self):
         """Low level function for selecting hydrogen bond"""
@@ -1014,7 +1003,7 @@ class Internal(Cartesian):
                             + periodic[self.numbers[ha_idx2]].vdw_radius
                         )
                         if dist <= 0.9 * cut_off and angle_cos < 0:
-                            self.add_bond(h_idx, ha_idx2, b_type=2, weight=1)
+                            self.add_bond(h_idx, ha_idx2, b_type=2, weight=10)
 
     def _auto_select_fragment_bond(self):
         """automatically select fragmental bonds"""
@@ -1066,7 +1055,7 @@ class Internal(Cartesian):
             # connected = self.connected_indices(center_index)
             if len(connected) >= 2:
                 for side_1, side_2 in combinations(connected, 2):
-                    self.add_angle(side_1, center_index, side_2, weight=1)
+                    self.add_angle(side_1, center_index, side_2, weight=10)
 
     def _auto_select_dihed_normal(self, special=False) -> None:
         """A private method for automatically selecting normal dihedral

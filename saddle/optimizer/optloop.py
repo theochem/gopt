@@ -224,7 +224,7 @@ class OptLoop:
 
 class PathLoop(OptLoop):
 
-    def check_converge(self, cutoff=3e-4):
+    def check_converge(self, cutoff=1e-3):
         sub_x_gradient = np.dot(np.dot(self.new.b_matrix.T, self.new.vspace), self.new.v_gradient)
         if np.max(np.abs(sub_x_gradient)) < cutoff:
             return True
