@@ -22,7 +22,7 @@ class TestInternal(unittest.TestCase):
 
     def test_ic_weights(self):
         self.mol.auto_select_ic()
-        assert_allclose(self.mol.ic_weights, [1, 1, 1])
+        assert_allclose(self.mol.ic_weights, [100, 100, 10])
         self.mol.set_ic_weights(np.array([0.5, 0.5, 2]))
         assert_allclose(self.mol.ic_weights, [0.5, 0.5, 2])
 

@@ -1,10 +1,10 @@
 import unittest
 
 import numpy as np
-from numpy.testing import assert_allclose
 from importlib_resources import path
-from saddle.ts_construct import TSConstruct
+from numpy.testing import assert_allclose
 from saddle.math_lib import diagonalize
+from saddle.ts_construct import TSConstruct
 
 
 class TestPathRI(unittest.TestCase):
@@ -26,6 +26,18 @@ class TestPathRI(unittest.TestCase):
 
         diff = self.ts_mol.prd.ic_values - self.ts_mol.rct.ic_values
         assert np.allclose(self.path_mol.path_vector, diff)
+
+        # genreate proper real unit path vector
+        real_path_v = (
+            self.ts_mol.ts.b_matrix @ np.linalg.pinv(self.ts_mol.ts.b_matrix) @ diff
+        )
+        assert np.allclose(
+            real_path_v / np.linalg.norm(real_path_v),
+            self.ts_mol.ts.real_unit_path_vector,
+        )
+
+        # dim space of v is one less than degree of freedom
+        assert self.ts_mol.ts.vspace.shape[1] == self.ts_mol.ts.df - 1
 
     def test_v_space(self):
         self.path_mol._generate_reduce_space()
