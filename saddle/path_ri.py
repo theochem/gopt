@@ -40,7 +40,7 @@ class PathRI(ReducedInternal):
     def update_to_reduced_internal(cls, internal_ob, key_ic_number=0):
         raise NotImplementedError
 
-    def _svd_of_b_matrix(self, threshold=1e-6) -> "np.ndarray":  # tested
+    def _svd_of_b_matrix(self, threshold=1e-3) -> "np.ndarray":  # tested
         # b_space is n * n
         b_space = np.dot(self.b_matrix, self.b_matrix.T)
         # b_matrix shape is n * 3N
@@ -53,9 +53,6 @@ class PathRI(ReducedInternal):
         # select non singular basis set
         sub_val, sub_vec = np.linalg.eigh(sub_vectors @ sub_vectors.T)
         basis = sub_vec[:, np.abs(sub_val) > threshold]
-        # for nonlinear molecules
-        assert len(basis[0]) == self.df - 1
-        # basis of space without path vector direction
         return basis
 
     # def _reduced_perturbation(self):

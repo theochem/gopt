@@ -3,7 +3,7 @@ from copy import deepcopy
 import numpy as np
 from saddle.errors import ICNumberError, NotSetError
 from saddle.internal import Internal
-from saddle.math_lib import diagonalize, pse_inv, maximum_overlap
+from saddle.math_lib import diagonalize, maximum_overlap, pse_inv
 
 __all__ = ("ReducedInternal",)
 
@@ -319,7 +319,7 @@ class ReducedInternal(Internal):  # need tests
         self._vspace = None
         return None
 
-    def _svd_of_b_matrix(self, threshold=1e-6) -> "np.ndarray":  # tested
+    def _svd_of_b_matrix(self, threshold=1e-3) -> "np.ndarray":  # tested
         """Select 3N - 6 non-singular vectors from b_matrix through SVD
         (eigenvalue) decomposition
 

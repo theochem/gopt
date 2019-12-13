@@ -3,8 +3,8 @@ import unittest
 from copy import deepcopy
 
 import numpy as np
-from numpy.testing import assert_allclose
 from importlib_resources import path
+from numpy.testing import assert_allclose
 from saddle.errors import InvalidArgumentError
 from saddle.internal import Internal
 from saddle.path_ri import PathRI
@@ -27,7 +27,6 @@ class Test_TS_Construct(unittest.TestCase):
                                     2)
         self.product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0,
                                    2)
-    '''
     def test_auto_internal(self):
         ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         assert isinstance(ts_ins.reactant, Internal)
@@ -160,7 +159,6 @@ class Test_TS_Construct(unittest.TestCase):
             np.abs(np.dot(new_ins.ts.b_matrix.T, new_ins.ts._cost_q_d)) < 3e-4)
         e_v = np.linalg.eigh(new_ins.ts.cost_value_in_cc[2])[0]
         assert all(e_v[np.abs(e_v) > 1e-4] > 0)
-    '''
 
     def test_choices_auto_select_ic(self):
         self.reactant_ic.add_bond(2, 4)
@@ -186,13 +184,12 @@ class Test_TS_Construct(unittest.TestCase):
         # TODO: need to be reviewed
         # print(new_ins.ts.ic)
         print(new_ins.ts.tf_cost)
-        assert np.allclose(new_ins.ts.ic_values[0], ref_ic, atol=2e-2)
+        assert np.allclose(new_ins.ts.ic_values[1:5], new_ins.ts.target_ic[1:5], atol=2e-2)
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(auto_select=True, reset_ic=True)
         assert all(
             np.abs(np.dot(new_ins.ts.b_matrix.T, new_ins.ts._cost_q_d)) < 3e-4)
 
-    '''
     # def test_from_file_and_to_file(self):
     #     with path('saddle.test.data', 'ch3_hf.xyz') as rct_p:
     #         with path('saddle.test.data', 'ch3f_h.xyz') as prd_p:
@@ -238,4 +235,3 @@ class Test_TS_Construct(unittest.TestCase):
     def tearDownClass(cls):
         for i in cls.file_list:
             os.remove(i)
-    '''
