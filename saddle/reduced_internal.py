@@ -283,7 +283,7 @@ class ReducedInternal(Internal):  # need tests
         new_ic = delta_ic + self.ic_values
         self.set_target_ic(new_ic)
         # self.converge_to_target_ic()
-        self.optimize_to_target_ic()
+        self.converge_to_target_ic()
         self._reset_v_space()
         return None
 

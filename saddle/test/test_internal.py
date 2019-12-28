@@ -371,7 +371,7 @@ class TestInternal(unittest.TestCase):
         assert isinstance(n_p, Point)
         assert n_p.trust_radius == 1.7320508075688772
 
-        self.mol.optimize_to_target_ic(max_iter=100)
+        self.mol.converge_to_target_ic(max_iter=100)
         g_array = self.mol.cost_value_in_cc[1]
         assert len(g_array[abs(g_array) > 3e-4]) == 0
 
@@ -567,17 +567,17 @@ class TestInternal(unittest.TestCase):
         assert np.allclose(h2o2.ic_values, ref_ic)
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 1.57]
         h2o2.set_target_ic(target_ic)
-        h2o2.optimize_to_target_ic()
+        h2o2.converge_to_target_ic()
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
 
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 3.14]
         h2o2.set_target_ic(target_ic)
-        h2o2.optimize_to_target_ic()
+        h2o2.converge_to_target_ic()
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-4)
 
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, -1.57]
         h2o2.set_target_ic(target_ic)
-        h2o2.optimize_to_target_ic()
+        h2o2.converge_to_target_ic()
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
 
     def test_dihedral_repeak(self):
@@ -625,7 +625,7 @@ class TestInternal(unittest.TestCase):
         # print(h2o2.ic_values)
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 0.8, 0.6]
         h2o2.set_target_ic(target_ic)
-        h2o2.optimize_to_target_ic()
+        h2o2.converge_to_target_ic()
         # print(h2o2.ic_values)
         assert np.allclose(h2o2.ic_values, target_ic, atol=1e-2)
         # print(h2o2.ic_values)
@@ -982,7 +982,7 @@ class TestInternal(unittest.TestCase):
         target_ic[3] = 2
         target_ic[5] = 2
         mol.set_target_ic(target_ic)
-        mol.optimize_to_target_ic()
+        mol.converge_to_target_ic()
         np.allclose(mol.ic_values[0], 2, atol=1e-4)
         np.allclose(mol.ic_values[3], 2, atol=1e-4)
         np.allclose(mol.ic_values[5], 2, atol=1e-4)
@@ -995,5 +995,5 @@ class TestInternal(unittest.TestCase):
         target_ic[-1] = -1
         mol.set_target_ic(target_ic)
         # print(mol.ic_values)
-        mol.optimize_to_target_ic()
+        mol.converge_to_target_ic()
         assert np.max(np.abs(mol._compute_tfm_gradient())) < 1e-4

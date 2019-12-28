@@ -314,13 +314,13 @@ class Internal(Cartesian):
         self._regenerate_ic()
 
     # @deprecated("Use 'optimize_to_target_ic' instead")
-    def converge_to_target_ic(self, iteration: int = 100, ignore_dihed=False) -> None:  # to be test
+    def converge_to_target_ic(self, max_iter: int = 100, ignore_dihed=False) -> None:  # to be test
         """Using buildin optimization process to optimize geometry to target
         internal coordinates as close as possible
 
         Arguments
         ---------
-        iteration : int, iteration > 0, default is 100
+        max_iter : int, max_iter > 0, default is 100
             number of iteration for optimization process
         """
         optimizer = GeoOptimizer()
@@ -339,7 +339,7 @@ class Internal(Cartesian):
         self.set_new_coordinates(init_coor)
         init_point = self.create_geo_point()
         optimizer.add_new(init_point)
-        for _ in range(iteration):
+        for _ in range(max_iter):
             optimizer.tweak_hessian(optimizer.newest)
             step = optimizer.trust_radius_step(optimizer.newest)
             new_coor = self.coordinates + step.reshape(-1, 3)
