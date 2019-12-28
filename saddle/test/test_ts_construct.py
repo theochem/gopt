@@ -155,9 +155,8 @@ class Test_TS_Construct(unittest.TestCase):
         self.product_ic.auto_select_ic()
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(start_with='product', reset_ic=False)
-        assert all(
-            np.abs(np.dot(new_ins.ts.b_matrix.T, new_ins.ts._cost_q_d)) < 3e-4)
-        e_v = np.linalg.eigh(new_ins.ts.cost_value_in_cc[2])[0]
+        assert all(np.abs(new_ins.ts._compute_tfm_gradient()) < 3e-4)
+        e_v = np.linalg.eigh(new_ins.ts._compute_tfm_hessian())[0]
         assert all(e_v[np.abs(e_v) > 1e-4] > 0)
 
     def test_choices_auto_select_ic(self):
@@ -187,8 +186,7 @@ class Test_TS_Construct(unittest.TestCase):
         assert np.allclose(new_ins.ts.ic_values[1:5], new_ins.ts.target_ic[1:5], atol=2e-2)
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(auto_select=True, reset_ic=True)
-        assert all(
-            np.abs(np.dot(new_ins.ts.b_matrix.T, new_ins.ts._cost_q_d)) < 3e-4)
+        assert all(abs(new_ins.ts._compute_tfm_gradient()) < 3e-4)
 
     # def test_from_file_and_to_file(self):
     #     with path('saddle.test.data', 'ch3_hf.xyz') as rct_p:

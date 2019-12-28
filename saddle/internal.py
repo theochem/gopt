@@ -774,15 +774,15 @@ class Internal(Cartesian):
             self.set_ic_weights(wts_bk)
         if result.success:
             new_coors = result.x.reshape(-1, 3)
-            print('opt g', self._compute_tfm_g_api(new_coors))
+            # print('opt g', self._compute_tfm_g_api(new_coors))
             self.set_new_coordinates(new_coors)
             if hess_check:
                 hessian = self._compute_tfm_hessian()
-                if np.any(np.linalg.eigh(hessian)[0] < -1e-4):
+                if np.any(np.linalg.eigh(hessian)[0] < -1e-3):
                     raise NotConvergeError(
                         "Converge to saddle point, need to change optimizer"
                     )
-            print("cost end", self.tf_cost)
+            # print("cost end", self.tf_cost)
         else:
             raise NotConvergeError("Failed to converge to target ic")
 
@@ -1161,9 +1161,9 @@ class Internal(Cartesian):
         -------
         geo_point : Point object
         """
-        _, x_d, x_dd = self.cost_value_in_cc
-        # x_d = self._compute_tfm_gradient()
-        # x_dd = self._compute_tfm_hessian()
+        # _, x_d, x_dd = self.cost_value_in_cc
+        x_d = self._compute_tfm_gradient()
+        x_dd = self._compute_tfm_hessian()
         return Point(x_d, x_dd, len(self.numbers))
 
     def _ic_gradient_hessian_transform_to_cc(

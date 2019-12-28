@@ -3,16 +3,12 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 import numpy as np
-from saddle.errors import (
-    AtomsNumberError,
-    InputTypeError,
-    InvalidArgumentError,
-    NotSetError,
-)
+from saddle.errors import (AtomsNumberError, InputTypeError,
+                           InvalidArgumentError, NotSetError)
 from saddle.internal import Internal
 from saddle.path_ri import PathRI
-from saddle.utils import Utils
 from saddle.reduced_internal import ReducedInternal
+from saddle.utils import Utils
 
 __all__ = ("TSConstruct",)
 
@@ -304,8 +300,9 @@ class TSConstruct(object):
         ts_internal.set_target_ic(target_ic)
         # ts_internal.list_ic
         ts_internal.converge_to_target_ic(ignore_dihed=False)
+        # print('converge')
         # ts_internal.optimize_to_target_ic(dihed_weight=0, hess_check=False)
-        # ts_internal.optimize_to_target_ic(dihed_weight=1, method='Newton-CG', hess_check=False)
+        # ts_internal.optimize_to_target_ic(method='BFGS')
         # dihed_weight=0, hess=True, method="Newton-CG", hess_check=False, max_iter=500
         # )
         if task == "ts":
