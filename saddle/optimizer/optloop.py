@@ -1,4 +1,5 @@
 from functools import partialmethod
+from pathlib import Path
 
 import numpy as np
 from saddle.errors import NotSetError, OptError
@@ -159,6 +160,27 @@ class OptLoop:
                     index_need_fd.append(i)
         return index_need_fd
 
+    def _run_one_circle_of_calculation(self, counter):
+        """Compute single iteration of optimization process."""
+        if counter > 1:
+            # update trust region
+            self.update_trust_radius()
+            # quasi newton method for updating hessian
+            self.update_hessian()
+            # finite diff for hessian if need
+            self.finite_diff_hessian()
+        # regulate hessian
+        self.modify_hessian()
+        # calculate new step
+        self.calculate_trust_step()
+        # calculate new point
+        new_point = self.next_step_structure()
+        while self.verify_new_point(new_point) is False:
+            self.calculate_trust_step()
+            new_point = self.next_step_structure()
+        # add new point to optimizer
+        self.add_new_point(new_point)
+
     @classmethod
     def opt_solver(cls,
                    init_structure,
@@ -169,7 +191,8 @@ class OptLoop:
                    neg_num=0,
                    method='g09',
                    max_pt=0,
-                   iterations=50):
+                   iterations=50,
+                   logfile=None):
         opt = cls(
             init_structure,
             quasi_nt=quasi_nt,
@@ -181,35 +204,40 @@ class OptLoop:
 
         # initiate counter
         counter = 1
-
+        if logfile:
+            file_path = Path(logfile)
+            opt[0].instance.save_to(file_path, mode='a')
         # setup optimization loop
         while opt.check_converge() is False:
-            print(counter)
-            if counter > 1:
-                # update trust region
-                opt.update_trust_radius()
-                # quasi newton method for updating hessian
-                opt.update_hessian()
-                # finite diff for hessian if need
-                opt.finite_diff_hessian()
-            # regulate hessian
-            opt.modify_hessian()
-            # calculate new step
-            opt.calculate_trust_step()
-            # calculate new point
-            new_point = opt.next_step_structure()
-            while opt.verify_new_point(new_point) is False:
-                opt.calculate_trust_step()
-                new_point = opt.next_step_structure()
-            # add new point to optimizer
-            opt.add_new_point(new_point)
+            opt._run_one_circle_of_calculation(counter)
+            # print(counter)
+            # if counter > 1:
+            #     # update trust region
+            #     opt.update_trust_radius()
+            #     # quasi newton method for updating hessian
+            #     opt.update_hessian()
+            #     # finite diff for hessian if need
+            #     opt.finite_diff_hessian()
+            # # regulate hessian
+            # opt.modify_hessian()
+            # # calculate new step
+            # opt.calculate_trust_step()
+            # # calculate new point
+            # new_point = opt.next_step_structure()
+            # while opt.verify_new_point(new_point) is False:
+            #     opt.calculate_trust_step()
+            #     new_point = opt.next_step_structure()
+            # # add new point to optimizer
+            # opt.add_new_point(new_point)
+            if logfile:
+                opt[-1].instance.save_to(file_path, mode='a')
 
             counter += 1
             if counter > iterations:
                 print('Failed to converge')
                 break
         print("Geometry optimization finished")
-        return opt
+        # return opt
 
     min_solver = partialmethod(
         opt_solver, quasi_nt='bfgs', trust_rad='trim', upd_size='energy')

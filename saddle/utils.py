@@ -1,8 +1,9 @@
-import numpy as np
 import functools
 import inspect
 import warnings
 from pathlib import Path
+
+import numpy as np
 from saddle.periodic.periodic import angstrom, periodic
 
 
@@ -27,7 +28,7 @@ class Utils():
         return cls(nums, coors)
 
     @classmethod
-    def save_file(cls, file_path, mole, format='xyz', encoding='utf-8'):
+    def save_file(cls, file_path, mole, format='xyz', encoding='utf-8', mode='w'):
         if isinstance(file_path, str):
             file_path = Path(file_path)
         if not isinstance(file_path, Path):
@@ -36,7 +37,7 @@ class Utils():
             file_path = file_path.parent / (file_path.name + f'.{format}')
         assert file_path.suffix == f'.{format}'
         if file_path.suffix == '.xyz':
-            cls._save_xyz(file_path, mole, encoding=encoding)
+            cls._save_xyz(file_path, mole, encoding=encoding, mode=mode)
         else:
             raise TypeError(
                 f'given file format {file_path.suffix} is not supported by GOpt'
@@ -60,10 +61,10 @@ class Utils():
         return numbers, coordinates, title
 
     @staticmethod
-    def _save_xyz(file_path, mole, encoding='utf-8'):
+    def _save_xyz(file_path, mole, encoding='utf-8', mode='w'):
         assert isinstance(file_path, Path)
         assert file_path.suffix == '.xyz'
-        with file_path.open(encoding=encoding, mode='w') as f:
+        with file_path.open(encoding=encoding, mode=mode) as f:
             f.write(f"{len(mole.numbers)}\n")
             title = getattr(mole, 'title', 'XYZ file Created by GOpt')
             f.write(f'{title}\n')
