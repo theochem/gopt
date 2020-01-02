@@ -29,7 +29,7 @@ class GeoOptimizer(object):
 
     def converge(self, index):
         point = self.points[index]
-        return max(np.abs(point.gradient)) <= 1e-5
+        return max(np.abs(point.gradient)) <= 1e-7
 
     @property
     def newest(self):
@@ -42,7 +42,7 @@ class GeoOptimizer(object):
     def add_new(self, point):
         self.points.append(point)
 
-    def tweak_hessian(self, index, negative=0, threshold=0.005):
+    def tweak_hessian(self, index, negative=0, threshold=0.05):
         point = self.points[index]
         w, v = np.linalg.eigh(point.hessian)
         negative_slice = w[:negative]

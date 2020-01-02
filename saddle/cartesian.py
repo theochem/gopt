@@ -162,9 +162,9 @@ class Cartesian:
         else:
             return self._energy
 
-    def save_to(self, filename):
+    def save_to(self, filename, mode='w'):
         # a little bit weird, need to be reconstruct later
-        Utils.save_file(filename, self)
+        Utils.save_file(filename, self, mode=mode)
 
     def set_new_coordinates(self, new_coor: 'np.ndarray[float]') -> None:
         """Assign new cartesian coordinates to this molecule
