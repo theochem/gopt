@@ -270,7 +270,7 @@ class TSConstruct(object):
         self._reactant.set_new_ics(target_ic_list)
         self._product.set_new_ics(target_ic_list)
 
-    def create_ts_state(self, start_with, ratio=0.5, task="ts"):
+    def create_ts_state(self, start_with, ratio=0.5, task="ts", flex_sin=True):
         """Create transition state structure based on the linear combination of
         internal structure of both reactant and product.
 
@@ -299,7 +299,7 @@ class TSConstruct(object):
         )
         ts_internal.set_target_ic(target_ic)
         # ts_internal.list_ic
-        ts_internal.converge_to_target_ic(ignore_dihed=False)
+        ts_internal.converge_to_target_ic(ignore_dihed=False, flex_sin=flex_sin)
         # ts_internal.optimize_to_target_ic(dihed_weight=0, hess_check=False)
         # ts_internal.optimize_to_target_ic(method='BFGS')
         # dihed_weight=0, hess=True, method="Newton-CG", hess_check=False, max_iter=500
@@ -338,7 +338,8 @@ class TSConstruct(object):
         auto_select=True,
         dihed_special=False,
         mode="mix",
-        task="ts"
+        task="ts",
+        flex_sin=True,
     ):
         """Complete auto generate transition state structure based on some
         default parameters
@@ -370,7 +371,7 @@ class TSConstruct(object):
             auto_select=auto_select,
             mode=mode,
         )
-        self.create_ts_state(start_with, ratio, task=task)
+        self.create_ts_state(start_with, ratio, task=task, flex_sin=flex_sin)
 
     def ts_to_file(self, filename=""):
         if filename:

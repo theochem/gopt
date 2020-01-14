@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import numpy as np
 from importlib_resources import path
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_almost_equal
 from saddle.errors import InvalidArgumentError
 from saddle.internal import Internal
 from saddle.path_ri import PathRI
@@ -73,9 +73,9 @@ class Test_TS_Construct(unittest.TestCase):
     def test_ts_construct(self):
         ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
         ts_ins.auto_select_ic()
-        ts_ins.create_ts_state(start_with="product")
+        ts_ins.create_ts_state(start_with="product", flex_sin=False)
         result = deepcopy(ts_ins.ts)
-        ts_ins.create_ts_state(start_with="reactant")
+        ts_ins.create_ts_state(start_with="reactant", flex_sin=False)
         result_2 = deepcopy(ts_ins.ts)
         # print result_2.ic_values
         ref_tar_ic = ts_ins._reactant.ic_values * 0.5 + \
@@ -155,7 +155,9 @@ class Test_TS_Construct(unittest.TestCase):
         self.product_ic.auto_select_ic()
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(start_with='product', reset_ic=False)
+        # test gradient
         assert all(np.abs(new_ins.ts._compute_tfm_gradient()) < 3e-4)
+        # test hessian eigenvalues
         e_v = np.linalg.eigh(new_ins.ts._compute_tfm_hessian())[0]
         assert all(e_v[np.abs(e_v) > 1e-4] > 0)
 
@@ -171,7 +173,7 @@ class Test_TS_Construct(unittest.TestCase):
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         print('rct', new_ins.reactant.ic)
         print('prd', new_ins.product.ic)
-        new_ins.auto_generate_ts(auto_select=True, reset_ic=False)
+        new_ins.auto_generate_ts(auto_select=True, reset_ic=False, flex_sin=False)
         # print('rct', new_ins.reactant.ic)
         # print('prd', new_ins.product.ic)
         print('ts', new_ins.ts.ic)
@@ -183,7 +185,8 @@ class Test_TS_Construct(unittest.TestCase):
         # TODO: need to be reviewed
         # print(new_ins.ts.ic)
         print(new_ins.ts.tf_cost)
-        assert np.allclose(new_ins.ts.ic_values[1:5], new_ins.ts.target_ic[1:5], atol=2e-2)
+        assert_allclose(new_ins.ts.ic_values[0], new_ins.ts.target_ic[0], atol=2e-2)
+        assert_allclose(new_ins.ts.ic_values[1:4], new_ins.ts.target_ic[1:4], atol=2e-2)
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(auto_select=True, reset_ic=True)
         assert all(abs(new_ins.ts._compute_tfm_gradient()) < 3e-4)

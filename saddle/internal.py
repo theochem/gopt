@@ -314,7 +314,7 @@ class Internal(Cartesian):
         self._regenerate_ic()
 
     # @deprecated("Use 'optimize_to_target_ic' instead")
-    def converge_to_target_ic(self, max_iter: int = 100, ignore_dihed=False) -> None:  # to be test
+    def converge_to_target_ic(self, max_iter: int = 100, ignore_dihed=False, flex_sin=True) -> None:  # to be test
         """Using buildin optimization process to optimize geometry to target
         internal coordinates as close as possible
 
@@ -337,14 +337,14 @@ class Internal(Cartesian):
             wts_bk = self.ic_weights
             self.set_dihed_weights(0)
         self.set_new_coordinates(init_coor)
-        init_point = self.create_geo_point()
+        init_point = self.create_geo_point(flex_sin=flex_sin)
         optimizer.add_new(init_point)
         for _ in range(max_iter):
             optimizer.tweak_hessian(optimizer.newest)
             step = optimizer.trust_radius_step(optimizer.newest)
             new_coor = self.coordinates + step.reshape(-1, 3)
             self.set_new_coordinates(new_coor)
-            new_point = self.create_geo_point()
+            new_point = self.create_geo_point(flex_sin=flex_sin)
             optimizer.add_new(new_point)
             if optimizer.converge(optimizer.newest):
                 # print("finished")
@@ -980,7 +980,7 @@ class Internal(Cartesian):
             distance = self.distance(ind1, ind2)
             rad_sum = periodic[atom1].cov_radius + periodic[atom2].cov_radius
             if distance < rad_sum * 1.3:
-                self.add_bond(ind1, ind2, b_type=1, weight=100)
+                self.add_bond(ind1, ind2, b_type=1, weight=1)
 
     def _auto_select_h_bond(self):
         """Low level function for selecting hydrogen bond"""
@@ -1003,7 +1003,7 @@ class Internal(Cartesian):
                             + periodic[self.numbers[ha_idx2]].vdw_radius
                         )
                         if dist <= 0.9 * cut_off and angle_cos < 0:
-                            self.add_bond(h_idx, ha_idx2, b_type=2, weight=10)
+                            self.add_bond(h_idx, ha_idx2, b_type=2, weight=1)
 
     def _auto_select_fragment_bond(self):
         """automatically select fragmental bonds"""
@@ -1055,7 +1055,7 @@ class Internal(Cartesian):
             # connected = self.connected_indices(center_index)
             if len(connected) >= 2:
                 for side_1, side_2 in combinations(connected, 2):
-                    self.add_angle(side_1, center_index, side_2, weight=10)
+                    self.add_angle(side_1, center_index, side_2, weight=1)
 
     def _auto_select_dihed_normal(self, special=False) -> None:
         """A private method for automatically selecting normal dihedral
@@ -1153,7 +1153,7 @@ class Internal(Cartesian):
             if isinstance(ic, BondLength):
                 self._add_connectivity(ic.atoms, ic.ic_type)
 
-    def create_geo_point(self) -> Point:
+    def create_geo_point(self, flex_sin=True) -> Point:
         """create a Point object based on self internal coordinates to undergo
         a optimizatino process in order to converge to target_ic
 
@@ -1162,8 +1162,13 @@ class Internal(Cartesian):
         geo_point : Point object
         """
         # _, x_d, x_dd = self.cost_value_in_cc
-        x_d = self._compute_tfm_gradient()
-        x_dd = self._compute_tfm_hessian()
+        # same for special dihed. Works for conventional
+        if flex_sin is True:
+            x_d = self._compute_tfm_gradient()
+            x_dd = self._compute_tfm_hessian()
+        else:
+            # not always converge but better result
+            _, x_d, x_dd = self.cost_value_in_cc
         return Point(x_d, x_dd, len(self.numbers))
 
     def _ic_gradient_hessian_transform_to_cc(

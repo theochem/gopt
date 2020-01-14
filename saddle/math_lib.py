@@ -118,19 +118,19 @@ def pse_inv(matrix):
         pseudo inverse of given matrix, inverse if it is revertible
     """
     assert isinstance(matrix, np.ndarray)
-    matrix[abs(matrix) < 1e-9] = 0
+    matrix[abs(matrix) < 1e-7] = 0
     shape = matrix.shape[::-1]
     u, s, vh = np.linalg.svd(matrix)
-    s[abs(s) < 1e-9] = 0
+    s[abs(s) < 1e-7] = 0
     s[s != 0] = 1 / s[s != 0]
 
     s_mtr = np.zeros(shape)
     s_mtr[: len(s), : len(s)] = np.diag(s)
     res = np.dot(np.dot(vh.T, s_mtr), u.T)
-    res[abs(res) < 1e-9] = 0
+    res[abs(res) < 1e-7] = 0
     # infunction test
     diff = np.dot(np.dot(matrix, res), matrix) - matrix
-    assert np.allclose(np.linalg.norm(diff), 0), f"pseudo inverse didn't converge"
+    assert np.allclose(np.max(np.abs(diff)), 0, atol=1e-7), f"pseudo inverse didn't converge"
     return res
 
 

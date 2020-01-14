@@ -22,7 +22,7 @@ class TestInternal(unittest.TestCase):
 
     def test_ic_weights(self):
         self.mol.auto_select_ic()
-        assert_allclose(self.mol.ic_weights, [100, 100, 10])
+        assert_allclose(self.mol.ic_weights, [1, 1, 1])
         self.mol.set_ic_weights(np.array([0.5, 0.5, 2]))
         assert_allclose(self.mol.ic_weights, [0.5, 0.5, 2])
 
@@ -990,10 +990,12 @@ class TestInternal(unittest.TestCase):
     def test_scipy_opt_tfm_cmpx(self):
         with path("saddle.test.data", "ethane.xyz") as mol_path:
             mol = Internal.from_file(mol_path)
+        # conventional dihedral
         mol.auto_select_ic()
         target_ic = mol.ic_values
         target_ic[-1] = -1
         mol.set_target_ic(target_ic)
         # print(mol.ic_values)
         mol.converge_to_target_ic()
-        assert np.max(np.abs(mol._compute_tfm_gradient())) < 1e-4
+        x_gradient = mol._compute_tfm_gradient()
+        assert np.max(np.abs(x_gradient)) < 1e-4
