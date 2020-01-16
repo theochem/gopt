@@ -12,19 +12,21 @@ from saddle.reduced_internal import ReducedInternal
 
 
 class OptLoop:
-    def __init__(self,
-                 init_structure,
-                 *_,
-                 quasi_nt,
-                 trust_rad,
-                 upd_size,
-                 neg_num=0,
-                 method='g09',
-                 max_pt=0):
+    def __init__(
+        self,
+        init_structure,
+        *_,
+        quasi_nt,
+        trust_rad,
+        upd_size,
+        neg_num=0,
+        method="g09",
+        max_pt=0,
+    ):
         if not isinstance(init_structure, ReducedInternal):
             raise TypeError(
-                f'Improper input type \
-                {type(init_structure)} for {init_structure}'
+                f"Improper input type \
+                {type(init_structure)} for {init_structure}"
             )
         # TODO: possible momery saving mode
         self._point = [PathPoint(init_structure)]
@@ -36,12 +38,12 @@ class OptLoop:
         if max_pt == 0 or max_pt >= 2:
             self._max_pt = max_pt
         else:
-            raise ValueError('max number of points is too small')
+            raise ValueError("max number of points is too small")
 
         # initialize step_size
         self._upd_size.initialize(self.new)
         if neg_num < 0 or neg_num > self.new.key_ic_number:
-            raise ValueError('# of negative eigenvalues is not valid')
+            raise ValueError("# of negative eigenvalues is not valid")
         self._neg = neg_num
         self._method = method
         self._flag = False
@@ -59,35 +61,34 @@ class OptLoop:
     def __getitem__(self, key):
         return self._point[key]
 
-    def run_calculation(self, *_, method='g09'):
+    def run_calculation(self, *_, method="g09"):
         self.new.run_calculation(method=method)
 
     @property
     def new(self):
         if len(self) < 1:
-            raise OptError('Not enough points in OptLoop')
+            raise OptError("Not enough points in OptLoop")
         return self[-1]
 
     @property
     def old(self):
         if len(self) < 2:
-            raise OptError('Not enough points in OptLoop')
+            raise OptError("Not enough points in OptLoop")
         return self[-2]
 
     def modify_hessian(self):
         moded_hessian = modify_hessian_with_pos_defi(
-            self.new.v_hessian, self._neg, key_ic=self.new.key_ic_number)
+            self.new.v_hessian, self._neg, key_ic=self.new.key_ic_number
+        )
         self.new.step_hessian = moded_hessian
 
     def update_trust_radius(self):
         target_p = self.new
-        target_p.stepsize = self._upd_size.update_step(
-            old=self.old, new=self.new)
+        target_p.stepsize = self._upd_size.update_step(old=self.old, new=self.new)
 
     def update_hessian(self):
         target_p = self.new
-        target_p.v_hessian = self._quasi_nt.update_hessian(
-            old=self.old, new=self.new)
+        target_p.v_hessian = self._quasi_nt.update_hessian(old=self.old, new=self.new)
 
     def check_converge(self, cutoff=3e-4):
         if np.max(np.abs(self.new.x_gradient)) < cutoff:
@@ -116,8 +117,7 @@ class OptLoop:
         if self._flag is True:
             self._flag = False
             return True
-        if np.linalg.norm(new_point.x_gradient) > np.linalg.norm(
-                self.new.x_gradient):
+        if np.linalg.norm(new_point.x_gradient) > np.linalg.norm(self.new.x_gradient):
             self.new.stepsize *= 0.25
             if self.new.stepsize <= 0.1 * self._upd_size.min_s:
                 self.new.stepsize = self._upd_size.min_s
@@ -182,17 +182,19 @@ class OptLoop:
         self.add_new_point(new_point)
 
     @classmethod
-    def opt_solver(cls,
-                   init_structure,
-                   *_,
-                   quasi_nt,
-                   trust_rad,
-                   upd_size,
-                   neg_num=0,
-                   method='g09',
-                   max_pt=0,
-                   iterations=50,
-                   logfile=None):
+    def opt_solver(
+        cls,
+        init_structure,
+        *_,
+        quasi_nt,
+        trust_rad,
+        upd_size,
+        neg_num=0,
+        method="g09",
+        max_pt=0,
+        iterations=50,
+        logfile=None,
+    ):
         opt = cls(
             init_structure,
             quasi_nt=quasi_nt,
@@ -200,13 +202,14 @@ class OptLoop:
             upd_size=upd_size,
             neg_num=neg_num,
             method=method,
-            max_pt=max_pt)
+            max_pt=max_pt,
+        )
 
         # initiate counter
         counter = 1
         if logfile:
             file_path = Path(logfile)
-            opt[0].instance.save_to(file_path, mode='a')
+            opt[0].instance.save_to(file_path, mode="a")
         # setup optimization loop
         while opt.check_converge() is False:
             opt._run_one_circle_of_calculation(counter)
@@ -230,30 +233,29 @@ class OptLoop:
             # # add new point to optimizer
             # opt.add_new_point(new_point)
             if logfile:
-                opt[-1].instance.save_to(file_path, mode='a')
+                opt[-1].instance.save_to(file_path, mode="a")
 
             counter += 1
             if counter > iterations:
-                print('Failed to converge')
+                print("Failed to converge")
                 break
         print("Geometry optimization finished")
         # return opt
 
     min_solver = partialmethod(
-        opt_solver, quasi_nt='bfgs', trust_rad='trim', upd_size='energy')
+        opt_solver, quasi_nt="bfgs", trust_rad="trim", upd_size="energy"
+    )
 
     ts_solver = partialmethod(
-        opt_solver,
-        quasi_nt='bofill',
-        trust_rad='trim',
-        upd_size='gradient',
-        neg_num=1)
+        opt_solver, quasi_nt="bofill", trust_rad="trim", upd_size="gradient", neg_num=1
+    )
 
 
 class PathLoop(OptLoop):
-
     def check_converge(self, cutoff=1e-3):
-        sub_x_gradient = np.dot(np.dot(self.new.b_matrix.T, self.new.vspace), self.new.v_gradient)
+        sub_x_gradient = np.dot(
+            np.dot(self.new.b_matrix.T, self.new.vspace), self.new.v_gradient
+        )
         if np.max(np.abs(sub_x_gradient)) < cutoff:
             return True
         return False

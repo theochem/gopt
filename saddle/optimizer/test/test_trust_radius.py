@@ -28,8 +28,7 @@ class TestTrustRadius(TestCase):
         hessian = np.diag([-1, 3, 5, 7, 9])
         gradient = np.arange(5)
         step = trim(hessian, gradient, 0.766881021)
-        ref_step = np.array(
-            [-0., -0.3030303, -0.37735849, -0.4109589, -0.43010753])
+        ref_step = np.array([-0.0, -0.3030303, -0.37735849, -0.4109589, -0.43010753])
         assert np.allclose(step, ref_step)
 
     def test_trim_all_pos(self):
@@ -37,7 +36,8 @@ class TestTrustRadius(TestCase):
         gradient = np.arange(1, 6)
         step = trim(hessian, gradient, 0.8451898886)
         ref_step = np.array(
-            [-0.27027027, -0.35087719, -0.38961039, -0.45977011, -0.39370079])
+            [-0.27027027, -0.35087719, -0.38961039, -0.45977011, -0.39370079]
+        )
         assert np.allclose(step, ref_step)
 
     def test_two_neg(self):
@@ -45,13 +45,13 @@ class TestTrustRadius(TestCase):
         gradient = np.arange(1, 6)
         step = trim(hessian, gradient, 0.8451898886)
         ref_step = np.array(
-            [0.27027027, 0.35087719, -0.38961039, -0.45977011, -0.39370079])
+            [0.27027027, 0.35087719, -0.38961039, -0.45977011, -0.39370079]
+        )
         assert np.allclose(step, ref_step)
 
     def _quad_func_setup(self):
         # function f = x^2 + 2y^2 + 3xy + 2x + 4y + 1
-        self.gradient = lambda x, y: np.array(
-            [2 * x + 3 * y + 2, 4 * y + 3 * x + 4])
+        self.gradient = lambda x, y: np.array([2 * x + 3 * y + 2, 4 * y + 3 * x + 4])
         self.hessian = lambda x, y: np.array([[2, 3], [3, 4]])
 
     def _set_path_points(self):
@@ -72,7 +72,7 @@ class TestTrustRadius(TestCase):
     def test_ob_trust_raiuds(self):
         self._quad_func_setup()
         self._set_path_points()
-        trim_ob = TrustRegion('trim')
+        trim_ob = TrustRegion("trim")
         assert np.allclose(self.p1.v_gradient, np.array([9, 14]))
         assert np.allclose(self.p1.v_hessian, np.array([[2, 3], [3, 4]]))
         self.p1.step_hessian = self.p1.v_hessian

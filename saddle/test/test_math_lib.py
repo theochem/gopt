@@ -11,7 +11,7 @@ from saddle.math_lib import diagonalize, pse_inv, ridders_solver, maximum_overla
 class TestSolver(unittest.TestCase):
     def test_ridder_quadratic(self):
         def func(x):
-            return x**2 - 4
+            return x ** 2 - 4
 
         answer = ridders_solver(func, -1, 10)
         assert abs(answer - 2) < 1e-6
@@ -25,7 +25,7 @@ class TestSolver(unittest.TestCase):
 
     def test_ridder_quatic(self):
         def func(x):
-            return x**3 - x**2 - 2 * x
+            return x ** 3 - x ** 2 - 2 * x
 
         answer = ridders_solver(func, -2, 0)
         assert answer == 0

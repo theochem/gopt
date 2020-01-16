@@ -18,11 +18,11 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-'''Physicochemical constants in atomic units
+"""Physicochemical constants in atomic units
 
    These are the physical constants defined in this module (in atomic units):
 
-'''
+"""
 
 boltzmann = 3.1668154051341965e-06
 avogadro = 6.0221415e23
@@ -33,15 +33,15 @@ planck = 6.2831853071795864769
 # automatically spice up the docstrings
 
 lines = [
-    '    ================  ==================',
-    '    Name              Value             ',
-    '    ================  ==================',
+    "    ================  ==================",
+    "    Name              Value             ",
+    "    ================  ==================",
 ]
 
 for key, value in sorted(globals().items()):
     if not isinstance(value, float):
         continue
-    lines.append('    %16s  %.10e' % (key, value))
-lines.append('    ================  ==================')
+    lines.append("    %16s  %.10e" % (key, value))
+lines.append("    ================  ==================")
 
-__doc__ += '\n'.join(lines)
+__doc__ += "\n".join(lines)

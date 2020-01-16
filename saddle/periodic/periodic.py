@@ -18,7 +18,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-'''Periodic table of elements
+"""Periodic table of elements
 
    This module contains an object ``periodic`` that can be used as a Pythonic
    periodic table. It can be used as follows::
@@ -34,7 +34,7 @@
        'Li'
        >>> periodic['5'].symbol
        'B'
-'''
+"""
 
 import csv
 
@@ -42,11 +42,11 @@ from pkg_resources import resource_filename
 
 from saddle.periodic.units import amu, angstrom
 
-__all__ = ('periodic', 'Element', 'Periodic')
+__all__ = ("periodic", "Element", "Periodic")
 
 
 class Element(object):
-    '''Represents an element from the periodic table.
+    """Represents an element from the periodic table.
 
        The following attributes are supported for all elements:
 
@@ -175,7 +175,7 @@ class Element(object):
 
        c6:
             | c6_chu
-    '''
+    """
 
     def __init__(self, number=None, symbol=None, **kwargs):
         self.number = number
@@ -208,14 +208,14 @@ class Element(object):
 
 
 class Periodic(object):
-    '''A periodic table data structure.'''
+    """A periodic table data structure."""
 
     def __init__(self, elements):
-        '''**Arguments:**
+        """**Arguments:**
 
            elements
                 A list of :class:`Element` instances.
-        '''
+        """
         self.elements = elements
         self._lookup = {}
         for element in elements:
@@ -223,7 +223,7 @@ class Periodic(object):
             self._lookup[element.symbol.lower()] = element
 
     def __getitem__(self, index):
-        '''Get an element from the table based on a flexible index.
+        """Get an element from the table based on a flexible index.
 
            **Argument:**
 
@@ -232,7 +232,7 @@ class Periodic(object):
                 elemental symbol (any case), or a string with the atomic number
 
            **Returns:** the corresponding :class:`Element` instance
-        '''
+        """
         result = self._lookup.get(index)
         if result is None and isinstance(index, str):
             index = index.strip()
@@ -240,25 +240,25 @@ class Periodic(object):
             if result is None and index.isdigit():
                 result = self._lookup.get(int(index))
                 if result is None:
-                    raise KeyError('Could not find element %s.' % index)
+                    raise KeyError("Could not find element %s." % index)
         return result
 
 
 def load_periodic():
 
     convertor_types = {
-        'int': (lambda s: int(s)),
-        'float': (lambda s: float(s)),
-        'au': (lambda s: float(s)),  # just for clarity, atomic units
-        'str': (lambda s: s.strip()),
-        'angstrom': (lambda s: float(s) * angstrom),
-        '2angstrom': (lambda s: float(s) * angstrom / 2),
-        'angstrom**3': (lambda s: float(s) * angstrom**3),
-        'amu': (lambda s: float(s) * amu),
+        "int": (lambda s: int(s)),
+        "float": (lambda s: float(s)),
+        "au": (lambda s: float(s)),  # just for clarity, atomic units
+        "str": (lambda s: s.strip()),
+        "angstrom": (lambda s: float(s) * angstrom),
+        "2angstrom": (lambda s: float(s) * angstrom / 2),
+        "angstrom**3": (lambda s: float(s) * angstrom ** 3),
+        "amu": (lambda s: float(s) * amu),
     }
 
     csv_path = resource_filename(__name__, "data/elements.csv")
-    with open(csv_path, encoding='utf-8', mode='r') as f:
+    with open(csv_path, encoding="utf-8", mode="r") as f:
         r = csv.reader(f)
         # go to the actual data
         for row in r:

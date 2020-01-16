@@ -12,21 +12,17 @@ from saddle.optimizer.trust_radius import TrustRegion
 
 class TestPathLoop(TestCase):
     def setUp(self):
-        with path('saddle.optimizer.test.data', 'HNCS.xyz') as rct_f:
-            with path('saddle.optimizer.test.data', 'HSCN.xyz') as prd_f:
+        with path("saddle.optimizer.test.data", "HNCS.xyz") as rct_f:
+            with path("saddle.optimizer.test.data", "HSCN.xyz") as prd_f:
                 ts_cons = TSConstruct.from_file(rct_f, prd_f)
         ts_cons.auto_generate_ts(dihed_special=True)
         self.ts = ts_cons.ts
         self.dir_vec = ts_cons.prd.ic_values - ts_cons.rct.ic_values
-        with path('saddle.optimizer.test.data',
-                  'pathloop_hscn.fchk') as fchk_f:
+        with path("saddle.optimizer.test.data", "pathloop_hscn.fchk") as fchk_f:
             self.ts.energy_from_fchk(fchk_f)
         self.opt_ob = PathLoop(
-            self.ts,
-            self.dir_vec,
-            quasi_nt='bfgs',
-            trust_rad='trim',
-            upd_size='energy')
+            self.ts, self.dir_vec, quasi_nt="bfgs", trust_rad="trim", upd_size="energy"
+        )
 
     def test_init(self):
         assert isinstance(self.opt_ob, PathLoop)
@@ -52,8 +48,9 @@ class TestPathLoop(TestCase):
         assert np.allclose(self.opt_ob[0].step_hessian, new_sub_v)
 
         # calculate step
-        ref_step = TrustRegion.trim(new_sub_v, self.opt_ob[0].v_gradient,
-                                    self.opt_ob[0].stepsize)
+        ref_step = TrustRegion.trim(
+            new_sub_v, self.opt_ob[0].v_gradient, self.opt_ob[0].stepsize
+        )
         self.opt_ob.calculate_trust_step()
         assert np.allclose(self.opt_ob[0].step, ref_step)
 
@@ -61,5 +58,4 @@ class TestPathLoop(TestCase):
         new_p = self.opt_ob.next_step_structure()
         assert isinstance(new_p, ReactPoint)
         dpcp_p.update_coordinates_with_delta_v(ref_step)
-        assert np.allclose(new_p._instance.coordinates,
-                           dpcp_p._instance.coordinates)
+        assert np.allclose(new_p._instance.coordinates, dpcp_p._instance.coordinates)

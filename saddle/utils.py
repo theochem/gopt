@@ -7,46 +7,46 @@ import numpy as np
 from saddle.periodic.periodic import angstrom, periodic
 
 
-class Utils():
+class Utils:
     def __init__(self, numbers, coordinates):
         self.numbers = numbers.copy()
         self.coordinates = coordinates.copy()
 
     @classmethod
-    def load_file(cls, file_path, encoding='utf-8'):
+    def load_file(cls, file_path, encoding="utf-8"):
         if isinstance(file_path, str):
             file_path = Path(file_path)
         if not isinstance(file_path, Path):
-            raise TypeError(f'input file path is not a valid type {file_path}')
+            raise TypeError(f"input file path is not a valid type {file_path}")
 
-        if file_path.suffix == '.xyz':
+        if file_path.suffix == ".xyz":
             nums, coors, _ = Utils._load_xyz(file_path, encoding=encoding)
-        elif file_path.suffix in ('.gjf', '.com'):
+        elif file_path.suffix in (".gjf", ".com"):
             nums, coors, _, _ = Utils._load_gauss(file_path, encoding=encoding)
         else:
             raise ValueError(f"Not supported file type: {file_path.suffix}")
         return cls(nums, coors)
 
     @classmethod
-    def save_file(cls, file_path, mole, format='xyz', encoding='utf-8', mode='w'):
+    def save_file(cls, file_path, mole, format="xyz", encoding="utf-8", mode="w"):
         if isinstance(file_path, str):
             file_path = Path(file_path)
         if not isinstance(file_path, Path):
-            raise TypeError(f'input file path is not a valid type {file_path}')
+            raise TypeError(f"input file path is not a valid type {file_path}")
         if not file_path.suffix:
-            file_path = file_path.parent / (file_path.name + f'.{format}')
-        assert file_path.suffix == f'.{format}'
-        if file_path.suffix == '.xyz':
+            file_path = file_path.parent / (file_path.name + f".{format}")
+        assert file_path.suffix == f".{format}"
+        if file_path.suffix == ".xyz":
             cls._save_xyz(file_path, mole, encoding=encoding, mode=mode)
         else:
             raise TypeError(
-                f'given file format {file_path.suffix} is not supported by GOpt'
+                f"given file format {file_path.suffix} is not supported by GOpt"
             )
 
     @staticmethod
-    def _load_xyz(file_path, encoding='utf-8'):
+    def _load_xyz(file_path, encoding="utf-8"):
         assert isinstance(file_path, Path)
-        assert file_path.suffix == '.xyz'
+        assert file_path.suffix == ".xyz"
         with file_path.open(encoding=encoding) as f:
             size = int(f.readline())
             title = f.readline().strip()
@@ -61,24 +61,24 @@ class Utils():
         return numbers, coordinates, title
 
     @staticmethod
-    def _save_xyz(file_path, mole, encoding='utf-8', mode='w'):
+    def _save_xyz(file_path, mole, encoding="utf-8", mode="w"):
         assert isinstance(file_path, Path)
-        assert file_path.suffix == '.xyz'
+        assert file_path.suffix == ".xyz"
         with file_path.open(encoding=encoding, mode=mode) as f:
             f.write(f"{len(mole.numbers)}\n")
-            title = getattr(mole, 'title', 'XYZ file Created by GOpt')
-            f.write(f'{title}\n')
+            title = getattr(mole, "title", "XYZ file Created by GOpt")
+            f.write(f"{title}\n")
             for index, atom_n in enumerate(mole.numbers):
                 atom_sym = periodic[atom_n].symbol
                 coor_x, coor_y, coor_z = mole.coordinates[index] / angstrom
                 f.write(
-                    f'{atom_sym:>2} {coor_x:15.10f} {coor_y:15.10f} {coor_z:15.10f}\n'
+                    f"{atom_sym:>2} {coor_x:15.10f} {coor_y:15.10f} {coor_z:15.10f}\n"
                 )
 
     @staticmethod
-    def _load_gauss(file_path, encoding='utf-8'):
+    def _load_gauss(file_path, encoding="utf-8"):
         assert isinstance(file_path, Path)
-        assert file_path.suffix in ('.com', '.gjf')
+        assert file_path.suffix in (".com", ".gjf")
         with file_path.open(encoding=encoding) as f:
             numbers = []
             coordinates = []
@@ -87,8 +87,9 @@ class Utils():
             while line:
                 contents = line.strip().split()
                 if len(contents) == 2:
-                    if ((contents[0].isdigit() or contents[0][0] == "-")
-                            and contents[1].isdigit()):
+                    if (contents[0].isdigit() or contents[0][0] == "-") and contents[
+                        1
+                    ].isdigit():
                         charge, multi = tuple(map(int, contents))
                         flag = True  # reached coorinates lines
                 if len(contents) == 4 and flag:
@@ -111,7 +112,7 @@ def deprecated(reason):
     as deprecated. It will result in a warning being emitted
     when the function is used.
     """
-    string_types = (type(b''), type(u''))
+    string_types = (type(b""), type(""))
 
     if isinstance(reason, string_types):
 
@@ -132,13 +133,13 @@ def deprecated(reason):
 
             @functools.wraps(func1)
             def new_func1(*args, **kwargs):
-                warnings.simplefilter('always', DeprecationWarning)
+                warnings.simplefilter("always", DeprecationWarning)
                 warnings.warn(
                     fmt1.format(name=func1.__name__, reason=reason),
                     category=DeprecationWarning,
-                    stacklevel=2
+                    stacklevel=2,
                 )
-                warnings.simplefilter('default', DeprecationWarning)
+                warnings.simplefilter("default", DeprecationWarning)
                 return func1(*args, **kwargs)
 
             return new_func1
@@ -164,13 +165,13 @@ def deprecated(reason):
 
         @functools.wraps(func2)
         def new_func2(*args, **kwargs):
-            warnings.simplefilter('always', DeprecationWarning)
+            warnings.simplefilter("always", DeprecationWarning)
             warnings.warn(
                 fmt2.format(name=func2.__name__),
                 category=DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
-            warnings.simplefilter('default', DeprecationWarning)
+            warnings.simplefilter("default", DeprecationWarning)
             return func2(*args, **kwargs)
 
         return new_func2

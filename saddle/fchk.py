@@ -31,10 +31,7 @@ class FCHKFile(object):
        command, lot (level of theory) and basis.
     """
 
-    def __init__(self,
-                 filename: str,
-                 ignore_errors: bool = False,
-                 field_labels=None):
+    def __init__(self, filename: str, ignore_errors: bool = False, field_labels=None):
         """
            Arguments:
             | ``filename``  --  The formatted checkpoint file
@@ -92,10 +89,10 @@ class FCHKFile(object):
                 if len(words) == 0:
                     return True
 
-                if words[0] == 'I':
+                if words[0] == "I":
                     datatype = int
                     unreadable = 0
-                elif words[0] == 'R':
+                elif words[0] == "R":
                     datatype = float
                     unreadable = np.nan
 
@@ -107,8 +104,9 @@ class FCHKFile(object):
             elif len(words) == 3:
                 if words[1] != "N=":
                     raise FileFormatError(
-                        "Unexpected line in formatted checkpoint file %s\n%s" %
-                        (filename, line[:-1]))
+                        "Unexpected line in formatted checkpoint file %s\n%s"
+                        % (filename, line[:-1])
+                    )
                 length = int(words[2])
                 value = np.zeros(length, datatype)
                 counter = 0
@@ -118,14 +116,16 @@ class FCHKFile(object):
                         if line == "":
                             raise FileFormatError(
                                 "Unexpected end of formatted checkpoint file %s"
-                                % filename)
+                                % filename
+                            )
                         for word in line.split():
                             try:
                                 value[counter] = datatype(word)
                             except (ValueError, OverflowError):
                                 print(
-                                    'WARNING: could not interpret word while reading %s: %s'
-                                    % (word, self.filename))
+                                    "WARNING: could not interpret word while reading %s: %s"
+                                    % (word, self.filename)
+                                )
                                 if self.ignore_errors:
                                     value[counter] = unreadable
                                 else:
@@ -135,14 +135,15 @@ class FCHKFile(object):
                     return True
             else:
                 raise FileFormatError(
-                    "Unexpected line in formatted checkpoint file %s\n%s" %
-                    (filename, line[:-1]))
+                    "Unexpected line in formatted checkpoint file %s\n%s"
+                    % (filename, line[:-1])
+                )
 
             self.fields[label] = value
             return True
 
         self.fields = {}
-        with open(filename, mode='r', encoding='utf-8') as f:
+        with open(filename, mode="r", encoding="utf-8") as f:
             self.title = f.readline()[:-1].strip()
             words = f.readline().split()
             if len(words) == 3:
@@ -151,7 +152,7 @@ class FCHKFile(object):
                 self.command, self.lot = words
             else:
                 raise FileFormatError(
-                    'The second line of the FCHK file should contain two or three words.'
+                    "The second line of the FCHK file should contain two or three words."
                 )
 
             while read_field(f):
@@ -162,11 +163,11 @@ class FCHKFile(object):
     def _analyze(self):
         """Convert a few elementary fields into a molecule object"""
         if ("Atomic numbers" in self.fields) and (
-                "Current cartesian coordinates" in self.fields):
+            "Current cartesian coordinates" in self.fields
+        ):
             self.molecule = Molecule(
                 self.fields["Atomic numbers"],
-                np.reshape(self.fields["Current cartesian coordinates"],
-                           (-1, 3)),
+                np.reshape(self.fields["Current cartesian coordinates"], (-1, 3)),
                 self.title,
             )
 
@@ -183,8 +184,8 @@ class FCHKFile(object):
         result = np.zeros((3 * N, 3 * N), float)
         counter = 0
         for row in range(3 * N):
-            result[row, :row + 1] = force_const[counter:counter + row + 1]
-            result[:row + 1, row] = force_const[counter:counter + row + 1]
+            result[row, : row + 1] = force_const[counter : counter + row + 1]
+            result[: row + 1, row] = force_const[counter : counter + row + 1]
             counter += row + 1
         return result
 

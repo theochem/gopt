@@ -18,8 +18,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-'''The main Saddle Package'''
+"""The main Saddle Package"""
 
-__version__ = '0.2.1'
-__author__ = 'Derrick Yang'
-__license__ = 'GPLv3'
+__version__ = "0.2.1"
+__author__ = "Derrick Yang"
+__license__ = "GPLv3"

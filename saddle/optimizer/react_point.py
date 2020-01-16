@@ -10,8 +10,8 @@ class ReactPoint(PathPoint):
     @property
     def dir_vect(self):
         real_dir_vect = np.dot(
-            self.b_matrix,
-            np.dot(np.linalg.pinv(self.b_matrix), self._raw_dir_vect))
+            self.b_matrix, np.dot(np.linalg.pinv(self.b_matrix), self._raw_dir_vect)
+        )
         return real_dir_vect / np.linalg.norm(real_dir_vect)
 
     @property
@@ -35,7 +35,7 @@ class ReactPoint(PathPoint):
 
     @property
     def sub_x_gradient(self):
-        return np.dot(self.b_matrix.T, self.sub_q_gradient)\
+        return np.dot(self.b_matrix.T, self.sub_q_gradient)
 
     @v_hessian.setter
     def v_hessian(self, value):
@@ -44,5 +44,5 @@ class ReactPoint(PathPoint):
                 raise ValueError("The shape of input is not valid")
             if not np.allclose(value, value.T):
                 raise ValueError("The input Hessian is not hermitian")
-            print('Overwrite old mod_hessian')
+            print("Overwrite old mod_hessian")
         self._mod_hessian = value.copy()

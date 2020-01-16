@@ -8,7 +8,7 @@ norm = np.linalg.norm
 class Stepsize:
     def __init__(self, method_name):
         if method_name not in Stepsize._methods_dict.keys():
-            raise ValueError(f'{method_name} is not a valid name')
+            raise ValueError(f"{method_name} is not a valid name")
         self._name = method_name
         self._update_fcn = Stepsize._methods_dict[method_name]
         self._max_s = None
@@ -39,23 +39,23 @@ class Stepsize:
         if self._init_flag is False:
             self.initialize(old)
         update_args = {
-            'o_gradient': old.v_gradient,
-            'o_hessian': old.v_hessian,
-            'step': old.step,
-            'diff_energy': new.energy - old.energy,
-            'n_gradient': new.v_gradient,
-            'df': old.df,
-            'max_s': self._max_s,
-            'min_s': self._min_s,
-            'step_size': old.stepsize
+            "o_gradient": old.v_gradient,
+            "o_hessian": old.v_hessian,
+            "step": old.step,
+            "diff_energy": new.energy - old.energy,
+            "n_gradient": new.v_gradient,
+            "df": old.df,
+            "max_s": self._max_s,
+            "min_s": self._min_s,
+            "step_size": old.stepsize,
         }
         return self._update_fcn(**update_args)
 
     @staticmethod
-    def energy_based_update(o_gradient, o_hessian, step, diff_energy,
-                            step_size, *_, min_s, max_s, **kwargs):
-        delta_m = np.dot(o_gradient,
-                         step) + 0.5 * np.dot(step, np.dot(o_hessian, step))
+    def energy_based_update(
+        o_gradient, o_hessian, step, diff_energy, step_size, *_, min_s, max_s, **kwargs
+    ):
+        delta_m = np.dot(o_gradient, step) + 0.5 * np.dot(step, np.dot(o_hessian, step))
         ratio = delta_m / diff_energy
         if 0.6667 < ratio < 1.5:
             new_step_size = 2 * step_size
@@ -65,17 +65,27 @@ class Stepsize:
         return min(0.25 * step_size, min_s)
 
     @staticmethod
-    def gradient_based_update(o_gradient, o_hessian, n_gradient, step, df,
-                              step_size, *_, min_s, max_s, **kwargs):
+    def gradient_based_update(
+        o_gradient,
+        o_hessian,
+        n_gradient,
+        step,
+        df,
+        step_size,
+        *_,
+        min_s,
+        max_s,
+        **kwargs,
+    ):
         g_predict = o_gradient + np.dot(o_hessian, step)
         rho = (norm(g_predict) - norm(o_gradient)) / (
-            norm(n_gradient) - norm(o_gradient))
+            norm(n_gradient) - norm(o_gradient)
+        )
         diff_pred = g_predict - o_gradient
         diff_act = n_gradient - o_gradient
-        cosine = np.dot(diff_pred, diff_act) / np.dot(
-            norm(diff_pred), norm(diff_act))
-        p10 = np.sqrt(1.6424 / df + 1.11 / (df**2))
-        p40 = np.sqrt(0.064175 / df + 0.0946 / (df**2))
+        cosine = np.dot(diff_pred, diff_act) / np.dot(norm(diff_pred), norm(diff_act))
+        p10 = np.sqrt(1.6424 / df + 1.11 / (df ** 2))
+        p40 = np.sqrt(0.064175 / df + 0.0946 / (df ** 2))
         if 0.8 < rho < 1.25 and p10 < cosine:
             new_step = 2 * step_size
             return min(max(new_step, min_s), max_s)
@@ -84,6 +94,6 @@ class Stepsize:
         return min(0.5 * step_size, min_s)
 
     _methods_dict = {
-        'energy': energy_based_update.__func__,
-        'gradient': gradient_based_update.__func__,
+        "energy": energy_based_update.__func__,
+        "gradient": gradient_based_update.__func__,
     }

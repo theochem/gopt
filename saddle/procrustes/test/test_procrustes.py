@@ -16,12 +16,13 @@ class test_procrustes(unittest.TestCase):
         m1 = periodic[1].mass / amu
         m2 = periodic[2].mass / amu
         mass_numbers = np.array([m1, m2])
-        assert np.allclose(mass_numbers, np.array([1, 4]), atol=1.e-2)
+        assert np.allclose(mass_numbers, np.array([1, 4]), atol=1.0e-2)
         coordinates = np.array([[0, 1, 0], [1, 0, 0]])
-        result = np.einsum('i, ij -> j', mass_numbers, coordinates)
+        result = np.einsum("i, ij -> j", mass_numbers, coordinates)
         assert np.allclose(
             Procrustes._barycenter(coordinates, ori_numbers),
-            result / np.sum(mass_numbers))
+            result / np.sum(mass_numbers),
+        )
 
     def test_fetch_atomic_amass(self):
         assert Procrustes._fetch_atomic_mass(1) - 1.007975 < 1e-5
@@ -54,13 +55,11 @@ class test_procrustes(unittest.TestCase):
 
         coordinates_2d = np.array([[1, 1, 0], [-1, 1, 0]])
         coordinates_2d_2 = np.array([[-1, 1, 0], [-1, -1, 0]])
-        coor_2d_2 = Procrustes._rotate_coordinates(coordinates_2d,
-                                                   coordinates_2d_2)
+        coor_2d_2 = Procrustes._rotate_coordinates(coordinates_2d, coordinates_2d_2)
         assert np.allclose(coordinates_2d, coor_2d_2)
 
         coordinates_2d_3 = np.array([[-1, 0, 1], [-1, 0, -1]])
-        coor_2d_3 = Procrustes._rotate_coordinates(coordinates_2d,
-                                                   coordinates_2d_3)
+        coor_2d_3 = Procrustes._rotate_coordinates(coordinates_2d, coordinates_2d_3)
         assert np.allclose(coordinates_2d, coor_2d_3)
 
     def test_move_and_rotate(self):
@@ -75,7 +74,7 @@ class test_procrustes(unittest.TestCase):
     def test_main_function(self):
         # file_path = resource_filename(
         #     Requirement.parse('saddle'), 'data/water.xyz')
-        with path('saddle.procrustes.test.data', 'water.xyz') as file_path:
+        with path("saddle.procrustes.test.data", "water.xyz") as file_path:
             water = Utils.load_file(file_path)
         water.coordinates = np.array([[0, 1, 0], [1, 0, 0], [-1, -1, 1]])
         water_2 = deepcopy(water)

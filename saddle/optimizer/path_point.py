@@ -58,7 +58,7 @@ class PathPoint:
     @property
     def step_hessian(self):
         if self._step_hessian is None:
-            raise NotSetError('Step hessian is not set yet')
+            raise NotSetError("Step hessian is not set yet")
         return self._step_hessian
 
     @step_hessian.setter
@@ -73,7 +73,7 @@ class PathPoint:
                 raise ValueError("The shape of input is not valid")
             if not np.allclose(value, value.T):
                 raise ValueError("The input Hessian is not hermitian")
-            print('Overwrite old mod_hessian')
+            print("Overwrite old mod_hessian")
         self._mod_hessian = value.copy()
 
     @property
@@ -129,10 +129,11 @@ class PathPoint:
         return deepcopy(self)
 
     # TODO: rewrap the lower level function and test
-    def fd_hessian(self, coord, *_, eps=0.001, method='g09'):
+    def fd_hessian(self, coord, *_, eps=0.001, method="g09"):
         if coord >= self.key_ic_number:
             raise ValueError(
-                'given coordinates index is not a key internal coordinates')
+                "given coordinates index is not a key internal coordinates"
+            )
         # create a perturbation
         unit_vec = np.zeros(self.df)
         unit_vec[coord] = eps

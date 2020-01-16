@@ -28,17 +28,27 @@ from typing import List, Tuple
 import numpy as np
 from numpy import cos, sin
 from saddle.cartesian import Cartesian
-from saddle.coordinate_types import (BendAngle, BondLength, CoordinateTypes,
-                                     DihedralAngle, NewDihedralCross,
-                                     NewDihedralDot)
-from saddle.errors import (AtomsIndexError, AtomsNumberError, NotConvergeError,
-                           NotSetError)
+from saddle.coordinate_types import (
+    BendAngle,
+    BondLength,
+    CoordinateTypes,
+    DihedralAngle,
+    NewDihedralCross,
+    NewDihedralDot,
+)
+from saddle.errors import (
+    AtomsIndexError,
+    AtomsNumberError,
+    NotConvergeError,
+    NotSetError,
+)
 from saddle.math_lib import pse_inv
 from saddle.molmod import bend_angle, dihed_angle
 from saddle.opt import GeoOptimizer, Point
 from saddle.periodic.periodic import periodic
 from saddle.utils import deprecated
-from scipy.optimize import minimize
+
+# from scipy.optimize import minimize
 
 __all__ = ("Internal",)
 
@@ -314,7 +324,9 @@ class Internal(Cartesian):
         self._regenerate_ic()
 
     # @deprecated("Use 'optimize_to_target_ic' instead")
-    def converge_to_target_ic(self, max_iter: int = 100, ignore_dihed=False, flex_sin=True) -> None:  # to be test
+    def converge_to_target_ic(
+        self, max_iter: int = 100, ignore_dihed=False, flex_sin=True
+    ) -> None:  # to be test
         """Using buildin optimization process to optimize geometry to target
         internal coordinates as close as possible
 
@@ -465,7 +477,7 @@ class Internal(Cartesian):
 
     @property
     def cost_value_in_cc(
-        self
+        self,
     ) -> Tuple[float, "np.ndarray[float]", "np.ndarray[float]"]:
         """Cost function value and its gradient, hessian versus Cartesian
         coordinates

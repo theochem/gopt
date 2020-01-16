@@ -11,12 +11,16 @@ gradient_based_update = Stepsize.gradient_based_update
 
 class test_update_trust_radius(TestCase):
     def setUp(self):
-        'set up test function gradient and hessian'
-        self.func = lambda x, y: x**3 + 2 * x**2 * y + 6 * x * y + 2 * y**3 + 6 * y + 10
+        "set up test function gradient and hessian"
+        self.func = (
+            lambda x, y: x ** 3 + 2 * x ** 2 * y + 6 * x * y + 2 * y ** 3 + 6 * y + 10
+        )
         self.gradient = lambda x, y: np.array(
-            [3 * x**2 + 4 * x * y + 6 * y, 2 * x**2 + 6 * x + 6 * y**2 + 6])
-        self.hessian = lambda x, y: np.array([[6 * x + 4 * y, 4 * x + 6],
-                                              [4 * x + 6, 12 * y]])
+            [3 * x ** 2 + 4 * x * y + 6 * y, 2 * x ** 2 + 6 * x + 6 * y ** 2 + 6]
+        )
+        self.hessian = lambda x, y: np.array(
+            [[6 * x + 4 * y, 4 * x + 6], [4 * x + 6, 12 * y]]
+        )
         init = (1, 2)
         assert self.func(*init) == 55
         assert np.allclose(self.gradient(*init), np.array([23, 38]))
@@ -37,10 +41,12 @@ class test_update_trust_radius(TestCase):
         assert ratio - 0.6666666666 < 1e-7
         stepsize = np.linalg.norm(step)
         new_stepsize = energy_based_update(
-            o_g, o_h, step, diff, stepsize, min_s=1, max_s=5)
+            o_g, o_h, step, diff, stepsize, min_s=1, max_s=5
+        )
         assert new_stepsize == stepsize  # condition 2
 
         # assert new_stepsize == 5
+
     def test_step_update_more(self):
         init = np.array((8, 6))
         o_g = self.gradient(*init)
@@ -52,14 +58,16 @@ class test_update_trust_radius(TestCase):
         assert np.allclose(o_h, np.array([[72, 38], [38, 72]]))
         stepsize = np.linalg.norm(step)
         new_stepsize = energy_based_update(
-            o_g, o_h, step, diff, stepsize, min_s=2, max_s=5)
+            o_g, o_h, step, diff, stepsize, min_s=2, max_s=5
+        )
         assert new_stepsize == 2 * stepsize
 
         step = np.array((-6, -6))
         stepsize = np.linalg.norm(step)
         diff = self.func(*(init + step)) - self.func(*init)
         new_stepsize = energy_based_update(
-            o_g, o_h, step, diff, stepsize, min_s=2, max_s=10)
+            o_g, o_h, step, diff, stepsize, min_s=2, max_s=10
+        )
         assert new_stepsize == stepsize
 
     def test_gradient_update(self):
@@ -77,7 +85,8 @@ class test_update_trust_radius(TestCase):
         pre_g = o_g + np.dot(o_h, step)
         assert np.allclose(pre_g, [238, 250])
         new_stepsize = gradient_based_update(
-            o_g, o_h, n_g, step, df=3, step_size=stepsize, min_s=1, max_s=5)
+            o_g, o_h, n_g, step, df=3, step_size=stepsize, min_s=1, max_s=5
+        )
         assert new_stepsize == 2 * stepsize
 
         step = list(map(int, (-np.dot(np.linalg.pinv(o_h), o_g))))
@@ -91,7 +100,8 @@ class test_update_trust_radius(TestCase):
         pre_g = o_g + np.dot(o_h, step)
         assert np.allclose(pre_g, [18, 30])
         new_stepsize = gradient_based_update(
-            o_g, o_h, n_g, step, df=3, step_size=stepsize, min_s=1, max_s=5)
+            o_g, o_h, n_g, step, df=3, step_size=stepsize, min_s=1, max_s=5
+        )
         assert new_stepsize == 5
 
     def _set_path_points(self):
@@ -135,12 +145,12 @@ class test_update_trust_radius(TestCase):
     def test_update_object(self):
         self._set_path_points()
         with self.assertRaises(ValueError):
-            energy_ob = Stepsize('gibberish')
+            energy_ob = Stepsize("gibberish")
         assert np.allclose(self.p1.v_gradient, [26, 32])
         assert np.allclose(self.p2.v_gradient, [23, 38])
-        energy_ob = Stepsize('energy')
+        energy_ob = Stepsize("energy")
         new_step = energy_ob.update_step(old=self.p1, new=self.p2)
         assert np.allclose(new_step, self.p1.stepsize)
-        gradient_ob = Stepsize('gradient')
+        gradient_ob = Stepsize("gradient")
         new_step = gradient_ob.update_step(old=self.p1, new=self.p2)
         assert np.allclose(new_step, energy_ob.min_s)

@@ -30,27 +30,29 @@ from saddle.conf import WORK_DIR
 from saddle.fchk import FCHKFile
 from saddle.periodic.periodic import angstrom, periodic
 
-__all__ = ('GaussianWrapper', )
+__all__ = ("GaussianWrapper",)
 
 
 class GaussianWrapper(object):
 
     counter = 0
 
-    template = Template(read_text('saddle.data', 'single_hf_template.com'))
+    template = Template(read_text("saddle.data", "single_hf_template.com"))
 
     def __init__(self, molecule, title):
         self.molecule = molecule
         self.title = title
 
-    def run_gaussian_and_get_result(self,
-                                    charge,
-                                    multi,
-                                    *_,
-                                    coordinates=True,
-                                    energy=True,
-                                    gradient=False,
-                                    hessian=False):
+    def run_gaussian_and_get_result(
+        self,
+        charge,
+        multi,
+        *_,
+        coordinates=True,
+        energy=True,
+        gradient=False,
+        hessian=False
+    ):
         freq = ""
         if gradient or hessian:
             freq = "freq"
@@ -59,8 +61,9 @@ class GaussianWrapper(object):
         # print "gausian is going to run \n{} \n{} \n{}".format(charge, multi,
         #   self.molecule.ic)
         fchk_file = self._run_gaussian(filename)
-        assert isinstance(fchk_file,
-                          FCHKFile), "Gaussian calculation didn't run properly"
+        assert isinstance(
+            fchk_file, FCHKFile
+        ), "Gaussian calculation didn't run properly"
         result = [None] * 4
         if coordinates:
             result[0] = fchk_file.get_coordinates()
@@ -72,26 +75,26 @@ class GaussianWrapper(object):
             result[3] = fchk_file.get_hessian()
         return result
 
-    def create_gauss_input(self,
-                           charge,
-                           multi,
-                           freq='freq',
-                           spe_title='',
-                           path='',
-                           postfix='.com'):
+    def create_gauss_input(
+        self, charge, multi, freq="freq", spe_title="", path="", postfix=".com"
+    ):
         assert isinstance(path, str) or isinstance(path, Path)
         assert isinstance(spe_title, str)
         atoms = ""
         for i in range(len(self.molecule.numbers)):
             x, y, z = self.molecule.coordinates[i] / angstrom
-            atoms += ('%2s % 10.5f % 10.5f % 10.5f \n' %
-                      (periodic[self.molecule.numbers[i]].symbol, x, y, z))
+            atoms += "%2s % 10.5f % 10.5f % 10.5f \n" % (
+                periodic[self.molecule.numbers[i]].symbol,
+                x,
+                y,
+                z,
+            )
         if spe_title:
             filename = spe_title
         elif self.title:
             filename = self.title
         else:
-            raise ValueError('file name is not specified')
+            raise ValueError("file name is not specified")
         if path:
             path = os.path.join(path, filename + postfix)
         else:
@@ -99,11 +102,9 @@ class GaussianWrapper(object):
         with open(path, "w") as f:
             f.write(
                 self.template.substitute(
-                    charge=charge,
-                    freq=freq,
-                    multi=multi,
-                    atoms=atoms,
-                    title=filename))
+                    charge=charge, freq=freq, multi=multi, atoms=atoms, title=filename
+                )
+            )
         GaussianWrapper.counter += 1
 
     def _create_input_file(self, charge, multi, freq="freq"):
@@ -118,13 +119,13 @@ class GaussianWrapper(object):
         os.system("{0} {1}.com".format(command_bin, filename))
         if fchk:
             logname = "{0}.log".format(filename)
-            if os.path.isfile(os.path.join(path,
-                                           logname)) and self._log_finish_test(
-                                               os.path.join(path, logname)):
-                os.system("formchk {0}.chk {0}.fchk".format(
-                    os.path.join(path, filename)))
-                fchk_ob = FCHKFile("{0}.fchk".format(
-                    os.path.join(path, filename)))
+            if os.path.isfile(os.path.join(path, logname)) and self._log_finish_test(
+                os.path.join(path, logname)
+            ):
+                os.system(
+                    "formchk {0}.chk {0}.fchk".format(os.path.join(path, filename))
+                )
+                fchk_ob = FCHKFile("{0}.fchk".format(os.path.join(path, filename)))
         # os.chdir(os.path.join(self.pwd, '..'))
         # print("change_back", self.pwd)
         return fchk_ob
@@ -138,10 +139,11 @@ class GaussianWrapper(object):
         return flag
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from collections import namedtuple
+
     molecule = namedtuple("molecule", "numbers, coordinates")
-    aa = molecule([1, 3], np.array([[0., 0., 0.], [1., 1., 1.]]))
+    aa = molecule([1, 3], np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]))
     a = GaussianWrapper(aa, "text_wrapper")
     print(a.template)
     a._create_input_file(0, 2)

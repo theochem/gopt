@@ -4,6 +4,7 @@ import numpy as np
 from importlib_resources import path
 from saddle.optimizer.react_point import ReactPoint
 from saddle.ts_construct import TSConstruct
+
 # from saddle.utils import Utils
 
 
@@ -11,8 +12,8 @@ from saddle.ts_construct import TSConstruct
 # Disable pylint on numpy.random functions
 class TestReactPoint(TestCase):
     def setUp(self):
-        with path('saddle.test.data', 'rct.xyz') as rct_path:
-            with path('saddle.test.data', 'prd.xyz') as prd_path:
+        with path("saddle.test.data", "rct.xyz") as rct_path:
+            with path("saddle.test.data", "prd.xyz") as prd_path:
                 mol = TSConstruct.from_file(rct_path, prd_path)
                 mol.auto_generate_ts(dihed_special=True)
         self.ts = mol.ts
@@ -30,7 +31,8 @@ class TestReactPoint(TestCase):
         proj_dv = np.outer(self.r_p1.dir_vect, self.r_p1.dir_vect)
         # project twice
         ref_sub_vspace = self.ts.vspace - np.dot(
-            proj_dv, np.dot(proj_dv, self.ts.vspace))
+            proj_dv, np.dot(proj_dv, self.ts.vspace)
+        )
         assert np.allclose(ref_sub_vspace, self.r_p1.vspace)
 
     def test_sub_v_gradient(self):
@@ -56,8 +58,9 @@ class TestReactPoint(TestCase):
         x_hessian = np.dot(x_hessian_h, x_hessian_h.T)
         self.ts._energy_hessian = x_hessian
 
-        ref_sub_v_hessian = np.dot(self.r_p1.vspace.T,
-                                   np.dot(self.ts.q_hessian, self.r_p1.vspace))
+        ref_sub_v_hessian = np.dot(
+            self.r_p1.vspace.T, np.dot(self.ts.q_hessian, self.r_p1.vspace)
+        )
         assert np.allclose(self.r_p1.q_gradient, self.ts.q_gradient)
         assert np.allclose(self.r_p1._instance.q_hessian, self.ts.q_hessian)
         assert np.allclose(self.r_p1.v_hessian, ref_sub_v_hessian)

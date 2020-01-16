@@ -13,7 +13,7 @@ from saddle.utils import Utils
 
 class TestOptLoop(TestCase):
     def setUp(self):
-        with path('saddle.optimizer.test.data', 'water.xyz') as mol_path:
+        with path("saddle.optimizer.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
         red_int.add_bond(0, 1)
@@ -23,10 +23,9 @@ class TestOptLoop(TestCase):
 
     def setup_opt(self):
         self.mol.select_key_ic(0)
-        with path('saddle.optimizer.test.data', 'water_old.fchk') as fchk_file:
+        with path("saddle.optimizer.test.data", "water_old.fchk") as fchk_file:
             self.mol.energy_from_fchk(fchk_file)
-        opt = OptLoop(
-            self.mol, quasi_nt='bfgs', trust_rad='trim', upd_size='energy')
+        opt = OptLoop(self.mol, quasi_nt="bfgs", trust_rad="trim", upd_size="energy")
         opt.new.step_hessian = opt.new.v_hessian
         return opt
 
@@ -35,8 +34,7 @@ class TestOptLoop(TestCase):
         opt.calculate_trust_step()
         # ref step
         r_p = opt.new
-        ref_step = TrustRegion.trim(r_p.v_hessian, r_p.v_gradient,
-                                    r_p.stepsize)
+        ref_step = TrustRegion.trim(r_p.v_hessian, r_p.v_gradient, r_p.stepsize)
         assert np.allclose(ref_step, opt.new.step)
 
     def test_new_struct(self):
@@ -55,8 +53,7 @@ class TestOptLoop(TestCase):
 
         # generate new point
         new_p = opt.next_step_structure()
-        with path('saddle.optimizer.test.data',
-                  'new_step_water.fchk') as fchk_file:
+        with path("saddle.optimizer.test.data", "new_step_water.fchk") as fchk_file:
             result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
@@ -73,8 +70,7 @@ class TestOptLoop(TestCase):
 
         new_p = opt.next_step_structure()
         # new_p._instance.create_gauss_input(title='new_step_water.com')
-        with path('saddle.optimizer.test.data',
-                  'new_step_water.fchk') as fchk_file:
+        with path("saddle.optimizer.test.data", "new_step_water.fchk") as fchk_file:
             result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
@@ -93,8 +89,7 @@ class TestOptLoop(TestCase):
         opt.calculate_trust_step()
 
         new_p = opt.next_step_structure()
-        with path('saddle.optimizer.test.data',
-                  'new_step_water.fchk') as fchk_file:
+        with path("saddle.optimizer.test.data", "new_step_water.fchk") as fchk_file:
             result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
@@ -102,8 +97,7 @@ class TestOptLoop(TestCase):
         # hessian update and modify
         opt.update_hessian()
         sec_y = secant(opt.new, opt.old)
-        ref_hes = QuasiNT.bfgs(
-            opt.old.v_hessian, sec_y=sec_y, step=opt.old.step)
+        ref_hes = QuasiNT.bfgs(opt.old.v_hessian, sec_y=sec_y, step=opt.old.step)
         assert np.allclose(ref_hes, opt.new.v_hessian)
         opt.modify_hessian()
         assert np.allclose(ref_hes, opt.new.v_hessian)
@@ -117,8 +111,7 @@ class TestOptLoop(TestCase):
         opt.calculate_trust_step()
 
         new_p = opt.next_step_structure()
-        with path('saddle.optimizer.test.data',
-                  'new_step_water.fchk') as fchk_file:
+        with path("saddle.optimizer.test.data", "new_step_water.fchk") as fchk_file:
             result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
@@ -140,8 +133,7 @@ class TestOptLoop(TestCase):
         opt.calculate_trust_step()
 
         new_p = opt.next_step_structure()
-        with path('saddle.optimizer.test.data',
-                  'new_step_water.fchk') as fchk_file:
+        with path("saddle.optimizer.test.data", "new_step_water.fchk") as fchk_file:
             result = opt.verify_new_point(new_p, debug_fchk=fchk_file)
         assert result is True
         opt.add_new_point(new_p)
@@ -150,20 +142,17 @@ class TestOptLoop(TestCase):
         opt.update_hessian()
         opt.modify_hessian()
         opt.calculate_trust_step()
-        ref_step = -np.dot(
-            np.linalg.pinv(opt.new.v_hessian), opt.new.v_gradient)
+        ref_step = -np.dot(np.linalg.pinv(opt.new.v_hessian), opt.new.v_gradient)
         assert np.allclose(ref_step, opt.new.step)
         opt.calculate_trust_step()
         new_point = opt.next_step_structure()
-        with path('saddle.optimizer.test.data',
-                  'final_water.fchk') as fchk_file:
+        with path("saddle.optimizer.test.data", "final_water.fchk") as fchk_file:
             opt.verify_new_point(new_point, debug_fchk=fchk_file)
         opt.add_new_point(new_point)
         assert opt.check_converge() is True
 
     def test_opt_initialize(self):
-        opt = OptLoop(
-            self.mol, quasi_nt='bfgs', trust_rad='trim', upd_size='energy')
+        opt = OptLoop(self.mol, quasi_nt="bfgs", trust_rad="trim", upd_size="energy")
         assert len(opt) == 1
         assert opt._max_pt == 0
         assert opt._neg == 0
@@ -172,25 +161,20 @@ class TestOptLoop(TestCase):
         assert np.allclose(opt[0].v_hessian, np.eye(3))
 
         opt = OptLoop(
-            self.mol,
-            quasi_nt='bfgs',
-            trust_rad='trim',
-            upd_size='energy',
-            max_pt=2)
+            self.mol, quasi_nt="bfgs", trust_rad="trim", upd_size="energy", max_pt=2
+        )
         assert opt._max_pt == 2
 
         with self.assertRaises(ValueError):
             opt = OptLoop(
-                self.mol,
-                quasi_nt='bfgs',
-                trust_rad='trim',
-                upd_size='energy',
-                max_pt=1)
+                self.mol, quasi_nt="bfgs", trust_rad="trim", upd_size="energy", max_pt=1
+            )
 
         with self.assertRaises(ValueError):
             opt = OptLoop(
                 self.mol,
-                quasi_nt='bfgs',
-                trust_rad='trim',
-                upd_size='energy',
-                neg_num=1)
+                quasi_nt="bfgs",
+                trust_rad="trim",
+                upd_size="energy",
+                neg_num=1,
+            )

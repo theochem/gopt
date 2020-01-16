@@ -4,7 +4,7 @@ import numpy as np
 
 from saddle.math_lib import ridders_solver, pse_inv
 
-__all__ = ('Point', 'GeoOptimizer')
+__all__ = ("Point", "GeoOptimizer")
 
 
 class Point(object):
@@ -66,7 +66,7 @@ class GeoOptimizer(object):
             x = w.copy()
             x[:negative] = x[:negative] - value
             x[negative:] = x[negative:] + value
-            new_hessian_inv = np.dot(v, np.dot(np.diag(1. / x), v.T))
+            new_hessian_inv = np.dot(v, np.dot(np.diag(1.0 / x), v.T))
             return -np.dot(new_hessian_inv, point.gradient)
 
         def func_value(value):
@@ -88,22 +88,20 @@ class GeoOptimizer(object):
         if np.linalg.norm(point.gradient) > np.linalg.norm(pre_point.gradient):
             point.trust_radius = pre_point.trust_radius * 0.25
             return
-        g_predict = pre_point.gradient + \
-            np.dot(pre_point.hessian, pre_point.step)
-        if np.linalg.norm(point.gradient) - np.linalg.norm(
-                pre_point.gradient) == 0:
-            ratio = 3.
+        g_predict = pre_point.gradient + np.dot(pre_point.hessian, pre_point.step)
+        if np.linalg.norm(point.gradient) - np.linalg.norm(pre_point.gradient) == 0:
+            ratio = 3.0
             # if the gradient change is 0, then use the set_trust_radius
         else:
-            ratio = np.linalg.norm(g_predict) - np.linalg.norm(
-                pre_point.gradient) / (np.linalg.norm(point.gradient) -
-                                       np.linalg.norm(pre_point.gradient))
+            ratio = np.linalg.norm(g_predict) - np.linalg.norm(pre_point.gradient) / (
+                np.linalg.norm(point.gradient) - np.linalg.norm(pre_point.gradient)
+            )
         if 0.8 <= ratio <= 1.25:
-            point.trust_radius = pre_point.trust_radius * 2.
+            point.trust_radius = pre_point.trust_radius * 2.0
         elif 0.2 <= ratio <= 6:
             point.trust_radius = pre_point.trust_radius
         else:
-            point.trust_radius = pre_point.trust_radius * .5
+            point.trust_radius = pre_point.trust_radius * 0.5
         point.trust_radius = min(
-            max(point.trust_radius, 0.1 * np.sqrt(point.ele)),
-            2. * np.sqrt(point.ele))
+            max(point.trust_radius, 0.1 * np.sqrt(point.ele)), 2.0 * np.sqrt(point.ele)
+        )

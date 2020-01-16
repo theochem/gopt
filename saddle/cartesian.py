@@ -29,7 +29,7 @@ from saddle.fchk import FCHKFile
 from saddle.gaussianwrapper import GaussianWrapper
 from saddle.utils import Utils
 
-__all__ = ('Cartesian', )
+__all__ = ("Cartesian",)
 
 
 class Cartesian:
@@ -78,12 +78,14 @@ class Cartesian:
         Calculate cosine of angle between atoms with index1, index2, and index3
     """
 
-    def __init__(self,
-                 coordinates: 'np.ndarray[float]',
-                 numbers: 'np.ndarray[int]',
-                 charge: int,
-                 multi: int,
-                 title: str = "") -> None:
+    def __init__(
+        self,
+        coordinates: "np.ndarray[float]",
+        numbers: "np.ndarray[int]",
+        charge: int,
+        multi: int,
+        title: str = "",
+    ) -> None:
         self._coordinates = coordinates.copy()
         self._numbers = numbers.copy()
         self._charge = charge
@@ -91,15 +93,16 @@ class Cartesian:
         if title:
             self._title = title
         else:
-            self._title = f'untitled_{token_hex(3)}'
+            self._title = f"untitled_{token_hex(3)}"
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None
         return None
 
     @classmethod
-    def from_file(cls, filename: str, charge: int = 0,
-                  multi: int = 1, title='') -> 'Cartesian':
+    def from_file(
+        cls, filename: str, charge: int = 0, multi: int = 1, title=""
+    ) -> "Cartesian":
         """Create an Cartesian instance from file .xyz, .com,
         .gjf or .fchk
 
@@ -117,11 +120,10 @@ class Cartesian:
         new Cartesian instance : Cartesian
         """
         mol = Utils.load_file(filename)
-        return cls(
-            mol.coordinates, mol.numbers, charge, multi, title=title)
+        return cls(mol.coordinates, mol.numbers, charge, multi, title=title)
 
     @property
-    def energy_gradient(self) -> 'np.ndarray[float]':
+    def energy_gradient(self) -> "np.ndarray[float]":
         """Gradient of energy versus cartesian coordinates
 
         Returns
@@ -130,12 +132,13 @@ class Cartesian:
         """
         if self._energy_gradient is None:
             raise NotSetError(
-                "The value 'energy_gradient' unset, do the calculation first")
+                "The value 'energy_gradient' unset, do the calculation first"
+            )
         else:
             return self._energy_gradient
 
     @property
-    def energy_hessian(self) -> 'np.ndarray[float]':
+    def energy_hessian(self) -> "np.ndarray[float]":
         """Hessian of energy versus internal coordinates
 
         Returns
@@ -144,7 +147,8 @@ class Cartesian:
         """
         if self._energy_hessian is None:
             raise NotSetError(
-                "The value 'energy_hessian' is None, do the calculation first")
+                "The value 'energy_hessian' is None, do the calculation first"
+            )
         else:
             return self._energy_hessian
 
@@ -157,16 +161,15 @@ class Cartesian:
         energy : float
         """
         if self._energy is None:
-            raise NotSetError(
-                "The value 'energy' is None, do the calculation first")
+            raise NotSetError("The value 'energy' is None, do the calculation first")
         else:
             return self._energy
 
-    def save_to(self, filename, mode='w'):
+    def save_to(self, filename, mode="w"):
         # a little bit weird, need to be reconstruct later
         Utils.save_file(filename, self, mode=mode)
 
-    def set_new_coordinates(self, new_coor: 'np.ndarray[float]') -> None:
+    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
         """Assign new cartesian coordinates to this molecule
 
         Arguments
@@ -175,8 +178,7 @@ class Cartesian:
             New cartesian coordinates of the system
         """
         if self._coordinates.shape != new_coor.shape:
-            raise AtomsNumberError(
-                "the dimentsion of coordinates are not the same")
+            raise AtomsNumberError("the dimentsion of coordinates are not the same")
         self._coordinates = new_coor.copy()
         self._reset_cartesian()
         return None
@@ -190,7 +192,7 @@ class Cartesian:
         return None
 
     @property
-    def numbers(self) -> 'np.ndarray[int]':
+    def numbers(self) -> "np.ndarray[int]":
         """Atomic number of all the atoms in the system
 
         Returns
@@ -220,7 +222,7 @@ class Cartesian:
         return self._multi
 
     @property
-    def coordinates(self) -> 'np.ndarray[float]':
+    def coordinates(self) -> "np.ndarray[float]":
         """Cartesian coordinates of every atoms
 
         Returns
@@ -253,11 +255,9 @@ class Cartesian:
             return 1
         return self.natom * 3 - 6
 
-    def energy_from_fchk(self,
-                         abs_path: str,
-                         *_,
-                         gradient: bool = True,
-                         hessian: bool = True) -> None:
+    def energy_from_fchk(
+        self, abs_path: str, *_, gradient: bool = True, hessian: bool = True
+    ) -> None:
         """Obtain energy and relative information from FCHK file.
 
         Arguments
@@ -282,7 +282,7 @@ class Cartesian:
             self._energy_hessian = fchk_file.get_hessian()
         return None
 
-    def energy_calculation(self, *_, method: str = 'g09') -> None:  # need test
+    def energy_calculation(self, *_, method: str = "g09") -> None:  # need test
         """Conduct calculation with designated method.
 
         Keywords Arguments
@@ -291,10 +291,10 @@ class Cartesian:
             name of the program(method) used to calculate energy and other
             property
         """
-        if method == 'g09':
+        if method == "g09":
             self._gaussian_calculation()
         else:
-            raise ValueError('input method is not support')
+            raise ValueError("input method is not support")
         return None
 
     def _gaussian_calculation(self, **kwargs):
@@ -303,7 +303,8 @@ class Cartesian:
         title = self._title
         obj = GaussianWrapper(self, title)
         coor, ener, grad, hess = obj.run_gaussian_and_get_result(
-            self.charge, self.multi, energy=True, gradient=True, hessian=True)
+            self.charge, self.multi, energy=True, gradient=True, hessian=True
+        )
         self.set_new_coordinates(coor.reshape(-1, 3))
         self._energy = ener
         self._energy_gradient = grad
@@ -359,8 +360,7 @@ class Cartesian:
         coord3 = self.coordinates[index3]
         diff_1 = coord2 - coord1
         diff_2 = coord2 - coord3
-        cos_angle = np.dot(diff_1, diff_2) / \
-            (npl.norm(diff_1) * npl.norm(diff_2))
+        cos_angle = np.dot(diff_1, diff_2) / (npl.norm(diff_1) * npl.norm(diff_2))
         return cos_angle
 
     def angle(self, index1: int, index2: int, index3: int) -> float:
@@ -384,7 +384,7 @@ class Cartesian:
         cos_value = self.angle_cos(index1, index2, index3)
         return np.arccos(cos_value)
 
-    def create_gauss_input(self, freq='freq', title=''):
+    def create_gauss_input(self, freq="freq", title=""):
         """Create gaussian input file for this molecule
 
         Arguments

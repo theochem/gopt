@@ -34,7 +34,8 @@ class Scalar(object):
             self.dd = np.zeros((size, size), float)
         if deriv > 2:
             raise ValueError(
-                "This implementation (only) supports up to second order derivatives.")
+                "This implementation (only) supports up to second order derivatives."
+            )
 
     def copy(self):
         """Return a deep copy"""
@@ -49,7 +50,7 @@ class Scalar(object):
     def results(self):
         """Return the value and optionally derivative and second order derivative"""
         if self.deriv == 0:
-            return self.v,
+            return (self.v,)
         if self.deriv == 1:
             return self.v, self.d
         if self.deriv == 2:
@@ -135,10 +136,9 @@ class Scalar(object):
     def inv(self):
         """In place invert"""
         self.v = 1 / self.v
-        tmp = self.v**2
+        tmp = self.v ** 2
         if self.deriv > 1:
-            self.dd[:] = tmp * \
-                (2 * self.v * np.outer(self.d, self.d) - self.dd)
+            self.dd[:] = tmp * (2 * self.v * np.outer(self.d, self.d) - self.dd)
         if self.deriv > 0:
             self.d[:] = -tmp * self.d[:]
 
@@ -208,7 +208,7 @@ class Vector3(object):
     def norm(self):
         """Return a Scalar object with the norm of this vector"""
         result = Scalar(self.size, self.deriv)
-        result.v = np.sqrt(self.x.v**2 + self.y.v**2 + self.z.v**2)
+        result.v = np.sqrt(self.x.v ** 2 + self.y.v ** 2 + self.z.v ** 2)
         if self.deriv > 0:
             result.d += self.x.v * self.x.d
             result.d += self.y.v * self.y.d
@@ -218,13 +218,10 @@ class Vector3(object):
             result.dd += self.x.v * self.x.dd
             result.dd += self.y.v * self.y.dd
             result.dd += self.z.v * self.z.dd
-            denom = result.v**2
-            result.dd += (1 - self.x.v**2 / denom) * \
-                np.outer(self.x.d, self.x.d)
-            result.dd += (1 - self.y.v**2 / denom) * \
-                np.outer(self.y.d, self.y.d)
-            result.dd += (1 - self.z.v**2 / denom) * \
-                np.outer(self.z.d, self.z.d)
+            denom = result.v ** 2
+            result.dd += (1 - self.x.v ** 2 / denom) * np.outer(self.x.d, self.x.d)
+            result.dd += (1 - self.y.v ** 2 / denom) * np.outer(self.y.d, self.y.d)
+            result.dd += (1 - self.z.v ** 2 / denom) * np.outer(self.z.d, self.z.d)
             tmp = -self.x.v * self.y.v / denom * np.outer(self.x.d, self.y.d)
             result.dd += tmp + tmp.transpose()
             tmp = -self.y.v * self.z.v / denom * np.outer(self.y.d, self.z.d)
@@ -272,6 +269,7 @@ def cross(r1, r2):
 #
 # Internal coordinate functions
 #
+
 
 def bond_length(rs, deriv=0):
     """Compute the distance between the two points rs[0] and rs[1]
@@ -404,7 +402,7 @@ def _bond_transform(rs, fn_low, deriv):
     result = fn_low(r, deriv)
     v = result[0]
     if deriv == 0:
-        return v,
+        return (v,)
     d = np.zeros((2, 3), float)
     d[0] = result[1]
     d[1] = -result[1]
@@ -426,7 +424,7 @@ def _bend_transform(rs, fn_low, deriv):
     result = fn_low(a, b, deriv)
     v = result[0]
     if deriv == 0:
-        return v,
+        return (v,)
     d = np.zeros((3, 3), float)
     d[0] = result[1][:3]
     d[1] = -result[1][:3] - result[1][3:]
@@ -439,13 +437,13 @@ def _bend_transform(rs, fn_low, deriv):
     ba = result[2][3:, :3]
     bb = result[2][3:, 3:]
     dd[0, :, 0, :] = aa
-    dd[0, :, 1, :] = - aa - ab
+    dd[0, :, 1, :] = -aa - ab
     dd[0, :, 2, :] = ab
-    dd[1, :, 0, :] = - aa - ba
+    dd[1, :, 0, :] = -aa - ba
     dd[1, :, 1, :] = aa + ba + ab + bb
-    dd[1, :, 2, :] = - ab - bb
+    dd[1, :, 2, :] = -ab - bb
     dd[2, :, 0, :] = ba
-    dd[2, :, 1, :] = - ba - bb
+    dd[2, :, 1, :] = -ba - bb
     dd[2, :, 2, :] = bb
     if deriv == 2:
         return v, d, dd
@@ -459,7 +457,7 @@ def _dihed_transform(rs, fn_low, deriv):
     result = fn_low(a, b, c, deriv)
     v = result[0]
     if deriv == 0:
-        return v,
+        return (v,)
     d = np.zeros((4, 3), float)
     d[0] = result[1][:3]
     d[1] = -result[1][:3] - result[1][3:6]
@@ -479,22 +477,22 @@ def _dihed_transform(rs, fn_low, deriv):
     cc = result[2][6:, 6:]
 
     dd[0, :, 0, :] = aa
-    dd[0, :, 1, :] = - aa - ab
+    dd[0, :, 1, :] = -aa - ab
     dd[0, :, 2, :] = ab - ac
     dd[0, :, 3, :] = ac
 
-    dd[1, :, 0, :] = - aa - ba
+    dd[1, :, 0, :] = -aa - ba
     dd[1, :, 1, :] = aa + ba + ab + bb
-    dd[1, :, 2, :] = - ab - bb + ac + bc
-    dd[1, :, 3, :] = - ac - bc
+    dd[1, :, 2, :] = -ab - bb + ac + bc
+    dd[1, :, 3, :] = -ac - bc
 
     dd[2, :, 0, :] = ba - ca
-    dd[2, :, 1, :] = - ba + ca - bb + cb
+    dd[2, :, 1, :] = -ba + ca - bb + cb
     dd[2, :, 2, :] = bb - cb - bc + cc
     dd[2, :, 3, :] = bc - cc
 
     dd[3, :, 0, :] = ca
-    dd[3, :, 1, :] = - ca - cb
+    dd[3, :, 1, :] = -ca - cb
     dd[3, :, 2, :] = cb - cc
     dd[3, :, 3, :] = cc
     if deriv == 2:
@@ -509,7 +507,7 @@ def _opbend_transform(rs, fn_low, deriv):
     result = fn_low(a, b, c, deriv)
     v = result[0]
     if deriv == 0:
-        return v,
+        return (v,)
     d = np.zeros((4, 3), float)
     d[0] = -result[1][:3] - result[1][3:6] - result[1][6:]
     d[1] = result[1][:3]
@@ -529,21 +527,21 @@ def _opbend_transform(rs, fn_low, deriv):
     cc = result[2][6:, 6:]
 
     dd[0, :, 0, :] = aa + ab + ac + ba + bb + bc + ca + cb + cc
-    dd[0, :, 1, :] = - aa - ba - ca
-    dd[0, :, 2, :] = - ab - bb - cb
-    dd[0, :, 3, :] = - ac - bc - cc
+    dd[0, :, 1, :] = -aa - ba - ca
+    dd[0, :, 2, :] = -ab - bb - cb
+    dd[0, :, 3, :] = -ac - bc - cc
 
-    dd[1, :, 0, :] = - aa - ab - ac
+    dd[1, :, 0, :] = -aa - ab - ac
     dd[1, :, 1, :] = aa
     dd[1, :, 2, :] = ab
     dd[1, :, 3, :] = ac
 
-    dd[2, :, 0, :] = - ba - bb - bc
+    dd[2, :, 0, :] = -ba - bb - bc
     dd[2, :, 1, :] = ba
     dd[2, :, 2, :] = bb
     dd[2, :, 3, :] = bc
 
-    dd[3, :, 0, :] = - ca - cb - cc
+    dd[3, :, 0, :] = -ca - cb - cc
     dd[3, :, 1, :] = ca
     dd[3, :, 2, :] = cb
     dd[3, :, 3, :] = cc
@@ -560,8 +558,7 @@ def _opbend_transform_mean(rs, fn_low, deriv=0):
     dd = np.zeros((4, 3, 4, 3), float)
     # loop over the 3 cyclic permutations
     for p in np.array([[0, 1, 2], [2, 0, 1], [1, 2, 0]]):
-        opbend = _opbend_transform(
-            [rs[p[0]], rs[p[1]], rs[p[2]], rs[3]], fn_low, deriv)
+        opbend = _opbend_transform([rs[p[0]], rs[p[1]], rs[p[2]], rs[3]], fn_low, deriv)
         v += opbend[0] / 3
         # index0 is the index of the 0th atom (rs[0])
         index0 = np.where(p == 0)[0][0]
@@ -594,7 +591,7 @@ def _opbend_transform_mean(rs, fn_low, deriv=0):
             dd[3, :, 2, :] += opbend[2][index3, :, index2, :] / 3
             dd[3, :, 3, :] += opbend[2][index3, :, index3, :] / 3
     if deriv == 0:
-        return v,
+        return (v,)
     elif deriv == 1:
         return v, d
     elif deriv == 2:
@@ -721,7 +718,7 @@ def _opbend_cos_low(a, b, c, deriv):
     c /= c.norm()
     temp = dot(n, c)
     result = temp.copy()
-    result.v = np.sqrt(1.0 - temp.v**2)
+    result.v = np.sqrt(1.0 - temp.v ** 2)
     if result.deriv > 0:
         result.d *= -temp.v
         result.d /= result.v
@@ -729,7 +726,7 @@ def _opbend_cos_low(a, b, c, deriv):
         result.dd *= -temp.v
         result.dd /= result.v
         temp2 = np.array(temp.d).transpose() * temp.d
-        temp2 /= result.v**3
+        temp2 /= result.v ** 3
         result.dd -= temp2
     return result.results()
 
@@ -750,15 +747,15 @@ def _cos_to_angle(result, deriv, sign=1):
     """Convert a cosine and its derivatives to an angle and its derivatives"""
     v = np.arccos(np.clip(result[0], -1, 1))
     if deriv == 0:
-        return v * sign,
+        return (v * sign,)
     if abs(result[0]) >= 1:
         factor1 = 0
     else:
-        factor1 = -1.0 / np.sqrt(1 - result[0]**2)
+        factor1 = -1.0 / np.sqrt(1 - result[0] ** 2)
     d = factor1 * result[1]
     if deriv == 1:
         return v * sign, d * sign
-    factor2 = result[0] * factor1**3
+    factor2 = result[0] * factor1 ** 3
     dd = factor2 * np.outer(result[1], result[1]) + factor1 * result[2]
     if deriv == 2:
         return v * sign, d * sign, dd * sign
@@ -777,15 +774,15 @@ def _sin_to_angle(result, deriv, side=1):
     else:
         offset = 0.0
     if deriv == 0:
-        return v * sign + offset,
+        return (v * sign + offset,)
     if abs(result[0]) >= 1:
         factor1 = 0
     else:
-        factor1 = 1.0 / np.sqrt(1 - result[0]**2)
+        factor1 = 1.0 / np.sqrt(1 - result[0] ** 2)
     d = factor1 * result[1]
     if deriv == 1:
         return v * sign + offset, d * sign
-    factor2 = result[0] * factor1**3
+    factor2 = result[0] * factor1 ** 3
     dd = factor2 * np.outer(result[1], result[1]) + factor1 * result[2]
     if deriv == 2:
         return v * sign + offset, d * sign, dd * sign

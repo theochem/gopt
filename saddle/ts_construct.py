@@ -3,8 +3,12 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 
 import numpy as np
-from saddle.errors import (AtomsNumberError, InputTypeError,
-                           InvalidArgumentError, NotSetError)
+from saddle.errors import (
+    AtomsNumberError,
+    InputTypeError,
+    InvalidArgumentError,
+    NotSetError,
+)
 from saddle.internal import Internal
 from saddle.path_ri import PathRI
 from saddle.reduced_internal import ReducedInternal

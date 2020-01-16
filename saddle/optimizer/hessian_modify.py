@@ -17,7 +17,7 @@ def modify_hessian(matrix, neg_num, key_ic=0, pos_value=0.005, neg_value=-0.005)
         if key_ic == total:
             value[neg:neg_num] = neg_value
         else:
-            pos_sum = np.sum((pos_vec**2)[:key_ic, :], axis=0)
+            pos_sum = np.sum((pos_vec ** 2)[:key_ic, :], axis=0)
             seq_ind = np.argsort(pos_sum)[::-1]
             value[seq_ind[:diff] + neg] = neg_value
     else:
@@ -26,7 +26,7 @@ def modify_hessian(matrix, neg_num, key_ic=0, pos_value=0.005, neg_value=-0.005)
         if key_ic == total:
             value[neg_num:neg] = pos_value
         else:
-            neg_sum = np.sum((neg_vec**2)[:key_ic, :], axis=0)
+            neg_sum = np.sum((neg_vec ** 2)[:key_ic, :], axis=0)
             seq_ind = np.argsort(neg_sum)
             value[seq_ind[:diff]] = pos_value
     value[(value > 0) & (value < pos_value)] = pos_value
@@ -34,11 +34,9 @@ def modify_hessian(matrix, neg_num, key_ic=0, pos_value=0.005, neg_value=-0.005)
     return np.dot(np.dot(vec, np.diag(value)), vec.T)
 
 
-def modify_hessian_with_pos_defi(matrix,
-                                 neg_num,
-                                 key_ic,
-                                 pos_value=0.005,
-                                 neg_value=-0.005):
+def modify_hessian_with_pos_defi(
+    matrix, neg_num, key_ic, pos_value=0.005, neg_value=-0.005
+):
     assert neg_num <= key_ic
     matrix = matrix.copy()
     assert len(matrix[:, 0]) == len(matrix[0])  # make sure it is square

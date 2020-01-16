@@ -84,7 +84,7 @@ def ridders_solver(
 
 
 def diagonalize(
-    matrix: "np.ndarray[float]"
+    matrix: "np.ndarray[float]",
 ) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
     """Orthogonilize a given matrix my Grammian Matrix method
 
@@ -130,7 +130,9 @@ def pse_inv(matrix):
     res[abs(res) < 1e-7] = 0
     # infunction test
     diff = np.dot(np.dot(matrix, res), matrix) - matrix
-    assert np.allclose(np.max(np.abs(diff)), 0, atol=1e-7), f"pseudo inverse didn't converge"
+    assert np.allclose(
+        np.max(np.abs(diff)), 0, atol=1e-7
+    ), f"Pseudo inverse didn't converge\nMax diff: {np.max(np.abs(diff))}"
     return res
 
 
