@@ -133,9 +133,7 @@ class Test_Coordinates_Types(TestCase):
             (2, 0, 1, 5), self.molecule.coordinates[[2, 0, 1, 5]]
         )
         assert conv_dihed.value - 0.5000093782761452 < 1e-8
-        conv_dihed.set_new_coordinates(
-            self.molecule.coordinates[[3, 0, 1, 5],]
-        )
+        conv_dihed.set_new_coordinates(self.molecule.coordinates[[3, 0, 1, 5]])
         assert conv_dihed.value - 0.5000015188648903 < 1e-8
 
     def test_new_dihed_dot(self):

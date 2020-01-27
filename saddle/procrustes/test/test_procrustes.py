@@ -1,13 +1,15 @@
-import unittest
+"""Procrustes test files."""
 from collections import Iterable
 from copy import deepcopy
 
-import numpy as np
-from importlib_resources import path
 from saddle.periodic.periodic import periodic
 from saddle.periodic.units import amu
 from saddle.procrustes.procrustes import Procrustes
 from saddle.utils import Utils
+
+import unittest
+import numpy as np
+from importlib_resources import path
 
 
 class test_procrustes(unittest.TestCase):

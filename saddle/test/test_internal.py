@@ -1,18 +1,23 @@
+"""Internal Coordinates test file."""
 import unittest
 from copy import deepcopy
 
-import numpy as np
-from importlib_resources import path
-from numpy.testing import assert_allclose
 from saddle.coordinate_types import DihedralAngle
 from saddle.internal import Internal
 from saddle.molmod import dihed_angle
 from saddle.opt import Point
 from saddle.utils import Utils
 
+import numpy as np
+from importlib_resources import path
+from numpy.testing import assert_allclose, assert_almost_equal
+
 
 class TestInternal(unittest.TestCase):
+    """Test internal coordinates transform."""
+
     def setUp(self):
+        """Setup function."""
         with path("saddle.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         self.mol = Internal(mol.coordinates, mol.numbers, 0, 1)
@@ -21,6 +26,7 @@ class TestInternal(unittest.TestCase):
         self.h2o2 = Internal(mol2.coordinates, mol2.numbers, 0, 1)
 
     def test_ic_weights(self):
+        """Test change internal coordinates weights."""
         self.mol.auto_select_ic()
         assert_allclose(self.mol.ic_weights, [1, 1, 1])
         self.mol.set_ic_weights(np.array([0.5, 0.5, 2]))
@@ -31,22 +37,28 @@ class TestInternal(unittest.TestCase):
         assert self.h2o2.ic[-1].weight == 0
 
     def test_connectivity(self):
-        assert np.allclose(self.mol.connectivity, np.eye(3) * -1)
+        """Test default connectivity."""
+        assert_allclose(self.mol.connectivity, np.eye(3) * -1)
 
     def test_file_title(self):
+        """Test default file title."""
         new_mol = Internal(self.mol.coordinates, self.mol.numbers, 0, 1)
         assert len(new_mol._title) == 15
 
     def test_add_bond(self):
+        """"""
         init_con = np.eye(3) * -1
-        assert np.allclose(self.mol.connectivity, init_con)
-        self.mol.add_bond(1, 0)
+        assert_allclose(self.mol.connectivity, init_con)
         new_con = init_con.copy()
+        # add a bond connection
+        self.mol.add_bond(1, 0)
         new_con[0, 1] = 1
         new_con[1, 0] = 1
-        assert np.allclose(self.mol.connectivity, new_con)
-        assert np.allclose(self.mol.ic_values, np.array([1.81413724]))
+        # test same connectivity
+        assert_allclose(self.mol.connectivity, new_con)
+        assert_allclose(self.mol.ic_values, np.array([1.81413724]))
         assert self.mol.ic[0].atoms == (0, 1)
+        # add dup bond
         self.mol.add_bond(0, 1)
         ref_hessian = np.array(
             [
@@ -103,13 +115,14 @@ class TestInternal(unittest.TestCase):
                 ]
             ]
         )
-        assert np.allclose(self.mol._cc_to_ic_hessian, ref_hessian)
+        assert_allclose(self.mol._cc_to_ic_hessian, ref_hessian)
         assert len(self.mol.ic) == 1
-        assert np.allclose(self.mol.connectivity, new_con)
+        # bond_type 1 == covalent bond
+        assert_allclose(self.mol.connectivity, new_con)
         self.mol.add_bond(2, 1)
         assert len(self.mol.ic) == 2
         assert self.mol.ic[1].atoms == (1, 2)
-        assert np.allclose(
+        assert_allclose(
             self.mol._cc_to_ic_gradient,
             np.array(
                 [
@@ -140,16 +153,17 @@ class TestInternal(unittest.TestCase):
         )
 
     def test_angle_add(self):
+        """Test add angle to internal coordinates."""
         self.mol.add_angle(0, 1, 2)
         assert len(self.mol.ic) == 0
         self.mol.add_bond(0, 1)
         self.mol.add_bond(1, 2)
         connected_index = self.mol.connected_indices(1)
-        assert np.allclose(connected_index, np.array([0, 2]))
+        assert_allclose(connected_index, np.array([0, 2]))
         self.mol.add_angle(0, 1, 2)
         assert len(self.mol.ic) == 3
-        assert np.allclose(self.mol.ic[2].value, 1.9106340153991836)
-        assert np.allclose(
+        assert_allclose(self.mol.ic[2].value, 1.9106340153991836)
+        assert_allclose(
             self.mol.b_matrix[2],
             np.array(
                 [
@@ -165,7 +179,7 @@ class TestInternal(unittest.TestCase):
                 ]
             ),
         )
-        assert np.allclose(
+        assert_allclose(
             self.mol._cc_to_ic_hessian[2],
             np.array(
                 [
@@ -272,9 +286,10 @@ class TestInternal(unittest.TestCase):
             ),
         )
         self.mol.set_target_ic((1.6, 1.7, -0.5))
-        assert np.allclose(self.mol.target_ic, np.array([1.6, 1.7, -0.5]))
+        assert_allclose(self.mol.target_ic, np.array([1.6, 1.7, -0.5]))
 
     def test_dihedral_add(self):
+        """Test add normal dihedral."""
         with path("saddle.test.data", "2h-azirine.xyz") as mol_path:
             mol = Utils.load_file(mol_path)  # create a water molecule
         internal = Internal(mol.coordinates, mol.numbers, 0, 1)
@@ -289,26 +304,27 @@ class TestInternal(unittest.TestCase):
         assert internal.ic_values[3] == dihed_angle(internal.coordinates[:4])
 
     def test_cost_function(self):
+        """"""
         self.mol.add_bond(0, 1)
         self.mol.add_bond(1, 2)
         self.mol.add_angle(0, 1, 2)
-        assert np.allclose(
+        assert_allclose(
             self.mol.ic_values,
             [1.8141372422079882, 1.8141372422079882, 1.9106340153991836],
         )
         self.mol.set_target_ic([1.7, 1.7, 1.5])
         self.mol.swap_internal_coordinates(0, 2)
-        assert np.allclose(
+        assert_allclose(
             self.mol.ic_values,
             [1.9106340153991836, 1.8141372422079882, 1.8141372422079882],
         )
-        assert np.allclose(self.mol.target_ic, [1.5, 1.7, 1.7])
+        assert_allclose(self.mol.target_ic, [1.5, 1.7, 1.7])
         self.mol.swap_internal_coordinates(0, 2)
-        assert np.allclose(
+        assert_allclose(
             self.mol.ic_values,
             [1.8141372422079882, 1.8141372422079882, 1.9106340153991836],
         )
-        assert np.allclose(self.mol.target_ic, [1.7, 1.7, 1.5])
+        assert_allclose(self.mol.target_ic, [1.7, 1.7, 1.5])
         # test cost function in ic
         v = self.mol.tf_cost
         d = self.mol._cost_q_d
@@ -318,23 +334,23 @@ class TestInternal(unittest.TestCase):
         ref_cost = (self.mol.ic_values[0] - 1.7) ** 2 * 2 + (
             np.cos(self.mol.ic_values[-1]) - np.cos(1.5)
         ) ** 2
-        assert np.allclose(ref_cost, v)
+        assert_allclose(ref_cost, v)
         ref_gradient = np.array([0.22827448441597653, 0.22827448441597653, 0.76192388])
-        assert np.allclose(d, ref_gradient)
+        assert_allclose(d, ref_gradient)
         ref_hessian = np.array(
             [[2.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 1.5083953582]]
         )
-        assert np.allclose(dd, ref_hessian)
+        assert_allclose(dd, ref_hessian)
         # assert False
         new_v, xd, xdd = self.mol.cost_value_in_cc
         assert new_v == v
-        assert np.allclose(xd, np.dot(self.mol._cc_to_ic_gradient.T, d))
+        assert_allclose(xd, np.dot(self.mol._cc_to_ic_gradient.T, d))
         ref_x_hessian = np.dot(
             np.dot(self.mol._cc_to_ic_gradient.T, dd), self.mol._cc_to_ic_gradient
         )
         K = np.tensordot(d, self.mol._cc_to_ic_hessian, 1)
         ref_x_hessian += K
-        assert np.allclose(xdd, ref_x_hessian)
+        assert_allclose(xdd, ref_x_hessian)
         new_coor = np.array(
             [
                 [1.40, -0.93019123, -0.0],
@@ -343,10 +359,10 @@ class TestInternal(unittest.TestCase):
             ]
         )
         self.mol.set_new_coordinates(new_coor)
-        assert np.allclose(
+        assert_allclose(
             self.mol.ic_values, [1.7484364736491811, 1.7484364736491811, 1.85697699]
         )
-        assert np.allclose(
+        assert_allclose(
             self.mol._cc_to_ic_gradient[0, :6],
             np.array([0.80071539, -0.59904495, 0.0, -0.80071539, 0.59904495, -0.0]),
         )
@@ -360,7 +376,7 @@ class TestInternal(unittest.TestCase):
                 [-0.0, -0.0, -0.57193957, 0.0, 0.0, 0.57193957],
             ]
         )
-        assert np.allclose(self.mol._cc_to_ic_hessian[0, :6, :6], ref_hessian)
+        assert_allclose(self.mol._cc_to_ic_hessian[0, :6, :6], ref_hessian)
 
     def test_transform_function(self):
         self.mol.add_bond(0, 1)
@@ -377,7 +393,7 @@ class TestInternal(unittest.TestCase):
 
     def test_auto_ic_select_water(self):
         self.mol.auto_select_ic()
-        assert np.allclose(
+        assert_allclose(
             self.mol.ic_values,
             [1.8141372422079882, 1.8141372422079882, 1.9106340153991836],
         )
@@ -433,7 +449,7 @@ class TestInternal(unittest.TestCase):
                 -2.87079827,
             ]
         )
-        assert np.allclose(mol.ic_values, ic_ref)
+        assert_allclose(mol.ic_values, ic_ref)
 
     def test_auto_ic_select_methanol(self):
         with path("saddle.test.data", "methanol.xyz") as mol_path:
@@ -459,13 +475,13 @@ class TestInternal(unittest.TestCase):
         mol1.add_bond(0, 2)
         mol1.add_angle(1, 0, 2)
         mol2.set_new_ics(mol1.ic)
-        assert np.allclose(mol2.ic_values, mol1.ic_values)
+        assert_allclose(mol2.ic_values, mol1.ic_values)
         mol2.wipe_ic_info(True)
         mol2.add_bond(2, 0)
         assert len(mol2.ic) == 1
         assert not np.allclose(mol2.connectivity, mol1.connectivity)
         mol2.set_new_ics(mol1.ic)
-        assert np.allclose(mol1.connectivity, mol2.connectivity)
+        assert_allclose(mol1.connectivity, mol2.connectivity)
 
     def test_get_energy_from_fchk(self):
         with path("saddle.test.data", "water_1.fchk") as fchk_path:
@@ -474,15 +490,15 @@ class TestInternal(unittest.TestCase):
             self.mol.add_angle(0, 1, 2)
             self.mol.energy_from_fchk(fchk_path)
         ref_g = self.mol.internal_gradient.copy()
-        assert np.allclose(self.mol.internal_gradient, ref_g)
+        assert_allclose(self.mol.internal_gradient, ref_g)
         ic_ref = deepcopy(self.mol.ic)
         self.mol.add_bond(0, 2)
         assert not np.allclose(self.mol.internal_gradient.shape, ref_g.shape)
         self.mol.set_new_ics(ic_ref)
-        assert np.allclose(self.mol.internal_gradient, ref_g)
+        assert_allclose(self.mol.internal_gradient, ref_g)
         self.mol.swap_internal_coordinates(0, 2)
-        assert np.allclose(self.mol.internal_gradient[2], ref_g[0])
-        assert np.allclose(self.mol.internal_gradient[0], ref_g[2])
+        assert_allclose(self.mol.internal_gradient[2], ref_g[0])
+        assert_allclose(self.mol.internal_gradient[0], ref_g[2])
 
     def test_delete_ic(self):
         with path("saddle.test.data", "ethane.xyz") as mol_path:
@@ -550,9 +566,9 @@ class TestInternal(unittest.TestCase):
         mol.add_bond(3, 4)
         mol.add_bond(4, 5)
         mol._auto_select_fragment_bond()
-        assert np.allclose(mol.ic_values[4], 2.02761704779693)
+        assert_allclose(mol.ic_values[4], 2.02761704779693)
         assert mol.ic[4].atoms == (0, 3)
-        assert np.allclose(mol.ic_values[5], 3.501060110109399)
+        assert_allclose(mol.ic_values[5], 3.501060110109399)
         assert mol.ic[5].atoms == (2, 3)
         assert len(mol.ic) == 6
 
@@ -564,21 +580,21 @@ class TestInternal(unittest.TestCase):
         ref_ic = np.array(
             [2.47617635, 1.85058569, 1.85070922, 1.81937566, 1.81930967, 1.43966113]
         )
-        assert np.allclose(h2o2.ic_values, ref_ic)
+        assert_allclose(h2o2.ic_values, ref_ic)
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 1.57]
         h2o2.set_target_ic(target_ic)
         h2o2.converge_to_target_ic()
-        assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
+        assert_allclose(h2o2.ic_values, target_ic, atol=1e-3)
 
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, 3.14]
         h2o2.set_target_ic(target_ic)
         h2o2.converge_to_target_ic()
-        assert np.allclose(h2o2.ic_values, target_ic, atol=1e-4)
+        assert_allclose(h2o2.ic_values, target_ic, atol=1e-4)
 
         target_ic = [2.4, 1.8, 1.8, 1.6, 1.6, -1.57]
         h2o2.set_target_ic(target_ic)
         h2o2.converge_to_target_ic()
-        assert np.allclose(h2o2.ic_values, target_ic, atol=1e-3)
+        assert_allclose(h2o2.ic_values, target_ic, atol=1e-3)
 
     def test_dihedral_repeak(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -613,7 +629,7 @@ class TestInternal(unittest.TestCase):
         assert len(h2o2.ic) == 5
         ref_b = h2o2.b_matrix.copy()
         h2o2._regenerate_ic()
-        assert np.allclose(h2o2.b_matrix, ref_b)
+        assert_allclose(h2o2.b_matrix, ref_b)
 
     def test_new_dihed_converge(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -627,7 +643,7 @@ class TestInternal(unittest.TestCase):
         h2o2.set_target_ic(target_ic)
         h2o2.converge_to_target_ic()
         # print(h2o2.ic_values)
-        assert np.allclose(h2o2.ic_values, target_ic, atol=1e-2)
+        assert_allclose(h2o2.ic_values, target_ic, atol=1e-2)
         # print(h2o2.ic_values)
 
     def test_bond_type(self):
@@ -700,7 +716,7 @@ class TestInternal(unittest.TestCase):
             q2 = ref_mol.ic_values[0]
             fd = (q2 - q1) / 1e-4
             b = mol.b_matrix[0][i]
-            assert np.allclose(fd, b, atol=1e-4)
+            assert_allclose(fd, b, atol=1e-4)
 
         q1 = mol.ic_values[1]
         for i in range(3):
@@ -710,7 +726,7 @@ class TestInternal(unittest.TestCase):
             q2 = ref_mol.ic_values[1]
             fd = (q2 - q1) / 1e-4
             b = mol.b_matrix[1][3 + i]
-            assert np.allclose(fd, b, atol=1e-4)
+            assert_allclose(fd, b, atol=1e-4)
 
         q1 = mol.ic_values[2]
         for i in range(3):
@@ -720,7 +736,7 @@ class TestInternal(unittest.TestCase):
             q2 = ref_mol.ic_values[2]
             fd = (q2 - q1) / 1e-4
             b = mol.b_matrix[2][6 + i]
-            assert np.allclose(fd, b, atol=1e-4)
+            assert_allclose(fd, b, atol=1e-4)
 
     def test_b_matrix_dihed(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -736,7 +752,7 @@ class TestInternal(unittest.TestCase):
                 q2 = ref_mol.ic_values[j]
                 fd = (q2 - q1) / 1e-4
                 b = mol.b_matrix[j][j * 3 + i]
-                assert np.allclose(fd, b, atol=1e-4)
+                assert_allclose(fd, b, atol=1e-4)
 
     def test_tfm_hessian(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -753,7 +769,7 @@ class TestInternal(unittest.TestCase):
             qd2 = ref_mol.b_matrix
             fd_b = (qd2 - qd1) / 1e-4
             analytic_b = mol._cc_to_ic_hessian[:, :, i]
-            assert np.allclose(fd_b, analytic_b, atol=1e-4)
+            assert_allclose(fd_b, analytic_b, atol=1e-4)
 
     def test_tfm_hessian_dihed(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -769,7 +785,7 @@ class TestInternal(unittest.TestCase):
                 qd2 = ref_mol.b_matrix
                 fd_b = (qd2 - qd1) / 1e-4
                 analytic_b = mol._cc_to_ic_hessian[:, :, 3 * j + i]
-                assert np.allclose(fd_b, analytic_b, atol=1e-4)
+                assert_allclose(fd_b, analytic_b, atol=1e-4)
 
     def test_cost_tfm_bond(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -785,7 +801,7 @@ class TestInternal(unittest.TestCase):
         cost_v = mol._compute_tfm_cost()
         cost_g = mol._compute_tfm_gradient()
         diff = 1e-4
-        assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
+        assert_allclose(cost_v, (2 - 2.47617635) ** 2)
         # finite diff test
         for i in range(4):
             for j in range(3):
@@ -795,7 +811,7 @@ class TestInternal(unittest.TestCase):
                 cost_v_2 = mol._compute_tfm_cost()
                 fd = (cost_v_2 - cost_v) / 1e-4
                 print(fd, cost_g[i * 3 + j], i * 3 + j)
-                assert np.allclose(fd, cost_g[3 * i + j], atol=2e-4)
+                assert_allclose(fd, cost_g[3 * i + j], atol=2e-4)
 
         # tests with bond and angle
 
@@ -816,7 +832,7 @@ class TestInternal(unittest.TestCase):
         cost_v = mol._compute_tfm_cost()
         cost_g = mol._compute_tfm_gradient()
         diff = 1e-4
-        # assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
+        # assert_allclose(cost_v, (2 - 2.47617635) ** 2)
         # finite diff test
         for i in range(4):
             for j in range(3):
@@ -826,7 +842,7 @@ class TestInternal(unittest.TestCase):
                 cost_v_2 = mol._compute_tfm_cost()
                 fd = (cost_v_2 - cost_v) / 1e-4
                 print(fd, cost_g[i * 3 + j], i * 3 + j)
-                assert np.allclose(fd, cost_g[3 * i + j], atol=2e-4)
+                assert_allclose(fd, cost_g[3 * i + j], atol=2e-4)
 
     def test_cost_tfm_dihed(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -844,7 +860,7 @@ class TestInternal(unittest.TestCase):
         cost_v = mol._compute_tfm_cost()
         cost_g = mol._compute_tfm_gradient()
         diff = 1e-4
-        # assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
+        # assert_allclose(cost_v, (2 - 2.47617635) ** 2)
         # finite diff test
         mol.list_ic
         for i in range(4):
@@ -854,7 +870,7 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_v_2 = mol._compute_tfm_cost()
                 fd = (cost_v_2 - cost_v) / 1e-4
-                assert np.allclose(fd, cost_g[3 * i + j], atol=2e-2)
+                assert_allclose(fd, cost_g[3 * i + j], atol=2e-2)
 
     def test_cost_tfm_dihed_cmplx(self):
         with path("saddle.test.data", "ethane.xyz") as mol_path:
@@ -869,7 +885,7 @@ class TestInternal(unittest.TestCase):
         cost_v = mol._compute_tfm_cost()
         cost_g = mol._compute_tfm_gradient()
         diff = 1e-4
-        # assert np.allclose(cost_v, (2 - 2.47617635) ** 2)
+        # assert_allclose(cost_v, (2 - 2.47617635) ** 2)
         # finite diff test
         for i in range(8):
             for j in range(3):
@@ -878,7 +894,7 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_v_2 = mol._compute_tfm_cost()
                 fd = (cost_v_2 - cost_v) / 1e-4
-                assert np.allclose(fd, cost_g[3 * i + j], atol=4e-2)
+                assert_allclose(fd, cost_g[3 * i + j], atol=4e-2)
 
     def test_cost_hessian_bond(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -902,7 +918,7 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()
                 fd = (cost_g_2 - cost_g) / 1e-4
-                assert np.allclose(fd, cost_h[3 * j + i], atol=4e-4)
+                assert_allclose(fd, cost_h[3 * j + i], atol=4e-4)
 
     def test_cost_hessian_angle(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -929,7 +945,7 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()
                 fd = (cost_g_2 - cost_g) / 1e-4
-                assert np.allclose(fd, cost_h[j * 3 + i], atol=4e-4)
+                assert_allclose(fd, cost_h[j * 3 + i], atol=4e-4)
 
     def test_cost_hessian_dihed(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
@@ -971,7 +987,7 @@ class TestInternal(unittest.TestCase):
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()
                 fd = (cost_g_2 - cost_g) / 1e-4
-                assert np.allclose(fd, cost_h[j * 3 + i], atol=4e-2)
+                assert_allclose(fd, cost_h[j * 3 + i], atol=4e-2)
 
     def test_scipy_opt_tfm(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
