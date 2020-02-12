@@ -1,3 +1,5 @@
+"""Compute trust radius module."""
+
 import numpy as np
 
 from saddle.math_lib import ridders_solver
@@ -5,19 +7,66 @@ from saddle.optimizer.path_point import PathPoint
 
 
 class TrustRegion:
+    """Constrain optimization step to preferred stepsize."""
+
     def __init__(self, method_name):
+        """Initialize trust radius instance.
+
+        Parameters
+        ----------
+        method_name : str
+            the name of the trust radius method
+
+        Raises
+        ------
+        ValueError
+            The method name is not allowed
+        """
         if method_name not in TrustRegion._trust_radius_methods:
             raise ValueError(f"{method_name} is not a valid name")
         self._name = method_name
         self._update_tr = TrustRegion._trust_radius_methods[method_name]
 
     def calculate_trust_step(self, point):
+        """Compute the update step conform with trust radius stepsize range.
+
+        Parameters
+        ----------
+        point : PathPoint
+            the optimization structure to be compute trust step
+
+        Returns
+        -------
+        np.ndarray
+
+
+        Raises
+        ------
+        TypeError
+            If the input argument is not an PathPoint instance
+        """
         if not isinstance(point, PathPoint):
             raise TypeError(f"Improper input type for {point}")
         return self._update_tr(point.step_hessian, point.v_gradient, point.stepsize)
 
     @staticmethod
     def trust_region_image_potential(hessian, gradient, stepsize):
+        """Conpute proper trsut radius tep with TRIP method.
+
+        Parameters
+        ----------
+        hessian : np.ndarray(N, N)
+            Cartesian hessian matrix
+        gradient : np.ndarray(N,)
+            Cartesian gradient array
+        stepsize : float
+            desired stepsize of update step
+
+        Returns
+        -------
+        np.ndarray(N,)
+            Proper update step conform with stepsize
+        """
         assert stepsize > 0
         val, vectors = np.linalg.eigh(hessian)
         negative = np.sum([val < 0])
@@ -54,6 +103,7 @@ class TrustRegion:
 
     @staticmethod
     def rational_functional_optimization(hessian, gradient, stepsize):
+        """Not implemented trust radius method."""
         raise NotImplementedError
 
     rfo = rational_functional_optimization

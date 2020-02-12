@@ -18,14 +18,16 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-"wrap over Gaussian to run gaussian calculation"
+"""wrap over Gaussian to run gaussian calculation."""
 
 import os
+from pathlib import Path
 from string import Template
 
-import numpy as np
 from importlib_resources import read_text
-from pathlib import Path
+
+import numpy as np
+
 from saddle.conf import WORK_DIR
 from saddle.fchk import FCHKFile
 from saddle.periodic.periodic import angstrom, periodic
@@ -34,12 +36,22 @@ __all__ = ("GaussianWrapper",)
 
 
 class GaussianWrapper(object):
+    """Gaussian wrapper class."""
 
     counter = 0
 
     template = Template(read_text("saddle.data", "single_hf_template.com"))
 
     def __init__(self, molecule, title):
+        """Initialize Gaussian Wrapper class.
+
+        Parameters
+        ----------
+        molecule : Molecule
+            Molecule instance with coordinates and numbers
+        title : str
+            molecule title
+        """
         self.molecule = molecule
         self.title = title
 
@@ -53,6 +65,23 @@ class GaussianWrapper(object):
         gradient=False,
         hessian=False
     ):
+        """Run gaussian calculation and get the result from .fchk file.
+
+        Parameters
+        ----------
+        charge : int
+            Charge of the molecule
+        multi : int
+            Multiplicity of the molecule
+        coordinates : bool, kwarg, optional
+            get coordinates from the result
+        energy : bool, kwarg, optional
+            get energy from the result
+        gradient : bool, kwarg, optional
+            get eneryg gradient from the result
+        hessian : bool, kwarg, optional
+            get energy hessian from the result
+        """
         freq = ""
         if gradient or hessian:
             freq = "freq"
@@ -78,6 +107,23 @@ class GaussianWrapper(object):
     def create_gauss_input(
         self, charge, multi, freq="freq", spe_title="", path="", postfix=".com"
     ):
+        """Create a gaussian style input file.
+
+        Parameters
+        ----------
+        charge : int
+            molecular charge
+        multi : int
+            molecular multiplicity
+        freq : str, optional
+            frequency calculation keyward
+        spe_title : str, optional
+            file name
+        path : str, optional
+            path of the file to be created
+        postfix : str, optional
+            poxis of input file, .com or .gjf
+        """
         assert isinstance(path, str) or isinstance(path, Path)
         assert isinstance(spe_title, str)
         atoms = ""
@@ -108,11 +154,13 @@ class GaussianWrapper(object):
         GaussianWrapper.counter += 1
 
     def _create_input_file(self, charge, multi, freq="freq"):
+        """Create input file for gaussian."""
         filename = "{0}_{1}".format(self.title, self.counter)
         self.create_gauss_input(charge, multi, freq=freq, spe_title=filename)
         return filename
 
     def _run_gaussian(self, filename, fchk=True, command_bin="g09"):
+        """Run gaussian calculation and format the output file to .fchk."""
         fchk_ob = None
         path = WORK_DIR
         os.chdir(path)
@@ -131,6 +179,7 @@ class GaussianWrapper(object):
         return fchk_ob
 
     def _log_finish_test(self, logname):
+        """Check whether the calculation run properly."""
         flag = False
         with open(logname) as f:
             for line in f:

@@ -1,14 +1,38 @@
-from __future__ import absolute_import, print_function
-
+"""Reaction path internal coordinate class."""
 from copy import deepcopy
 
 import numpy as np
+
 from saddle.internal import Internal
 from saddle.reduced_internal import ReducedInternal
 
 
 class PathRI(ReducedInternal):
+    """Reaction path reduced internal coordinates."""
+
     def __init__(self, coordinates, numbers, charge, multi, path_vector, title=""):
+        """Initialize reaction path instance.
+
+        Parameters
+        ----------
+        coordinates : np.ndarray(N, 3)
+            Cartesian Coordinates of molecules
+        numbers : np.ndarray(N.)
+            Atomic numbers of system
+        charge : int
+            Molecular charge
+        multi : int
+            Molecular multiplicity
+        path_vector : np.ndarray(n,)
+            Reaction path direction vector
+        title : str, optional
+            Molecule's title name
+
+        Raises
+        ------
+        ValueError
+            Shape of path_vactor is not a np.ndarray
+        """
         super().__init__(coordinates, numbers, charge, multi, title, key_ic_number=0)
         if len(path_vector.shape) == 1:
             raise ValueError("Path vector is a 1d array")
@@ -17,27 +41,33 @@ class PathRI(ReducedInternal):
 
     @property
     def path_vector(self):
+        """np.ndarray: reaction path vector in redundant internal coordinates."""
         return self._path_vector
 
     @property
     def real_unit_path_vector(self):
+        """np.ndarray: realizable reaction path unit vector in inernal coordinates."""
         tfm = np.dot(self.b_matrix, np.linalg.pinv(self.b_matrix))
         real_path_v = np.dot(tfm, self.path_vector)
         return real_path_v / np.linalg.norm(real_path_v)
 
     def set_path_vector(self, vector):
+        """Set a new reaction path vector."""
         assert isinstance(vector, np.ndarray)
         self._reset_v_space()
         self._path_vector = vector
 
     def set_key_ic_number(self, number):
+        """Not implemeted in reaction path."""
         raise NotImplementedError
 
     def select_key_ic(self, *indices):
+        """Not implemented in reaction path."""
         raise NotImplementedError
 
     @classmethod
     def update_to_reduced_internal(cls, internal_ob, key_ic_number=0):
+        """Not implemented in reaction path."""
         raise NotImplementedError
 
     def _svd_of_b_matrix(self, threshold=1e-3) -> "np.ndarray":  # tested
@@ -78,6 +108,7 @@ class PathRI(ReducedInternal):
     # TO BE determined
     @classmethod
     def update_to_path_ri(cls, internal_ob, path_vector):
+        """Update a reduced internal coordinates to Path Reaction Internal."""
         assert isinstance(internal_ob, Internal)
         new_ob = deepcopy(internal_ob)
         new_ob.__class__ = cls
@@ -87,7 +118,7 @@ class PathRI(ReducedInternal):
         return new_ob
 
     def set_vspace(self, new_vspace: "np.ndarray") -> None:
-        """Set vspace of system with given values
+        """Set vspace of system with given values.
 
         Arguments
         ---------

@@ -1,5 +1,5 @@
-"""Summary
-"""
+"""Mathlib module."""
+
 from typing import Callable, Tuple
 
 import numpy as np
@@ -16,9 +16,10 @@ def ridders_solver(
     iteration: int = 500,
     error: float = 1e-6,
 ) -> float:
-    """The ridders solver to solver nonlinear equation to find a mathematical
-    root for a continuous function. the value of the two end should be of
-    different sign.
+    """Solver nonlinear equation with ridders solver.
+
+    To find a mathematical root for a continuous function. the value of the two
+    end should be of different sign.
 
     Parameters
     ----------
@@ -46,8 +47,6 @@ def ridders_solver(
     -------
     float
         the root for function in the interval between x1 and x2
-
-
     """
     f1 = func(x1)
     f2 = func(x2)
@@ -86,7 +85,7 @@ def ridders_solver(
 def diagonalize(
     matrix: "np.ndarray[float]",
 ) -> Tuple["np.ndarray[float]", "np.ndarray[float]"]:
-    """Orthogonilize a given matrix my Grammian Matrix method
+    """Orthogonilize a given matrix my Grammian Matrix method.
 
     Arguments
     ---------
@@ -105,7 +104,7 @@ def diagonalize(
 
 
 def pse_inv(matrix):
-    """Calculate pseudo inverse of given matrix
+    """Calculate pseudo inverse of given matrix.
 
     Parameters
     ----------

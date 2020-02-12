@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-
-from setuptools import setup, find_packages
+"""Setup file for installing GOpt."""
 import saddle
 
+from setuptools import find_packages, setup
+
+"""Setup installation dependencies."""
 setup(
     name="saddle",
     version=saddle.__version__,

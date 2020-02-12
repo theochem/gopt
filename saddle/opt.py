@@ -1,14 +1,26 @@
-from __future__ import absolute_import, division, print_function
-
+"""Transform optimization process module."""
 import numpy as np
 
-from saddle.math_lib import ridders_solver, pse_inv
+from saddle.math_lib import pse_inv, ridders_solver
 
 __all__ = ("Point", "GeoOptimizer")
 
 
 class Point(object):
+    """Point class for holding optimiztaion property."""
+
     def __init__(self, gradient, hessian, ele_number):
+        """Initialize Point class.
+
+        Parameters
+        ----------
+        gradient : np.ndarray(N,)
+            Gradient of a point
+        hessian : np.ndarray(N, N)
+            Hessian of a point
+        ele_number : int
+            Number of electron in the molecule
+        """
         self.gradient = gradient
         self.hessian = hessian
         self.trust_radius = np.sqrt(ele_number)
@@ -17,32 +29,80 @@ class Point(object):
 
     @property
     def ele(self):
+        """int: number of electron in the system."""
         return self._ele
 
 
 class GeoOptimizer(object):
+    """Coordinates Transformation optimization class."""
+
     def __init__(self):
+        """Initialize Geo optimization class."""
         self.points = []
 
     def __getitem__(self, index):
+        """Add slicing functionality to class."""
         return self.points[index]
 
     def converge(self, index):
+        """Check given index point converged or not.
+
+        Parameters
+        ----------
+        index : int
+            The index of the point in the points list
+
+        Returns
+        -------
+        bool
+            True if it converged, otherwise False
+        """
         point = self.points[index]
         return max(np.abs(point.gradient)) <= 1e-7
 
     @property
     def newest(self):
+        """int: the length of all points."""
         return len(self.points) - 1
 
     def newton_step(self, index):
+        """Compute newtom-raphson step for certain point index.
+
+        Parameters
+        ----------
+        index : int
+            index of point
+
+        Returns
+        -------
+        np.ndarray
+            newton step to be taken in the next iteration
+        """
         point = self.points[index]
         return -np.dot(pse_inv(point.hessian), point.gradient)
 
     def add_new(self, point):
+        """Add a new point to the Point class.
+
+        Parameters
+        ----------
+        point : Point
+            new optimization point to be added to the list
+        """
         self.points.append(point)
 
     def tweak_hessian(self, index, negative=0, threshold=0.05):
+        """Tweak eigenvalues of hessian to be positive-semi-definite.
+
+        Parameters
+        ----------
+        index : int
+            index of opt point
+        negative : int, optional
+            number of negative eiganvalues
+        threshold : float, optional
+            update hessian value if the eigenvalue is too small
+        """
         point = self.points[index]
         w, v = np.linalg.eigh(point.hessian)
         negative_slice = w[:negative]
@@ -53,6 +113,20 @@ class GeoOptimizer(object):
         point.hessian = new_hessian
 
     def trust_radius_step(self, index, negative=0):
+        """Compute trust radius step for optimization.
+
+        Parameters
+        ----------
+        index : int
+            index of opt point
+        negative : int, optional
+            number of negative eigenvalues
+
+        Returns
+        -------
+        np.ndarray
+            new step controlled by trust radius
+        """
         point = self.points[index]
         c_step = self.newton_step(index)
         if np.linalg.norm(c_step) <= point.trust_radius:
@@ -63,6 +137,7 @@ class GeoOptimizer(object):
         max_w = round(max(w), 7)
 
         def func_step(value):
+            """Compute proper update step."""
             x = w.copy()
             x[:negative] = x[:negative] - value
             x[negative:] = x[negative:] + value
@@ -70,6 +145,7 @@ class GeoOptimizer(object):
             return -np.dot(new_hessian_inv, point.gradient)
 
         def func_value(value):
+            """Compute function value difference."""
             step = func_step(value)
             return np.linalg.norm(step) - point.trust_radius
 
@@ -83,6 +159,7 @@ class GeoOptimizer(object):
         return step
 
     def update_trust_radius(self, index):
+        """Update trust radius for given index point."""
         point = self.points[index]
         pre_point = self.points[index - 1]
         if np.linalg.norm(point.gradient) > np.linalg.norm(pre_point.gradient):

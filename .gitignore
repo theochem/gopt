@@ -4,9 +4,13 @@
 *.chk
 *.swp
 *.swo
+*.coverage
+*.ipynb
 saddle/work/*
 !saddle/work/.gitkeep
 !single_hf_template.com
 
 build
 .tox
+.cache
+.pytest_cache/

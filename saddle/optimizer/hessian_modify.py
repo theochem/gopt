@@ -1,7 +1,28 @@
+"""Modify matrix engenvalues module."""
 import numpy as np
 
 
 def modify_hessian(matrix, neg_num, key_ic=0, pos_value=0.005, neg_value=-0.005):
+    """Modify eigenvalues of given matrix.
+
+    Parameters
+    ----------
+    matrix : np.ndarray(N, N)
+        A symmetric square matrix with well defined eigenvalues
+    neg_num : int
+        number of negative eigenvalue(s) preferred.
+    key_ic : int, optional
+        number of key internal coordinates in the system
+    pos_value : float, optional
+        the positive eigenvalues threshold
+    neg_value : float, optional
+        the negative eigenvalues threshold
+
+    Returns
+    -------
+    np.ndarray(N, N)
+        New modified square matrix
+    """
     val, vec = np.linalg.eigh(matrix)
     value = val.copy()
     total = len(value)
@@ -37,6 +58,26 @@ def modify_hessian(matrix, neg_num, key_ic=0, pos_value=0.005, neg_value=-0.005)
 def modify_hessian_with_pos_defi(
     matrix, neg_num, key_ic, pos_value=0.005, neg_value=-0.005
 ):
+    """Modify hessian matrix with non reduced part positive definite.
+
+    Parameters
+    ----------
+    matrix : np.ndarray(N, N)
+        the original matrix to be modified
+    neg_num : int
+        number of negative eigenvalues
+    key_ic : int
+        number of key internal coordinates
+    pos_value : float, optional
+        positive eigenvalues threshold
+    neg_value : TYPE, optional
+        negative eigenvalues threshold
+
+    Returns
+    -------
+    np.ndarray(N, N)
+        New modified square matrix
+    """
     assert neg_num <= key_ic
     matrix = matrix.copy()
     assert len(matrix[:, 0]) == len(matrix[0])  # make sure it is square

@@ -1,9 +1,25 @@
+"""Different secant condition method module."""
 import numpy as np
+
 from saddle.math_lib import pse_inv
 from saddle.optimizer.path_point import PathPoint
 
 
 def secant(new_ob, old_ob):  # need tests
+    """Compute secant value with method mentioned in the original thesis.
+
+    Parameters
+    ----------
+    new_ob : PathPoint
+        Previous step point
+    old_ob : PathPoint
+        Newly computed step point
+
+    Returns
+    -------
+    np.ndarray(3N)
+        computed secont condition value
+    """
     assert isinstance(new_ob, PathPoint)
     assert isinstance(old_ob, PathPoint)
     delta_g = new_ob.v_gradient - old_ob.v_gradient
@@ -19,6 +35,20 @@ def secant(new_ob, old_ob):  # need tests
 
 
 def secant_1(new_ob, old_ob):
+    """Compute secant value with 1st type.
+
+    Parameters
+    ----------
+    new_ob : PathPoint
+        Previous step point
+    old_ob : PathPoint
+        Newly computed step point
+
+    Returns
+    -------
+    np.ndarray(3N)
+        computed secont condition value
+    """
     assert isinstance(new_ob, PathPoint)
     assert isinstance(old_ob, PathPoint)
     delta_g = new_ob.v_gradient - old_ob.v_gradient
@@ -34,6 +64,20 @@ def secant_1(new_ob, old_ob):
 
 
 def secant_2(new_ob, old_ob):
+    """Compute secant value with 2nd type.
+
+    Parameters
+    ----------
+    new_ob : PathPoint
+        Previous step point
+    old_ob : PathPoint
+        Newly computed step point
+
+    Returns
+    -------
+    np.ndarray(3N)
+        computed secont condition value
+    """
     assert isinstance(new_ob, PathPoint)
     assert isinstance(old_ob, PathPoint)
     delta_g = new_ob.v_gradient - old_ob.v_gradient
@@ -47,6 +91,20 @@ def secant_2(new_ob, old_ob):
 
 
 def secant_3(new_ob, old_ob):
+    """Compute secant value with 3rd type.
+
+    Parameters
+    ----------
+    new_ob : PathPoint
+        Previous step point
+    old_ob : PathPoint
+        Newly computed step point
+
+    Returns
+    -------
+    np.ndarray(3N)
+        computed secont condition value
+    """
     assert isinstance(new_ob, PathPoint)
     assert isinstance(old_ob, PathPoint)
     delta_g = new_ob.v_gradient - old_ob.v_gradient

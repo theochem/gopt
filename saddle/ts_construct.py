@@ -1,8 +1,9 @@
-from __future__ import absolute_import, print_function
+"""Transition state constructor."""
 
 from copy import deepcopy
 
 import numpy as np
+
 from saddle.errors import (
     AtomsNumberError,
     InputTypeError,
@@ -18,7 +19,7 @@ __all__ = ("TSConstruct",)
 
 
 class TSConstruct(object):
-    """Transitian State Constructor
+    """Transitian State Constructor.
 
     Properties
     ----------
@@ -89,65 +90,38 @@ class TSConstruct(object):
 
     @property
     def reactant(self):
-        """Internal coordinates instance of reactant structure
-
-        Returns
-        -------
-        reactant : Internal
-        """
+        """Internal: internal coordinates instance of reactant structure."""
         return self._reactant
 
     rct = reactant
 
     @property
     def product(self):
-        """Internal coordinates instance of product structure
-
-        Returns
-        -------
-        product : Internal
-        """
+        """Internal: internal coordinates instance of product structure."""
         return self._product
 
     prd = product
 
     @property
     def ts(self):
-        """Internal cooridnates instance of transition structure if
-        it has been generated already. Otherwise, raise NotSetError.
-
-        Returns
-        -------
-        ts : Internal
-        """
+        """Internal: internal cooridnates instance of transition structure."""
         if self._ts is None:
             raise NotSetError("TS state hasn't been set")
         return self._ts
 
     @property
     def numbers(self):
-        """A numpy array of atomic number for input coordinates
-
-        Returns
-        -------
-        numbers : np.ndarray(N,)
-        """
+        """np.ndarray(N,): A numpy array of atomic number for input coordinates."""
         return self._numbers
 
     @property
     def key_ic_counter(self):
-        """Number of key internal coordinates in this reaction
-
-        Returns
-        -------
-        key_ic_counter : int
-        """
+        """int: Number of key internal coordinates in this reaction."""
         return self._key_ic_counter
 
     @classmethod
     def from_file(cls, rct_file, prd_file, charge=0, multi=1):
-        """Create a TSConstruct instance from files contains info for reactant
-        and product
+        """Create a TSConstruct instance from files for reactant and product.
 
         Arguments
         ---------
@@ -171,8 +145,7 @@ class TSConstruct(object):
         return cls(rct_mol, prd_mol)
 
     def add_bond(self, atom1, atom2):
-        """Add bond connection between atom1 and atom2 for both reactant
-        and product structure
+        """Add bond connection between atom1 and atom2 for reactant and product.
 
         Arguments
         ---------
@@ -185,8 +158,7 @@ class TSConstruct(object):
         self._product.add_bond(atom1, atom2)
 
     def add_angle_cos(self, atom1, atom2, atom3):
-        """Add cos angle connection between atom1, atom2, and atom3 for
-        both reactant and product structure
+        """Add cos angle connection to reactant and product.
 
         Arguments
         ---------
@@ -201,8 +173,9 @@ class TSConstruct(object):
         self._product.add_angle_cos(atom1, atom2, atom3)
 
     def add_angle(self, atom1, atom2, atom3):
-        """Add cos angle connection between atom1, atom2, and atom3 for
-        both reactant and product structure
+        """Add cos angle connection to reactant and product.
+
+        The angle consist of bond(atom1, atom2) and bond(atom2, atom3)
 
         Arguments
         ---------
@@ -217,9 +190,10 @@ class TSConstruct(object):
         self._product.add_angle(atom1, atom2, atom3)
 
     def add_dihedral(self, atom1, atom2, atom3, atom4):
-        """Add dihedral angle between plane1(atom1, atom2, and atom3)
-        and plane2(atom2, atom3, and atom4) for both reactant and
-        product structures
+        """Add dihedral angle between to reactant and product.
+
+        Dihedral angle between plane1(atom1, atom2, and atom3) and
+        plane2(atom2, atom3, and atom4)
 
         Arguments
         ---------
@@ -236,7 +210,7 @@ class TSConstruct(object):
         self._product.add_dihedral(atom1, atom2, atom3, atom4)
 
     def delete_ic(self, *indices):
-        """Delete a exsiting internal cooridnates with given indices(index)
+        """Delete a exsiting internal cooridnates with given indices(index).
 
         Arguments
         ---------
@@ -249,8 +223,7 @@ class TSConstruct(object):
     def auto_select_ic(
         self, *_, reset_ic=False, auto_select=True, dihed_special=False, mode="mix"
     ):
-        """Select internal coordinates for both reactant and product based on
-        given structure and choices
+        """Automatically select internal coordinates for reactant and product.
 
         Arguments
         ---------
@@ -275,7 +248,9 @@ class TSConstruct(object):
         self._product.set_new_ics(target_ic_list)
 
     def create_ts_state(self, start_with, ratio=0.5, task="ts", flex_sin=True):
-        """Create transition state structure based on the linear combination of
+        """Create transition state guess structure.
+
+        The selection process is based on the linear combination of
         internal structure of both reactant and product.
 
         Arguments
@@ -317,8 +292,7 @@ class TSConstruct(object):
         self._ts = ts_internal  # set _ts attribute
 
     def select_key_ic(self, *ic_indices):
-        """Set one or multiply internal coordinate(s) as the the key internal
-        coordinates
+        """Set one or multiply internal coordinate(s) as the the key IC.
 
         Arguments
         ---------
@@ -345,8 +319,7 @@ class TSConstruct(object):
         task="ts",
         flex_sin=True,
     ):
-        """Complete auto generate transition state structure based on some
-        default parameters
+        """Completely auto generate transition state structure.
 
         Arguments
         ---------
@@ -378,20 +351,31 @@ class TSConstruct(object):
         self.create_ts_state(start_with, ratio, task=task, flex_sin=flex_sin)
 
     def ts_to_file(self, filename=""):
+        """Save the ts structure to xyz file.
+
+        Parameters
+        ----------
+        filename : str, optional
+            filename of stored file
+
+        Raises
+        ------
+        InvalidArgumentError
+            the input filename is not valid.
+        """
         if filename:
             Utils.save_file(filename, self.ts)
         else:
             raise InvalidArgumentError("Invalid empty filename")
 
     def update_rct_and_prd_with_ts(self):
+        """Update reactant and product IC with combined TS IC."""
         target_ic = self.ts.ic
         self._reactant.set_new_ics(target_ic)
         self._product.set_new_ics(target_ic)
 
     def _get_union_of_ics(self, mode="mix"):  # need tests
-        """Get the combined internal coordinates based on the ic structure of
-        both reactant and product
-        """
+        """Get the combined internal coordinates of reactant and product."""
         if mode == "mix":
             basic_ic = deepcopy(self._reactant.ic)
             for new_ic in self._product.ic:

@@ -1,19 +1,23 @@
 """Procrustes test files."""
+import unittest
 from collections import Iterable
 from copy import deepcopy
+
+from importlib_resources import path
+
+import numpy as np
 
 from saddle.periodic.periodic import periodic
 from saddle.periodic.units import amu
 from saddle.procrustes.procrustes import Procrustes
 from saddle.utils import Utils
 
-import unittest
-import numpy as np
-from importlib_resources import path
-
 
 class test_procrustes(unittest.TestCase):
+    """Procrustes test class."""
+
     def test_barycenter(self):
+        """Test barycenter of molecule."""
         ori_numbers = np.array([1, 2])
         m1 = periodic[1].mass / amu
         m2 = periodic[2].mass / amu
@@ -27,10 +31,12 @@ class test_procrustes(unittest.TestCase):
         )
 
     def test_fetch_atomic_amass(self):
+        """Test get atomic mass."""
         assert Procrustes._fetch_atomic_mass(1) - 1.007975 < 1e-5
         assert Procrustes._fetch_atomic_mass(6) - 12.0106 < 1e-5
 
     def test_move_center(self):
+        """Test move the center of molecule to another place."""
         numbers = np.array([1, 2])
         coordinates = np.array([[0, 1, 0], [1, 0, 0]])
         coor_1st = Procrustes._move_to_center(coordinates, numbers)
@@ -50,6 +56,7 @@ class test_procrustes(unittest.TestCase):
         assert np.allclose(coor_1st, coor_4th)
 
     def test_rotate_coordiantes(self):
+        """Test rotate two coordinates to align."""
         coordinates = np.array([0, 1, 0])
         coordinates_2 = np.array([-1, 0, 0])
         coor_2 = Procrustes._rotate_coordinates(coordinates, coordinates_2)
@@ -65,6 +72,7 @@ class test_procrustes(unittest.TestCase):
         assert np.allclose(coordinates_2d, coor_2d_3)
 
     def test_move_and_rotate(self):
+        """Test first move the molecule and then rotate to align."""
         numbers = np.array([1, 2])
         coordinates = np.array([[0, 1, 0], [1, 0, 0]])
         coordinates_2 = np.array([[0, 1, 1], [1, 2, 1]])
@@ -74,6 +82,7 @@ class test_procrustes(unittest.TestCase):
         assert np.allclose(center_1, center_2)
 
     def test_main_function(self):
+        """Test the main function and use case for procrustes."""
         # file_path = resource_filename(
         #     Requirement.parse('saddle'), 'data/water.xyz')
         with path("saddle.procrustes.test.data", "water.xyz") as file_path:

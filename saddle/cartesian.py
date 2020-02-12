@@ -18,12 +18,13 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-"Cartesian coordinates implementation"
+"""Cartesian coordinates implementation."""
 from pathlib import Path
 from secrets import token_hex
 
 import numpy as np
 import numpy.linalg as npl
+
 from saddle.errors import AtomsNumberError, NotSetError
 from saddle.fchk import FCHKFile
 from saddle.gaussianwrapper import GaussianWrapper
@@ -33,7 +34,7 @@ __all__ = ("Cartesian",)
 
 
 class Cartesian:
-    """ Cartesian Coordinate.
+    """Construct Cartesian properties for molecule.
 
     Properties
     ----------
@@ -103,8 +104,7 @@ class Cartesian:
     def from_file(
         cls, filename: str, charge: int = 0, multi: int = 1, title=""
     ) -> "Cartesian":
-        """Create an Cartesian instance from file .xyz, .com,
-        .gjf or .fchk
+        """Create an Cartesian instance from file .xyz, .com, .gjf or .fchk.
 
         Arguments
         ---------
@@ -124,7 +124,7 @@ class Cartesian:
 
     @property
     def energy_gradient(self) -> "np.ndarray[float]":
-        """Gradient of energy versus cartesian coordinates
+        """Get gradient of energy versus cartesian coordinates.
 
         Returns
         -------
@@ -139,7 +139,7 @@ class Cartesian:
 
     @property
     def energy_hessian(self) -> "np.ndarray[float]":
-        """Hessian of energy versus internal coordinates
+        """Get hessian of energy versus internal coordinates.
 
         Returns
         -------
@@ -154,7 +154,7 @@ class Cartesian:
 
     @property
     def energy(self) -> float:
-        """Energy of the system
+        """Get energy of the system.
 
         Returns
         -------
@@ -166,11 +166,19 @@ class Cartesian:
             return self._energy
 
     def save_to(self, filename, mode="w"):
-        # a little bit weird, need to be reconstruct later
+        """Save current coordinates of molecule into a .xzy file.
+
+        Parameters
+        ----------
+        filename : str
+            File name of the saved file
+        mode : str, optional
+            I/O mode of file
+        """
         Utils.save_file(filename, self, mode=mode)
 
     def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
-        """Assign new cartesian coordinates to this molecule
+        """Assign new cartesian coordinates to this molecule.
 
         Arguments
         ---------
@@ -184,8 +192,7 @@ class Cartesian:
         return None
 
     def _reset_cartesian(self) -> None:
-        """Reset the energy data including energy, gradient and hessian.
-        """
+        """Reset the energy data including energy, gradient and hessian."""
         self._energy = None
         self._energy_gradient = None
         self._energy_hessian = None
@@ -193,7 +200,7 @@ class Cartesian:
 
     @property
     def numbers(self) -> "np.ndarray[int]":
-        """Atomic number of all the atoms in the system
+        """Atomic number of all the atoms in the system.
 
         Returns
         -------
@@ -203,7 +210,7 @@ class Cartesian:
 
     @property
     def charge(self) -> int:
-        """The charge of the system
+        """Get the charge of the system.
 
         Returns
         -------
@@ -213,7 +220,7 @@ class Cartesian:
 
     @property
     def multi(self) -> int:
-        """The spin multiplicity of the system
+        """Get hhe spin multiplicity of the system.
 
         Returns
         -------
@@ -223,7 +230,7 @@ class Cartesian:
 
     @property
     def coordinates(self) -> "np.ndarray[float]":
-        """Cartesian coordinates of every atoms
+        """Cartesian coordinates of every atoms.
 
         Returns
         -------
@@ -233,22 +240,12 @@ class Cartesian:
 
     @property
     def natom(self) -> int:
-        """number of atoms of given molecule
-
-        Returns
-        -------
-        natom : int
-        """
+        """int: Get the number of atoms of given molecule."""
         return len(self.numbers)
 
     @property
     def df(self) -> int:
-        """The degree of the system
-
-        Returns
-        -------
-        df : int
-        """
+        """int: The degree of the system."""
         if self.natom <= 1:
             raise AtomsNumberError
         elif self.natom == 2:
@@ -298,7 +295,7 @@ class Cartesian:
         return None
 
     def _gaussian_calculation(self, **kwargs):
-        "low level function for run gaussian and obtain energy"
+        """Call gaussian function to compute energy, gradient and hessian."""
         # method = kwargs.pop('method', 'g09')  # get calculation method arg
         title = self._title
         obj = GaussianWrapper(self, title)
@@ -317,7 +314,7 @@ class Cartesian:
         # sel self._energy_hessian
 
     def distance(self, index1: int, index2: int) -> float:
-        """Calculate the distance between two atoms
+        """Calculate the distance between two atoms.
 
         Arguments
         ---------
@@ -338,8 +335,7 @@ class Cartesian:
         return distance
 
     def angle_cos(self, index1: int, index2: int, index3: int) -> float:
-        """Calculate cosine of the angle consist of vector (index1 - index2)
-        and vector (index3 - index2)
+        """Calculate cos of the angle consist of index1 - index2 and index3 - index2.
 
         Arguments
         ---------
@@ -364,8 +360,7 @@ class Cartesian:
         return cos_angle
 
     def angle(self, index1: int, index2: int, index3: int) -> float:
-        """Calculate radian of the angle consist of vector (index1 - index2)
-        and vector (index3 - index2)
+        """Calculate rad of the angle consist of index1 - index2 and index3 - index2.
 
         Arguments
         ---------
@@ -385,7 +380,7 @@ class Cartesian:
         return np.arccos(cos_value)
 
     def create_gauss_input(self, freq="freq", title=""):
-        """Create gaussian input file for this molecule
+        """Create gaussian input file for this molecule.
 
         Arguments
         ---------

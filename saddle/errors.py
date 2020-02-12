@@ -18,48 +18,70 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-"Custom Exception types"
+"""Custom Exception types."""
 
 
 class NotSetError(Exception):
+    """Value not set error."""
+
     pass
 
 
 class AtomsNumberError(Exception):
+    """Atoms number error."""
+
     pass
 
 
 class ICNumberError(Exception):
+    """Internal coordinates number error."""
+
     pass
 
 
 class AtomsIndexError(Exception):
+    """Atomic index error."""
+
     pass
 
 
 class NotConvergeError(Exception):
+    """Optimization not converge error."""
+
     pass
 
 
 class InputTypeError(Exception):
+    """Input type is not desired error."""
+
     pass
 
 
 class PositiveProductError(Exception):
+    """Positive product error."""
+
     pass
 
 
 class InvalidArgumentError(Exception):
+    """Invalid Argument error."""
+
     pass
 
 
 class OverIterLimitError(Exception):
+    """Over iteration limit error."""
+
     pass
 
 
 class InvalidInputError(Exception):
+    """Invalid input error."""
+
     pass
 
 
 class OptError(Exception):
+    """Opt result error."""
+
     pass

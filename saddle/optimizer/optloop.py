@@ -1,7 +1,9 @@
+"""Optimization loop module to run."""
 from functools import partialmethod
 from pathlib import Path
 
 import numpy as np
+
 from saddle.errors import NotSetError, OptError
 from saddle.optimizer.hessian_modify import modify_hessian_with_pos_defi
 from saddle.optimizer.path_point import PathPoint
@@ -12,6 +14,8 @@ from saddle.reduced_internal import ReducedInternal
 
 
 class OptLoop:
+    """Run optimization loops."""
+
     def __init__(
         self,
         init_structure,
@@ -23,6 +27,32 @@ class OptLoop:
         method="g09",
         max_pt=0,
     ):
+        """Initialize optloop instance.
+
+        Parameters
+        ----------
+        init_structure : ReducedInternal
+            initial guess structure of optimization
+        quasi_nt : str
+            method name of quasi Newton method for hessian update
+        trust_rad : str
+            method name of trust radius constrain method
+        upd_size : str
+            method name of update stepsize calculation
+        neg_num : int, optional
+            number of negative eigenvalues
+        method : str, optional
+            name of outer quantum chemistr software name
+        max_pt : int, optional
+            maximum points stored in memory
+
+        Raises
+        ------
+        TypeError
+            input initial structure is ReducedInternal
+        ValueError
+
+        """
         if not isinstance(init_structure, ReducedInternal):
             raise TypeError(
                 f"Improper input type \
@@ -56,51 +86,68 @@ class OptLoop:
             self.new.v_hessian = np.eye(self.new.df)
 
     def __len__(self):
+        """int: total points in optimiztaion."""
         return len(self._point)
 
     def __getitem__(self, key):
+        """Get nth point with dict-like index."""
         return self._point[key]
 
     def run_calculation(self, *_, method="g09"):
+        """Run quantum chemistry calculation for all needed property for optimization.
+
+        Parameters
+        ----------
+        method : str, optional
+            the name of the outer quantum chemistry sofware
+        """
         self.new.run_calculation(method=method)
 
     @property
     def new(self):
+        """PathPoint: the last add point in the optimization process."""
         if len(self) < 1:
             raise OptError("Not enough points in OptLoop")
         return self[-1]
 
     @property
     def old(self):
+        """PathPoint: the second last point in the optimization process."""
         if len(self) < 2:
             raise OptError("Not enough points in OptLoop")
         return self[-2]
 
     def modify_hessian(self):
+        """Modify the hessian of the latest point."""
         moded_hessian = modify_hessian_with_pos_defi(
             self.new.v_hessian, self._neg, key_ic=self.new.key_ic_number
         )
         self.new.step_hessian = moded_hessian
 
     def update_trust_radius(self):
+        """Update the stepsize of lastest point."""
         target_p = self.new
         target_p.stepsize = self._upd_size.update_step(old=self.old, new=self.new)
 
     def update_hessian(self):
+        """Update hessian matrix of lastest point."""
         target_p = self.new
         target_p.v_hessian = self._quasi_nt.update_hessian(old=self.old, new=self.new)
 
     def check_converge(self, cutoff=3e-4):
+        """bool: Check whether the lastest point converged."""
         if np.max(np.abs(self.new.x_gradient)) < cutoff:
             return True
         return False
 
     def calculate_trust_step(self):
+        """Compute the update step to be equal or less than trusted stepsize."""
         step = self._trust_rad.calculate_trust_step(self.new)
         self.new.step = step
         # target_p.step = self._trust_rad()
 
     def next_step_structure(self):  # TODO: memory saving can be made later
+        """Compute for the next structure with step."""
         new_pt = self.new.copy()  # deepcopy PathPoint object
         assert isinstance(new_pt, PathPoint)
         # calculate newton step
@@ -108,6 +155,7 @@ class OptLoop:
         return new_pt
 
     def verify_new_point(self, new_point, *_, debug_fchk=None):
+        """bool: check the new calculated point ready to be accepted or not."""
         assert isinstance(new_point, PathPoint)
         if debug_fchk:
             # debug choices
@@ -127,6 +175,7 @@ class OptLoop:
             return True
 
     def add_new_point(self, new_point):
+        """Add new point to optimization list."""
         assert isinstance(new_point, PathPoint)
 
         # set new point vspace to align with old one
@@ -143,6 +192,7 @@ class OptLoop:
             self._point.pop(0)
 
     def finite_diff_hessian(self, *_, omega=1.0, nu=1.0):
+        """Use finite difference method to compute approximate hessian."""
         update_index = self._judge_finite_diff(omega, nu)
         for i in update_index:
             self.new.fd_hessian(i)
@@ -193,8 +243,31 @@ class OptLoop:
         method="g09",
         max_pt=0,
         iterations=50,
-        logfile=None,
+        logfile=None
     ):
+        """Create an optloop instance to optimize structure.
+
+        Parameters
+        ----------
+        init_structure : ReducedInernal
+            initial guess structure for optimization
+        quasi_nt : str
+            name of quasi Newtom update matehod
+        trust_rad : str
+            name of trust radius method
+        upd_size : str
+            name of confine update step method
+        neg_num : int, optional
+            number of negative eigenvalues
+        method : str, optional
+            name of outer quantum chemistr software
+        max_pt : int, optional
+            number of maximum points stored in the optimization loop
+        iterations : int, optional
+            number of maximum iterations of update
+        logfile : Path, optional
+            path to the logfile to store update process
+        """
         opt = cls(
             init_structure,
             quasi_nt=quasi_nt,
@@ -252,7 +325,10 @@ class OptLoop:
 
 
 class PathLoop(OptLoop):
+    """Special optimization loop for optimize reaction path."""
+
     def check_converge(self, cutoff=1e-3):
+        """bool: Check whether the lastest point converged."""
         sub_x_gradient = np.dot(
             np.dot(self.new.b_matrix.T, self.new.vspace), self.new.v_gradient
         )

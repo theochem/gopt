@@ -18,15 +18,25 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-"Config file to configure file directory"
+"""Config file to configure file directory.
+
+Attributes
+----------
+LOG_DIR : Path
+    Path obj to save/load log file
+WORK_DIR : Path
+    Path obj to save/load computation input/output file
+"""
 
 import json
+from pathlib import Path, PosixPath, WindowsPath
 
 from importlib_resources import path
-from pathlib import Path, PosixPath, WindowsPath
 
 
 class Config:
+    """Config class for file directory."""
+
     # load config contents from conf.json
     with path("saddle.data", "conf.json") as json_path:
         with json_path.open(encoding="utf-8") as json_data_f:
@@ -38,6 +48,25 @@ class Config:
 
     @staticmethod
     def _find_path(given_path: str, system="posix"):
+        """Turn given path into a proper path for given system.
+
+        Parameters
+        ----------
+        given_path : str
+            Path to be converted
+        system : str, optional
+            System type for getting the path, 'posix' or 'windows'
+
+        Returns
+        -------
+        Path
+            Generated path obj for locating certain directory
+
+        Raises
+        ------
+        ValueError
+            If system offered is not suppported
+        """
         if system == "posix":
             given_path = PosixPath(given_path)
         elif system == "windows":
@@ -48,6 +77,18 @@ class Config:
 
     @classmethod
     def get_path(cls, key: str):
+        """Get proper path for given key.
+
+        Parameters
+        ----------
+        key : str
+            key for certain type of directory path
+
+        Returns
+        -------
+        Path
+            proper path obj for given path key
+        """
         try:
             keyword_path = cls.json_data[key]
         except KeyError:
@@ -59,6 +100,20 @@ class Config:
 
     @classmethod
     def set_path(cls, key: str, new_path):
+        """Set a new path for certain key path.
+
+        Parameters
+        ----------
+        key : str
+            key path to set
+        new_path : str
+            Preferred new path
+
+        Raises
+        ------
+        ValueError
+            Given key is not supported
+        """
         if key not in cls.json_data.keys():
             raise ValueError(f"Give key {key} is not in conf file")
         new_path = cls._find_path(new_path)
@@ -71,6 +126,7 @@ class Config:
 
     @classmethod
     def reset_path(cls):
+        """Reset all path to default."""
         cls.json_data["work_dir"] = "work"
         cls.json_data["log_dir"] = "work/log"
         with path("saddle.data", "conf.json") as json_path:

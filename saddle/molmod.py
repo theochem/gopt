@@ -1,27 +1,27 @@
-from __future__ import division
-
+"""Molecular geometry structure module."""
 import numpy as np
 
 
 class Scalar(object):
-    """A scalar object with optional first and second order derivates
+    """A scalar object with optional first and second order derivates.
 
-       Each input value to which the derivative is computed has its own index.
-       The numerical value of the derivatives are stored in arrays self.d and
-       self.dd. The value of the scalar itself if self.v
+    Each input value to which the derivative is computed has its own index.
+    The numerical value of the derivatives are stored in arrays self.d and
+    self.dd. The value of the scalar itself if self.v
     """
 
     def __init__(self, size, deriv=0, value=0, index=None):
-        """
-           Arguments:
-            | ``size`` -- The number of inputs on which this ic depends. e.g. a
-                          distance depends on 6 Cartesian coordinates.
-            | ``deriv`` -- Consider up to deriv order derivatives. (max=2)
-            | ``value`` -- The initial value.
-            | ``index`` -- If this scalar is one of the input variables, this is
-                           its index.
+        """Initialize Scalar class.
 
-           The scalar object supports several in place modifications.
+        Arguments:
+        | ``size`` -- The number of inputs on which this ic depends. e.g. a
+                      distance depends on 6 Cartesian coordinates.
+        | ``deriv`` -- Consider up to deriv order derivatives. (max=2)
+        | ``value`` -- The initial value.
+        | ``index`` -- If this scalar is one of the input variables, this is
+                       its index.
+
+        The scalar object supports several in place modifications.
         """
         self.deriv = deriv
         self.size = size
@@ -38,7 +38,7 @@ class Scalar(object):
             )
 
     def copy(self):
-        """Return a deep copy"""
+        """Return a deep copy."""
         result = Scalar(self.size, self.deriv)
         result.v = self.v
         if self.deriv > 0:
@@ -48,7 +48,7 @@ class Scalar(object):
         return result
 
     def results(self):
-        """Return the value and optionally derivative and second order derivative"""
+        """Return the value and optionally derivative and second order derivative."""
         if self.deriv == 0:
             return (self.v,)
         if self.deriv == 1:
@@ -57,6 +57,7 @@ class Scalar(object):
             return self.v, self.d, self.dd
 
     def __iadd__(self, other):
+        """Define function for +=."""
         if self.deriv > 1:
             self.dd += other.dd
         if self.deriv > 0:
@@ -65,11 +66,13 @@ class Scalar(object):
         return self
 
     def __add__(self, other):
+        """Define function for +."""
         result = self.copy()
         result += other
         return result
 
     def __isub__(self, other):
+        """Define function for -=."""
         if self.deriv > 1:
             self.dd -= other.dd
         if self.deriv > 0:
@@ -78,11 +81,13 @@ class Scalar(object):
         return self
 
     def __sub__(self, other):
+        """Define function for -."""
         result = self.copy()
         result -= other
         return result
 
     def __imul__(self, other):
+        """Define function for *=."""
         if isinstance(other, int) or isinstance(other, float):
             self.v *= other
             if self.deriv > 0:
@@ -106,11 +111,13 @@ class Scalar(object):
         return self
 
     def __mul__(self, other):
+        """Define function for *."""
         result = self.copy()
         result *= other
         return result
 
     def __itruediv__(self, other):
+        """Define function for /=."""
         if isinstance(other, int) or isinstance(other, float):
             self.v /= other
             if self.deriv > 0:
@@ -134,7 +141,7 @@ class Scalar(object):
         return self
 
     def inv(self):
-        """In place invert"""
+        """Invert in place."""
         self.v = 1 / self.v
         tmp = self.v ** 2
         if self.deriv > 1:
@@ -146,17 +153,18 @@ class Scalar(object):
 class Vector3(object):
     """A Three dimensional vector with optional first and second order derivatives.
 
-       This object is nothing more than a tier for three Scalar objects.
+    This object is nothing more than a tier for three Scalar objects.
     """
 
     def __init__(self, size, deriv=0, values=(0, 0, 0), indexes=(None, None, None)):
-        """
-           Arguments:
-            | ``size`` -- The number of inputs on which this ic depends. e.g. a
-                          distance depends on 6 Cartesian coordinates.
-            | ``deriv`` -- Consider up to deriv order derivatives. (max=2)
-            | ``values`` -- The initial values.
-            | ``indexes`` -- If this vector is one of the input variables, these
+        """Initialize 3 dim vector class.
+
+        Arguments:
+        | ``size`` -- The number of inputs on which this ic depends. e.g. a
+                      distance depends on 6 Cartesian coordinates.
+        | ``deriv`` -- Consider up to deriv order derivatives. (max=2)
+        | ``values`` -- The initial values.
+        | ``indexes`` -- If this vector is one of the input variables, these
                              are the indexes of the components.
         """
         self.deriv = deriv
@@ -166,7 +174,7 @@ class Vector3(object):
         self.z = Scalar(size, deriv, values[2], indexes[2])
 
     def copy(self):
-        """Return a deep copy"""
+        """Return a deep copy."""
         result = Vector3(self.size, self.deriv)
         result.x.v = self.x.v
         result.y.v = self.y.v
@@ -182,31 +190,35 @@ class Vector3(object):
         return result
 
     def __iadd__(self, other):
+        """Define += method."""
         self.x += other.x
         self.y += other.y
         self.z += other.z
         return self
 
     def __isub__(self, other):
+        """Define -= method."""
         self.x -= other.x
         self.y -= other.y
         self.z -= other.z
         return self
 
     def __imul__(self, other):
+        """Define *= method."""
         self.x *= other
         self.y *= other
         self.z *= other
         return self
 
     def __itruediv__(self, other):
+        """Define /= method."""
         self.x /= other
         self.y /= other
         self.z /= other
         return self
 
     def norm(self):
-        """Return a Scalar object with the norm of this vector"""
+        """Return a Scalar object with the norm of this vector."""
         result = Scalar(self.size, self.deriv)
         result.v = np.sqrt(self.x.v ** 2 + self.y.v ** 2 + self.z.v ** 2)
         if self.deriv > 0:
@@ -233,12 +245,12 @@ class Vector3(object):
 
 
 def dot(r1, r2):
-    """Compute the dot product
+    """Compute the dot product.
 
-       Arguments:
-        | ``r1``, ``r2``  -- two :class:`Vector3` objects
+    Arguments:
+    | ``r1``, ``r2``  -- two :class:`Vector3` objects
 
-       (Returns a Scalar)
+    (Returns a Scalar)
     """
     if r1.size != r2.size:
         raise ValueError("Both arguments must have the same input size.")
@@ -248,12 +260,12 @@ def dot(r1, r2):
 
 
 def cross(r1, r2):
-    """Compute the cross product
+    """Compute the cross product.
 
-       Arguments:
-        | ``r1``, ``r2``  -- two :class:`Vector3` objects
+    Arguments:
+    | ``r1``, ``r2``  -- two :class:`Vector3` objects
 
-       (Returns a Vector3)
+    (Returns a Vector3)
     """
     if r1.size != r2.size:
         raise ValueError("Both arguments must have the same input size.")
@@ -272,13 +284,13 @@ def cross(r1, r2):
 
 
 def bond_length(rs, deriv=0):
-    """Compute the distance between the two points rs[0] and rs[1]
+    """Compute the distance between the two points rs[0] and rs[1].
 
-       Arguments:
-        | ``rs``  --  two numpy array with three elements
-        | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
+    Arguments:
+    | ``rs``  --  two numpy array with three elements
+    | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
 
-       When derivatives are computed a tuple with a single result is returned
+    When derivatives are computed a tuple with a single result is returned
     """
     return _bond_transform(rs, _bond_length_low, deriv)
 
@@ -287,108 +299,111 @@ pair_distance = bond_length
 
 
 def bend_cos(rs, deriv=0):
-    """Compute the cosine of the angle between the vectors rs[0]-rs[1] and rs[2]-rs[1]
+    """Compute the cosine of the angle between the vectors rs[0]-rs[1] and rs[2]-rs[1].
 
-       Arguments:
-        | ``rs``  --  three numpy array with three elements
-        | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
+    Arguments:
+    | ``rs``  --  three numpy array with three elements
+    | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
 
-       When derivatives are computed a tuple with a single result is returned
+    When derivatives are computed a tuple with a single result is returned
     """
     return _bend_transform(rs, _bend_cos_low, deriv)
 
 
 def bend_angle(rs, deriv=0):
-    """Compute the angle between the vectors rs[0]-rs[1] and rs[2]-rs[1]
+    """Compute the angle between the vectors rs[0]-rs[1] and rs[2]-rs[1].
 
-       Arguments:
-        | ``rs``  --  three numpy array with three elements
-        | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
+    Arguments:
+    | ``rs``  --  three numpy array with three elements
+    | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
 
-       When derivatives are computed a tuple with a single result is returned
+    When derivatives are computed a tuple with a single result is returned
     """
     return _bend_transform(rs, _bend_angle_low, deriv)
 
 
 def dihed_new_dot(rs, deriv=0):
+    """Compute the dot dihed indicator between vector rs[0]-rs[1] and rs[3]-r[s]."""
     return _dihed_transform(rs, _dihed_new_dot, deriv)
 
 
 def dihed_new_cross(rs, deriv=0):
+    """Compute the cross dihed indicator between vector rs[0], rs[1], r[2] and rs[3]."""
     return _dihed_transform(rs, _dihed_new_cross, deriv)
 
 
 def dihed_cos(rs, deriv=0):
-    """Compute the cosine of the angle between the planes rs[0], rs[1], rs[2] and rs[1], rs[2], rs[3]
+    """Compute the cosine of the angle between the planes.
 
-       Arguments:
-        | ``rs``  --  four numpy array with three elements
-        | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
+    Planes consist of rs[0], rs[1], rs[2] and rs[1], rs[2], rs[3].
+
+    Arguments:
+    | ``rs``  --  four numpy array with three elements
+    | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
     """
     return _dihed_transform(rs, _dihed_cos_low, deriv)
 
 
 def dihed_angle(rs, deriv=0):
-    """Compute the angle between the planes rs[0], rs[1], rs[2] and rs[1], rs[2], rs[3]
+    """Compute the angle between the planes rs[0], rs[1], rs[2] and rs[1], rs[2], rs[3].
 
-       The sign convention corresponds to the IUPAC definition of the torsion
-       angle: http://dx.doi.org/10.1351/goldbook.T06406
+    The sign convention corresponds to the IUPAC definition of the torsion
+    angle: http://dx.doi.org/10.1351/goldbook.T06406
 
-       Arguments:
-        | ``rs``  --  four numpy array with three elements
-        | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
+    Arguments:
+    | ``rs``  --  four numpy array with three elements
+    | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
 
-       When derivatives are computed a tuple with a single result is returned
+    When derivatives are computed a tuple with a single result is returned
     """
     return _dihed_transform(rs, _dihed_angle_low, deriv)
 
 
 def opbend_dist(rs, deriv=0):
-    """Compute the out-of-plane distance, i.e. the distance between atom rs[3]
-       and plane rs[0],rs[1],rs[2]
+    """Compute the out-of-plane distance.
 
-       Arguments:
-        | ``rs``  --  four numpy array with three elements
-        | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
+    The distance between atom rs[3] and plane rs[0],rs[1],rs[2].
+
+    Arguments:
+    | ``rs``  --  four numpy array with three elements
+    | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
     """
     return _opbend_transform(rs, _opdist_low, deriv)
 
 
 def opbend_cos(rs, deriv=0):
-    """Compute the cosine of the angle between the vector (rs[0],rs[3]) and plane rs[0],rs[1],rs[2]
+    """Compute the cosine of the angle between the vector (rs[0],rs[3]) and plane rs[0],rs[1],rs[2].
 
-       Arguments:
-        | ``rs``  --  four numpy array with three elements
-        | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
+    Arguments:
+    | ``rs``  --  four numpy array with three elements
+    | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
     """
     return _opbend_transform(rs, _opbend_cos_low, deriv)
 
 
 def opbend_angle(rs, deriv=0):
-    """Compute the angle between the vector rs[0], rs[3] and the plane rs[0], rs[1], rs[2]
+    """Compute the angle between the vector rs[0], rs[3] and the plane rs[0], rs[1], rs[2].
 
-       The sign convention is as follows: positive if rs[3] lies in the space
-       above plane rs[0], rs[1], rs[2] and negative if rs[3] lies below. Above
-       is defined by right hand rule from rs[0]-rs[1] to rs[0]-rs[2].
+    The sign convention is as follows: positive if rs[3] lies in the space
+    above plane rs[0], rs[1], rs[2] and negative if rs[3] lies below. Above
+    is defined by right hand rule from rs[0]-rs[1] to rs[0]-rs[2].
 
-       Arguments:
-        | ``rs``  --  four numpy array with three elements
-        | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
+    Arguments:
+    | ``rs``  --  four numpy array with three elements
+    | ``deriv``  --  the derivatives to be computed: 0, 1 or 2 [default=0]
 
-       When no derivatives are computed a tuple with a single result is returned.
+    When no derivatives are computed a tuple with a single result is returned.
     """
     return _opbend_transform(rs, _opbend_angle_low, deriv)
 
 
 def opbend_mangle(rs, deriv=0):
-    """Compute the mean value of the 3 opbend_angles
-    """
+    """Compute the mean value of the 3 opbend_angles."""
     return _opbend_transform_mean(rs, _opbend_angle_low, deriv)
 
 
 def opbend_mcos(rs, deriv=0):
-    """Compute the mean cos of the 3 opbend_angles
-    """
+    """Compute the mean cos of the 3 opbend_angles."""
     return _opbend_transform_mean(rs, _opbend_cos_low, deriv)
 
 
@@ -551,8 +566,7 @@ def _opbend_transform(rs, fn_low, deriv):
 
 
 def _opbend_transform_mean(rs, fn_low, deriv=0):
-    """Compute the mean of the 3 opbends
-    """
+    """Compute the mean of the 3 opbends."""
     v = 0.0
     d = np.zeros((4, 3), float)
     dd = np.zeros((4, 3, 4, 3), float)
@@ -606,14 +620,14 @@ def _opbend_transform_mean(rs, fn_low, deriv=0):
 
 
 def _bond_length_low(r, deriv):
-    """Similar to bond_length, but with a relative vector"""
+    """Similar to bond_length, but with a relative vector."""
     r = Vector3(3, deriv, r, (0, 1, 2))
     d = r.norm()
     return d.results()
 
 
 def _bend_cos_low(a, b, deriv):
-    """Similar to bend_cos, but with relative vectors"""
+    """Similar to bend_cos, but with relative vectors."""
     a = Vector3(6, deriv, a, (0, 1, 2))
     b = Vector3(6, deriv, b, (3, 4, 5))
     a /= a.norm()
@@ -622,13 +636,13 @@ def _bend_cos_low(a, b, deriv):
 
 
 def _bend_angle_low(a, b, deriv):
-    """Similar to bend_angle, but with relative vectors"""
+    """Similar to bend_angle, but with relative vectors."""
     result = _bend_cos_low(a, b, deriv)
     return _cos_to_angle(result, deriv)
 
 
 def _dihed_new_dot(a, b, c, deriv):  # self defined function by Derrick Yang
-    """Similar to new_dihed_cos, but with relative vectors"""
+    """Similar to new_dihed_cos, but with relative vectors."""
     a = Vector3(9, deriv, a, (0, 1, 2))
     b = Vector3(9, deriv, b, (3, 4, 5))
     c = Vector3(9, deriv, c, (6, 7, 8))
@@ -639,7 +653,7 @@ def _dihed_new_dot(a, b, c, deriv):  # self defined function by Derrick Yang
 
 
 def _dihed_new_cross(a, b, c, deriv):  # self defined function by Derrick Yang
-    """Similar to new_dihed_cross, but with relative vectors"""
+    """Similar to new_dihed_cross, but with relative vectors."""
     a = Vector3(9, deriv, a, (0, 1, 2))
     b = Vector3(9, deriv, b, (3, 4, 5))
     c = Vector3(9, deriv, c, (6, 7, 8))
@@ -651,7 +665,7 @@ def _dihed_new_cross(a, b, c, deriv):  # self defined function by Derrick Yang
 
 
 def _dihed_cos_low(a, b, c, deriv):
-    """Similar to dihed_cos, but with relative vectors"""
+    """Similar to dihed_cos, but with relative vectors."""
     a = Vector3(9, deriv, a, (0, 1, 2))
     b = Vector3(9, deriv, b, (3, 4, 5))
     c = Vector3(9, deriv, c, (6, 7, 8))
@@ -668,7 +682,7 @@ def _dihed_cos_low(a, b, c, deriv):
 
 
 def _dihed_angle_low(av, bv, cv, deriv):
-    """Similar to dihed_cos, but with relative vectors"""
+    """Similar to dihed_cos, but with relative vectors."""
     a = Vector3(9, deriv, av, (0, 1, 2))
     b = Vector3(9, deriv, bv, (3, 4, 5))
     c = Vector3(9, deriv, cv, (6, 7, 8))
@@ -698,7 +712,7 @@ def _dihed_angle_low(av, bv, cv, deriv):
 
 
 def _opdist_low(av, bv, cv, deriv):
-    """Similar to opdist, but with relative vectors"""
+    """Similar to opdist, but with relative vectors."""
     a = Vector3(9, deriv, av, (0, 1, 2))
     b = Vector3(9, deriv, bv, (3, 4, 5))
     c = Vector3(9, deriv, cv, (6, 7, 8))
@@ -709,7 +723,7 @@ def _opdist_low(av, bv, cv, deriv):
 
 
 def _opbend_cos_low(a, b, c, deriv):
-    """Similar to opbend_cos, but with relative vectors"""
+    """Similar to opbend_cos, but with relative vectors."""
     a = Vector3(9, deriv, a, (0, 1, 2))
     b = Vector3(9, deriv, b, (3, 4, 5))
     c = Vector3(9, deriv, c, (6, 7, 8))
@@ -732,7 +746,7 @@ def _opbend_cos_low(a, b, c, deriv):
 
 
 def _opbend_angle_low(a, b, c, deriv=0):
-    """Similar to opbend_angle, but with relative vectors"""
+    """Similar to opbend_angle, but with relative vectors."""
     result = _opbend_cos_low(a, b, c, deriv)
     sign = np.sign(np.linalg.det([a, b, c]))
     return _cos_to_angle(result, deriv, sign)
@@ -744,7 +758,7 @@ def _opbend_angle_low(a, b, c, deriv=0):
 
 
 def _cos_to_angle(result, deriv, sign=1):
-    """Convert a cosine and its derivatives to an angle and its derivatives"""
+    """Convert a cosine and its derivatives to an angle and its derivatives."""
     v = np.arccos(np.clip(result[0], -1, 1))
     if deriv == 0:
         return (v * sign,)
@@ -763,7 +777,7 @@ def _cos_to_angle(result, deriv, sign=1):
 
 
 def _sin_to_angle(result, deriv, side=1):
-    """Convert a sine and its derivatives to an angle and its derivatives"""
+    """Convert a sine and its derivatives to an angle and its derivatives."""
     v = np.arcsin(np.clip(result[0], -1, 1))
     sign = side
     if sign == -1:

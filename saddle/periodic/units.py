@@ -18,55 +18,54 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-"""Conversion from and to atomic units
+"""Conversion from and to atomic units.
 
-   Internally HORTON always uses atomic units. Atomic units are consistent,
-   similar to the SI unit system: one does not need conversion factors in the
-   middle of a computation. This choice facilitates the programming and reduces
-   accidental bugs.
+Internally HORTON always uses atomic units. Atomic units are consistent,
+similar to the SI unit system: one does not need conversion factors in the
+middle of a computation. This choice facilitates the programming and reduces
+accidental bugs.
 
-   References for the conversion values:
+References for the conversion values:
 
-   * B. J. Mohr and B. N. Taylor,
-     CODATA recommended values of the fundamental physical
-     constants: 1998, Rev. Mod. Phys. 72(2), 351 (2000)
-   * The NIST Reference on Constants, Units, and Uncertainty
-     (http://physics.nist.gov/cuu/Constants/index.html)
-   * 1 calorie = 4.184 Joules
+* B. J. Mohr and B. N. Taylor,
+ CODATA recommended values of the fundamental physical
+ constants: 1998, Rev. Mod. Phys. 72(2), 351 (2000)
+* The NIST Reference on Constants, Units, and Uncertainty
+ (http://physics.nist.gov/cuu/Constants/index.html)
+* 1 calorie = 4.184 Joules
 
-   **Conventions followed by this module:**
+**Conventions followed by this module:**
 
-   Let foo be is the value of an external unit in internal (atomic) units. The
-   way to use this unit is as follows: ``5*foo`` litterally means `five times
-   foo`. The result of this operation is a floating point number for this value
-   in atomic units.
+Let foo be is the value of an external unit in internal (atomic) units. The
+way to use this unit is as follows: ``5*foo`` litterally means `five times
+foo`. The result of this operation is a floating point number for this value
+in atomic units.
 
-   **Examples:**
+**Examples:**
 
-   If you want to have a distance of five angstrom in internal units:
-   ``5*angstrom``.
+If you want to have a distance of five angstrom in internal units:
+``5*angstrom``.
 
-   If you want to convert a length of 5 internal units to angstrom:
-   ``5/angstrom``.
+If you want to convert a length of 5 internal units to angstrom:
+``5/angstrom``.
 
-   **Remarks:**
+**Remarks:**
 
-   It is highly recommended to perform unit conversions only when data is read
-   from the input or data is written to the output. It may also be useful in
-   `input scripts` that use HORTON. Do not perform any unit conversion in other
-   parts of the program.
+It is highly recommended to perform unit conversions only when data is read
+from the input or data is written to the output. It may also be useful in
+`input scripts` that use HORTON. Do not perform any unit conversion in other
+parts of the program.
 
-   An often recurring question is how to convert a frequency in internal units
-   to a spectroscopic wavenumber in inverse centimeters. This is how it can be
-   done::
+An often recurring question is how to convert a frequency in internal units
+to a spectroscopic wavenumber in inverse centimeters. This is how it can be
+done::
 
-     >>> from horton import centimeter, lightspeed
-     >>> invcm = lightspeed/centimeter
-     >>> freq = 0.00320232
-     >>> print freq/invcm
+ >>> from horton import centimeter, lightspeed
+ >>> invcm = lightspeed/centimeter
+ >>> freq = 0.00320232
+ >>> print freq/invcm
 
-   These are the conversion constants defined in this module:
-
+These are the conversion constants defined in this module:
 """
 
 

@@ -1,0 +1,1 @@
+"""Optimizer data init file."""

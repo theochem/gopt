@@ -1,19 +1,53 @@
+"""Utility class for file input and output."""
 import functools
 import inspect
 import warnings
 from pathlib import Path
 
 import numpy as np
+
 from saddle.periodic.periodic import angstrom, periodic
 
 
 class Utils:
+    """Utility function class."""
+
     def __init__(self, numbers, coordinates):
+        """Initialize Utility class instance class.
+
+        Parameters
+        ----------
+        numbers : np.ndarray(N,)
+            atomic number of atoms
+        coordinates : np.ndarray(N, 3)
+            atomic coordinates of atoms
+        """
         self.numbers = numbers.copy()
         self.coordinates = coordinates.copy()
 
     @classmethod
     def load_file(cls, file_path, encoding="utf-8"):
+        """Load input file from other format.
+
+        Parameters
+        ----------
+        file_path : Path or str
+            path to designated file
+        encoding : str, optional
+            encoding method of input file
+
+        Returns
+        -------
+        Utils
+            New instance of Utils with coords and numbers from other input type
+
+        Raises
+        ------
+        TypeError
+            input file_path is not a valid type
+        ValueError
+            given input file is not supported
+        """
         if isinstance(file_path, str):
             file_path = Path(file_path)
         if not isinstance(file_path, Path):
@@ -29,6 +63,26 @@ class Utils:
 
     @classmethod
     def save_file(cls, file_path, mole, format="xyz", encoding="utf-8", mode="w"):
+        """Save molecule structure to a given file.
+
+        Parameters
+        ----------
+        file_path : Path or str
+            Path of the stored file, posix with '.xyz'
+        mole : Molecule
+            Molecule instance with numbers and coordinates
+        format : str, optional
+            stored file format
+        encoding : str, optional
+            encoding method of output format
+        mode : str, optional
+            file I/O mode
+
+        Raises
+        ------
+        TypeError
+            if given file posix is not support
+        """
         if isinstance(file_path, str):
             file_path = Path(file_path)
         if not isinstance(file_path, Path):
@@ -62,6 +116,19 @@ class Utils:
 
     @staticmethod
     def _save_xyz(file_path, mole, encoding="utf-8", mode="w"):
+        """Save file to .xyz format.
+
+        Parameters
+        ----------
+        file_path : Path or str
+            Path of the stored file, posix with '.xyz'
+        mole : Molecule
+            Molecule instance with numbers and coordinates
+        encoding : str, optional
+            encoding method of output format
+        mode : str, optional
+            file I/O mode
+        """
         assert isinstance(file_path, Path)
         assert file_path.suffix == ".xyz"
         with file_path.open(encoding=encoding, mode=mode) as f:
@@ -77,6 +144,20 @@ class Utils:
 
     @staticmethod
     def _load_gauss(file_path, encoding="utf-8"):
+        """Load from gaussian input file.
+
+        Parameters
+        ----------
+        file_path : Path or str
+            Path of the stored file, posix with '.xyz'
+        encoding : str, optional
+            encoding method of output format
+
+        Returns
+        -------
+        tuple
+            molecular property (atomic numbers, atomic coords, charge, multiplicity)
+        """
         assert isinstance(file_path, Path)
         assert file_path.suffix in (".com", ".gjf")
         with file_path.open(encoding=encoding) as f:
@@ -104,7 +185,8 @@ class Utils:
 
 
 def deprecated(reason):
-    """Decorator to generate deprecated warning for old functions or classes.
+    """Generate deprecated warning for old functions or classes.
+
     This code is originally published on stackoverflow: https://bit.ly/2H4Uvgv
     Appreciation to the original author: Laurent & Zero
 

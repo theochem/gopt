@@ -18,5 +18,6 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
+"""Periodic module for get basic atomic property."""
 # from .periodic import *
 # from .units import *

@@ -18,31 +18,33 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-"Class for parsing data from FCHK file"
+"""Data parsing class for FCHK file."""
 
 import numpy as np
 
 
 class FCHKFile(object):
-    """Reader for Formatted checkpoint files
+    """Reader for Formatted checkpoint files.
 
-       After initialization, the data from the file is available in the fields
-       dictionary. Also the following attributes are read from the file: title,
-       command, lot (level of theory) and basis.
+    After initialization, the data from the file is available in the fields
+    dictionary. Also the following attributes are read from the file: title,
+    command, lot (level of theory) and basis.
+
+    Attributes
+    ----------
+    fields : str
+        field name of chemical property from fchk file
+    filename : str
+        filename of interested fchk file
+    ignore_errors : bool
+        flag for controlling error handling
+    molecule : Molecule
+        A molecule instance contains basic atomic number, coordinates information
+    title : str
+        title of fchk molecule file
     """
 
     def __init__(self, filename: str, ignore_errors: bool = False, field_labels=None):
-        """
-           Arguments:
-            | ``filename``  --  The formatted checkpoint file
-
-           Optional arguments:
-            | ``ignore_errors``  --  Try to read incorrectly formatted files
-                                     without raising exceptions [default=False]
-            | ``field_labels``  --  When given, only these fields are read from
-                                    the formatted checkpoint file. (This can
-                                    save a lot of time.)
-        """
         self.filename = filename
         self.ignore_errors = ignore_errors
         try:
@@ -59,16 +61,23 @@ class FCHKFile(object):
         self._analyze()
 
     def _read(self, filename, field_labels=None):
-        """Read all the requested fields
+        """Read all the requested fields.
 
-           Arguments:
-            | ``filename``  --  the filename of the FCHK file
-            | ``field_labels``  --  when given, only these fields are read
+        Parameters
+        ----------
+        filename : str
+            the filename of the FCHK file
+        field_labels : str, optional
+            when given, only these fields are read
+
+        Raises
+        ------
+        FileFormatError
+            Raised if given file is not a proper fchk file.
         """
-
         # if fields is None, all fields are read
         def read_field(f):
-            """Read a single field"""
+            """Read a single field."""
             datatype = None
             while datatype is None:
                 # find a sane header line
@@ -158,10 +167,8 @@ class FCHKFile(object):
             while read_field(f):
                 pass
 
-            f.close()
-
     def _analyze(self):
-        """Convert a few elementary fields into a molecule object"""
+        """Convert a few elementary fields into a molecule object."""
         if ("Atomic numbers" in self.fields) and (
             "Current cartesian coordinates" in self.fields
         ):
@@ -172,11 +179,11 @@ class FCHKFile(object):
             )
 
     def get_coordinates(self):
-        """Return cartesian coordinates in format check file"""
+        """Return cartesian coordinates in format check file."""
         return self.fields.get("Current cartesian coordinates")
 
     def get_hessian(self):
-        """Return the hessian"""
+        """np.ndarray(N, N): the hessian of energy versus coords."""
         force_const = self.fields.get("Cartesian Force Constants")
         if force_const is None:
             return None
@@ -190,13 +197,27 @@ class FCHKFile(object):
         return result
 
     def get_gradient(self):
+        """np.ndarray(N,): the grandient of energy versus coords."""
         return self.fields.get("Cartesian Gradient")
 
     def get_energy(self):
+        """float: the energy of given fchk file."""
         return self.fields.get("Total Energy")
 
 
 class Molecule(object):
+    """Molecule class for containing molecular properties.
+
+    Attributes
+    ----------
+    coordinates : np.ndarray
+        Cartesian coordinates for each atoms
+    numbers : np.ndarray
+        Atomic number for each atoms
+    title : str
+        Molecular title
+    """
+
     def __init__(self, numbers, coordinates, title):
         self.numbers = numbers
         self.coordinates = coordinates
@@ -204,6 +225,8 @@ class Molecule(object):
 
 
 class FileFormatError(Exception):
+    """File type error."""
+
     pass
 
 
