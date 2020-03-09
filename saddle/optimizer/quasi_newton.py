@@ -29,6 +29,11 @@ class QuasiNT:
         self._name = method_name
         self._update_fcn = QuasiNT._methods_dict[method_name]
 
+    @property
+    def name(self):
+        """str: name of quasi newtom update method."""
+        return self._name
+
     def update_hessian(self, old, new):
         """Update new point Hessian matrix based on given old point.
 

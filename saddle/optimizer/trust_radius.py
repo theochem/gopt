@@ -27,6 +27,11 @@ class TrustRegion:
         self._name = method_name
         self._update_tr = TrustRegion._trust_radius_methods[method_name]
 
+    @property
+    def name(self):
+        """str: the name of trust radius update method."""
+        return self._name
+
     def calculate_trust_step(self, point):
         """Compute the update step conform with trust radius stepsize range.
 

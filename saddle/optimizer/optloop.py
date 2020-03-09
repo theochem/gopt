@@ -61,8 +61,11 @@ class OptLoop:
         # TODO: possible momery saving mode
         self._point = [PathPoint(init_structure)]
         self._quasi_nt = QuasiNT(quasi_nt)
+        print(f"Quasi Newton Method: {self._quasi_nt.name}")
         self._trust_rad = TrustRegion(trust_rad)
+        print(f"Trust radius Method: {self._trust_rad.name}")
         self._upd_size = Stepsize(upd_size)
+        print(f"Stepsize control Method: {self._upd_size.name}")
 
         # memory setting
         if max_pt == 0 or max_pt >= 2:
@@ -243,7 +246,7 @@ class OptLoop:
         method="g09",
         max_pt=0,
         iterations=50,
-        logfile=None
+        logfile=None,
     ):
         """Create an optloop instance to optimize structure.
 
@@ -280,6 +283,7 @@ class OptLoop:
 
         # initiate counter
         counter = 1
+        print(counter)
         if logfile:
             file_path = Path(logfile)
             opt[0].instance.save_to(file_path, mode="a")
@@ -309,6 +313,7 @@ class OptLoop:
                 opt[-1].instance.save_to(file_path, mode="a")
 
             counter += 1
+            print(counter)
             if counter > iterations:
                 print("Failed to converge")
                 break

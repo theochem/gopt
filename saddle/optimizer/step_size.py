@@ -20,6 +20,11 @@ class Stepsize:
         self._init_flag = False
 
     @property
+    def name(self):
+        """str: the name of step size control method."""
+        return self._name
+
+    @property
     def min_s(self):
         """float: the acceptable minimum stepsize."""
         return self._min_s
