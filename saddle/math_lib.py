@@ -163,14 +163,12 @@ def maximum_overlap(target_mtr, input_mtr):
 
 
 def procrustes(original, target):
-    if not isinstance(original, np.ndarray) or not isinstance(
-            target, np.ndarray):
+    if not isinstance(original, np.ndarray) or not isinstance(target, np.ndarray):
         raise TypeError("The input is not the right type.")
     if original.shape != target.shape:
-        raise ValueError('The shape of two matrix is not the same')
+        raise ValueError("The shape of two matrix is not the same")
     if original.ndim < 2 or original.shape[0] == 1:
-        raise ValueError(
-            f'The shape of given matrix is not valid -- {original.shape}')
+        raise ValueError(f"The shape of given matrix is not valid -- {original.shape}")
     proj = np.dot(target, original.T)
     u, _, v = np.linalg.svd(proj)
     tf_mtr = np.dot(u, v)

@@ -3,7 +3,13 @@ import unittest
 import numpy as np
 from numpy.testing import assert_allclose
 from saddle.errors import PositiveProductError
-from saddle.math_lib import diagonalize, pse_inv, ridders_solver, maximum_overlap, procrustes
+from saddle.math_lib import (
+    diagonalize,
+    pse_inv,
+    ridders_solver,
+    maximum_overlap,
+    procrustes,
+)
 
 
 # pylint: disable=E1101, E1133

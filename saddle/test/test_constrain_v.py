@@ -2,6 +2,7 @@ from copy import deepcopy
 from unittest import TestCase
 
 import numpy as np
+from numpy.testing import assert_allclose
 from importlib_resources import path
 from saddle.constrain_v import NewVspace
 from copy import deepcopy
@@ -9,10 +10,10 @@ from copy import deepcopy
 
 class TestConstrainVspace(TestCase):
     def setUp(self):
-        with path('saddle.test.data', 'h2o2.xyz') as mol_file:
+        with path("saddle.test.data", "h2o2.xyz") as mol_file:
             self.mol = NewVspace.from_file(mol_file, charge=0, multi=1)
             self.mol.auto_select_ic()
-        with path('saddle.test.data', 'water.xyz') as mol_file:
+        with path("saddle.test.data", "water.xyz") as mol_file:
             self.mol2 = NewVspace.from_file(mol_file, charge=0, multi=1)
             self.mol2.auto_select_ic()
             self.mol2.add_bond(0, 2)
@@ -151,7 +152,7 @@ class TestConstrainVspace(TestCase):
         bset = np.dot(mtx, vectors)
         bset[:, 0] /= np.linalg.norm(bset[:, 0])
         bset[:, 1] /= np.linalg.norm(bset[:, 1])
-        assert np.allclose(self.mol2._freeze_space**2, bset**2)
+        assert np.allclose(self.mol2._freeze_space ** 2, bset ** 2)
 
     def test_generate_key_space(self):
         ref_mol = deepcopy(self.mol2)
@@ -168,7 +169,7 @@ class TestConstrainVspace(TestCase):
         left_over_v = rf_space - np.dot(np.dot(f_space, f_space.T), rf_space)
         values, vectors = np.linalg.eigh(np.dot(left_over_v, left_over_v.T))
         ref_kspace = vectors[:, np.abs(values) > 1e-6]
-        assert np.allclose(self.mol2._key_space[:, 0]**2, ref_kspace[:, 0]**2)
+        assert np.allclose(self.mol2._key_space[:, 0] ** 2, ref_kspace[:, 0] ** 2)
 
     def test_generate_non_space(self):
         ref_mol = deepcopy(self.mol2)
@@ -188,92 +189,93 @@ class TestConstrainVspace(TestCase):
         left_ov_2 = left_ov_1 - np.dot(np.dot(k_space, k_space.T), left_ov_1)
         values, vectors = np.linalg.eigh(np.dot(left_ov_2, left_ov_2.T))
         ref_n_space = vectors[:, np.abs(values) > 1e-6]
-        assert np.allclose(self.mol2._non_space**2, ref_n_space**2)
+        assert np.allclose(self.mol2._non_space ** 2, ref_n_space ** 2)
 
     def test_vspace(self):
         self.mol2.select_freeze_ic(0, 2)
         self.mol2.select_key_ic(2)
         self.mol2.vspace
-        ref_v = np.hstack((self.mol2._freeze_space, self.mol2._key_space,
-                           self.mol2._non_space))
-        assert np.allclose(self.mol2.vspace, ref_v)
+        ref_v = np.hstack(
+            (self.mol2._freeze_space, self.mol2._key_space, self.mol2._non_space)
+        )
+        assert_allclose(self.mol2.all_vspace, ref_v)
 
         self.mol2.select_freeze_ic(0)
-        assert not np.allclose(self.mol2.vspace, ref_v)
-        vspace = self.mol2.vspace
+        assert not np.allclose(self.mol2.all_vspace, ref_v)
+        vspace = self.mol2.all_vspace
         self.mol2.select_key_ic(1, 3)
-        assert not np.allclose(self.mol2.vspace, vspace)
+        assert not np.allclose(self.mol2.all_vspace, vspace)
 
     def test_vspace_forms(self):
         ref_mol = deepcopy(self.mol2)
         # calculate two different vspace
         self.mol2.select_freeze_ic(0, 2)
-        vs1 = self.mol2.vspace
+        vs1 = self.mol2.all_vspace
 
         ref_mol.select_key_ic(0, 2)
         vs2 = ref_mol.vspace
-        assert np.allclose(vs1**2, vs2**2)
+        assert_allclose(vs1 ** 2, vs2 ** 2)
 
     def test_set_vspace(self):
         ref_mol = deepcopy(self.mol2)
         self.mol2.select_freeze_ic(0, 2)
         self.mol2.select_key_ic(2)
-        vspace = self.mol2.vspace
-
-        ref_mol.set_vspace(vspace)
-        assert np.allclose(ref_mol.vspace, self.mol2.vspace)
-        assert np.allclose(ref_mol.vspace, ref_mol._non_space)
+        assert self.mol2.vspace.shape == (4, 1)
+        # assert_allclose(ref_mol.vspace, self.mol2.all_vspace)
+        # assert np.allclose(ref_mol.vspace, ref_mol._non_space)
 
         # random vspace, set freeze, key ic values
         ref_mol._n_freeze_ic = 2
         ref_mol._n_key_ic = 1
-        ref_vs = np.random.rand(4, 3)
+        ref_vs = np.random.rand(4, 1)
         ref_mol.set_vspace(ref_vs)
-        assert np.allclose(ref_mol._freeze_space, ref_vs[:, :2])
-        assert np.allclose(ref_mol._key_space, ref_vs[:, 2:])
+        # assert np.allclose(ref_mol._freeze_space, ref_vs[:, :2])
+        assert np.allclose(ref_mol._key_space, ref_vs)
 
     def test_vs_align_matrix(self):
         ref_v = deepcopy(self.mol2.vspace)
         self.mol2.select_freeze_ic(0)
-        assert self.mol2.vspace.shape == (4, 3)
+        assert self.mol2.all_vspace.shape == (4, 3)
+        assert self.mol2.vspace.shape == (4, 2)
         assert self.mol2.b_matrix.shape == (4, 9)
         self.mol2.select_key_ic(2)
-        assert not np.allclose(self.mol2.vspace, ref_v)
+        assert not np.allclose(self.mol2.all_vspace, ref_v)
         # construct ref vs
-        self.mol2.align_vspace_matrix(ref_v)
-        assert np.allclose(self.mol2.vspace, ref_v)
-        assert np.allclose(self.mol2._freeze_space, ref_v[:, 0].reshape(4, -1))
-        assert np.allclose(self.mol2._key_space, ref_v[:, 1].reshape(4, -1))
-        assert np.allclose(self.mol2._non_space, ref_v[:, 2:])
+        print(self.mol2.n_freeze)
+        self.mol2.align_vspace_matrix(ref_v[:, 1:])
+        assert_allclose(self.mol2.vspace, ref_v[:, 1:])
+        # assert_allclose(self.mol2._freeze_space, ref_v[:, 0].reshape(4, -1))
+        assert_allclose(self.mol2._key_space, ref_v[:, 1].reshape(4, -1))
+        assert_allclose(self.mol2._non_space, ref_v[:, 2:])
 
         # change key_ic
         self.mol2.select_freeze_ic(0, 1)
         self.mol2.select_key_ic(2)
-        assert not np.allclose(self.mol2.vspace, ref_v)
-        self.mol2.align_vspace_matrix(ref_v)
-        assert np.allclose(self.mol2.vspace, ref_v)
-        assert np.allclose(self.mol2._freeze_space, ref_v[:, :2])
-        assert np.allclose(self.mol2._key_space, ref_v[:, 2:].reshape(4, -1))
-        assert np.allclose(self.mol2._non_space, ref_v[:, 3:])
+        assert self.mol2.vspace.shape != ref_v.shape
+        self.mol2.align_vspace_matrix(ref_v[:, :1])
+        assert_allclose(self.mol2.vspace, ref_v[:, :1])
+        # assert np.allclose(self.mol2._freeze_space, ref_v[:, :2])
+        # assert np.allclose(self.mol2._key_space, ref_v[:, 2:].reshape(4, -1))
+        # assert np.allclose(self.mol2._non_space, ref_v[:, 3:])
 
         # use separate align
         self.mol2.select_freeze_ic(0, 1)
         self.mol2.select_key_ic(2)
         assert not np.allclose(self.mol2.vspace, ref_v)
-        self.mol2.align_vspace_matrix(ref_v, special=True)
-        assert np.allclose(self.mol2.vspace, ref_v)
-        assert np.allclose(self.mol2._freeze_space, ref_v[:, :2])
-        assert np.allclose(self.mol2._key_space, ref_v[:, 2:].reshape(4, -1))
-        assert np.allclose(self.mol2._non_space, ref_v[:, 3:])
-
+        self.mol2.align_vspace_matrix(ref_v[:, 1:2], special=True)
+        assert np.allclose(self.mol2.vspace, ref_v[:, 1:2])
+        # assert np.allclose(self.mol2._freeze_space, ref_v[:, :2])
+        # assert np.allclose(self.mol2._key_space, ref_v[:, 2:].reshape(4, -1))
+        # assert np.allclose(self.mol2._non_space, ref_v[:, 3:])
 
     def test_vs_align_object(self):
         ref_mol = deepcopy(self.mol2)
         self.mol2.select_freeze_ic(0)
         self.mol2.select_key_ic(2)
-        assert not np.allclose(self.mol2.vspace, ref_mol.vspace)
+        assert not np.allclose(self.mol2.vspace, ref_mol.vspace[:, 1:])
+        ref_mol.select_freeze_ic(1)
         self.mol2.align_vspace(ref_mol)
-        assert np.allclose(self.mol2.vspace, ref_mol.vspace)
+        assert_allclose(self.mol2.vspace, ref_mol.vspace, atol=1e-8)
         with self.assertRaises(ValueError):
             self.mol2.align_vspace(ref_mol, ic_check=True)
         with self.assertRaises(TypeError):

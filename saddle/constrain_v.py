@@ -1,45 +1,50 @@
-import warnings
 import numpy as np
 
 from saddle.errors import ICNumberError, NotSetError
-from saddle.internal import Internal
 from saddle.math_lib import diagonalize, pse_inv
 from saddle.math_lib import procrustes
 
 
 class NewVspace(Internal):
-    def __init__(self,
-                 coordinates: 'np.ndarray',
-                 numbers: 'np.ndarray',
-                 charge: int,
-                 multi: int,
-                 title: str = "") -> None:
-        super(NewVspace, self).__init__(coordinates, numbers, charge, multi,
-                                        title)
+    def __init__(
+        self,
+        coordinates: "np.ndarray",
+        numbers: "np.ndarray",
+        charge: int,
+        multi: int,
+        title: str = "",
+    ) -> None:
+        super(NewVspace, self).__init__(coordinates, numbers, charge, multi, title)
         self._n_freeze_ic = 0
         self._n_key_ic = 0
         self._n_dof = len(self.numbers) - 6
-        self._freeze_space = None
+        self._freeze_space = np.array([])
         self._key_space = None
         self._non_space = None
         self._vspace = None
         self._reset_v_space()
 
     @property
-    def vspace(self):
-        if (self._freeze_space is None or self._key_space is None
-                or self._non_space is None):
+    def all_vspace(self):
+        if self._key_space is None or self._non_space is None:
             self._generate_freeze_space()
             self._generate_key_space()
             self._generate_non_space()
-        return np.hstack((self._freeze_space, self._key_space,
-                          self._non_space))
+        return np.hstack((self._freeze_space, self._key_space, self._non_space))
+
+    @property
+    def vspace(self):
+        if self._key_space is None or self._non_space is None:
+            self._generate_freeze_space()
+            self._generate_key_space()
+            self._generate_non_space()
+        return np.hstack((self._key_space, self._non_space))
 
     @property
     def vspace_gradient(self):
         if self.internal_gradient is None:
             raise NotSetError
-        return np.dot(self.vspace.T, self.internal_gradient)
+        return self.vspace.T @ self.internal_gradient
 
     v_gradient = vspace_gradient
 
@@ -47,8 +52,7 @@ class NewVspace(Internal):
     def vspace_hessian(self):
         if self._internal_hessian is None:
             raise NotSetError
-        return np.dot(
-            np.dot(self.vspace.T, self._internal_hessian), self.vspace)
+        return self.vspace.T @ self._internal_hessian @ self.vspace
 
     v_hessian = vspace_hessian
 
@@ -66,14 +70,14 @@ class NewVspace(Internal):
 
     def select_freeze_ic(self, *indices: int) -> None:
         if any(np.array(indices) < 0):
-            raise IndexError('Non negative index allowed')
+            raise IndexError("Non negative index allowed")
         n_freeze_ic = 0
         indices = np.unique(np.sort(np.array(indices)))
         if max(indices) >= len(self.ic):
-            raise IndexError('Given index is out of IC range')
+            raise IndexError("Given index is out of IC range")
 
         if self.n_key != 0:
-            print('Key ic info will be erased')
+            print("Key ic info will be erased")
             self._n_key_ic = 0
 
         for index in indices:
@@ -84,13 +88,13 @@ class NewVspace(Internal):
 
     def select_key_ic(self, *indices: int) -> None:
         if any(np.array(indices) < 0):
-            raise IndexError('Non negative index allowed')
+            raise IndexError("Non negative index allowed")
         n_key_ic = 0
         indices = np.unique(np.sort(np.array(indices)))
         if max(indices) >= len(self.ic):
-            raise IndexError('Given index is out of IC range')
+            raise IndexError("Given index is out of IC range")
         if min(indices) < self.n_freeze:
-            raise IndexError('Can\'t set frozen ic to key ic')
+            raise IndexError("Can't set frozen ic to key ic")
         for index in indices:
             self.swap_internal_coordinates(n_key_ic + self.n_freeze, index)
             n_key_ic += 1
@@ -98,40 +102,41 @@ class NewVspace(Internal):
         self._reset_v_space()
 
     def set_vspace(self, new_vspace):
-        if new_vspace.shape != (len(self.ic), self.df):
-            raise ValueError('Given new vspace is not in the right shape')
-        n_f_k = self.n_freeze + self.n_key
-        self._freeze_space = new_vspace[:, :self.n_freeze]
-        self._key_space = new_vspace[:, self.n_freeze:n_f_k]
-        self._non_space = new_vspace[:, n_f_k:]
+        if new_vspace.shape != (len(self.ic), self.df - self.n_freeze):
+            raise ValueError(
+                "Given new vspace is not in the right shape\n"
+                f"expect:{len(self.ic), self.df - self.n_freeze}, got:{new_vspace.shape}"
+            )
+        # n_f_k = self.n_freeze + self.n_key
+        # self._freeze_space = new_vspace[:, : self.n_freeze]
+        self._key_space = new_vspace[:, : self.n_key]
+        self._non_space = new_vspace[:, self.n_key :]
 
     def align_vspace_matrix(self, target, special=False):
         if not isinstance(target, np.ndarray):
-            raise TypeError('Input matrix is not a legit numpy array')
-        if target.shape != (len(self.ic), self.df):
-            raise ValueError(
-                f'Input array doesn\'t have a correct shape {target.shape}')
+            raise TypeError("Input matrix is not a legit numpy array")
+        if target.shape != (len(self.ic), self.df - self.n_freeze):
+            raise ValueError(f"Input array doesn't have a correct shape {target.shape}")
         if special is False:
             new_v = procrustes(self.vspace, target)
             self.set_vspace(new_v)
         else:
-            n_f_k = self.n_freeze + self.n_key
-            n_f = self.n_freeze
-            new_v_freeze = procrustes(self.vspace[:, :n_f], target[:, :n_f])
-            new_v_key = procrustes(self.vspace[:, n_f:n_f_k],
-                                   target[:, n_f:n_f_k])
-            new_v_non = procrustes(self.vspace[:, n_f_k:], target[:, n_f_k:])
-            new_v = np.hstack((new_v_freeze, new_v_key, new_v_non))
+            new_v_key = procrustes(
+                self.vspace[:, : self.n_key], target[:, : self.n_key]
+            )
+            new_v_non = procrustes(
+                self.vspace[:, self.n_key :], target[:, self.n_key :]
+            )
+            new_v = np.hstack((new_v_key, new_v_non))
         self.set_vspace(new_v)
 
     def align_vspace(self, target, ic_check=False):
         # could add check for same ic selection
         if not isinstance(target, NewVspace):
-            raise TypeError('Input molecule is not a valid type')
+            raise TypeError("Input molecule is not a valid type")
         if ic_check:
             if target.n_freeze != self.n_freeze or target.n_key != self.n_key:
-                raise ValueError(
-                    'Number of special cooridnates does not match')
+                raise ValueError("Number of special cooridnates does not match")
         self.align_vspace_matrix(target.vspace)
 
     def update_to_new_structure_with_delta_v(self, delta_v):
@@ -142,7 +147,7 @@ class NewVspace(Internal):
         self.converge_to_target_ic()
         self._reset_v_space()
 
-    def _reduced_unit_vectors(self, *start_ends) -> 'np.ndarray':  # tested
+    def _reduced_unit_vectors(self, *start_ends) -> "np.ndarray":  # tested
         """Generate unit vectors where every position is 0 except the
         key_ic_number position is 1
 
@@ -158,13 +163,13 @@ class NewVspace(Internal):
         elif len(start_ends) == 2 and start_ends[1] >= start_ends[0]:
             start, end = start_ends
         else:
-            raise ValueError(f'takes 1 or 2 arguments. {start_ends} is given')
+            raise ValueError(f"takes 1 or 2 arguments. {start_ends} is given")
         num_col = end - start
         unit_mtx = np.zeros((len(self.ic), num_col))
         unit_mtx[start:end, :] = np.eye(num_col)
         return unit_mtx
 
-    def _reduced_perturbation(self, *start_ends) -> 'np.ndarray':  # tested
+    def _reduced_perturbation(self, *start_ends) -> "np.ndarray":  # tested
         """Calculate the realizable purterbation in internal cooridnates from
         the unit vectors
 
@@ -184,11 +189,10 @@ class NewVspace(Internal):
         self._freeze_space = v[:, np.abs(w) > threshold]
 
     def _generate_key_space(self, threshold=1e-6):
-        b_mtx = self._reduced_perturbation(self.n_freeze,
-                                           self.n_key + self.n_freeze)
+        b_mtx = self._reduced_perturbation(self.n_freeze, self.n_key + self.n_freeze)
         # project out freezed space
-        proj_f = np.dot(self._freeze_space, self._freeze_space.T)
-        left_b_mtx = b_mtx - np.dot(proj_f, b_mtx)
+        proj_f = self._freeze_space @ self._freeze_space.T
+        left_b_mtx = b_mtx - proj_f @ b_mtx
         w, v = diagonalize(left_b_mtx)
         self._key_space = v[:, np.abs(w) > threshold]
 
@@ -200,7 +204,7 @@ class NewVspace(Internal):
         w, v = diagonalize(non_red_v)
         self._non_space = v[:, abs(w) > threshold]
 
-    def _svd_of_b_matrix(self, threshold=1e-6) -> 'np.ndarray':  # tested
+    def _svd_of_b_matrix(self, threshold=1e-6) -> "np.ndarray":  # tested
         """Select 3N - 6 non-singular vectors from b_matrix through SVD
         (eigenvalue) decomposition
 
