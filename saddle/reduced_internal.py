@@ -419,4 +419,6 @@ class ReducedInternal(Internal):  # need tests
         rot_non_v = rotate_v[:, key_ic_num:]
         non_rot_mtr = maximum_overlap(tar_non_v, rot_non_v)
         new_non_v = np.dot(non_rot_mtr, rot_non_v)
+        if np.any(np.abs(new_red_v.T @ new_non_v) > 1e-8):
+            raise ValueError("Vspace separation is not orthogonal.")
         return np.hstack([new_red_v, new_non_v])

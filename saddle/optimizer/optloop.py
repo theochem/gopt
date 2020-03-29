@@ -283,7 +283,7 @@ class OptLoop:
 
         # initiate counter
         counter = 1
-        print(counter)
+        # print(counter)
         if logfile:
             file_path = Path(logfile)
             opt[0].instance.save_to(file_path, mode="a")
@@ -311,9 +311,8 @@ class OptLoop:
             # opt.add_new_point(new_point)
             if logfile:
                 opt[-1].instance.save_to(file_path, mode="a")
-
-            counter += 1
             print(counter)
+            counter += 1
             if counter > iterations:
                 print("Failed to converge")
                 break
