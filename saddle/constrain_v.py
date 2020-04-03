@@ -1,11 +1,15 @@
+"""Constrained reduced internal coordinates class."""
 import numpy as np
 
-from saddle.errors import ICNumberError, NotSetError
+from saddle.errors import NotSetError
+from saddle.internal import Internal
 from saddle.math_lib import diagonalize, pse_inv
 from saddle.math_lib import procrustes
 
 
 class NewVspace(Internal):
+    """Redueced internal coordinate class."""
+
     def __init__(
         self,
         coordinates: "np.ndarray",
@@ -14,6 +18,7 @@ class NewVspace(Internal):
         multi: int,
         title: str = "",
     ) -> None:
+        """Initialize NewVspace matrix with support for frozen coordinates."""
         super(NewVspace, self).__init__(coordinates, numbers, charge, multi, title)
         self._n_freeze_ic = 0
         self._n_key_ic = 0
@@ -26,6 +31,7 @@ class NewVspace(Internal):
 
     @property
     def all_vspace(self):
+        """np.ndarray: vspace matrix including frozen space."""
         if self._key_space is None or self._non_space is None:
             self._generate_freeze_space()
             self._generate_key_space()
@@ -34,6 +40,7 @@ class NewVspace(Internal):
 
     @property
     def vspace(self):
+        """np.ndarray: reduntant -> reduced space transformation."""
         if self._key_space is None or self._non_space is None:
             self._generate_freeze_space()
             self._generate_key_space()
@@ -42,6 +49,7 @@ class NewVspace(Internal):
 
     @property
     def vspace_gradient(self):
+        """np.ndarray: gradient array in vspace."""
         if self.internal_gradient is None:
             raise NotSetError
         return self.vspace.T @ self.internal_gradient
@@ -50,6 +58,7 @@ class NewVspace(Internal):
 
     @property
     def vspace_hessian(self):
+        """np.ndarray: hessian matrix in vspace."""
         if self._internal_hessian is None:
             raise NotSetError
         return self.vspace.T @ self._internal_hessian @ self.vspace
@@ -58,17 +67,21 @@ class NewVspace(Internal):
 
     @property
     def n_freeze(self):
+        """int: number of frozen internal coordinates."""
         return self._n_freeze_ic
 
     @property
     def n_key(self):
+        """int: number of reduced internal coordinates."""
         return self._n_key_ic
 
     @property
     def n_nonkey(self):
+        """int: number of non reduced internal coordinates."""
         return self.df - self.n_key - self.n_freeze
 
     def select_freeze_ic(self, *indices: int) -> None:
+        """Select frozen internal coordinates."""
         if any(np.array(indices) < 0):
             raise IndexError("Non negative index allowed")
         n_freeze_ic = 0
@@ -87,6 +100,7 @@ class NewVspace(Internal):
         self._reset_v_space()
 
     def select_key_ic(self, *indices: int) -> None:
+        """Select key internal coordinates."""
         if any(np.array(indices) < 0):
             raise IndexError("Non negative index allowed")
         n_key_ic = 0
@@ -102,6 +116,7 @@ class NewVspace(Internal):
         self._reset_v_space()
 
     def set_vspace(self, new_vspace):
+        """Set a new vspace for reduced internal coordinates."""
         if new_vspace.shape != (len(self.ic), self.df - self.n_freeze):
             raise ValueError(
                 "Given new vspace is not in the right shape\n"
@@ -113,6 +128,7 @@ class NewVspace(Internal):
         self._non_space = new_vspace[:, self.n_key :]
 
     def align_vspace_matrix(self, target, special=False):
+        """Align two matrix with maximum overlap."""
         if not isinstance(target, np.ndarray):
             raise TypeError("Input matrix is not a legit numpy array")
         if target.shape != (len(self.ic), self.df - self.n_freeze):
@@ -131,6 +147,7 @@ class NewVspace(Internal):
         self.set_vspace(new_v)
 
     def align_vspace(self, target, ic_check=False):
+        """Align vspace between two differenc structure."""
         # could add check for same ic selection
         if not isinstance(target, NewVspace):
             raise TypeError("Input molecule is not a valid type")
@@ -140,6 +157,7 @@ class NewVspace(Internal):
         self.align_vspace_matrix(target.vspace)
 
     def update_to_new_structure_with_delta_v(self, delta_v):
+        """Update system to a new internal coordinates structure with change in delta_v."""
         delta_v = np.array(delta_v)
         delta_ic = np.dot(self.vspace, delta_v)
         new_ic = self.ic_values + delta_ic
@@ -148,8 +166,7 @@ class NewVspace(Internal):
         self._reset_v_space()
 
     def _reduced_unit_vectors(self, *start_ends) -> "np.ndarray":  # tested
-        """Generate unit vectors where every position is 0 except the
-        key_ic_number position is 1
+        """Generate unit vectors where every position is 0 except the key ic.
 
         Returns
         -------
@@ -170,8 +187,7 @@ class NewVspace(Internal):
         return unit_mtx
 
     def _reduced_perturbation(self, *start_ends) -> "np.ndarray":  # tested
-        """Calculate the realizable purterbation in internal cooridnates from
-        the unit vectors
+        """Calculate the realizable purterbation in internal cooridnates.
 
         Returns
         -------
@@ -184,11 +200,13 @@ class NewVspace(Internal):
         return np.dot(tsfm, unit_mtx)
 
     def _generate_freeze_space(self, threshold=1e-6):
+        """Generate frozen internal coordinates."""
         b_mtx = self._reduced_perturbation(self.n_freeze)
         w, v = diagonalize(b_mtx)
         self._freeze_space = v[:, np.abs(w) > threshold]
 
     def _generate_key_space(self, threshold=1e-6):
+        """Generate reduced internal space."""
         b_mtx = self._reduced_perturbation(self.n_freeze, self.n_key + self.n_freeze)
         # project out freezed space
         proj_f = self._freeze_space @ self._freeze_space.T
@@ -197,6 +215,7 @@ class NewVspace(Internal):
         self._key_space = v[:, np.abs(w) > threshold]
 
     def _generate_non_space(self, threshold=1e-6):
+        """Generate non reduced internal space."""
         a_mtx = self._svd_of_b_matrix()
         red_space = np.hstack((self._freeze_space, self._key_space))
         prj_rd = np.dot(red_space, red_space.T)
@@ -205,8 +224,7 @@ class NewVspace(Internal):
         self._non_space = v[:, abs(w) > threshold]
 
     def _svd_of_b_matrix(self, threshold=1e-6) -> "np.ndarray":  # tested
-        """Select 3N - 6 non-singular vectors from b_matrix through SVD
-        (eigenvalue) decomposition
+        """Select 3N - 6 non-singular vectors from b_matrix through SVD.
 
         Returns:
         u : np.ndarray(K, 3N - 6)
@@ -224,18 +242,22 @@ class NewVspace(Internal):
         return basis
 
     def _reset_v_space(self):
+        """Reset vspace coordinates data, including vspace, gradient, hessian."""
         self._freeze_space = None
         self._key_space = None
         self._non_space = None
 
     def _add_cc_to_ic_gradient(self, deriv, atoms):
+        """Add new entries from a new ic to transformation matrix gradient."""
         super()._add_cc_to_ic_gradient(deriv, atoms)
         self._reset_v_space()
 
     def _clear_ic_info(self):
+        """Wipe all the internal information in this structure."""
         super()._clear_ic_info()
         self._reset_v_space()
 
     def _regenerate_ic(self):
+        """Reset internal coordinates system."""
         super()._regenerate_ic()
         self._reset_v_space()
