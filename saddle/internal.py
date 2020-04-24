@@ -883,8 +883,6 @@ class Internal(Cartesian):
         -------
         b_matrix : np.ndarray(K, 3N)
         """
-        if np.any(np.isnan(self._cc_to_ic_gradient)):
-            raise ValueError("NaN generated, some IC is not properly defined")
         return self._cc_to_ic_gradient
 
     @property

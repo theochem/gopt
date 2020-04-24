@@ -21,6 +21,7 @@
 """Coordinates types for represent internal coordinates."""
 
 from typing import Tuple
+import warnings
 
 import numpy as np
 
@@ -183,7 +184,7 @@ class BondLength(CoordinateTypes):
         coordinates: "np.ndarray[float]",
         *_,
         ic_type=None,
-        weight=1.0
+        weight=1.0,
     ) -> None:
         """Initialize Bondlength type IC.
 
@@ -423,7 +424,18 @@ class DihedralAngle(CoordinateTypes):
         Tuple
             value, gradient, hessian
         """
-        return dihed_angle(self._coordinates, 2)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            v, d, dd = dihed_angle(self._coordinates, 2)
+        if np.isnan(v):
+            warnings.warn(
+                f"NaN generated, dihed: {self.atoms} is not properly defined",
+                RuntimeWarning
+            )
+        v = np.nan_to_num(v)
+        d = np.nan_to_num(d)
+        dd = np.nan_to_num(dd)
+        return v, d, dd
 
     @property
     def info(self) -> None:
