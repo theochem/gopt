@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from saddle.periodic.periodic import angstrom, periodic
+from saddle.pure_internal import Bond, Angle, Dihed
 
 
 class Utils:
@@ -260,3 +261,64 @@ def deprecated(reason):
 
     else:
         raise TypeError(repr(type(reason)))
+
+
+
+def get_sphere_coor(coords):
+    # R21 is Z
+    assert coords.ndim == 2
+    r01 = coords[1] - coords[0]
+    r21 = coords[1] - coords[2]  # z direction
+    r01 /= np.linalg.norm(r01)
+    r21 /= np.linalg.norm(r21)
+    # align r21 as the z direction
+    z = r21
+    y = np.cross(r01, r21)
+    x = np.cross(y, z)
+    return np.vstack((x, y, z))
+
+def get_sphere_xyz(bond_v, angle_v, dihed_v):
+    x = bond_v * np.sin(angle_v) * np.cos(dihed_v)
+    y = bond_v * np.sin(angle_v) * np.sin(dihed_v)
+    z = bond_v * np.cos(angle_v)
+    return np.array([x, y, z])
+
+
+def internal_to_cartesian(internal_sets):
+    n_atom = 1
+    coords = np.zeros((1, 3), dtype=float)
+    # for i, ic in enumerate(internal_sets):
+    i = 0
+    while i < len(internal_sets):
+        # select for the first atom
+        if n_atom == 1:
+            ic = internal_sets[i]
+            atom_coor = coords[0] + np.array([0.0, 0.0, ic.value])
+            coords = np.vstack((coords, atom_coor))
+            n_atom += 1
+            i += 1
+        # select for the second atom
+        elif n_atom == 2:
+            atom_coor = np.zeros(3)
+            ics = internal_sets[i : i + 2]
+            r_val = ics[0].value
+            ind_at = ics[0].atoms[0] if ics[0].atoms[0] != n_atom else ics[0].atoms[1]
+            a_val = ics[1].value
+            atom_coor[1] = r_val * np.sin(a_val)
+            atom_coor[2] = coords[ind_at][2] + (-1) ** ind_at * r_val * np.cos(a_val)
+            coords = np.vstack((coords, atom_coor))
+            n_atom += 1
+            i += 2
+        # select for following atoms
+        elif n_atom >= 3:
+            ics = internal_sets[i : i + 3]
+            other_atoms = list(ics[2].atoms[:3])
+            sphere_tf = get_sphere_coor(coords[other_atoms])
+            bond_vector_in_sphere = get_sphere_xyz(ics[0].value, ics[1].value, ics[2].value)
+            change_in_xyz = sphere_tf.T @ bond_vector_in_sphere
+            atom_coor = coords[other_atoms[2]] + change_in_xyz
+            coords = np.vstack((coords, atom_coor))
+            n_atom += 1
+            i += 3
+
+    return coords

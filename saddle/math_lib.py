@@ -130,7 +130,7 @@ def pse_inv(matrix):
     # infunction test
     diff = np.dot(np.dot(matrix, res), matrix) - matrix
     assert np.allclose(
-        np.max(np.abs(diff)), 0, atol=1e-7
+        np.max(np.abs(diff)), 0, atol=1e-4
     ), f"Pseudo inverse didn't converge\nMax diff: {np.max(np.abs(diff))}"
     return res
 
