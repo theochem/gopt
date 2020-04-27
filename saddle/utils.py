@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 
 from saddle.periodic.periodic import angstrom, periodic
-from saddle.pure_internal import Bond, Angle, Dihed
 
 
 class Utils:
@@ -263,62 +262,121 @@ def deprecated(reason):
         raise TypeError(repr(type(reason)))
 
 
+class Z2C:
+    """Converting Z matrix to Cartesian coordinates."""
 
-def get_sphere_coor(coords):
-    # R21 is Z
-    assert coords.ndim == 2
-    r01 = coords[1] - coords[0]
-    r21 = coords[1] - coords[2]  # z direction
-    r01 /= np.linalg.norm(r01)
-    r21 /= np.linalg.norm(r21)
-    # align r21 as the z direction
-    z = r21
-    y = np.cross(r01, r21)
-    x = np.cross(y, z)
-    return np.vstack((x, y, z))
+    def __init__(self, center=np.zeros(3)):
+        """Initialize with a default origin position.
 
-def get_sphere_xyz(bond_v, angle_v, dihed_v):
-    x = bond_v * np.sin(angle_v) * np.cos(dihed_v)
-    y = bond_v * np.sin(angle_v) * np.sin(dihed_v)
-    z = bond_v * np.cos(angle_v)
-    return np.array([x, y, z])
+        Parameters
+        ----------
+        center : np.ndarray(3), optional
+            The origin for the very first atom in the molecule
+        """
+        self._coords = center.reshape(-1, 3)
 
+    @property
+    def natom(self):
+        """int: the number of atoms in the system."""
+        return len(self._coords) if len(self._coords) != 1 else 0
 
-def internal_to_cartesian(internal_sets):
-    n_atom = 1
-    coords = np.zeros((1, 3), dtype=float)
-    # for i, ic in enumerate(internal_sets):
-    i = 0
-    while i < len(internal_sets):
-        # select for the first atom
-        if n_atom == 1:
-            ic = internal_sets[i]
-            atom_coor = coords[0] + np.array([0.0, 0.0, ic.value])
-            coords = np.vstack((coords, atom_coor))
-            n_atom += 1
-            i += 1
-        # select for the second atom
-        elif n_atom == 2:
-            atom_coor = np.zeros(3)
-            ics = internal_sets[i : i + 2]
-            r_val = ics[0].value
-            ind_at = ics[0].atoms[0] if ics[0].atoms[0] != n_atom else ics[0].atoms[1]
-            a_val = ics[1].value
-            atom_coor[1] = r_val * np.sin(a_val)
-            atom_coor[2] = coords[ind_at][2] + (-1) ** ind_at * r_val * np.cos(a_val)
-            coords = np.vstack((coords, atom_coor))
-            n_atom += 1
-            i += 2
-        # select for following atoms
-        elif n_atom >= 3:
-            ics = internal_sets[i : i + 3]
-            other_atoms = list(ics[2].atoms[:3])
-            sphere_tf = get_sphere_coor(coords[other_atoms])
-            bond_vector_in_sphere = get_sphere_xyz(ics[0].value, ics[1].value, ics[2].value)
-            change_in_xyz = sphere_tf.T @ bond_vector_in_sphere
-            atom_coor = coords[other_atoms[2]] + change_in_xyz
-            coords = np.vstack((coords, atom_coor))
-            n_atom += 1
-            i += 3
+    @property
+    def coords(self):
+        """np.ndarray(n, 3): coordinates of the system."""
+        return self._coords
 
-    return coords
+    def add_z_entry(self, atoms, values):
+        """Add a z matrix entry for an atom.
+
+        The first z entry needs 2 atoms [ind1, ind2] and 1 value [bond]
+        second entry needs 3 atoms [ind1, ind2, ind3] and 2 value [bond, angle]
+        after, needs 4 atoms [ind1, ind2, ind3, ind4] and 3 values [bond, angle, dihed]
+        Note: The newly added atom index need to be the last one
+        The bond is the distance between the last two indcies
+        The angle is the angle between the bond atoms[-3:]
+        The dihed is consist of all four atoms between plane atoms[:3], and atoms [-3:]
+
+        Parameters
+        ----------
+        atoms : list[int]
+            indices of atoms for z matrix coordinates
+        values : list[float]
+            values of [bond, angle & dihed]
+        """
+        n_atom = len(atoms)
+        n_value = len(values)
+        if n_value != n_atom - 1:
+            raise ValueError(
+                "The #atoms need to be #ic + 1\n"
+                f"# of atoms: {n_atom}, # of ics: {n_value}"
+            )
+        if values[0] <= 0:
+            raise ValueError(f"Bond needs to be positive\nGot: {values[0]}")
+        # Case 1: the first bond
+        if self.natom == 0:
+            if n_atom != 2:
+                raise ValueError(f"Only 2 atoms need.\nGot: {n_atom}")
+            self._add_first(atoms, values)
+            return
+        # Case 2: the third atom
+        if not 0 <= values[1] <= np.pi:  # check angle value
+            raise ValueError(f"Angle needs to be in range [0, pi]\ngot: {values[1]}")
+        if self.natom == 2:
+            if n_atom != 3:
+                raise ValueError(f"Only 3 atoms need.\nGot: {n_atom}")
+            # assert values[0] > 0, ('Distance needs to be positive')
+            self._add_second(atoms, values)
+            return
+        if self.natom >= 3:
+            if n_atom != 4:
+                raise ValueError(f"Only 4 atoms need.\nGot: {n_atom}")
+            self._add_third(atoms, values)
+        else:
+            raise ValueError("Unexpected error, send a bug report please.")
+
+    def _add_first(self, atoms, value):
+        """Add the very first bond, adding the first two atoms."""
+        atom_coor = self.coords[0] + np.array([0.0, 0.0, value[0]])
+        self._coords = np.vstack((self.coords, atom_coor))
+
+    def _add_second(self, atoms, values):
+        """Add the third atom with only a bond and an angle."""
+        atom_coor = np.zeros(3)
+        bond, angle = values
+        atom_coor[1] = bond * np.sin(angle)
+        atom_coor[2] = (-1) ** atoms[1] * bond * np.cos(angle)
+        self._coords = np.vstack((self.coords, self.coords[atoms[1]] + atom_coor))
+
+    def _add_third(self, atoms, values):
+        """Add any atom with a list of bond, angle, and dihedral."""
+        atom_coor = np.zeros(3)
+        sphere_tf = self._get_sphere_coor(self.coords[atoms[:3]])
+        bond_vector_in_sphere = self._get_sphere_xyz(*values)
+        change_in_xyz = sphere_tf.T @ bond_vector_in_sphere
+        atom_coor = self.coords[atoms[2]] + change_in_xyz
+        self._coords = np.vstack((self.coords, atom_coor))
+
+    @staticmethod
+    def _get_sphere_coor(coords):
+        """Compute new basis in the last connected points."""
+        # R21 is Z
+        assert coords.ndim == 2
+        r01 = coords[1] - coords[0]
+        r21 = coords[1] - coords[2]  # z direction
+        r01 /= np.linalg.norm(r01)
+        r21 /= np.linalg.norm(r21)
+        # align r21 as the z direction
+        z = r21
+        # r01 r21 may not be orthogonal
+        y = np.cross(r01, r21)
+        y /= np.linalg.norm(y)
+        x = np.cross(y, z)
+        return np.vstack((x, y, z))
+
+    @staticmethod
+    def _get_sphere_xyz(bond_v, angle_v, dihed_v):
+        """Compute xyz in the spherical coodinates."""
+        x = bond_v * np.sin(angle_v) * np.cos(dihed_v)
+        y = bond_v * np.sin(angle_v) * np.sin(dihed_v)
+        z = bond_v * np.cos(angle_v)
+        return np.array([x, y, z])

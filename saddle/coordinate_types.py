@@ -20,8 +20,8 @@
 # --
 """Coordinates types for represent internal coordinates."""
 
-from typing import Tuple
 import warnings
+from typing import Tuple
 
 import numpy as np
 
@@ -430,7 +430,7 @@ class DihedralAngle(CoordinateTypes):
         if np.isnan(v):
             warnings.warn(
                 f"NaN generated, dihed: {self.atoms} is not properly defined",
-                RuntimeWarning
+                RuntimeWarning,
             )
         v = np.nan_to_num(v)
         d = np.nan_to_num(d)

@@ -1,11 +1,12 @@
 from unittest import TestCase
+from copy import deepcopy
 
 import numpy as np
+from numpy.linalg import norm
 from numpy.testing import assert_almost_equal, assert_allclose
 from importlib_resources import path
 
-from saddle.utils import Utils, internal_to_cartesian
-from saddle.pure_internal import Bond, Angle, Dihed
+from saddle.utils import Utils, Z2C
 
 
 class TestUtils(TestCase):
@@ -46,99 +47,134 @@ class TestUtils(TestCase):
         assert np.allclose(mol.coordinates, ref_coor)
         assert np.allclose(mol.numbers, [1, 8, 1])
 
-    def test_internal_to_cartesian_bond_angle(self):
-        b1 = Bond((0, 1), 1)
-        b2 = Bond((1, 2), 1)
-        # test 90 degree
-        a1 = Angle((0, 1, 2), np.pi / 2)
-        coords = internal_to_cartesian([b1, b2, a1])
-        assert_almost_equal(np.linalg.norm(coords[2] - coords[0]), np.sqrt(2))
+    def test_internal_to_cartesian(self):
+        """Test internal coordinates (Zmt style) to xyz."""
+        z = Z2C()
+        assert z.natom == 0
+        b1 = 0.8
+        b2 = 1.3
+        b3 = 1.5
+        ang1 = np.pi / 3
+        ang2 = np.pi / 4
+        dihed1 = np.pi / 5
+        # add first bond
+        z.add_z_entry([0, 1], [b1])
+        assert_allclose(z.coords[0], [0.0, 0.0, 0.0])
+        assert_allclose(z.coords[1], [0.0, 0.0, b1])
+        assert z.natom == 2
 
-        # test 60 degree with connected with 0
-        b1 = Bond((0, 1), 1)
-        b2 = Bond((0, 2), 1)
-        a1 = Angle((1, 0, 2), np.pi / 3)
-        coords = internal_to_cartesian([b1, b2, a1])
-        assert_almost_equal(np.linalg.norm(coords[1] - coords[0]), 1)
+        # add third bond
+        z.add_z_entry([0, 1, 2], [b2, ang1])
+        b_10 = z.coords[0] - z.coords[1]
+        b_12 = z.coords[2] - z.coords[1]
+        assert_allclose(norm(b_10), b1)
+        assert_allclose(norm(b_12), b2)
+        assert_almost_equal(b_10 @ b_12 / norm(b_12) / norm(b_10), np.cos(ang1))
+        assert z.natom == 3
 
-        # test 60 degree with connected with 1
-        b1 = Bond((0, 1), 1)
-        b2 = Bond((1, 2), 1)
-        a1 = Angle((0, 1, 2), np.pi / 3)
-        coords = internal_to_cartesian([b1, b2, a1])
-        assert_almost_equal(np.linalg.norm(coords[2] - coords[0]), 1)
-
-    def test_internal_to_cartesian_all(self):
-        b1 = Bond((0, 1), 1)
-        b2 = Bond((1, 2), 1)
-        a1 = Angle((0, 1, 2), np.pi / 2)
-        b3 = Bond((2, 3), 1)
-        a2 = Angle((1, 2, 3), np.pi / 2)
-        d1 = Dihed((0, 1, 2, 3), np.pi * 2 / 3)
-        coords = internal_to_cartesian([b1, b2, a1, b3, a2, d1])
-        # test section
-        r_23 = coords[3] - coords[2]
-        assert_almost_equal(np.linalg.norm(r_23), 1)
-        r_21 = coords[1] - coords[2]
-        assert_almost_equal(np.linalg.norm(r_21), 1)
-        sin_angle = r_23 @ r_21 / (np.linalg.norm(r_23) * np.linalg.norm(r_21))
-        assert_almost_equal(sin_angle, 0.0)
-        # cos dihed value
-        cos_dihed = self._compute_dihed_helper(coords)
-        assert_almost_equal(cos_dihed, np.cos(np.pi * 2 / 3))
-
-    def test_internal_to_cartesian_random(self):
-        at1 = Bond((0, 1), 1.2)
-        at21 = Bond((1, 2), 1.5)
-        at22 = Angle((0, 1, 2), np.pi / 2)
-        at31 = Bond((2, 3), 1.2)
-        at32 = Angle((1, 2, 3), np.pi / 2)
-        at33 = Dihed((0, 1, 2, 3), np.pi * 2 / 3)
-        at41 = Bond((3, 4), 1)
-        at42 = Angle((2, 3, 4), np.pi / 2)
-        at43 = Dihed((1, 2, 3, 4), -np.pi * 2 / 3)
-        coords = internal_to_cartesian(
-            [at1, at21, at22, at31, at32, at33, at41, at42, at43]
+        # add the fourth atom
+        z.add_z_entry([0, 1, 2, 3], [b3, ang2, dihed1])
+        # print(z.coords)
+        b_10 = z.coords[0] - z.coords[1]
+        b_12 = z.coords[2] - z.coords[1]
+        b_23 = z.coords[3] - z.coords[2]
+        assert_allclose(norm(b_10), b1)
+        assert_allclose(norm(b_12), b2)
+        assert_allclose(norm(b_23), b3)
+        assert_almost_equal(b_10 @ b_12 / norm(b_12) / norm(b_10), np.cos(ang1))
+        assert_almost_equal(
+            -b_12 @ b_23 / norm(b_12) / norm(b_23), np.cos(ang2),
         )
-        # test dihed1
-        dihed1 = self._compute_dihed_helper(coords[[0, 1, 2, 3]])
-        assert_almost_equal(dihed1, np.cos(np.pi * 2 / 3))
-        # test dihed2
-        dihed2 = self._compute_dihed_helper(coords[[1, 2, 3, 4]])
-        assert_almost_equal(dihed2, np.cos(-np.pi * 2 / 3))
+        test_dihed = self._compute_dihed_helper(z.coords)
+        assert_almost_equal(test_dihed, np.cos(dihed1))
+        assert z.natom == 4
 
-    def test_internal_to_cartesian_diff_direction(self):
-        at1 = Bond((0, 1), 1.2)
-        at21 = Bond((1, 2), 1.5)
-        at22 = Angle((0, 1, 2), np.pi / 2)
-        at31 = Bond((2, 3), 1.2)
-        at32 = Angle((1, 2, 3), np.pi / 2)
-        at33 = Dihed((0, 1, 2, 3), np.pi * 2 / 3)
-        at41 = Bond((2, 4), 1)
-        at42 = Angle((1, 2, 4), np.pi / 2)
-        at43 = Dihed((0, 1, 2, 4), -np.pi * 2 / 3)
-        coords = internal_to_cartesian(
-            [at1, at21, at22, at31, at32, at33, at41, at42, at43]
+        # add the fifth atom, check opposite direction
+        z.add_z_entry([0, 1, 2, 4], [b3, ang2, -dihed1])
+        b_10 = z.coords[0] - z.coords[1]
+        b_12 = z.coords[2] - z.coords[1]
+        b_24 = z.coords[4] - z.coords[2]
+        assert_allclose(norm(b_10), b1)
+        assert_allclose(norm(b_12), b2)
+        assert_allclose(norm(b_24), b3)
+        assert_almost_equal(b_10 @ b_12 / norm(b_12) / norm(b_10), np.cos(ang1))
+        assert_almost_equal(
+            -b_12 @ b_24 / norm(b_12) / norm(b_24), np.cos(ang2),
         )
-        # test dihed1
-        dihed1 = self._compute_dihed_helper(coords[[0, 1, 2, 3]])
-        assert_almost_equal(dihed1, np.cos(np.pi * 2 / 3))
-        # test dihed2
-        dihed2 = self._compute_dihed_helper(coords[[0, 1, 2, 4]])
-        assert_almost_equal(dihed2, np.cos(-np.pi * 2 / 3))
-        # test dihed1 and dihed2 cos value same, but different value
-        assert_almost_equal(dihed1, dihed2)
-        assert not np.allclose(coords[3], coords[4])
+        test_dihed = self._compute_dihed_helper(z.coords)
+        assert_almost_equal(test_dihed, np.cos(-dihed1))
+        assert z.natom == 5
+        assert not np.allclose(z.coords[3], z.coords[4])
 
+    def test_random_internal(self):
+        """Generate random bond, angle, dihed."""
+        for i in range(10):
+            z = Z2C()
+            assert z.natom == 0
+            b1, b2, b3 = np.random.rand(3) * 2
+            ang1, ang2 = np.random.rand(2) * np.pi
+            dihed1 = (np.random.rand(1)[0] - 0.5) * 4 * np.pi
+            # add first bond
+            z.add_z_entry([0, 1], [b1])
+            assert_allclose(z.coords[0], [0.0, 0.0, 0.0])
+            assert_allclose(z.coords[1], [0.0, 0.0, b1])
+            assert z.natom == 2
+
+            # add third bond
+            z.add_z_entry([0, 1, 2], [b2, ang1])
+            b_10 = z.coords[0] - z.coords[1]
+            b_12 = z.coords[2] - z.coords[1]
+            assert_allclose(norm(b_10), b1)
+            assert_allclose(norm(b_12), b2)
+            assert_almost_equal(b_10 @ b_12 / norm(b_12) / norm(b_10), np.cos(ang1))
+            assert z.natom == 3
+
+            # add the fourth atom
+            z.add_z_entry([0, 1, 2, 3], [b3, ang2, dihed1])
+            # print(z.coords)
+            b_10 = z.coords[0] - z.coords[1]
+            b_12 = z.coords[2] - z.coords[1]
+            b_23 = z.coords[3] - z.coords[2]
+            assert_allclose(norm(b_10), b1)
+            assert_allclose(norm(b_12), b2)
+            assert_allclose(norm(b_23), b3)
+            assert_almost_equal(b_10 @ b_12 / norm(b_12) / norm(b_10), np.cos(ang1))
+            assert_almost_equal(
+                -b_12 @ b_23 / norm(b_12) / norm(b_23), np.cos(ang2),
+            )
+            # print(z.coords)
+            test_dihed = self._compute_dihed_helper(z.coords)
+            assert_almost_equal(test_dihed, np.cos(dihed1))
+            assert z.natom == 4
+
+    def test_z2c_error(self):
+        """Test error situation."""
+        z = Z2C()
+        with self.assertRaises(ValueError):
+            z.add_z_entry([0, 1], [1.1, 1.2])
+        with self.assertRaises(ValueError):
+            z.add_z_entry([0, 1], [-0.5])
+        with self.assertRaises(ValueError):
+            z.add_z_entry([0, 1, 2], [0.5, 1])
+        z.add_z_entry([0, 1], [1.0])
+        with self.assertRaises(ValueError):
+            z.add_z_entry([1, 2, 3], [0.5, 1.5 * np.pi])
+        with self.assertRaises(ValueError):
+            z.add_z_entry([1, 2, 3, 4], [0.5, 0.5 * np.pi, 1.0])
+        z.add_z_entry([0, 1, 2], [1, np.pi / 2])
+        with self.assertRaises(ValueError):
+            z.add_z_entry([1, 2, 3], [0.5, 0.5 * np.pi])
 
     def _compute_dihed_helper(self, coords):
         """Compute dihedral between plane 0,1,2 and plane 1,2,3."""
-        r_10 = (coords[0] - coords[1]) / np.linalg.norm(coords[0] - coords[1])
-        r_21 = (coords[1] - coords[2]) / np.linalg.norm(coords[1] - coords[2])
-        r_32 = (coords[2] - coords[3]) / np.linalg.norm(coords[2] - coords[3])
-        norm1 = np.cross(r_21, r_10)
-        norm2 = np.cross(r_32, r_21)
-        return norm1 @ norm2
+        r_10 = (coords[0] - coords[1]) / norm(coords[0] - coords[1])
+        r_21 = (coords[1] - coords[2]) / norm(coords[1] - coords[2])
+        r_32 = (coords[2] - coords[3]) / norm(coords[2] - coords[3])
+        norm_vec1 = np.cross(r_21, r_10)
+        norm_vec2 = np.cross(r_32, r_21)
+        norm_vec1 /= norm(norm_vec1)
+        norm_vec2 /= norm(norm_vec2)
+        return norm_vec1 @ norm_vec2
 
     @classmethod
     def tearDownClass(cls):

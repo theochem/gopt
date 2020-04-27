@@ -155,7 +155,7 @@ class Test_Coordinates_Types(TestCase):
         assert new_dihed_cross.value - (-0.76980062801256954) < 1e-8
 
     def test_linear_dihedral(self):
-        coors = np.array([[0, 0, 1.], [0, 0, 0.], [0, 0, -1], [0, 1, 0]])
+        coors = np.array([[0, 0, 1.0], [0, 0, 0.0], [0, 0, -1], [0, 1, 0]])
         with self.assertWarns(RuntimeWarning):
             dihed = DihedralAngle([0, 1, 2, 3], coors)
         assert_almost_equal(dihed.value, 0)
