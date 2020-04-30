@@ -288,6 +288,71 @@ class TestInternal(unittest.TestCase):
         self.mol.set_target_ic((1.6, 1.7, -0.5))
         assert_allclose(self.mol.target_ic, np.array([1.6, 1.7, -0.5]))
 
+    def test_cross_shape_molecule(self):
+        """Check cross shape molecule with long chain."""
+        fake_coors = np.zeros((9, 3), dtype=float)
+        fake_coors[::2, 0] = np.arange(-2, 3)
+        fake_coors[1::2, 1] = np.array([-2, -1, 1, 2])
+        # print(fake_coors)
+        mol = Internal(fake_coors, np.ones(9), 0, 1)
+        mol._auto_select_cov_bond()
+        mol._auto_select_angle()
+        assert len(mol._chains) == 2
+        assert_allclose(mol._chains[0], [0, 2, 4, 6, 8])
+        assert_allclose(mol._chains[1], [1, 3, 4, 5, 7])
+        assert len(mol.ic) == 42
+        mol._auto_select_chain_bond()
+        assert len(mol.ic) == 44
+
+    def test_linear_molecule(self):
+        """Check auto long chain check function."""
+        fake_coors = np.zeros((11, 3), dtype=float)
+        for i in range(11):
+            fake_coors[i][2] = -5 + i
+        mol = Internal(fake_coors, np.ones(11), 0, 1)
+        mol._auto_select_cov_bond()
+        assert len(mol.ic) == 10
+        # add first linear angle
+        mol.add_angle(2, 1, 0)
+        assert len(mol._chains) == 1
+        assert mol._chains[0] == [0, 1, 2]
+        # add second non connected angle
+        mol.add_angle(6, 5, 4)
+        assert len(mol._chains) == 2
+        assert mol._chains[1] == [4, 5, 6]
+        # add third non connected angle
+        mol.add_angle(4, 3, 2)
+        assert len(mol._chains) == 3
+        assert mol._chains[2] == [2, 3, 4]
+        # add angle connect the first and the last
+        mol.add_angle(3, 2, 1)
+        assert len(mol._chains) == 2
+        assert mol._chains[0] == [0, 1, 2, 3, 4]
+        # add angle connect the leftover
+        mol.add_angle(3, 4, 5)
+        assert len(mol._chains) == 1
+        assert mol._chains[0] == [0, 1, 2, 3, 4, 5, 6]
+        # add the one more
+        mol.add_angle(7, 8, 9)
+        assert len(mol._chains) == 2
+        assert mol._chains[1] == [7, 8, 9]
+        mol.add_angle(8, 7, 6)
+        assert len(mol._chains) == 2
+        assert mol._chains[1] == [6, 7, 8, 9]
+        mol.add_angle(5, 6, 7)
+        assert len(mol._chains) == 1
+        assert_allclose(mol._chains[0], np.arange(10))
+        mol.add_angle(10, 9, 8)
+        assert len(mol._chains) == 1
+        assert_allclose(mol._chains[0], np.arange(11))
+
+        # second molecule
+        mol2 = Internal(fake_coors, np.ones(11), 0, 1)
+        mol2._auto_select_cov_bond()
+        mol2._auto_select_angle()
+        assert len(mol2._chains) == 1
+        assert_allclose(mol2._chains[0], np.arange(11))
+
     def test_dihedral_add(self):
         """Test add normal dihedral."""
         with path("saddle.test.data", "2h-azirine.xyz") as mol_path:

@@ -158,6 +158,7 @@ class Internal(Cartesian):
 
         # to indicate fragment groups in system
         self._fragment = np.arange(self.natom)
+        self._chains = []
 
     def add_bond(
         self, atom1: int, atom2: int, *_, b_type: int = 1, weight: int = 1
@@ -216,6 +217,8 @@ class Internal(Cartesian):
                 new_ic_obj = BendAngle(atoms, rs, weight=weight)
                 d, dd = new_ic_obj.get_gradient_hessian()
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
+                if np.cos(new_ic_obj.value) < -0.99:
+                    self._check_angle_linear(atoms)
 
     def add_dihedral(
         self,
@@ -938,6 +941,7 @@ class Internal(Cartesian):
         reset_ic: bool = True,
         keep_bond: bool = False,
         minimum: bool = False,
+        chain_bond: bool = False,
     ) -> None:
         """Automatically selecting internal coordinates.
 
@@ -966,6 +970,8 @@ class Internal(Cartesian):
         else:
             self.set_new_ics(bonds)
         self._auto_select_angle()
+        if chain_bond is True:
+            self._auto_select_chain_bond()
         if minimum:
             self._auto_select_minimum_dihed_normal(dihed_special)
         else:
@@ -1036,6 +1042,36 @@ class Internal(Cartesian):
                         )
                         if dist <= 0.9 * cut_off and angle_cos < 0:
                             self.add_bond(h_idx, ha_idx2, b_type=2, weight=1)
+
+    def _check_angle_linear(self, atoms):
+        """Locates long chains in molecule."""
+        flag1 = flag2 = None
+        for ind, chain in enumerate(self._chains):
+            if atoms[1] == chain[-1]:
+                if atoms[0] == chain[-2]:
+                    chain.append(atoms[2])
+                elif atoms[2] == chain[-2]:
+                    chain.append(atoms[0])
+                flag1 = ind
+            elif atoms[1] == chain[0]:
+                if atoms[2] == chain[1]:
+                    chain.insert(0, atoms[0])
+                elif atoms[0] == chain[1]:
+                    chain.insert(0, atoms[2])
+                flag2 = ind
+        if flag1 is None and flag2 is None:
+            self._chains.append(list(atoms))
+        elif (flag1 is not None) and (flag2 is not None):
+            assert flag1 != flag2
+            main_chain = self._chains[flag1]
+            for i in self._chains[flag2][3:]:
+                main_chain.append(i)
+            self._chains.pop(flag2)
+
+    def _auto_select_chain_bond(self):  # to be tested
+        """Automatically add chain bond in molecule."""
+        for chain in self._chains:
+            self.add_bond(chain[0], chain[-1], b_type=5)
 
     def _auto_select_fragment_bond(self):
         """Automatically select fragmental bonds."""
