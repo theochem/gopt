@@ -58,7 +58,7 @@ class GeoOptimizer(object):
             True if it converged, otherwise False
         """
         point = self.points[index]
-        return max(np.abs(point.gradient)) <= 1e-7
+        return max(np.abs(point.gradient)) <= 5e-6
 
     @property
     def newest(self):

@@ -362,6 +362,26 @@ class Internal(Cartesian):
             new_point = self.create_geo_point(flex_sin=flex_sin)
             optimizer.add_new(new_point)
             if optimizer.converge(optimizer.newest):
+                # test eigenvalues
+                eig_val, eig_vec = np.linalg.eigh(new_point.hessian)
+                if np.min(eig_val) < -1e-4:
+                    print('saddle converged')
+                    direct = eig_vec[:, 0]
+                    # make two path
+                    dir_up = self.coordinates + 0.1 * direct.reshape(-1, 3)
+                    dir_down = self.coordinates - 0.1 * direct.reshape(-1, 3)
+                    copy_mol = deepcopy(self)
+                    # try one direction
+                    copy_mol.set_new_coordinates(dir_up)
+                    v1 = copy_mol.tf_cost
+                    # try the other direction
+                    copy_mol.set_new_coordinates(dir_down)
+                    v2 = copy_mol.tf_cost
+                    better_coor = dir_up if v1 < v2 else dir_down
+                    self.set_new_coordinates(better_coor)
+                    continue
+                        # new_point = self.create_geo_point(flex_sin=flex_sin)
+                        # diff = optimizer.newest.value - new_point.value
                 # print("finished")
                 return
             optimizer.update_trust_radius(optimizer.newest)
@@ -851,7 +871,7 @@ class Internal(Cartesian):
         ic_values : list of float, len(ic_values) = K
         """
         value = [i.value for i in self._ic]
-        return np.array(value)
+        return np.array(value, dtype=float)
 
     @property
     def target_ic(self) -> "np.ndarray[float]":
@@ -970,13 +990,15 @@ class Internal(Cartesian):
         else:
             self.set_new_ics(bonds)
         self._auto_select_angle()
-        if chain_bond is True:
-            self._auto_select_chain_bond()
         if minimum:
             self._auto_select_minimum_dihed_normal(dihed_special)
         else:
             self._auto_select_dihed_normal(dihed_special)
             self._auto_select_dihed_improper(dihed_special)
+        if chain_bond is True:
+            self._auto_select_chain_bond()
+            # self._auto_select_chain_angle()
+            self._auto_select_chain_dihed(dihed_special)
 
     def _find_angle_of_atoms(self, indices):
         """Find ic index for an angle consist of given indices."""
@@ -1068,10 +1090,30 @@ class Internal(Cartesian):
                 main_chain.append(i)
             self._chains.pop(flag2)
 
-    def _auto_select_chain_bond(self):  # to be tested
+    def _auto_select_chain_bond(self):
         """Automatically add chain bond in molecule."""
         for chain in self._chains:
             self.add_bond(chain[0], chain[-1], b_type=5)
+
+    def _auto_select_chain_dihed(self, special=False):  # To be tested
+        """Add a special dihed for chain bond molecule."""
+        for chain in self._chains:
+            end_1 = chain[0]
+            end_2 = chain[-1]
+            connected_1 = list(self.connected_indices(end_1, exclude=4))
+            connected_2 = list(self.connected_indices(end_2, exclude=4))
+            # exclude chain atoms
+            for i in connected_1[:]:
+                if i in chain:
+                    connected_1.remove(i)
+            for i in connected_2[:]:
+                if i in chain:
+                    connected_2.remove(i)
+            cnnt_1 = np.sum(self.connectivity[connected_1], axis=1)
+            cnnt_2 = np.sum(self.connectivity[connected_2], axis=1)
+            one_at1 = connected_1[np.argmax(cnnt_1)]
+            one_at2 = connected_2[np.argmax(cnnt_2)]
+            self.add_dihedral(one_at1, end_1, end_2, one_at2, special=special)
 
     def _auto_select_fragment_bond(self):
         """Automatically select fragmental bonds."""
@@ -1186,6 +1228,9 @@ class Internal(Cartesian):
                 cnct_total = len(cnct_atoms)
                 for i, j, k in combinations(range(cnct_total), 3):
                     ind_i, ind_j, ind_k = cnct_atoms[[i, j, k]]
+                    connected = connect_sum[[ind_i, ind_j, ind_k]]
+                    if np.any(connected > 1):
+                        continue
                     ang1_r = self.angle(ind_i, center_ind, ind_j)
                     ang2_r = self.angle(ind_i, center_ind, ind_k)
                     ang3_r = self.angle(ind_j, center_ind, ind_k)

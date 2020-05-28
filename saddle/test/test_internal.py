@@ -486,7 +486,7 @@ class TestInternal(unittest.TestCase):
         with path("saddle.test.data", "ch3_hf.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         mol = Internal(mol.coordinates, mol.numbers, 0, 1)
-        mol.auto_select_ic()
+        mol.auto_select_ic(chain_bond=False)
         ic_ref = np.array(
             [
                 2.02762919,
@@ -511,7 +511,7 @@ class TestInternal(unittest.TestCase):
                 -3.14152957,
                 2.09455878,
                 -2.09427619,
-                -2.87079827,
+                # -2.87079827,
             ]
         )
         assert_allclose(mol.ic_values, ic_ref)
@@ -660,6 +660,102 @@ class TestInternal(unittest.TestCase):
         h2o2.set_target_ic(target_ic)
         h2o2.converge_to_target_ic()
         assert_allclose(h2o2.ic_values, target_ic, atol=1e-3)
+
+    def test_dihed_repeak(self):
+        with path("saddle.test.data", "h3o2.xyz") as mol_path:
+            mol = Utils.load_file(mol_path)
+        h3o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h3o2.auto_select_ic()
+        target_ic = h3o2.ic_values
+        target_ic[8] = -1.57
+        target_ic[9] = 1.57
+        # target_ic[10] = 3.14
+        h3o2.set_target_ic(target_ic)
+        h3o2.converge_to_target_ic()
+        # set all the right angle
+        assert_allclose(h3o2.ic_values, target_ic, atol=3e-3)
+
+        # test a new set of dihed
+        h3o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h3o2.auto_select_ic()
+        target_ic[8] = - np.pi / 4
+        target_ic[9] = np.pi * 3 / 4
+        h3o2.set_target_ic(target_ic)
+        h3o2.converge_to_target_ic()
+        assert_allclose(h3o2.ic_values, target_ic, atol=5e-3)
+
+        h3o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h3o2.auto_select_ic()
+        target_ic[8] = 0
+        target_ic[9] = np.pi
+        h3o2.set_target_ic(target_ic)
+        h3o2.converge_to_target_ic()
+        assert_allclose(h3o2.ic_values, target_ic, atol=5e-3)
+
+    def test_dihed_repeak_random(self):
+        with path("saddle.test.data", "h3o2.xyz") as mol_path:
+            mol = Utils.load_file(mol_path)
+        h3o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h3o2.auto_select_ic()
+        target_ic = h3o2.ic_values
+        for i in range(10):
+            rand_ang = np.random.rand(1)[0] * np.pi
+            target_ic[8] = -rand_ang
+            target_ic[9] = np.pi - rand_ang
+            h3o2.set_target_ic(target_ic)
+            h3o2.converge_to_target_ic()
+            assert_allclose(h3o2.ic_values, target_ic, atol=5e-3)
+
+    def test_dihed_o2h4_rotate(self):
+        with path("saddle.test.data", "h4o2.xyz") as mol_path:
+            mol = Utils.load_file(mol_path)
+        h4o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h4o2.auto_select_ic()
+        target_ic = h4o2.ic_values
+        h4o2.list_ic
+        # overlap config
+        target_ic[11] = 0
+        target_ic[12] = 3.14
+        target_ic[13] = 0
+        h4o2.set_target_ic(target_ic)
+        h4o2.converge_to_target_ic()
+        assert_allclose(h4o2.ic_values, target_ic, atol=5e-3)
+        # stagger config
+        target_ic[11] = -1.57
+        target_ic[12] = 1.57
+        target_ic[13] = -1.57
+        h4o2.set_target_ic(target_ic)
+        h4o2.converge_to_target_ic()
+        assert_allclose(h4o2.ic_values, target_ic, atol=5e-3)
+
+        for i in range(5):
+            dihed_ang = np.random.rand(1)[0] * np.pi
+            target_ic[11] = -dihed_ang
+            target_ic[12] = np.pi - dihed_ang
+            target_ic[13] = -dihed_ang
+            h4o2.set_target_ic(target_ic)
+            h4o2.converge_to_target_ic()
+            assert_allclose(h4o2.ic_values, target_ic, atol=5e-3)
+
+    # def test_plane_rotate(self):
+    #     with path("saddle.test.data", "o2h4_plane.xyz") as mol_path:
+    #         mol = Utils.load_file(mol_path)
+    #     o2_1 = Internal(mol.coordinates, mol.numbers, 0, 1)
+    #     o2_2 = Internal(o2_1.coordinates[[0, 1, 4, 3, 2, 5]], mol.numbers, 0, 1)
+    #     o2_1.auto_select_ic()
+    #     o2_2.auto_select_ic()
+    #     # o2_1.list_ic
+    #     target_ic = (o2_1.ic_values + o2_2.ic_values) / 2
+    #     o2 = deepcopy(o2_1)
+    #     o2.set_target_ic(target_ic)
+    #     o2.converge_to_target_ic()
+    #     o2.ic_values
+    #     # print('-----')
+    #     # o2.save_to('try.xyz')
+    #     o2.list_ic
+    #     print(o2.target_ic)
+    #     assert False
+
 
     def test_dihedral_repeak(self):
         with path("saddle.test.data", "h2o2.xyz") as mol_path:
