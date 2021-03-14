@@ -1,6 +1,7 @@
 """Internal Coordinates test file."""
 import unittest
 from copy import deepcopy
+from importlib.resources import path
 
 from saddle.coordinate_types import DihedralAngle
 from saddle.internal import Internal
@@ -9,7 +10,6 @@ from saddle.opt import Point
 from saddle.utils import Utils
 
 import numpy as np
-from importlib_resources import path
 from numpy.testing import assert_allclose, assert_almost_equal
 
 

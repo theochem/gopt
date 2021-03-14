@@ -23,8 +23,7 @@
 import os
 from pathlib import Path
 from string import Template
-
-from importlib_resources import read_text
+from importlib.resources import read_text
 
 import numpy as np
 

@@ -1,9 +1,9 @@
 import os
 import unittest
 from copy import deepcopy
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from numpy.testing import assert_allclose
 from saddle.errors import InvalidArgumentError
 from saddle.internal import Internal

@@ -1,6 +1,6 @@
 from unittest import TestCase
+from importlib.resources import path
 
-from importlib_resources import path
 from pathlib import PosixPath
 from saddle.conf import Config
 
@@ -26,4 +26,4 @@ class TestUtils(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Config.reset_path()
+        onfig.reset_path()

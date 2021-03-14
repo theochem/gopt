@@ -1,7 +1,7 @@
 import unittest
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from saddle.fchk import FCHKFile
 
 

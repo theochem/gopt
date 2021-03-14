@@ -1,8 +1,8 @@
 import unittest
 from copy import deepcopy
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from saddle.cartesian import Cartesian
 from saddle.periodic.periodic import angstrom
 from saddle.utils import Utils

@@ -1,7 +1,7 @@
 from unittest import TestCase
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from saddle.optimizer.react_point import ReactPoint
 from saddle.ts_construct import TSConstruct
 

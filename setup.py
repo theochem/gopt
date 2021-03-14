@@ -23,7 +23,6 @@ setup(
         "numpy>=1.16",
         "pytest>=2.6",
         #        "scipy>=1.2",
-        "importlib_resources",
     ]
     # package_data is only useful for bdist
     # add to MANIFEST.in works for both bdist and sdist

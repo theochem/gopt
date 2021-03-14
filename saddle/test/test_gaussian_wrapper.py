@@ -1,7 +1,7 @@
 import unittest
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from saddle.conf import WORK_DIR
 from saddle.gaussianwrapper import GaussianWrapper
 from saddle.utils import Utils

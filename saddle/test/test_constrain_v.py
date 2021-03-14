@@ -1,9 +1,9 @@
 from copy import deepcopy
 from unittest import TestCase
+from importlib.resources import path
 
 import numpy as np
 from numpy.testing import assert_allclose
-from importlib_resources import path
 from saddle.constrain_v import NewVspace
 from copy import deepcopy
 

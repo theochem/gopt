@@ -2,8 +2,7 @@
 import unittest
 from collections import Iterable
 from copy import deepcopy
-
-from importlib_resources import path
+from importlib.resources import path
 
 import numpy as np
 

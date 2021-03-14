@@ -30,8 +30,7 @@ WORK_DIR : Path
 
 import json
 from pathlib import Path, PosixPath, WindowsPath
-
-from importlib_resources import path
+from importlib.resources import path
 
 
 class Config:

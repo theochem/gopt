@@ -1,8 +1,8 @@
 from copy import deepcopy
 from unittest import TestCase
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from saddle.optimizer.optloop import OptLoop
 from saddle.optimizer.quasi_newton import QuasiNT
 from saddle.optimizer.secant import secant

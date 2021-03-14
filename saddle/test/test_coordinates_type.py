@@ -1,9 +1,9 @@
 from unittest import TestCase
+from importlib.resources import path
 
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-from importlib_resources import path
 from saddle.coordinate_types import (
     BendAngle,
     BendCos,

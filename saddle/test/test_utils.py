@@ -1,11 +1,10 @@
 from unittest import TestCase
 from copy import deepcopy
+from importlib.resources import path
 
 import numpy as np
 from numpy.linalg import norm
 from numpy.testing import assert_almost_equal, assert_allclose
-from importlib_resources import path
-
 from saddle.utils import Utils, Z2C
 
 

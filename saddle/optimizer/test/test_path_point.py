@@ -1,7 +1,7 @@
 from unittest import TestCase
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from saddle.errors import NotSetError
 from saddle.optimizer.path_point import PathPoint
 from saddle.reduced_internal import ReducedInternal

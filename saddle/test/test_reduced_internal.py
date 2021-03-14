@@ -1,8 +1,8 @@
 from copy import deepcopy
 from unittest import TestCase
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from numpy.testing import assert_allclose
 from saddle.internal import Internal
 from saddle.reduced_internal import ReducedInternal

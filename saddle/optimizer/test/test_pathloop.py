@@ -1,8 +1,8 @@
 from unittest import TestCase
+from importlib.resources import path
 
 from copy import deepcopy
 import numpy as np
-from importlib_resources import path
 from saddle.optimizer.pathloop import PathLoop
 from saddle.optimizer.react_point import ReactPoint
 from saddle.optimizer.hessian_modify import modify_hessian_with_pos_defi

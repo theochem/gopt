@@ -1,7 +1,7 @@
 import unittest
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from numpy.testing import assert_allclose
 from saddle.optimizer.path_point import PathPoint
 from saddle.optimizer.secant import secant, secant_1, secant_2, secant_3

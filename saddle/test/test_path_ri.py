@@ -1,7 +1,7 @@
 import unittest
+from importlib.resources import path
 
 import numpy as np
-from importlib_resources import path
 from numpy.testing import assert_allclose
 from saddle.math_lib import diagonalize
 from saddle.ts_construct import TSConstruct
