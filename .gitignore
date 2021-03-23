@@ -6,6 +6,7 @@
 *.swo
 *.coverage
 *.ipynb
+*.xml
 saddle/work/*
 !saddle/work/.gitkeep
 !single_hf_template.com

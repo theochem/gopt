@@ -25,6 +25,7 @@ from secrets import token_hex
 import numpy as np
 import numpy.linalg as npl
 
+import iodata
 from gopt.errors import AtomsNumberError, NotSetError
 from gopt.fchk import FCHKFile
 from gopt.gaussianwrapper import GaussianWrapper
@@ -53,7 +54,7 @@ class Cartesian:
     coordinates : np.ndarray(K, 3)
         Cartesian information of input molecule
     natom : int
-        Number of atoms in the system
+            Number of atoms in the system
 
     Classmethod
     -----------
@@ -244,6 +245,11 @@ class Cartesian:
         return len(self.numbers)
 
     @property
+    def title(self) -> str:
+        """str: Title of molecule"""
+        return self._title
+
+    @property
     def df(self) -> int:
         """int: The degree of the system."""
         if self.natom <= 1:
@@ -278,6 +284,26 @@ class Cartesian:
         if hessian:
             self._energy_hessian = fchk_file.get_hessian()
         return None
+
+    @classmethod
+    def load_with_iodata(cls, filepath, charge=0, spinmult=1, title=None):
+        mol = iodata.load_one(filepath)
+        if not title:
+            title = mol.title
+        return cls(mol.atcoords, mol.atnums, charge, spinmult, title)
+
+    def compute_energy(self, external):
+        fields = {
+            "work_path" : None,
+            "lot" : 'uhf',
+            "obasis_name" : "6-31+G",
+            "run_type" : "freq SCF(XQC) nosymmetry",
+            "title" : self._title,
+            "charge" : self.charge,
+            "spinmult" : self.multi,
+            "geometry" : self.coordinates,
+        }
+        return fields
 
     def energy_calculation(self, *_, method: str = "g09") -> None:  # need test
         """Conduct calculation with designated method.
