@@ -292,6 +292,13 @@ class Cartesian:
             title = mol.title
         return cls(mol.atcoords, mol.atnums, charge, spinmult, title)
 
+    def as_iodata(self):
+        data = {}
+        data['atcoords'] = self.coordinates
+        data['atnums'] = self.numbers
+        data['title'] = self.title
+        return iodata.IOData(**data)
+
     def compute_energy(self, external):
         fields = {
             "work_path" : None,
