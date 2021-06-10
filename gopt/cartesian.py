@@ -39,19 +39,19 @@ class Cartesian:
 
     Properties
     ----------
-    numbers : np.ndarray(N)
+    atnums : np.ndarray(N)
         A list of atomic number for input coordinates
-    multi : int
+    spinmult : int
         Spin multiplicity of the molecule
     charge : int
         Charge of the input molecule
     energy : float
         Energy of given Cartesian coordinates system molecule
-    energy_gradient : np.ndarray(N)
+    atgradient : np.ndarray(N)
         Gradient of Energy that calculated under Cartesian coordinates
-    energy_hessian : np.ndarray(N, N)
+    athessian : np.ndarray(N, N)
         Hessian of Energy that calculated under Cartesian coordinates
-    coordinates : np.ndarray(K, 3)
+    atcoords : np.ndarray(K, 3)
         Cartesian information of input molecule
     natom : int
             Number of atoms in the system
@@ -65,8 +65,6 @@ class Cartesian:
     -------
     __init__(self, coordinates, numbers, charge, multi)
         Initializes molecule
-    set_new_coordinates(new_coor)
-        Set molecule with a set of coordinates
     energy_from_fchk(self, abs_path, gradient=True, hessian=True):
         Obtain energy and corresponding info from fchk file
     energy_calculation(**kwargs)
@@ -88,10 +86,10 @@ class Cartesian:
         multi: int,
         title: str = "",
     ) -> None:
-        self._coordinates = coordinates.copy()
-        self._numbers = numbers.copy()
+        self._atcoords = coordinates.copy()
+        self._atnums = numbers.copy()
         self._charge = charge
-        self._multi = multi
+        self._spinmulti = multi
         if title:
             self._title = title
         else:
@@ -103,7 +101,7 @@ class Cartesian:
 
     @classmethod
     def from_file(
-        cls, filename: str, charge: int = 0, multi: int = 1, title=""
+        cls, filename: str, charge: int = None, multi: int = None, title=""
     ) -> "Cartesian":
         """Create an Cartesian instance from file .xyz, .com, .gjf or .fchk.
 
@@ -111,17 +109,22 @@ class Cartesian:
         ---------
         filename : str
             the path of the file
-        charge : int, default is 0
-            the charge of the given molecule(system)
-        multi : int, dufault is 1
-            the multiplicity of the given molecule(system)
+        charge : int
+            the charge of the given molecule(system), default is 0
+        multi : int
+            the multiplicity of the given molecule(system), default is 1
 
         Return
         ------
         new Cartesian instance : Cartesian
         """
-        mol = Utils.load_file(filename)
-        return cls(mol.coordinates, mol.numbers, charge, multi, title=title)
+        mol = iodata.load_one(filename)
+        print(mol.charge is None)
+        if charge is None:
+            charge = int(mol.charge) if mol.charge else 0
+        if multi is None:
+            multi = 1
+        return cls(mol.atcoords, mol.atnums, charge, multi, title=title)
 
     @property
     def energy_gradient(self) -> "np.ndarray[float]":
@@ -138,6 +141,8 @@ class Cartesian:
         else:
             return self._energy_gradient
 
+    atgradient = energy_gradient
+
     @property
     def energy_hessian(self) -> "np.ndarray[float]":
         """Get hessian of energy versus internal coordinates.
@@ -152,6 +157,8 @@ class Cartesian:
             )
         else:
             return self._energy_hessian
+
+    athessian = energy_hessian
 
     @property
     def energy(self) -> float:
@@ -176,21 +183,8 @@ class Cartesian:
         mode : str, optional
             I/O mode of file
         """
-        Utils.save_file(filename, self, mode=mode)
-
-    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
-        """Assign new cartesian coordinates to this molecule.
-
-        Arguments
-        ---------
-        new_coor : np.ndarray(N, 3)
-            New cartesian coordinates of the system
-        """
-        if self._coordinates.shape != new_coor.shape:
-            raise AtomsNumberError("the dimentsion of coordinates are not the same")
-        self._coordinates = new_coor.copy()
-        self._reset_cartesian()
-        return None
+        iodata_mol = self.as_iodata()
+        iodata.dump_one(iodata_mol, filename)
 
     def _reset_cartesian(self) -> None:
         """Reset the energy data including energy, gradient and hessian."""
@@ -200,14 +194,14 @@ class Cartesian:
         return None
 
     @property
-    def numbers(self) -> "np.ndarray[int]":
+    def atnums(self) -> "np.ndarray[int]":
         """Atomic number of all the atoms in the system.
 
         Returns
         -------
         numbers : an np.ndarray of atomic numbers, len(numbers) = N
         """
-        return self._numbers
+        return self._atnums
 
     @property
     def charge(self) -> int:
@@ -220,29 +214,43 @@ class Cartesian:
         return self._charge
 
     @property
-    def multi(self) -> int:
+    def spinmult(self) -> int:
         """Get hhe spin multiplicity of the system.
 
         Returns
         -------
         multi : int
         """
-        return self._multi
+        return self._spinmulti
 
     @property
-    def coordinates(self) -> "np.ndarray[float]":
+    def atcoords(self) -> "np.ndarray[float]":
         """Cartesian coordinates of every atoms.
 
         Returns
         -------
         coordinates : np.ndarray(N, 3)
         """
-        return self._coordinates
+        return self._atcoords
+
+    @atcoords.setter
+    def atcoords(self, new_coors):
+        """Assign new cartesian coordinates to this molecule.
+
+        Arguments
+        ---------
+        new_coor : np.ndarray(N, 3)
+            New cartesian coordinates of the system
+        """
+        if self._atcoords.shape != new_coors.shape:
+            raise AtomsNumberError("the dimentsion of coordinates are not the same")
+        self._atcoords = new_coors.copy()
+        self._reset_cartesian()
 
     @property
     def natom(self) -> int:
         """int: Get the number of atoms of given molecule."""
-        return len(self.numbers)
+        return len(self.atnums)
 
     @property
     def title(self) -> str:
@@ -277,7 +285,7 @@ class Cartesian:
         if isinstance(abs_path, Path):
             fchk_file = str(abs_path)
         fchk_file = FCHKFile(filename=abs_path)
-        self.set_new_coordinates(fchk_file.get_coordinates().reshape(-1, 3))
+        self.atcoords = fchk_file.get_coordinates().reshape(-1, 3)
         self._energy = fchk_file.get_energy()
         if gradient:
             self._energy_gradient = fchk_file.get_gradient()
@@ -294,21 +302,26 @@ class Cartesian:
 
     def as_iodata(self):
         data = {}
-        data['atcoords'] = self.coordinates
-        data['atnums'] = self.numbers
-        data['title'] = self.title
+        data["atcoords"] = self.atcoords
+        data["atnums"] = self.atnums
+        data["title"] = self.title
+        data["chargea"] = self.charge
+        if self.atgradient:
+            data["atgradient"] = self.atgradient
+        if self.athessian:
+            data["athessian"] = self.athessian
         return iodata.IOData(**data)
 
     def compute_energy(self, external):
         fields = {
-            "work_path" : None,
-            "lot" : 'uhf',
-            "obasis_name" : "6-31+G",
-            "run_type" : "freq SCF(XQC) nosymmetry",
-            "title" : self._title,
-            "charge" : self.charge,
-            "spinmult" : self.multi,
-            "geometry" : self.coordinates,
+            "work_path": None,
+            "lot": "uhf",
+            "obasis_name": "6-31+G",
+            "run_type": "freq SCF(XQC) nosymmetry",
+            "title": self._title,
+            "charge": self.charge,
+            "spinmult": self.spinmult,
+            "geometry": self.atcoords,
         }
         return fields
 
@@ -333,9 +346,9 @@ class Cartesian:
         title = self._title
         obj = GaussianWrapper(self, title)
         coor, ener, grad, hess = obj.run_gaussian_and_get_result(
-            self.charge, self.multi, energy=True, gradient=True, hessian=True
+            self.charge, self.spinmult, energy=True, gradient=True, hessian=True
         )
-        self.set_new_coordinates(coor.reshape(-1, 3))
+        self.at_coords(coor.reshape(-1, 3))
         self._energy = ener
         self._energy_gradient = grad
         self._energy_hessian = hess
@@ -361,8 +374,8 @@ class Cartesian:
         distance : float
             the distance between two atoms
         """
-        coord1 = self.coordinates[index1]
-        coord2 = self.coordinates[index2]
+        coord1 = self.atcoords[index1]
+        coord2 = self.atcoords[index2]
         diff = coord1 - coord2
         distance = npl.norm(diff)
         return distance
@@ -384,9 +397,9 @@ class Cartesian:
         cos_angle : float
             cosine value of angle
         """
-        coord1 = self.coordinates[index1]
-        coord2 = self.coordinates[index2]
-        coord3 = self.coordinates[index3]
+        coord1 = self.atcoords[index1]
+        coord2 = self.atcoords[index2]
+        coord3 = self.atcoords[index3]
         diff_1 = coord2 - coord1
         diff_2 = coord2 - coord3
         cos_angle = np.dot(diff_1, diff_2) / (npl.norm(diff_1) * npl.norm(diff_2))
@@ -425,4 +438,4 @@ class Cartesian:
         if not title:
             title = self._title
         gw = GaussianWrapper(self, title)
-        gw.create_gauss_input(self.charge, self.multi, freq=freq)
+        gw.create_gauss_input(self.charge, self.spinmult, freq=freq)
