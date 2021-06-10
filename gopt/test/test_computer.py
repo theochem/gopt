@@ -4,7 +4,7 @@ import re
 from importlib.resources import path, read_text
 
 from gopt.conf import WORK_DIR
-from gopt.external import Gaussian
+from gopt.computer import Gaussian
 
 import iodata
 

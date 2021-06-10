@@ -7,7 +7,7 @@ from gopt.conf import WORK_DIR
 from gopt.cartesian import Cartesian
 
 
-class BaseCompute:
+class BaseComputer:
     def __init__(self):
         ...
 
@@ -15,7 +15,7 @@ class BaseCompute:
         ...
 
 
-class Gaussian(BaseCompute):
+class Gaussian(BaseComputer):
     def __init__(self, template=None, workdir=None):
         if template:
             self.template = template
