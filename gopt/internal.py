@@ -152,7 +152,7 @@ class Internal(Cartesian):
         super(Internal, self).__init__(coordinates, numbers, charge, multi, title)
         self._ic = []
         # 1 is connected, 0 is not, -1 is itself
-        self._connectivity = np.diag([-1] * len(self.numbers))
+        self._connectivity = np.diag([-1] * len(self.atnums))
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
 
@@ -179,7 +179,7 @@ class Internal(Cartesian):
         atoms = self._atoms_sequence_reorder(atoms)
         # just sorting, no sequence changes
         if self._repeat_atoms_check(atoms):
-            rs = self.coordinates[np.array(atoms)]
+            rs = self.atcoords[np.array(atoms)]
             new_ic_obj = BondLength(atoms, rs, ic_type=b_type, weight=weight)
             d, dd = new_ic_obj.get_gradient_hessian()
             # gradient and hessian need to be set
@@ -213,7 +213,7 @@ class Internal(Cartesian):
             if self._check_connectivity(atom1, atom2) and self._check_connectivity(
                 atom2, atom3
             ):  # check if the angle is formed by two connected bonds
-                rs = self.coordinates[np.array(atoms)]
+                rs = self.atcoords[np.array(atoms)]
                 new_ic_obj = BendAngle(atoms, rs, weight=weight)
                 d, dd = new_ic_obj.get_gradient_hessian()
                 self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
@@ -262,7 +262,7 @@ class Internal(Cartesian):
                     or self._check_connectivity(atom4, atom2)
                 )
             ):
-                rs = self.coordinates[np.array(atoms)]
+                rs = self.atcoords[np.array(atoms)]
                 if special:
                     # add Dot dihedral
                     new_ic_obj_1 = NewDihedralDot(atoms, rs, weight=weight)
@@ -303,6 +303,15 @@ class Internal(Cartesian):
         for index, ic in enumerate(self.ic):
             ic.target = new_ic[index]
 
+    # @property
+    # def atcoords(self) -> "np.ndarray[float]":
+    #     return self._atcoords
+
+    # @atcoords.setter
+    # def atcoords(self, new_coor) -> "np.ndarray[float]":
+    #     self._atcoords = new_coor
+    #     self._regenerate_ic()
+
     def set_new_coordinates(self, new_coor: "np.ndarray") -> None:
         """Assign new cartesian coordinates to this molecule.
 
@@ -311,7 +320,7 @@ class Internal(Cartesian):
         new_coor : np.ndarray(N, 3)
             New cartesian coordinates of the system483G
         """
-        super(Internal, self).set_new_coordinates(new_coor)
+        super().set_new_coordinates(new_coor)
         self._regenerate_ic()
 
     def swap_internal_coordinates(self, index_1: int, index_2: int) -> None:
@@ -345,19 +354,19 @@ class Internal(Cartesian):
             np.dot(pse_inv(self.b_matrix), self.target_ic - self.ic_values).reshape(
                 -1, 3
             )
-            + self.coordinates
+            + self.atcoords
         )
         # ignore dihedral
         if ignore_dihed:
             wts_bk = self.ic_weights
             self.set_dihed_weights(0)
-        self.set_new_coordinates(init_coor)
+        self.at_coords = init_coor
         init_point = self.create_geo_point(flex_sin=flex_sin)
         optimizer.add_new(init_point)
         for _ in range(max_iter):
             optimizer.tweak_hessian(optimizer.newest)
             step = optimizer.trust_radius_step(optimizer.newest)
-            new_coor = self.coordinates + step.reshape(-1, 3)
+            new_coor = self.atcoords + step.reshape(-1, 3)
             self.set_new_coordinates(new_coor)
             new_point = self.create_geo_point(flex_sin=flex_sin)
             optimizer.add_new(new_point)
@@ -365,11 +374,11 @@ class Internal(Cartesian):
                 # test eigenvalues
                 eig_val, eig_vec = np.linalg.eigh(new_point.hessian)
                 if np.min(eig_val) < -1e-4:
-                    print('gopt converged')
+                    print("gopt converged")
                     direct = eig_vec[:, 0]
                     # make two path
-                    dir_up = self.coordinates + 0.1 * direct.reshape(-1, 3)
-                    dir_down = self.coordinates - 0.1 * direct.reshape(-1, 3)
+                    dir_up = self.atcoords + 0.1 * direct.reshape(-1, 3)
+                    dir_down = self.atcoords - 0.1 * direct.reshape(-1, 3)
                     copy_mol = deepcopy(self)
                     # try one direction
                     copy_mol.set_new_coordinates(dir_up)
@@ -380,8 +389,8 @@ class Internal(Cartesian):
                     better_coor = dir_up if v1 < v2 else dir_down
                     self.set_new_coordinates(better_coor)
                     continue
-                        # new_point = self.create_geo_point(flex_sin=flex_sin)
-                        # diff = optimizer.newest.value - new_point.value
+                    # new_point = self.create_geo_point(flex_sin=flex_sin)
+                    # diff = optimizer.newest.value - new_point.value
                 # print("finished")
                 return
             optimizer.update_trust_radius(optimizer.newest)
@@ -587,12 +596,12 @@ class Internal(Cartesian):
                 atoms = np.array(ic.atoms)
                 # value and b matrix of angle1
                 ang1_ind = np.array(atoms[:3])
-                ang1_v, ang1_d1 = bend_angle(self.coordinates[ang1_ind], 1)
+                ang1_v, ang1_d1 = bend_angle(self.atcoords[ang1_ind], 1)
                 # value and b matrix of angle2
                 ang2_ind = np.array(atoms[1:])
-                ang2_v, ang2_d1 = bend_angle(self.coordinates[ang2_ind], 1)
+                ang2_v, ang2_d1 = bend_angle(self.atcoords[ang2_ind], 1)
                 # value and b matrix for dihed
-                _, dihed_d1 = dihed_angle(self.coordinates[atoms], 1)
+                _, dihed_d1 = dihed_angle(self.atcoords[atoms], 1)
                 # derivative of angle 1
                 tmp_cost_g_q = (
                     2
@@ -660,14 +669,14 @@ class Internal(Cartesian):
                 dihed_bp = np.zeros((3, 12, 12))
                 # value and b matrix of angle1
                 ang1_ind = atoms[:3]
-                ang1_v, ang1_d1, ang1_d2 = bend_angle(self.coordinates[ang1_ind], 2)
+                ang1_v, ang1_d1, ang1_d2 = bend_angle(self.atcoords[ang1_ind], 2)
                 # value and b matrix of angle2
                 ang2_ind = atoms[1:]
-                ang2_v, ang2_d1, ang2_d2 = bend_angle(self.coordinates[ang2_ind], 2)
+                ang2_v, ang2_d1, ang2_d2 = bend_angle(self.atcoords[ang2_ind], 2)
 
                 # value of b`_ijk
                 di_ind = np.array(ic.atoms)
-                dihed, di_d1, di_d2 = dihed_angle(self.coordinates[di_ind], 2)
+                dihed, di_d1, di_d2 = dihed_angle(self.atcoords[di_ind], 2)
                 # add dihed_b
                 dihed_b[0] += di_d1.ravel()
                 dihed_b[1][:9] += ang1_d1.ravel()
@@ -951,7 +960,7 @@ class Internal(Cartesian):
         """Print the connectivity matrix on screen."""
         format_func = "{:3}".format
         print("--Connectivity Starts-- \n")
-        for i, _ in enumerate(self.numbers):
+        for i, _ in enumerate(self.atnums):
             print(" ".join(map(format_func, self.connectivity[i, : i + 1])))
             print("\n--Connectivity Ends--")
 
@@ -1028,15 +1037,15 @@ class Internal(Cartesian):
         """Wipe all the internal information in this structure."""
         self._ic = []
         self._fragment = np.arange(self.natom)
-        self._connectivity = np.diag([-1] * len(self.numbers))
+        self._connectivity = np.diag([-1] * len(self.atnums))
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
 
     def _auto_select_cov_bond(self):
         """Low level function for selecting covalence bond."""
         for ind1, ind2 in combinations(range(self.natom), 2):
-            atom1 = self.numbers[ind1]
-            atom2 = self.numbers[ind2]
+            atom1 = self.atnums[ind1]
+            atom2 = self.atnums[ind2]
             distance = self.distance(ind1, ind2)
             rad_sum = periodic[atom1].cov_radius + periodic[atom2].cov_radius
             if distance < rad_sum * 1.3:
@@ -1046,12 +1055,12 @@ class Internal(Cartesian):
         """Low level function for selecting hydrogen bond."""
         ele_neg = np.array([7, 8, 9, 15, 16, 17])
         # find strong ele nagative atoms' indices
-        halo_indices = np.where(np.isin(self.numbers, ele_neg))[0]
+        halo_indices = np.where(np.isin(self.atnums, ele_neg))[0]
         for ha_idx in halo_indices:
             # indices formed cov bond with index ha_idx
             cnnt_idxs = np.where(self.connectivity[ha_idx] == 1)[0]
             # indices of H atoms formed bond with ha_idx
-            cnnt_h_idx = cnnt_idxs[self.numbers[cnnt_idxs] == 1]
+            cnnt_h_idx = cnnt_idxs[self.atnums[cnnt_idxs] == 1]
             for h_idx in cnnt_h_idx:
                 # loop over second halo atoms
                 for ha_idx2 in halo_indices:
@@ -1059,8 +1068,8 @@ class Internal(Cartesian):
                         dist = self.distance(h_idx, ha_idx2)
                         angle_cos = self.angle_cos(ha_idx, h_idx, ha_idx2)
                         cut_off = (
-                            periodic[self.numbers[h_idx]].vdw_radius
-                            + periodic[self.numbers[ha_idx2]].vdw_radius
+                            periodic[self.atnums[h_idx]].vdw_radius
+                            + periodic[self.atnums[ha_idx2]].vdw_radius
                         )
                         if dist <= 0.9 * cut_off and angle_cos < 0:
                             self.add_bond(h_idx, ha_idx2, b_type=2, weight=1)
@@ -1126,8 +1135,8 @@ class Internal(Cartesian):
             g2_atoms = frags[group2]  # np.array
 
             # atomic number for each fragments
-            g1_numbers = self.numbers[g1_atoms]
-            g2_numbers = self.numbers[g2_atoms]
+            g1_numbers = self.atnums[g1_atoms]
+            g2_numbers = self.atnums[g2_atoms]
 
             # min atoms for each fragments
             # min_atom = min(len(g1_atoms), len(g2_atoms))
@@ -1159,7 +1168,7 @@ class Internal(Cartesian):
 
     def _auto_select_angle(self) -> None:
         """Automatically selecting angle."""
-        for center_index, _ in enumerate(self.numbers):
+        for center_index, _ in enumerate(self.atnums):
             connected = self.connected_indices(center_index, exclude=4)
             # connected = self.connected_indices(center_index)
             if len(connected) >= 2:
@@ -1168,7 +1177,7 @@ class Internal(Cartesian):
 
     def _auto_select_dihed_normal(self, special=False) -> None:
         """Automatically selecting normal dihedral."""
-        for center_ind_1, _ in enumerate(self.numbers):
+        for center_ind_1, _ in enumerate(self.atnums):
             # find indices connected to center_ind_1
             connected = self.connected_indices(center_ind_1, exclude=4)
             if len(connected) >= 2:
@@ -1249,7 +1258,7 @@ class Internal(Cartesian):
         self._cc_to_ic_gradient = None
         self._cc_to_ic_hessian = None
         for ic in self.ic:
-            rs = self.coordinates[np.array(ic.atoms)]
+            rs = self.atcoords[np.array(ic.atoms)]
             ic.set_new_coordinates(rs)
             d, dd = ic.get_gradient_hessian()
             self._add_cc_to_ic_gradient(d, ic.atoms)  # add transform gradient
@@ -1257,7 +1266,7 @@ class Internal(Cartesian):
 
     def _regenerate_connectivity(self) -> None:
         """Regenerate the connectivity of molecule depends on present IC."""
-        self._connectivity = np.diag([-1] * len(self.numbers))
+        self._connectivity = np.diag([-1] * len(self.atnums))
         for ic in self.ic:
             if isinstance(ic, BondLength):
                 self._add_connectivity(ic.atoms, ic.ic_type)
@@ -1277,7 +1286,7 @@ class Internal(Cartesian):
         else:
             # not always converge but better result
             _, x_d, x_dd = self.cost_value_in_cc
-        return Point(x_d, x_dd, len(self.numbers))
+        return Point(x_d, x_dd, len(self.atnums))
 
     def _ic_gradient_hessian_transform_to_cc(
         self, gradient: "np.ndarray[float]", hessian: "np.ndarray[float]"
@@ -1426,8 +1435,8 @@ class Internal(Cartesian):
             indices of atoms for those transformation
         """
         if self._cc_to_ic_gradient is None:
-            self._cc_to_ic_gradient = np.zeros((0, 3 * len(self.numbers)))
-        tmp_vector = np.zeros(3 * len(self.numbers))
+            self._cc_to_ic_gradient = np.zeros((0, 3 * len(self.atnums)))
+        tmp_vector = np.zeros(3 * len(self.atnums))
         atoms = np.array(atoms)
         index = np.ravel(list(zip(3 * atoms, 3 * atoms + 1, 3 * atoms + 2)))
         tmp_vector[index] += deriv.ravel()
@@ -1447,10 +1456,10 @@ class Internal(Cartesian):
         """
         if self._cc_to_ic_hessian is None:
             self._cc_to_ic_hessian = np.zeros(
-                (0, 3 * len(self.numbers), 3 * len(self.numbers))
+                (0, 3 * len(self.atnums), 3 * len(self.atnums))
             )
         atoms = np.array(atoms)
-        tmp_vector = np.zeros((1, 3 * len(self.numbers), 3 * len(self.numbers)))
+        tmp_vector = np.zeros((1, 3 * len(self.atnums), 3 * len(self.atnums)))
         index = np.ravel(list(zip(3 * atoms, 3 * atoms + 1, 3 * atoms + 2)))
         tmp_vector[0, index[:, None], index] = deriv.reshape(-1, 3 * len(atoms))
         self._cc_to_ic_hessian = np.vstack((self._cc_to_ic_hessian, tmp_vector))

@@ -20,10 +20,10 @@ class TestInternal(unittest.TestCase):
         """Setup function."""
         with path("gopt.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        self.mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        self.mol = Internal(mol.atcoords, mol.atnums, 0, 1)
         with path("gopt.test.data", "h2o2.xyz") as mol_path:
             mol2 = Utils.load_file(mol_path)
-        self.h2o2 = Internal(mol2.coordinates, mol2.numbers, 0, 1)
+        self.h2o2 = Internal(mol2.atcoords, mol2.atnums, 0, 1)
 
     def test_ic_weights(self):
         """Test change internal coordinates weights."""
@@ -42,7 +42,7 @@ class TestInternal(unittest.TestCase):
 
     def test_file_title(self):
         """Test default file title."""
-        new_mol = Internal(self.mol.coordinates, self.mol.numbers, 0, 1)
+        new_mol = Internal(self.mol.atcoords, self.mol.atnums, 0, 1)
         assert len(new_mol._title) == 15
 
     def test_add_bond(self):
@@ -357,7 +357,7 @@ class TestInternal(unittest.TestCase):
         """Test add normal dihedral."""
         with path("gopt.test.data", "2h-azirine.xyz") as mol_path:
             mol = Utils.load_file(mol_path)  # create a water molecule
-        internal = Internal(mol.coordinates, mol.numbers, 0, 1)
+        internal = Internal(mol.atcoords, mol.atnums, 0, 1)
         internal.add_bond(0, 1)
         internal.add_bond(1, 2)
         internal.add_bond(1, 3)
@@ -366,7 +366,7 @@ class TestInternal(unittest.TestCase):
         assert len(internal.ic) == 3
         internal.add_dihedral(0, 1, 2, 3)
         assert len(internal.ic) == 4
-        assert internal.ic_values[3] == dihed_angle(internal.coordinates[:4])
+        assert internal.ic_values[3] == dihed_angle(internal.atcoords[:4])
 
     def test_cost_function(self):
         """"""
@@ -466,7 +466,7 @@ class TestInternal(unittest.TestCase):
     def test_auto_ic_select_ethane(self):
         with path("gopt.test.data", "ethane.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
+        ethane = Internal(mol.atcoords, mol.atnums, 0, 1)
         ethane.auto_select_ic()
         assert len(ethane.ic) == 24
 
@@ -474,7 +474,7 @@ class TestInternal(unittest.TestCase):
         with path("gopt.test.data", "ethane.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         mol = Utils.load_file(mol_path)
-        ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
+        ethane = Internal(mol.atcoords, mol.atnums, 0, 1)
         ethane.auto_select_ic()
         counter = 0
         for ic in ethane.ic:
@@ -485,7 +485,7 @@ class TestInternal(unittest.TestCase):
     def test_auto_select_improper_ch3_hf(self):
         with path("gopt.test.data", "ch3_hf.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        mol = Internal(mol.atcoords, mol.atnums, 0, 1)
         mol.auto_select_ic(chain_bond=False)
         ic_ref = np.array(
             [
@@ -519,7 +519,7 @@ class TestInternal(unittest.TestCase):
     def test_auto_ic_select_methanol(self):
         with path("gopt.test.data", "methanol.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        methanol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        methanol = Internal(mol.atcoords, mol.atnums, 0, 1)
         methanol.auto_select_ic()
         assert len(methanol.ic) == 15
 
@@ -568,7 +568,7 @@ class TestInternal(unittest.TestCase):
     def test_delete_ic(self):
         with path("gopt.test.data", "ethane.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        ethane = Internal(mol.coordinates, mol.numbers, 0, 1)
+        ethane = Internal(mol.atcoords, mol.atnums, 0, 1)
         ethane.auto_select_ic()
         ethane._delete_ic_index(0)
         assert len(ethane.ic) == 23
@@ -583,7 +583,7 @@ class TestInternal(unittest.TestCase):
     def test_fragments_in_mole(self):
         with path("gopt.test.data", "ch3_hf.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        mol = Internal(mol.atcoords, mol.atnums, 0, 1)
         assert len(mol.fragments) == mol.natom
         mol.add_bond(0, 1)
         mol.add_bond(2, 3)
@@ -601,7 +601,7 @@ class TestInternal(unittest.TestCase):
     def test_fragments_bond_add(self):
         with path("gopt.test.data", "ch3_hf.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        mol = Internal(mol.atcoords, mol.atnums, 0, 1)
         mol._auto_select_fragment_bond()
         assert len(mol.ic) == 15
 
@@ -640,7 +640,7 @@ class TestInternal(unittest.TestCase):
     def test_dihedral_rotation(self):
         with path("gopt.test.data", "h2o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h2o2 = Internal(mol.atcoords, mol.atnums, 0, 1)
         h2o2.auto_select_ic()
         ref_ic = np.array(
             [2.47617635, 1.85058569, 1.85070922, 1.81937566, 1.81930967, 1.43966113]
@@ -664,7 +664,7 @@ class TestInternal(unittest.TestCase):
     def test_dihed_repeak(self):
         with path("gopt.test.data", "h3o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        h3o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h3o2 = Internal(mol.atcoords, mol.atnums, 0, 1)
         h3o2.auto_select_ic()
         target_ic = h3o2.ic_values
         target_ic[8] = -1.57
@@ -676,18 +676,19 @@ class TestInternal(unittest.TestCase):
         assert_allclose(h3o2.ic_values, target_ic, atol=3e-3)
 
         # test a new set of dihed
-        h3o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h3o2 = Internal(mol.atcoords, mol.atnums, 0, 1)
         h3o2.auto_select_ic()
-        target_ic[8] = - np.pi / 4
+        target_ic[8] = -np.pi / 4
         target_ic[9] = np.pi * 3 / 4
         h3o2.set_target_ic(target_ic)
         h3o2.converge_to_target_ic()
         assert_allclose(h3o2.ic_values, target_ic, atol=5e-3)
 
-        h3o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h3o2 = Internal(mol.atcoords, mol.atnums, 0, 1)
         h3o2.auto_select_ic()
         target_ic[8] = 0
-        target_ic[9] = np.pi
+        target_ic[9] = np.pi - 0.05
+        print(h3o2.ic)
         h3o2.set_target_ic(target_ic)
         h3o2.converge_to_target_ic()
         assert_allclose(h3o2.ic_values, target_ic, atol=5e-3)
@@ -695,7 +696,7 @@ class TestInternal(unittest.TestCase):
     def test_dihed_repeak_random(self):
         with path("gopt.test.data", "h3o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        h3o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h3o2 = Internal(mol.atcoords, mol.atnums, 0, 1)
         h3o2.auto_select_ic()
         target_ic = h3o2.ic_values
         for i in range(10):
@@ -709,7 +710,7 @@ class TestInternal(unittest.TestCase):
     def test_dihed_o2h4_rotate(self):
         with path("gopt.test.data", "h4o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        h4o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h4o2 = Internal(mol.atcoords, mol.atnums, 0, 1)
         h4o2.auto_select_ic()
         target_ic = h4o2.ic_values
         h4o2.list_ic
@@ -756,11 +757,10 @@ class TestInternal(unittest.TestCase):
     #     print(o2.target_ic)
     #     assert False
 
-
     def test_dihedral_repeak(self):
         with path("gopt.test.data", "h2o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h2o2 = Internal(mol.atcoords, mol.atnums, 0, 1)
         h2o2.add_bond(0, 1)
         h2o2.add_bond(1, 2)
         h2o2.add_bond(2, 3)
@@ -776,7 +776,7 @@ class TestInternal(unittest.TestCase):
     def test_new_dihed(self):
         with path("gopt.test.data", "h2o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h2o2 = Internal(mol.atcoords, mol.atnums, 0, 1)
         h2o2.add_bond(0, 1)
         h2o2.add_bond(1, 2)
         h2o2.add_bond(2, 3)
@@ -796,7 +796,7 @@ class TestInternal(unittest.TestCase):
         with path("gopt.test.data", "h2o2.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
         mol = Utils.load_file(mol_path)
-        h2o2 = Internal(mol.coordinates, mol.numbers, 0, 1)
+        h2o2 = Internal(mol.atcoords, mol.atnums, 0, 1)
         h2o2.auto_select_ic(dihed_special=True)
         assert len(h2o2.ic) == 7
         # print(h2o2.ic_values)
@@ -871,7 +871,7 @@ class TestInternal(unittest.TestCase):
         ref_mol = deepcopy(mol)
         q1 = mol.ic_values[0]
         for i in range(3):
-            coor = mol.coordinates.copy()
+            coor = mol.atcoords.copy()
             coor[0][i] += 1e-4
             ref_mol.set_new_coordinates(coor)
             q2 = ref_mol.ic_values[0]
@@ -881,7 +881,7 @@ class TestInternal(unittest.TestCase):
 
         q1 = mol.ic_values[1]
         for i in range(3):
-            coor = mol.coordinates.copy()
+            coor = mol.atcoords.copy()
             coor[1][i] += 1e-4
             ref_mol.set_new_coordinates(coor)
             q2 = ref_mol.ic_values[1]
@@ -891,7 +891,7 @@ class TestInternal(unittest.TestCase):
 
         q1 = mol.ic_values[2]
         for i in range(3):
-            coor = mol.coordinates.copy()
+            coor = mol.atcoords.copy()
             coor[2][i] += 1e-4
             ref_mol.set_new_coordinates(coor)
             q2 = ref_mol.ic_values[2]
@@ -907,7 +907,7 @@ class TestInternal(unittest.TestCase):
         for j in range(4):
             q1 = mol.ic_values[j]
             for i in range(3):
-                coor = mol.coordinates.copy()
+                coor = mol.atcoords.copy()
                 coor[j][i] += 1e-4
                 ref_mol.set_new_coordinates(coor)
                 q2 = ref_mol.ic_values[j]
@@ -924,7 +924,7 @@ class TestInternal(unittest.TestCase):
         ref_mol = deepcopy(mol)
         qd1 = mol.b_matrix
         for i in range(3):
-            coor = mol.coordinates.copy()
+            coor = mol.atcoords.copy()
             coor[0][i] += 1e-4
             ref_mol.set_new_coordinates(coor)
             qd2 = ref_mol.b_matrix
@@ -940,7 +940,7 @@ class TestInternal(unittest.TestCase):
         qd1 = mol.b_matrix
         for j in range(4):
             for i in range(3):
-                coor = mol.coordinates.copy()
+                coor = mol.atcoords.copy()
                 coor[j][i] += 1e-4
                 ref_mol.set_new_coordinates(coor)
                 qd2 = ref_mol.b_matrix
@@ -953,7 +953,7 @@ class TestInternal(unittest.TestCase):
             mol = Internal.from_file(mol_path)
         mol.add_bond(0, 1)
         ref_mol = deepcopy(mol)
-        coor = mol.coordinates.copy()
+        coor = mol.atcoords.copy()
         target_ic = mol.ic_values
         # print(mol.ic)
         target_ic[0] = 2
@@ -966,7 +966,7 @@ class TestInternal(unittest.TestCase):
         # finite diff test
         for i in range(4):
             for j in range(3):
-                coor = ref_mol.coordinates.copy()
+                coor = ref_mol.atcoords.copy()
                 coor[i][j] += diff
                 mol.set_new_coordinates(coor)
                 cost_v_2 = mol._compute_tfm_cost()
@@ -983,7 +983,7 @@ class TestInternal(unittest.TestCase):
         mol.add_bond(0, 2)
         mol.add_angle(1, 0, 2)
         ref_mol = deepcopy(mol)
-        coor = mol.coordinates.copy()
+        coor = mol.atcoords.copy()
         target_ic = mol.ic_values
         # print(mol.ic)
         target_ic[2] = 2
@@ -997,7 +997,7 @@ class TestInternal(unittest.TestCase):
         # finite diff test
         for i in range(4):
             for j in range(3):
-                coor = ref_mol.coordinates.copy()
+                coor = ref_mol.atcoords.copy()
                 coor[i][j] += diff
                 mol.set_new_coordinates(coor)
                 cost_v_2 = mol._compute_tfm_cost()
@@ -1010,7 +1010,7 @@ class TestInternal(unittest.TestCase):
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
-        coor = mol.coordinates.copy()
+        coor = mol.atcoords.copy()
         target_ic = mol.ic_values
         # print(mol.ic)
         target_ic[0] = 2
@@ -1026,7 +1026,7 @@ class TestInternal(unittest.TestCase):
         mol.list_ic
         for i in range(4):
             for j in range(3):
-                coor = ref_mol.coordinates.copy()
+                coor = ref_mol.atcoords.copy()
                 coor[i][j] += diff
                 mol.set_new_coordinates(coor)
                 cost_v_2 = mol._compute_tfm_cost()
@@ -1038,7 +1038,7 @@ class TestInternal(unittest.TestCase):
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
-        coor = mol.coordinates.copy()
+        coor = mol.atcoords.copy()
         target_ic = mol.ic_values + 0.5
         # print(mol.ic)
         mol.set_target_ic(target_ic)
@@ -1050,7 +1050,7 @@ class TestInternal(unittest.TestCase):
         # finite diff test
         for i in range(8):
             for j in range(3):
-                coor = ref_mol.coordinates.copy()
+                coor = ref_mol.atcoords.copy()
                 coor[i][j] += diff
                 mol.set_new_coordinates(coor)
                 cost_v_2 = mol._compute_tfm_cost()
@@ -1062,7 +1062,7 @@ class TestInternal(unittest.TestCase):
             mol = Internal.from_file(mol_path)
         mol.add_bond(0, 1)
         ref_mol = deepcopy(mol)
-        coor = mol.coordinates.copy()
+        coor = mol.atcoords.copy()
         target_ic = mol.ic_values + 0.5
         # print(mol.ic)
         mol.set_target_ic(target_ic)
@@ -1074,7 +1074,7 @@ class TestInternal(unittest.TestCase):
 
         for j in range(4):
             for i in range(3):
-                coor = ref_mol.coordinates.copy()
+                coor = ref_mol.atcoords.copy()
                 coor[j, i] += diff
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()
@@ -1091,7 +1091,7 @@ class TestInternal(unittest.TestCase):
         # print(mol.ic)
         # assert False
         ref_mol = deepcopy(mol)
-        coor = mol.coordinates.copy()
+        coor = mol.atcoords.copy()
         target_ic = mol.ic_values + 0.5
         # print(mol.ic)
         mol.set_target_ic(target_ic)
@@ -1101,7 +1101,7 @@ class TestInternal(unittest.TestCase):
 
         for j in range(4):
             for i in range(3):
-                coor = ref_mol.coordinates.copy()
+                coor = ref_mol.atcoords.copy()
                 coor[j, i] += diff
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()
@@ -1113,7 +1113,7 @@ class TestInternal(unittest.TestCase):
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
-        coor = mol.coordinates.copy()
+        coor = mol.atcoords.copy()
         target_ic = mol.ic_values + 0.5
         mol.set_target_ic(target_ic)
         cost_g = mol._compute_tfm_gradient()
@@ -1122,7 +1122,7 @@ class TestInternal(unittest.TestCase):
 
         for j in range(4):
             for i in range(3):
-                coor = ref_mol.coordinates.copy()
+                coor = ref_mol.atcoords.copy()
                 coor[j, i] += diff
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()
@@ -1134,7 +1134,7 @@ class TestInternal(unittest.TestCase):
             mol = Internal.from_file(mol_path)
         mol.auto_select_ic()
         ref_mol = deepcopy(mol)
-        coor = mol.coordinates.copy()
+        coor = mol.atcoords.copy()
         target_ic = mol.ic_values + 0.5
         mol.set_target_ic(target_ic)
         cost_g = mol._compute_tfm_gradient()
@@ -1143,7 +1143,7 @@ class TestInternal(unittest.TestCase):
 
         for j in range(6):
             for i in range(3):
-                coor = ref_mol.coordinates.copy()
+                coor = ref_mol.atcoords.copy()
                 coor[j, i] += diff
                 mol.set_new_coordinates(coor)
                 cost_g_2 = mol._compute_tfm_gradient()

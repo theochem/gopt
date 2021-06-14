@@ -13,7 +13,7 @@ class TestCartesian(unittest.TestCase):
     def setUp(self):
         with path("gopt.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        self.cartesian = Cartesian(mol.coordinates, mol.numbers, 0, 1)
+        self.cartesian = Cartesian(mol.atcoords, mol.atnums, 0, 1)
 
     def test_from_file(self):
         with path("gopt.test.data", "water.xyz") as mol_path:

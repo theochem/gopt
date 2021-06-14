@@ -29,7 +29,6 @@ import iodata
 from gopt.errors import AtomsNumberError, NotSetError
 from gopt.fchk import FCHKFile
 from gopt.gaussianwrapper import GaussianWrapper
-from gopt.utils import Utils
 
 __all__ = ("Cartesian",)
 
@@ -233,19 +232,19 @@ class Cartesian:
         """
         return self._atcoords
 
-    @atcoords.setter
-    def atcoords(self, new_coors):
-        """Assign new cartesian coordinates to this molecule.
+    # @atcoords.setter
+    # def atcoords(self, new_coors):
+    #     """Assign new cartesian coordinates to this molecule.
 
-        Arguments
-        ---------
-        new_coor : np.ndarray(N, 3)
-            New cartesian coordinates of the system
-        """
-        if self._atcoords.shape != new_coors.shape:
-            raise AtomsNumberError("the dimentsion of coordinates are not the same")
-        self._atcoords = new_coors.copy()
-        self._reset_cartesian()
+    #     Arguments
+    #     ---------
+    #     new_coor : np.ndarray(N, 3)
+    #         New cartesian coordinates of the system
+    #     """
+    #     if self._atcoords.shape != new_coors.shape:
+    #         raise AtomsNumberError("the dimentsion of coordinates are not the same")
+    #     self._atcoords = new_coors.copy()
+    #     self._reset_cartesian()
 
     @property
     def natom(self) -> int:
@@ -266,6 +265,19 @@ class Cartesian:
             return 1
         return self.natom * 3 - 6
 
+    def set_new_coordinates(self, new_coor: "np.ndarray[float]") -> None:
+        """Assign new cartesian coordinates to this molecule.
+
+        Arguments
+        ---------
+        new_coor : np.ndarray(N, 3)
+            New cartesian coordinates of the system
+        """
+        if self._atcoords.shape != new_coor.shape:
+            raise AtomsNumberError("the dimentsion of coordinates are not the same")
+        self._atcoords = new_coor.copy()
+        self._reset_cartesian()
+
     def energy_from_fchk(
         self, abs_path: str, *_, gradient: bool = True, hessian: bool = True
     ) -> None:
@@ -285,7 +297,7 @@ class Cartesian:
         if isinstance(abs_path, Path):
             fchk_file = str(abs_path)
         fchk_file = FCHKFile(filename=abs_path)
-        self.atcoords = fchk_file.get_coordinates().reshape(-1, 3)
+        self.set_new_coordinates(fchk_file.get_coordinates().reshape(-1, 3))
         self._energy = fchk_file.get_energy()
         if gradient:
             self._energy_gradient = fchk_file.get_gradient()
