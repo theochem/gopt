@@ -30,9 +30,9 @@ class Test_Coordinates_Types(TestCase):
         self.h2o2 = mol2
 
     def test_bond_length(self):
-        bond = BondLength((0, 1), self.molecule.coordinates[[0, 1]])
+        bond = BondLength((0, 1), self.molecule.atcoords[[0, 1]])
         assert bond.value - 2.0220069632957394 < 1e-8
-        bond.set_new_coordinates(self.molecule.coordinates[[1, 2]])
+        bond.set_new_coordinates(self.molecule.atcoords[[1, 2]])
         assert bond.value - 3.3019199546607476 < 1e-8
         # set target
         bond.target = 3.0
@@ -52,9 +52,9 @@ class Test_Coordinates_Types(TestCase):
         assert np.allclose(real_dd * 1.2, bond.cost_dd)
 
     def test_bend_angle(self):
-        angle = BendAngle((1, 0, 2), self.molecule.coordinates[[1, 0, 2]])
+        angle = BendAngle((1, 0, 2), self.molecule.atcoords[[1, 0, 2]])
         assert angle.value - (1.9106254499450943) < 1e-8
-        angle.set_new_coordinates(self.molecule.coordinates[[1, 0, 3]])
+        angle.set_new_coordinates(self.molecule.atcoords[[1, 0, 3]])
         assert angle.value - (1.910636062481526) < 1e-8
         # calculate ref value
         angle.target = 1.8
@@ -81,13 +81,13 @@ class Test_Coordinates_Types(TestCase):
         assert np.allclose(angle.cost_dd, real_dd * 1.2)
 
     def test_bend_cos(self):
-        angle_cos = BendCos((1, 0, 2), self.molecule.coordinates[[1, 0, 2]])
+        angle_cos = BendCos((1, 0, 2), self.molecule.atcoords[[1, 0, 2]])
         assert angle_cos.value - (-0.3333259923254888) < 1e-8
-        angle_cos.set_new_coordinates(self.molecule.coordinates[[1, 0, 3]])
+        angle_cos.set_new_coordinates(self.molecule.atcoords[[1, 0, 3]])
         assert angle_cos.value - (-0.3333359979295637) < 1e-8
 
     def test_dihed_angle(self):
-        dihed_angle = DihedralAngle((2, 0, 1, 3), self.h2o2.coordinates[[2, 0, 1, 3]])
+        dihed_angle = DihedralAngle((2, 0, 1, 3), self.h2o2.atcoords[[2, 0, 1, 3]])
         assert dihed_angle.value - 1.43966112870 < 1e-8
         with self.assertRaises(NotSetError):
             dihed_angle.target
@@ -96,8 +96,8 @@ class Test_Coordinates_Types(TestCase):
         d = dihed_angle.cost_d
         dd = dihed_angle.cost_dd
         # calculate ref value
-        sin_ang1 = np.sin(bend_angle(dihed_angle._coordinates[:3])) ** 2
-        sin_ang2 = np.sin(bend_angle(dihed_angle._coordinates[1:])) ** 2
+        sin_ang1 = np.sin(bend_angle(dihed_angle._atcoords[:3])) ** 2
+        sin_ang2 = np.sin(bend_angle(dihed_angle._atcoords[1:])) ** 2
         ref_v = (
             sin_ang1
             * sin_ang2
@@ -132,26 +132,26 @@ class Test_Coordinates_Types(TestCase):
 
     def test_convention_dihedral(self):
         conv_dihed = ConventionDihedral(
-            (2, 0, 1, 5), self.molecule.coordinates[[2, 0, 1, 5]]
+            (2, 0, 1, 5), self.molecule.atcoords[[2, 0, 1, 5]]
         )
         assert conv_dihed.value - 0.5000093782761452 < 1e-8
-        conv_dihed.set_new_coordinates(self.molecule.coordinates[[3, 0, 1, 5]])
+        conv_dihed.set_new_coordinates(self.molecule.atcoords[[3, 0, 1, 5]])
         assert conv_dihed.value - 0.5000015188648903 < 1e-8
 
     def test_new_dihed_dot(self):
         new_dihed_dot = NewDihedralDot(
-            (2, 0, 1, 5), self.molecule.coordinates[[2, 0, 1, 5]]
+            (2, 0, 1, 5), self.molecule.atcoords[[2, 0, 1, 5]]
         )
         assert new_dihed_dot.value - 0.33334848858597832 < 1e-8
-        new_dihed_dot.set_new_coordinates(self.molecule.coordinates[[3, 0, 1, 5]])
+        new_dihed_dot.set_new_coordinates(self.molecule.atcoords[[3, 0, 1, 5]])
         assert new_dihed_dot.value - 0.33333649967203649 < 1e-8
 
     def test_new_dihed_cross(self):
         new_dihed_cross = NewDihedralCross(
-            (2, 0, 1, 5), self.molecule.coordinates[[2, 0, 1, 5]]
+            (2, 0, 1, 5), self.molecule.atcoords[[2, 0, 1, 5]]
         )
         assert new_dihed_cross.value - 0.76979948283180566 < 1e-8
-        new_dihed_cross.set_new_coordinates(self.molecule.coordinates[[3, 0, 1, 5]])
+        new_dihed_cross.set_new_coordinates(self.molecule.atcoords[[3, 0, 1, 5]])
         assert new_dihed_cross.value - (-0.76980062801256954) < 1e-8
 
     def test_linear_dihedral(self):

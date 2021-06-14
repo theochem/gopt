@@ -63,7 +63,7 @@ class CoordinateTypes:
         weight : int, optional, kwarg
             weight for internal coordinates
         """
-        self._coordinates = coordinates
+        self._atcoords = coordinates
         self._atoms = atoms
         self._value, self._d, self._dd = self._get_all()
         self._weight = weight
@@ -126,7 +126,7 @@ class CoordinateTypes:
         new_coor : np.ndarray[float]
             New coordinates to be assign to the molecule
         """
-        self._coordinates = new_coor
+        self._atcoords = new_coor
         self._value, self._d, self._dd = self._get_all()
 
     @property
@@ -210,7 +210,7 @@ class BondLength(CoordinateTypes):
         Tuple
             value, gradient, hessian
         """
-        return bond_length(self._coordinates, 2)
+        return bond_length(self._atcoords, 2)
 
     @property
     def info(self) -> None:
@@ -288,7 +288,7 @@ class BendAngle(CoordinateTypes):
         Tuple
             value, gradient, hessian
         """
-        return bend_angle(self._coordinates, 2)
+        return bend_angle(self._atcoords, 2)
 
     @property
     def info(self) -> None:
@@ -357,7 +357,7 @@ class BendCos(CoordinateTypes):
         Tuple
             value, gradient, hessian
         """
-        return bend_cos(self._coordinates, 2)
+        return bend_cos(self._atcoords, 2)
 
     @property
     def info(self) -> None:
@@ -401,8 +401,8 @@ class DihedralAngle(CoordinateTypes):
     @property
     def sub_weight(self):
         """float: Sub weight of this particular IC."""
-        sin_ang1 = np.sin(bend_angle(self._coordinates[:3])[0])
-        sin_ang2 = np.sin(bend_angle(self._coordinates[1:])[0])
+        sin_ang1 = np.sin(bend_angle(self._atcoords[:3])[0])
+        sin_ang2 = np.sin(bend_angle(self._atcoords[1:])[0])
         return sin_ang1 ** 2 * sin_ang2 ** 2
 
     @sub_weight.setter
@@ -426,7 +426,7 @@ class DihedralAngle(CoordinateTypes):
         """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            v, d, dd = dihed_angle(self._coordinates, 2)
+            v, d, dd = dihed_angle(self._atcoords, 2)
         if np.isnan(v):
             warnings.warn(
                 f"NaN generated, dihed: {self.atoms} is not properly defined",
@@ -493,7 +493,7 @@ class ConventionDihedral(CoordinateTypes):
         Tuple
             value, gradient, hessian
         """
-        return dihed_cos(self._coordinates, 2)
+        return dihed_cos(self._atcoords, 2)
 
     @property
     def info(self) -> None:
@@ -550,7 +550,7 @@ class NewDihedralDot(CoordinateTypes):  # need tests
         Tuple
             value, gradient, hessian
         """
-        return dihed_new_dot(self._coordinates, 2)
+        return dihed_new_dot(self._atcoords, 2)
 
     @property
     def info(self) -> None:
@@ -606,7 +606,7 @@ class NewDihedralCross(CoordinateTypes):  # need tests
         Tuple
             value, gradient, hessian
         """
-        return dihed_new_cross(self._coordinates, 2)
+        return dihed_new_cross(self._atcoords, 2)
 
     @property
     def info(self) -> None:
