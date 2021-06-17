@@ -1,4 +1,3 @@
-from string import Template
 import iodata
 from importlib.resources import path
 import subprocess

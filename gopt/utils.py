@@ -22,8 +22,8 @@ class Utils:
         coordinates : np.ndarray(N, 3)
             atomic coordinates of atoms
         """
-        self.numbers = numbers.copy()
-        self.coordinates = coordinates.copy()
+        self.atnums = numbers.copy()
+        self.atcoords = coordinates.copy()
 
     @classmethod
     def load_file(cls, file_path, encoding="utf-8"):
@@ -132,12 +132,12 @@ class Utils:
         assert isinstance(file_path, Path)
         assert file_path.suffix == ".xyz"
         with file_path.open(encoding=encoding, mode=mode) as f:
-            f.write(f"{len(mole.numbers)}\n")
+            f.write(f"{len(mole.atnums)}\n")
             title = getattr(mole, "title", "XYZ file Created by GOpt")
             f.write(f"{title}\n")
-            for index, atom_n in enumerate(mole.numbers):
+            for index, atom_n in enumerate(mole.atnums):
                 atom_sym = periodic[atom_n].symbol
-                coor_x, coor_y, coor_z = mole.coordinates[index] / angstrom
+                coor_x, coor_y, coor_z = mole.atcoords[index] / angstrom
                 f.write(
                     f"{atom_sym:>2} {coor_x:15.10f} {coor_y:15.10f} {coor_z:15.10f}\n"
                 )

@@ -77,8 +77,8 @@ class TSConstruct(object):
 
     def __init__(self, reactant_ic, product_ic):
         if isinstance(reactant_ic, Internal) and isinstance(product_ic, Internal):
-            if np.allclose(reactant_ic.numbers, product_ic.numbers):
-                self._numbers = reactant_ic.numbers
+            if np.allclose(reactant_ic.atnums, product_ic.atnums):
+                self._atnums = reactant_ic.atnums
                 self._reactant = deepcopy(reactant_ic)
                 self._product = deepcopy(product_ic)
             else:
@@ -110,9 +110,9 @@ class TSConstruct(object):
         return self._ts
 
     @property
-    def numbers(self):
+    def atnums(self):
         """np.ndarray(N,): A numpy array of atomic number for input coordinates."""
-        return self._numbers
+        return self._atnums
 
     @property
     def key_ic_counter(self):
@@ -348,6 +348,8 @@ class TSConstruct(object):
             auto_select=auto_select,
             mode=mode,
         )
+        print("rct", self.rct.ic_values)
+        print("rct", self.prd.ic_values)
         self.create_ts_state(start_with, ratio, task=task, flex_sin=flex_sin)
 
     def ts_to_file(self, filename=""):

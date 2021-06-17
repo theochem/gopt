@@ -86,17 +86,17 @@ class test_procrustes(unittest.TestCase):
         #     Requirement.parse('gopt'), 'data/water.xyz')
         with path("gopt.procrustes.test.data", "water.xyz") as file_path:
             water = Utils.load_file(file_path)
-        water.coordinates = np.array([[0, 1, 0], [1, 0, 0], [-1, -1, 1]])
+        water.atcoords = np.array([[0, 1, 0], [1, 0, 0], [-1, -1, 1]])
         water_2 = deepcopy(water)
-        water_2.coordinates = np.array([[-1, 0, 0], [0, 1, 0], [1, -1, 0]])
-        water_2.coordinates += 1
+        water_2.atcoords = np.array([[-1, 0, 0], [0, 1, 0], [1, -1, 0]])
+        water_2.atcoords += 1
         water_3 = deepcopy(water)
-        water_3.coordinates = np.array([[1, 0, 0], [0, -1, 0], [-1, 1, 0]])
-        water_3.coordinates -= 1
+        water_3.atcoords = np.array([[1, 0, 0], [0, -1, 0], [-1, 1, 0]])
+        water_3.atcoords -= 1
 
         pcs = Procrustes(water, water_2, water_3)
         final_xyz = pcs.rotate_mols()
         assert isinstance(final_xyz, Iterable)
         assert len(list(final_xyz)) == 2
         for i in final_xyz:
-            assert np.allclose(i, water.coordinates)
+            assert np.allclose(i, water.atcoords)

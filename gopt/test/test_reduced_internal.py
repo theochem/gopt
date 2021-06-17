@@ -13,7 +13,7 @@ class TestReduceInternal(TestCase):
     def setUp(self):
         with path("gopt.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        self.red_int = ReducedInternal(mol.coordinates, mol.numbers, 0, 1, "water")
+        self.red_int = ReducedInternal(mol.atcoords, mol.atnums, 0, 1, "water")
         self.red_int.add_bond(1, 0)
         self.red_int.add_bond(1, 2)
         self.red_int.add_bond(0, 2)
@@ -129,7 +129,7 @@ class TestReduceInternal(TestCase):
     def test_ic_ric_transform(self):
         with path("gopt.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        ri_mol = Internal(mol.atcoords, mol.atnums, 0, 1)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
         ri_mol.add_bond(0, 2)
@@ -191,7 +191,7 @@ class TestReduceInternal(TestCase):
     def test_ric_add_ic(self):
         with path("gopt.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        ri_mol = Internal(mol.coordinates, mol.numbers, 0, 1)
+        ri_mol = Internal(mol.atcoords, mol.atnums, 0, 1)
         ri_mol = ReducedInternal.update_to_reduced_internal(ri_mol)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
@@ -220,7 +220,7 @@ class TestReduceInternal(TestCase):
     def test_get_delta_v(self):
         with path("gopt.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        ri_mol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        ri_mol = ReducedInternal(mol.atcoords, mol.atnums, 0, 1)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
         ri_mol.add_angle(0, 1, 2)
@@ -246,7 +246,7 @@ class TestReduceInternal(TestCase):
     def test_set_new_vspace(self):
         with path("gopt.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        ri_mol = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        ri_mol = ReducedInternal(mol.atcoords, mol.atnums, 0, 1)
         ri_mol.add_bond(1, 0)
         ri_mol.add_bond(1, 2)
         ri_mol.add_angle(0, 1, 2)
@@ -258,7 +258,7 @@ class TestReduceInternal(TestCase):
     def test_align_v_space(self):
         with path("gopt.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        mol_1 = ReducedInternal(mol.atcoords, mol.atnums, 0, 1)
         mol_1.add_bond(1, 0)
         mol_1.add_bond(1, 2)
         mol_1.add_angle(0, 1, 2)
@@ -312,7 +312,7 @@ class TestReduceInternal(TestCase):
     def test_select_key_ic(self):
         with path("gopt.test.data", "water.xyz") as mol_path:
             mol = Utils.load_file(mol_path)
-        mol_1 = ReducedInternal(mol.coordinates, mol.numbers, 0, 1)
+        mol_1 = ReducedInternal(mol.atcoords, mol.atnums, 0, 1)
         mol_1.add_bond(1, 0)
         mol_1.add_bond(1, 2)
         mol_1.add_angle(0, 1, 2)

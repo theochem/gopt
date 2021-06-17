@@ -43,8 +43,8 @@ class TestUtils(TestCase):
                 [-1.481237149, -0.93019116, 0.0],
             ]
         )
-        assert np.allclose(mol.coordinates, ref_coor)
-        assert np.allclose(mol.numbers, [1, 8, 1])
+        assert np.allclose(mol.atcoords, ref_coor)
+        assert np.allclose(mol.atnums, [1, 8, 1])
 
     def test_internal_to_cartesian(self):
         """Test internal coordinates (Zmt style) to xyz."""
@@ -82,7 +82,8 @@ class TestUtils(TestCase):
         assert_allclose(norm(b_23), b3)
         assert_almost_equal(b_10 @ b_12 / norm(b_12) / norm(b_10), np.cos(ang1))
         assert_almost_equal(
-            -b_12 @ b_23 / norm(b_12) / norm(b_23), np.cos(ang2),
+            -b_12 @ b_23 / norm(b_12) / norm(b_23),
+            np.cos(ang2),
         )
         test_dihed = self._compute_dihed_helper(z.coords)
         assert_almost_equal(test_dihed, np.cos(dihed1))
@@ -98,7 +99,8 @@ class TestUtils(TestCase):
         assert_allclose(norm(b_24), b3)
         assert_almost_equal(b_10 @ b_12 / norm(b_12) / norm(b_10), np.cos(ang1))
         assert_almost_equal(
-            -b_12 @ b_24 / norm(b_12) / norm(b_24), np.cos(ang2),
+            -b_12 @ b_24 / norm(b_12) / norm(b_24),
+            np.cos(ang2),
         )
         test_dihed = self._compute_dihed_helper(z.coords)
         assert_almost_equal(test_dihed, np.cos(-dihed1))
@@ -139,7 +141,8 @@ class TestUtils(TestCase):
             assert_allclose(norm(b_23), b3)
             assert_almost_equal(b_10 @ b_12 / norm(b_12) / norm(b_10), np.cos(ang1))
             assert_almost_equal(
-                -b_12 @ b_23 / norm(b_12) / norm(b_23), np.cos(ang2),
+                -b_12 @ b_23 / norm(b_12) / norm(b_23),
+                np.cos(ang2),
             )
             # print(z.coords)
             test_dihed = self._compute_dihed_helper(z.coords)

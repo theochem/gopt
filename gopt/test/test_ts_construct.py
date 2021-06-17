@@ -23,8 +23,8 @@ class Test_TS_Construct(unittest.TestCase):
         with path("gopt.test.data", "ch3f_h.xyz") as prd_path:
             self.prd = Utils.load_file(prd_path)
 
-        self.reactant_ic = Internal(self.rct.coordinates, self.rct.numbers, 0, 2)
-        self.product_ic = Internal(self.prd.coordinates, self.prd.numbers, 0, 2)
+        self.reactant_ic = Internal(self.rct.atcoords, self.rct.atnums, 0, 2)
+        self.product_ic = Internal(self.prd.atcoords, self.prd.atnums, 0, 2)
 
     def test_auto_internal(self):
         ts_ins = TSConstruct(self.reactant_ic, self.product_ic)
@@ -33,8 +33,6 @@ class Test_TS_Construct(unittest.TestCase):
         ts_ins.auto_select_ic()
         assert len(ts_ins.reactant.ic) == len(ts_ins.product.ic)
         self.reactant_ic.auto_select_ic()
-        print(ts_ins.reactant.ic)
-        print(self.reactant_ic.ic)
         # self.reactant_ic.add_bond(0, 4)
         # self.reactant_ic.add_angle(1, 0, 4)
         # self.reactant_ic.add_angle(2, 0, 4)
@@ -220,19 +218,19 @@ class Test_TS_Construct(unittest.TestCase):
         self.reactant_ic.add_bond(2, 4)
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
         new_ins.auto_generate_ts(auto_select=False)
-        print("rct", self.reactant_ic.ic)
-        print("prd", self.product_ic.ic)
+        # print("rct", self.reactant_ic.ic)
+        # print("prd", self.product_ic.ic)
         ref_ic = (self.reactant_ic.distance(2, 4) + self.product_ic.distance(2, 4)) / 2
         assert np.allclose(new_ins.ts.ic_values, ref_ic)
         new_ins = TSConstruct(self.reactant_ic, self.product_ic)
-        print("rct", new_ins.reactant.ic)
-        print("prd", new_ins.product.ic)
+        # print("rct", new_ins.reactant.ic)
+        # print("prd", new_ins.product.ic)
         new_ins.auto_generate_ts(auto_select=True, reset_ic=False, flex_sin=False)
         # print('rct', new_ins.reactant.ic)
         # print('prd', new_ins.product.ic)
-        print("ts", new_ins.ts.ic)
-        print("target_ic", new_ins.ts.target_ic)
-        print("ts g", new_ins.ts._compute_tfm_gradient())
+        # print("ts", new_ins.ts.ic)
+        # print("target_ic", new_ins.ts.target_ic)
+        # print("ts g", new_ins.ts._compute_tfm_gradient())
         # print('ts g', new_ins.)
         # with deepcopy 31, no deepcopy 44
         assert len(new_ins.ts.ic) == 30

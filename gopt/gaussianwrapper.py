@@ -126,10 +126,10 @@ class GaussianWrapper(object):
         assert isinstance(path, str) or isinstance(path, Path)
         assert isinstance(spe_title, str)
         atoms = ""
-        for i in range(len(self.molecule.numbers)):
-            x, y, z = self.molecule.coordinates[i] / angstrom
+        for i in range(len(self.molecule.atnums)):
+            x, y, z = self.molecule.atcoords[i] / angstrom
             atoms += "%2s % 10.5f % 10.5f % 10.5f \n" % (
-                periodic[self.molecule.numbers[i]].symbol,
+                periodic[self.molecule.atnums[i]].symbol,
                 x,
                 y,
                 z,

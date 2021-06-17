@@ -160,6 +160,9 @@ class Internal(Cartesian):
         self._fragment = np.arange(self.natom)
         self._chains = []
 
+        # store added ICs
+        self._exist_ic = {}
+
     def add_bond(
         self, atom1: int, atom2: int, *_, b_type: int = 1, weight: int = 1
     ) -> None:  # tested
@@ -178,12 +181,14 @@ class Internal(Cartesian):
         # reorder the sequence of atoms indices
         atoms = self._atoms_sequence_reorder(atoms)
         # just sorting, no sequence changes
-        if self._repeat_atoms_check(atoms):
+        if (atoms, BondLength) not in self._exist_ic:
+            # if self._repeat_atoms_check(atoms):
             rs = self.atcoords[np.array(atoms)]
             new_ic_obj = BondLength(atoms, rs, ic_type=b_type, weight=weight)
             d, dd = new_ic_obj.get_gradient_hessian()
             # gradient and hessian need to be set
             self._add_new_internal_coordinate(new_ic_obj, d, dd, atoms)
+            self._exist_ic[(atoms, BondLength)] = len(self.ic) - 1
             # after adding a bond, change the connectivity of atoms pair to 1
             self._add_connectivity(atoms, b_type)
             if b_type == 1:
@@ -360,7 +365,7 @@ class Internal(Cartesian):
         if ignore_dihed:
             wts_bk = self.ic_weights
             self.set_dihed_weights(0)
-        self.at_coords = init_coor
+        self.set_new_coordinates(init_coor)
         init_point = self.create_geo_point(flex_sin=flex_sin)
         optimizer.add_new(init_point)
         for _ in range(max_iter):
@@ -510,7 +515,7 @@ class Internal(Cartesian):
         if not isinstance(weights, np.ndarray):
             raise TypeError(f"Weights need to be a numpy array, got {type(weights)}")
         if len(weights) != len(self.ic):
-            raise ValueError(f"# of Weights is not equal to ics. Total ")
+            raise ValueError(f"# of Weights is not equal to ics. Total {len(self.ic)}")
         for i, ic in enumerate(self.ic):
             ic.weight = weights[i]
 
@@ -1036,6 +1041,7 @@ class Internal(Cartesian):
     def _clear_ic_info(self) -> None:  # tested
         """Wipe all the internal information in this structure."""
         self._ic = []
+        self._exist_ic = {}
         self._fragment = np.arange(self.natom)
         self._connectivity = np.diag([-1] * len(self.atnums))
         self._cc_to_ic_gradient = None

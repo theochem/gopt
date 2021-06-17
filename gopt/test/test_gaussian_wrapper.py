@@ -29,7 +29,7 @@ class TestGaussWrap(unittest.TestCase):
         filepath = WORK_DIR / "test_gauss.com"
         mol = Utils.load_file(filepath)
         self.file_list.append(filepath)
-        assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
+        assert np.allclose(self.gwob.molecule.atcoords, mol.atcoords)
 
     def test_create_input_gjf(self):
         self.gwob.create_gauss_input(
@@ -38,7 +38,7 @@ class TestGaussWrap(unittest.TestCase):
         filepath = self.test_path / "test_2nd_gauss.gjf"
         self.file_list.append(filepath)
         mol = Utils.load_file(filepath)
-        assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
+        assert np.allclose(self.gwob.molecule.atcoords, mol.atcoords)
 
     def test_create_input_file(self):
         self.gwob.title = "test_untitled"
@@ -46,7 +46,7 @@ class TestGaussWrap(unittest.TestCase):
         filepath = WORK_DIR / (input_file + ".com")
         mol = Utils.load_file(filepath)
         self.file_list.append(filepath)
-        assert np.allclose(self.gwob.molecule.coordinates, mol.coordinates)
+        assert np.allclose(self.gwob.molecule.atcoords, mol.atcoords)
 
     @classmethod
     def tearDownClass(cls):
