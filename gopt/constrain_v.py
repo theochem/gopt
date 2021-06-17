@@ -22,7 +22,7 @@ class NewVspace(Internal):
         super(NewVspace, self).__init__(coordinates, numbers, charge, multi, title)
         self._n_freeze_ic = 0
         self._n_key_ic = 0
-        self._n_dof = len(self.numbers) - 6
+        self._n_dof = len(self.atnums) - 6
         self._freeze_space = np.array([])
         self._key_space = None
         self._non_space = None

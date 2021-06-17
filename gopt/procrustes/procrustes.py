@@ -23,10 +23,11 @@ class Procrustes(object):
             target molecule
         """
         assert len(candidates) > 0
-        assert all(np.array_equal(target.numbers, i.numbers) for i in candidates)
+        assert all(np.array_equal(target.atnums, i.atnums) for i in candidates)
         self._target = target
         self._candidates = candidates
-        self._target_center = Procrustes._barycenter(target.coordinates, target.numbers)
+        self._target_center = Procrustes._barycenter(target.atcoords,
+                                                     target.atnums)
 
     @staticmethod
     def _barycenter(coordinates, numbers):
@@ -128,11 +129,11 @@ class Procrustes(object):
         """
         # move target molecule center to origin
         adj_tar_coor = Procrustes._move_to_center(
-            self._target.coordinates, self._target.numbers
+            self._target.atcoords, self._target.atnums
         )
         for i in self._candidates:
             # move each object molecule center to origin
-            adj_center = Procrustes._move_to_center(i.coordinates, i.numbers)
+            adj_center = Procrustes._move_to_center(i.atcoords, i.atnums)
             # align each object molecule with target molecule
             adj_can_coor = Procrustes._rotate_coordinates(adj_tar_coor, adj_center)
             yield adj_can_coor + self._target_center
